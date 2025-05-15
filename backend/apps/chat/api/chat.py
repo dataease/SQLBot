@@ -5,7 +5,7 @@ from apps.chat.schemas.chat_base_schema import LLMConfig
 from apps.chat.schemas.chat_schema import ChatQuestion
 from apps.chat.schemas.llm import AgentService, LLMService
 from apps.datasource.models.datasource import CoreDatasource
-from apps.system.models.system_modle import AiModelDetail
+from apps.system.models.system_model import AiModelDetail
 from common.core.deps import SessionDep
 from sse_starlette.sse import EventSourceResponse
 import json

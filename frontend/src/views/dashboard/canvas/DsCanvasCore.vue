@@ -682,14 +682,14 @@ function startMove(e, item, index) {
   infoBox.value.cloneItem.classList.add('cloneNode')
   document.body.append(infoBox.value.cloneItem)
 
-  infoBox.value.orignX = infoBox.value.cloneItem.offsetLeft
-  infoBox.value.orignY = infoBox.value.cloneItem.offsetTop
+  infoBox.value.originX = infoBox.value.cloneItem.offsetLeft
+  infoBox.value.originY = infoBox.value.cloneItem.offsetTop
   infoBox.value.oldX = item.x
   infoBox.value.oldY = item.y
   infoBox.value.oldSizeX = item.sizex
   infoBox.value.oldSizeY = item.sizey
-  infoBox.value.orignWidth = infoBox.value.cloneItem.offsetWidth
-  infoBox.value.orignHeight = infoBox.value.cloneItem.offsetHeight
+  infoBox.value.originWidth = infoBox.value.cloneItem.offsetWidth
+  infoBox.value.originHeight = infoBox.value.cloneItem.offsetHeight
   const itemMouseMove = e => {
     const moveItem = _.get(infoBox.value, 'moveItem')
     const resizeItem = _.get(infoBox.value, 'resizeItem')
@@ -718,8 +718,8 @@ function startMove(e, item, index) {
         resizePlayer(resizeItem, { sizex: nowX, sizey: nowY })
       }, 10)
 
-      const nowWidth = Math.max(infoBox.value.orignWidth + moveXSize, baseWidth.value)
-      const nowHeight = Math.max(infoBox.value.orignHeight + moveYSize, baseHeight.value)
+      const nowWidth = Math.max(infoBox.value.originWidth + moveXSize, baseWidth.value)
+      const nowHeight = Math.max(infoBox.value.originHeight + moveYSize, baseHeight.value)
 
       infoBox.value.cloneItem.style.width = `${nowWidth}px`
       infoBox.value.cloneItem.style.height = `${nowHeight}px`
@@ -733,8 +733,8 @@ function startMove(e, item, index) {
       const moveXSize = e.pageX - infoBox.value.startX
       const moveYSize = e.pageY - infoBox.value.startY
 
-      let nowCloneItemX = infoBox.value.orignX + moveXSize
-      let nowCloneItemY = infoBox.value.orignY + moveYSize
+      let nowCloneItemX = infoBox.value.originX + moveXSize
+      let nowCloneItemY = infoBox.value.originY + moveYSize
 
       const newX = Math.max(
         Math.floor(
