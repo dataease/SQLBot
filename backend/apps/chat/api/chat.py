@@ -6,9 +6,10 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
+from sqlalchemy import and_, select
 
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
-    delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data
+    delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, ExcelData
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser
@@ -23,48 +24,37 @@ async def chats(session: SessionDep, current_user: CurrentUser):
 
 @router.get("/get/{chart_id}")
 async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int, current_assistant: CurrentAssistant):
-    try:
+    def inner():
         return get_chat_with_records(chart_id=chart_id, session=session, current_user=current_user,
                                      current_assistant=current_assistant)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+
+    return await asyncio.to_thread(inner)
 
 
 @router.get("/get/with_data/{chart_id}")
-async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, chart_id: int, current_assistant: CurrentAssistant):
-    try:
+async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, chart_id: int,
+                             current_assistant: CurrentAssistant):
+    def inner():
         return get_chat_with_records_with_data(chart_id=chart_id, session=session, current_user=current_user,
                                                current_assistant=current_assistant)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+
+    return await asyncio.to_thread(inner)
 
 
 @router.get("/record/get/{chart_record_id}/data")
 async def chat_record_data(session: SessionDep, chart_record_id: int):
-    try:
+    def inner():
         return get_chat_chart_data(chart_record_id=chart_record_id, session=session)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+
+    return await asyncio.to_thread(inner)
 
 
 @router.get("/record/get/{chart_record_id}/predict_data")
 async def chat_predict_data(session: SessionDep, chart_record_id: int):
-    try:
+    def inner():
         return get_chat_predict_data(chart_record_id=chart_record_id, session=session)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+
+    return await asyncio.to_thread(inner)
 
 
 @router.post("/rename")
@@ -115,7 +105,8 @@ async def start_chat(session: SessionDep, current_user: CurrentUser):
 async def recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
                               current_assistant: CurrentAssistant):
     try:
-        record = session.get(ChatRecord, chat_record_id)
+        record = get_chat_record_by_id(session, chat_record_id)
+
         if not record:
             raise HTTPException(
                 status_code=400,
@@ -123,7 +114,7 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, ch
             )
         request_question = ChatQuestion(chat_id=record.chat_id, question=record.question if record.question else '')
 
-        llm_service = LLMService(current_user, request_question, current_assistant)
+        llm_service = LLMService(current_user, request_question, current_assistant, True)
         llm_service.set_record(record)
         llm_service.run_recommend_questions_task_async()
     except Exception as e:
@@ -172,8 +163,17 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
             status_code=404,
             detail="Not Found"
         )
+    record: ChatRecord | None = None
 
-    record = session.query(ChatRecord).get(chat_record_id)
+    stmt = select(ChatRecord.id, ChatRecord.question, ChatRecord.chat_id, ChatRecord.datasource, ChatRecord.engine_type,
+                  ChatRecord.ai_modal_id, ChatRecord.create_by, ChatRecord.chart, ChatRecord.data).where(
+        and_(ChatRecord.id == chat_record_id))
+    result = session.execute(stmt)
+    for r in result:
+        record = ChatRecord(id=r.id, question=r.question, chat_id=r.chat_id, datasource=r.datasource,
+                            engine_type=r.engine_type, ai_modal_id=r.ai_modal_id, create_by=r.create_by, chart=r.chart,
+                            data=r.data)
+
     if not record:
         raise HTTPException(
             status_code=400,

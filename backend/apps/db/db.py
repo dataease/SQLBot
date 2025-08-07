@@ -256,7 +256,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str):
                 columns = [item.lower() for item in result.keys()._keys]
                 res = result.fetchall()
                 result_list = [
-                    {columns[i]: float(value) if isinstance(value, Decimal) else value for i, value in
+                    {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
                      enumerate(tuple_item)}
                     for tuple_item in res
                 ]

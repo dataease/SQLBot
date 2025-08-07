@@ -1,9 +1,11 @@
 import asyncio
 import hashlib
 import os
+import traceback
 import uuid
 from typing import List
 
+import orjson
 import pandas as pd
 from fastapi import APIRouter, File, UploadFile, HTTPException
 
@@ -109,10 +111,25 @@ async def get_fields(session: SessionDep, id: int, table_name: str):
     return getFields(session, id, table_name)
 
 
-@router.post("/execSql/{id}/{sql}")
-async def exec_sql(session: SessionDep, id: int, sql: str):
+from pydantic import BaseModel
+
+
+class TestObj(BaseModel):
+    sql: str = None
+
+
+@router.post("/execSql/{id}")
+async def exec_sql(session: SessionDep, id: int, obj: TestObj):
     def inner():
-        return execSql(session, id, sql)
+        data = execSql(session, id, obj.sql)
+        try:
+            data_obj = data.get('data')
+            # print(orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS).decode())
+            print(orjson.dumps(data_obj).decode())
+        except Exception:
+            traceback.print_exc()
+
+        return data
 
     return await asyncio.to_thread(inner)
 

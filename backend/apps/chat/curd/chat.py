@@ -3,13 +3,26 @@ from typing import List
 
 import orjson
 import sqlparse
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, update
 
 from apps.chat.models.chat_model import Chat, ChatRecord, CreateChat, ChatInfo, RenameChat, ChatQuestion
 from apps.datasource.models.datasource import CoreDatasource
 from apps.system.crud.assistant import AssistantOutDsFactory
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser
 from common.utils.utils import extract_nested_json
+
+
+def get_chat_record_by_id(session: SessionDep, record_id: int):
+    record: ChatRecord | None = None
+
+    stmt = select(ChatRecord.id, ChatRecord.question, ChatRecord.chat_id, ChatRecord.datasource, ChatRecord.engine_type,
+                  ChatRecord.ai_modal_id, ChatRecord.create_by).where(
+        and_(ChatRecord.id == record_id))
+    result = session.execute(stmt)
+    for r in result:
+        record = ChatRecord(id=r.id, question=r.question, chat_id=r.chat_id, datasource=r.datasource,
+                            engine_type=r.engine_type, ai_modal_id=r.ai_modal_id, create_by=r.create_by)
+    return record
 
 
 def list_chats(session: SessionDep, current_user: CurrentUser) -> List[Chat]:
@@ -45,6 +58,17 @@ def delete_chat(session, chart_id) -> str:
     return f'Chat with id {chart_id} has been deleted'
 
 
+def get_chart_config(session: SessionDep, chart_record_id: int):
+    stmt = select(ChatRecord.chart).where(and_(ChatRecord.id == chart_record_id))
+    res = session.execute(stmt)
+    for row in res:
+        try:
+            return orjson.loads(row.chart)
+        except Exception:
+            pass
+    return {}
+
+
 def get_chat_chart_data(session: SessionDep, chart_record_id: int):
     stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chart_record_id))
     res = session.execute(stmt)
@@ -53,7 +77,7 @@ def get_chat_chart_data(session: SessionDep, chart_record_id: int):
             return orjson.loads(row.data)
         except Exception:
             pass
-    return {}
+    return []
 
 
 def get_chat_predict_data(session: SessionDep, chart_record_id: int):
@@ -64,7 +88,7 @@ def get_chat_predict_data(session: SessionDep, chart_record_id: int):
             return orjson.loads(row.predict_data)
         except Exception:
             pass
-    return {}
+    return []
 
 
 def get_chat_with_records_with_data(session: SessionDep, chart_id: int, current_user: CurrentUser,
@@ -185,10 +209,17 @@ def format_record(record: ChatRecord):
 
 
 def list_base_records(session: SessionDep, chart_id: int, current_user: CurrentUser) -> List[ChatRecord]:
-    record_list = session.query(ChatRecord).filter(
-        and_(Chat.create_by == current_user.id, ChatRecord.chat_id == chart_id,
+    stmt = select(ChatRecord.id, ChatRecord.chat_id, ChatRecord.full_sql_message, ChatRecord.full_chart_message,
+                  ChatRecord.first_chat, ChatRecord.create_time).where(
+        and_(ChatRecord.create_by == current_user.id, ChatRecord.chat_id == chart_id,
              ChatRecord.analysis_record_id.is_(None), ChatRecord.predict_record_id.is_(None))).order_by(
-        ChatRecord.create_time).all()
+        ChatRecord.create_time)
+    result = session.execute(stmt).all()
+    record_list: List[ChatRecord] = []
+    for r in result:
+        record_list.append(
+            ChatRecord(id=r.id, chat_id=r.chat_id, create_time=r.create_time, full_sql_message=r.full_sql_message,
+                       full_chart_message=r.full_chart_message, first_chat=r.first_chat))
     return record_list
 
 
@@ -321,7 +352,8 @@ def save_full_sql_message_and_answer(session: SessionDep, record_id: int, answer
                                      token_usage: dict = None) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.full_sql_message = full_message
     record.sql_answer = answer
 
@@ -330,9 +362,13 @@ def save_full_sql_message_and_answer(session: SessionDep, record_id: int, answer
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        full_sql_message=record.full_sql_message,
+        sql_answer=record.sql_answer,
+        token_sql=record.token_sql,
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -343,7 +379,8 @@ def save_full_analysis_message_and_answer(session: SessionDep, record_id: int, a
                                           full_message: str, token_usage: dict = None) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.full_analysis_message = full_message
     record.analysis = answer
 
@@ -352,9 +389,13 @@ def save_full_analysis_message_and_answer(session: SessionDep, record_id: int, a
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        full_analysis_message=record.full_analysis_message,
+        analysis=record.analysis,
+        token_analysis=record.token_analysis,
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -365,7 +406,8 @@ def save_full_predict_message_and_answer(session: SessionDep, record_id: int, an
                                          full_message: str, data: str, token_usage: dict = None) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.full_predict_message = full_message
     record.predict = answer
     record.predict_data = data
@@ -375,9 +417,14 @@ def save_full_predict_message_and_answer(session: SessionDep, record_id: int, an
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        full_predict_message=record.full_predict_message,
+        predict=record.predict,
+        predict_data=record.predict_data,
+        token_predict=record.token_predict
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -389,7 +436,8 @@ def save_full_select_datasource_message_and_answer(session: SessionDep, record_i
                                                    engine_type: str = None, token_usage: dict = None) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.get(ChatRecord, record_id)
+    record = get_chat_record_by_id(session, record_id)
+
     record.full_select_datasource_message = full_message
     record.datasource_select_answer = answer
 
@@ -402,9 +450,22 @@ def save_full_select_datasource_message_and_answer(session: SessionDep, record_i
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    if datasource:
+        stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+            full_select_datasource_message=record.full_select_datasource_message,
+            datasource_select_answer=record.datasource_select_answer,
+            token_select_datasource_question=record.token_select_datasource_question,
+            datasource=record.datasource,
+            engine_type=record.engine_type,
+        )
+    else:
+        stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+            full_select_datasource_message=record.full_select_datasource_message,
+            datasource_select_answer=record.datasource_select_answer,
+            token_select_datasource_question=record.token_select_datasource_question,
+        )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -415,9 +476,12 @@ def save_full_recommend_question_message_and_answer(session: SessionDep, record_
                                                     full_message: str = '[]', token_usage: dict = None) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.full_recommended_question_message = full_message
-    record.recommended_question_answer = orjson.dumps(answer).decode()
+
+    if answer:
+        record.recommended_question_answer = orjson.dumps(answer).decode()
 
     json_str = '[]'
     if answer and answer.get('content') and answer.get('content') != '':
@@ -435,9 +499,14 @@ def save_full_recommend_question_message_and_answer(session: SessionDep, record_
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        full_recommended_question_message=record.full_recommended_question_message,
+        recommended_question_answer=record.recommended_question_answer,
+        recommended_question=record.recommended_question,
+        token_recommended_question=record.token_recommended_question
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -447,14 +516,18 @@ def save_full_recommend_question_message_and_answer(session: SessionDep, record_
 def save_sql(session: SessionDep, record_id: int, sql: str) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+
+    record = get_chat_record_by_id(session, record_id)
+
     record.sql = sql
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        sql=record.sql
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -470,7 +543,8 @@ def save_full_chart_message_and_answer(session: SessionDep, record_id: int, answ
                                        full_message: str, token_usage: dict = None) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.full_chart_message = full_message
     record.chart_answer = answer
 
@@ -479,9 +553,13 @@ def save_full_chart_message_and_answer(session: SessionDep, record_id: int, answ
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        full_chart_message=record.full_chart_message,
+        chart_answer=record.chart_answer,
+        token_chart=record.token_chart
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -491,14 +569,17 @@ def save_full_chart_message_and_answer(session: SessionDep, record_id: int, answ
 def save_chart(session: SessionDep, record_id: int, chart: str) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.chart = chart
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        chart=record.chart
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -508,14 +589,17 @@ def save_chart(session: SessionDep, record_id: int, chart: str) -> ChatRecord:
 def save_predict_data(session: SessionDep, record_id: int, data: str = '') -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.predict_data = data
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        predict_data=record.predict_data
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -525,16 +609,21 @@ def save_predict_data(session: SessionDep, record_id: int, data: str = '') -> Ch
 def save_error_message(session: SessionDep, record_id: int, message: str) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.error = message
     record.finish = True
     record.finish_time = datetime.datetime.now()
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        error=record.error,
+        finish=record.finish,
+        finish_time=record.finish_time
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -544,14 +633,17 @@ def save_error_message(session: SessionDep, record_id: int, message: str) -> Cha
 def save_sql_exec_data(session: SessionDep, record_id: int, data: str) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.data = data
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        data=record.data,
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -561,15 +653,19 @@ def save_sql_exec_data(session: SessionDep, record_id: int, data: str) -> ChatRe
 def finish_record(session: SessionDep, record_id: int) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
-    record = session.query(ChatRecord).filter(ChatRecord.id == record_id).first()
+    record = get_chat_record_by_id(session, record_id)
+
     record.finish = True
     record.finish_time = datetime.datetime.now()
 
     result = ChatRecord(**record.model_dump())
 
-    session.add(record)
-    session.flush()
-    session.refresh(record)
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        finish=record.finish,
+        finish_time=record.finish_time
+    )
+
+    session.execute(stmt)
 
     session.commit()
 
@@ -577,9 +673,13 @@ def finish_record(session: SessionDep, record_id: int) -> ChatRecord:
 
 
 def get_old_questions(session: SessionDep, datasource: int):
+    records = []
     if not datasource:
-        return []
-    records = session.query(ChatRecord.question, ChatRecord.create_time).filter(ChatRecord.datasource == datasource,
-                                                                                ChatRecord.question != None).order_by(
-        ChatRecord.create_time.desc()).limit(20).all()
+        return records
+    stmt = select(ChatRecord.question).where(
+        and_(ChatRecord.datasource == datasource, ChatRecord.question.isnot(None))).order_by(
+        ChatRecord.create_time.desc()).limit(20)
+    result = session.execute(stmt)
+    for r in result:
+        records.append(r.question)
     return records

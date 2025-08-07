@@ -11,7 +11,7 @@ export const datasourceApi = {
   getTablesByConf: (data: any) => request.post('/datasource/getTablesByConf', data),
   getFields: (id: number, table_name: string) =>
     request.post(`/datasource/getFields/${id}/${table_name}`),
-  execSql: (id: number, sql: string) => request.post(`/datasource/execSql/${id}/${sql}`),
+  execSql: (id: number, sql: string) => request.post(`/datasource/execSql/${id}`, { sql: sql }),
   chooseTables: (id: number, data: any) => request.post(`/datasource/chooseTables/${id}`, data),
   tableList: (id: number) => request.post(`/datasource/tableList/${id}`),
   fieldList: (id: number) => request.post(`/datasource/fieldList/${id}`),

@@ -48,6 +48,18 @@ const handleQuestion = () => {
   })
 }
 
+function runSQL() {
+  datasourceApi.execSql(
+    props.id,
+    'SELECT TO_CHAR(FLOOR("c"."CREDIT_LIMIT" / 10000) * 10000) || \' - \' || TO_CHAR((FLOOR("c"."CREDIT_LIMIT" / 10000) + 1) * 10000) AS "credit_range",\n' +
+      '       COUNT(*) AS "customer_count"\n' +
+      'FROM "WEI"."CUSTOMERS" "c"\n' +
+      'WHERE "c"."CREDIT_LIMIT" IS NOT NULL\n' +
+      'GROUP BY FLOOR("c"."CREDIT_LIMIT" / 10000)\n' +
+      'ORDER BY FLOOR("c"."CREDIT_LIMIT" / 10000)'
+  )
+}
+
 const dataTableDetail = () => {
   emits('dataTableDetail')
 }
@@ -79,6 +91,7 @@ const onClickOutside = () => {
         {{ num }}
       </div>
       <div click.stop class="methods">
+        <el-button v-if="false" @click="runSQL">test</el-button>
         <el-button type="primary" style="margin-right: 8px" @click.stop="handleQuestion">
           <el-icon style="margin-right: 2px" size="12">
             <icon_chat_outlined></icon_chat_outlined>

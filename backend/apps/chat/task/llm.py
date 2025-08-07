@@ -22,7 +22,8 @@ from apps.chat.curd.chat import save_question, save_full_sql_message, save_full_
     save_error_message, save_sql_exec_data, save_full_chart_message, save_full_chart_message_and_answer, save_chart, \
     finish_record, save_full_analysis_message_and_answer, save_full_predict_message_and_answer, save_predict_data, \
     save_full_select_datasource_message_and_answer, save_full_recommend_question_message_and_answer, \
-    get_old_questions, save_analysis_predict_record, list_base_records, rename_chat
+    get_old_questions, save_analysis_predict_record, list_base_records, rename_chat, get_chart_config, \
+    get_chat_chart_data
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat
 from apps.datasource.crud.datasource import get_table_schema
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
@@ -61,7 +62,7 @@ class LLMService:
     future: Future
 
     def __init__(self, current_user: CurrentUser, chat_question: ChatQuestion,
-                 current_assistant: Optional[CurrentAssistant] = None):
+                 current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False):
         self.chunk_list = []
         engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
         session_maker = sessionmaker(bind=engine)
@@ -104,6 +105,13 @@ class LLMService:
         self.ds = (ds if isinstance(ds, AssistantOutDsSchema) else CoreDatasource(**ds.model_dump())) if ds else None
         self.chat_question = chat_question
         self.config = get_default_config()
+        if no_reasoning:
+            # only work while using qwen
+            if self.config.additional_params:
+                if self.config.additional_params.get('extra_body'):
+                    if self.config.additional_params.get('extra_body').get('enable_thinking'):
+                        del self.config.additional_params['extra_body']['enable_thinking']
+
         self.chat_question.ai_modal_id = self.config.model_id
 
         # Create LLM instance through factory
@@ -186,7 +194,7 @@ class LLMService:
         self.record = record
 
     def get_fields_from_chart(self):
-        chart_info = orjson.loads(self.record.chart)
+        chart_info = get_chart_config(self.session, self.record.id)
         fields = []
         if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
             for column in chart_info.get('columns'):
@@ -206,20 +214,15 @@ class LLMService:
 
     def generate_analysis(self):
         fields = self.get_fields_from_chart()
-
         self.chat_question.fields = orjson.dumps(fields).decode()
-        self.chat_question.data = orjson.dumps(orjson.loads(self.record.data).get('data')).decode()
+        data = get_chat_chart_data(self.session, self.record.id)
+        self.chat_question.data = orjson.dumps(data.get('data')).decode()
         analysis_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         analysis_msg.append(SystemMessage(content=self.chat_question.analysis_sys_question()))
         analysis_msg.append(HumanMessage(content=self.chat_question.analysis_user_question()))
 
-        history_msg = []
-        if self.record.full_analysis_message and self.record.full_analysis_message.strip() != '':
-            history_msg = orjson.loads(self.record.full_analysis_message)
-
         self.record = save_full_analysis_message_and_answer(session=self.session, record_id=self.record.id, answer='',
-                                                            full_message=orjson.dumps(history_msg +
-                                                                                      [{'type': msg.type,
+                                                            full_message=orjson.dumps([{'type': msg.type,
                                                                                         'content': msg.content} for msg
                                                                                        in
                                                                                        analysis_msg]).decode())
@@ -247,29 +250,23 @@ class LLMService:
                                                             token_usage=token_usage,
                                                             answer=orjson.dumps({'content': full_analysis_text,
                                                                                  'reasoning_content': full_thinking_text}).decode(),
-                                                            full_message=orjson.dumps(history_msg +
-                                                                                      [{'type': msg.type,
+                                                            full_message=orjson.dumps([{'type': msg.type,
                                                                                         'content': msg.content} for msg
                                                                                        in
                                                                                        analysis_msg]).decode())
 
     def generate_predict(self):
         fields = self.get_fields_from_chart()
-
         self.chat_question.fields = orjson.dumps(fields).decode()
-        self.chat_question.data = orjson.dumps(orjson.loads(self.record.data).get('data')).decode()
+        data = get_chat_chart_data(self.session, self.record.id)
+        self.chat_question.data = orjson.dumps(data.get('data')).decode()
         predict_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         predict_msg.append(SystemMessage(content=self.chat_question.predict_sys_question()))
         predict_msg.append(HumanMessage(content=self.chat_question.predict_user_question()))
 
-        history_msg = []
-        if self.record.full_predict_message and self.record.full_predict_message.strip() != '':
-            history_msg = orjson.loads(self.record.full_predict_message)
-
         self.record = save_full_predict_message_and_answer(session=self.session, record_id=self.record.id, answer='',
                                                            data='',
-                                                           full_message=orjson.dumps(history_msg +
-                                                                                     [{'type': msg.type,
+                                                           full_message=orjson.dumps([{'type': msg.type,
                                                                                        'content': msg.content} for msg
                                                                                       in
                                                                                       predict_msg]).decode())
@@ -298,8 +295,7 @@ class LLMService:
                                                            answer=orjson.dumps({'content': full_predict_text,
                                                                                 'reasoning_content': full_thinking_text}).decode(),
                                                            data='',
-                                                           full_message=orjson.dumps(history_msg +
-                                                                                     [{'type': msg.type,
+                                                           full_message=orjson.dumps([{'type': msg.type,
                                                                                        'content': msg.content} for msg
                                                                                       in
                                                                                       predict_msg]).decode())
@@ -315,7 +311,7 @@ class LLMService:
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question()))
 
-        old_questions = list(map(lambda q: q[0].strip(), get_old_questions(self.session, self.record.datasource)))
+        old_questions = list(map(lambda q: q.strip(), get_old_questions(self.session, self.record.datasource)))
         guess_msg.append(
             HumanMessage(content=self.chat_question.guess_user_question(orjson.dumps(old_questions).decode())))
 
@@ -600,7 +596,8 @@ class LLMService:
         return full_filter_text
 
     def generate_filter(self, sql: str, tables: List):
-        filters = get_row_permission_filters(session=self.session, current_user=self.current_user, ds=self.ds, tables=tables)
+        filters = get_row_permission_filters(session=self.session, current_user=self.current_user, ds=self.ds,
+                                             tables=tables)
         if not filters:
             return None
         return self.build_table_filter(sql=sql, filters=filters)
@@ -718,7 +715,7 @@ class LLMService:
         except Exception:
             error = True
             message = orjson.dumps({'message': 'Cannot parse chart config from answer',
-                                                   'traceback': "Cannot parse chart config from answer:\n" + res}).decode()
+                                    'traceback': "Cannot parse chart config from answer:\n" + res}).decode()
 
         if error:
             raise SingleMessageError(message)
@@ -745,12 +742,15 @@ class LLMService:
         return save_error_message(session=self.session, record_id=self.record.id, message=message)
 
     def save_sql_data(self, data_obj: Dict[str, Any]):
-        data_result = data_obj.get('data')
-        if data_result:
-            data_result = prepare_for_orjson(data_result)
-            data_obj['data'] = data_result
-        return save_sql_exec_data(session=self.session, record_id=self.record.id,
-                                  data=orjson.dumps(data_obj).decode())
+        try:
+            data_result = data_obj.get('data')
+            if data_result:
+                data_result = prepare_for_orjson(data_result)
+                data_obj['data'] = data_result
+            return save_sql_exec_data(session=self.session, record_id=self.record.id,
+                                      data=orjson.dumps(data_obj).decode())
+        except Exception as e:
+            raise e
 
     def finish(self):
         return finish_record(session=self.session, record_id=self.record.id)
