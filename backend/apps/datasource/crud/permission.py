@@ -1,15 +1,13 @@
 import json
 from typing import List, Optional
 
-from sqlalchemy import and_, cast, or_
+from sqlalchemy import and_
 from apps.datasource.crud.row_permission import transFilterTree
 from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
 from common.core.deps import CurrentUser, SessionDep
 from sqlbot_xpack.permissions.api.permission import transRecord2DTO
 from sqlbot_xpack.permissions.models.ds_permission import DsPermission, PermissionDTO
 from sqlbot_xpack.permissions.models.ds_rules import DsRules
-from sqlalchemy.dialects.postgresql import JSONB
-
 
 def get_row_permission_filters(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource,
                                tables: Optional[list] = None, single_table: Optional[CoreTable] = None):
