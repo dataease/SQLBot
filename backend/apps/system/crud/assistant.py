@@ -139,7 +139,6 @@ class AssistantOutDs:
     def get_db_schema(self, ds_id: int) -> str:
         ds = self.get_ds(ds_id)
         schema_str = ""
-        # db_name = ds.db_schema
         db_name = ds.db_schema if ds.db_schema is not None and ds.db_schema != "" else ds.dataBase
         schema_str += f"【DB_ID】 {db_name}\n【Schema】\n"
         for table in ds.tables:
