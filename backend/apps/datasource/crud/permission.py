@@ -30,11 +30,6 @@ def get_row_permission_filters(session: SessionDep, current_user: CurrentUser, d
             if row_permissions is not None:
                 for permission in row_permissions:
                     # check permission and user in same rules
-                    # obj = session.query(DsRules).filter(
-                    #     and_(DsRules.permission_list.op('@>')(cast([permission.id], JSONB)),
-                    #          or_(DsRules.user_list.op('@>')(cast([f'{current_user.id}'], JSONB)),
-                    #              DsRules.user_list.op('@>')(cast([current_user.id], JSONB))))
-                    # ).first()
                     flag = False
                     for r in contain_rules:
                         p_list = json.loads(r.permission_list)
