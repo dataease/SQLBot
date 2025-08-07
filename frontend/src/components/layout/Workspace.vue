@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import icon_expand_down_filled from '@/assets/svg/icon_expand-down_filled.svg'
 import icon_moments_categories_outlined from '@/assets/svg/icon_moments-categories_outlined.svg'
 import icon_done_outlined from '@/assets/svg/icon_done_outlined.svg'
@@ -55,8 +55,7 @@ const handleDefaultWorkspaceChange = (item: any) => {
 }
 
 const init_ws_data = async () => {
-  const res = await userApi.ws_options()
-  defaultDatasourceList.value = res
+  defaultDatasourceList.value = await userApi.ws_options()
 }
 
 const init_current_ws = () => {
@@ -178,7 +177,7 @@ onMounted(async () => {
 .system-workspace.system-workspace {
   padding: 4px 0;
   width: 280px !important;
-  box-shadow: 0px 4px 8px 0px #1f23291a;
+  box-shadow: 0 4px 8px 0 #1f23291a;
   border: 1px solid #dee0e3;
   .ed-input {
     .ed-input__wrapper {
