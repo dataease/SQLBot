@@ -20,7 +20,7 @@ const props = withDefaults(
 
 const router = useRouter()
 const searchLoading = ref(false)
-const datasourceConfigvVisible = ref(false)
+const datasourceConfigVisible = ref(false)
 const keywords = ref('')
 const datasourceList = shallowRef([] as any[])
 const datasourceListWithSearch = computed(() => {
@@ -30,7 +30,7 @@ const datasourceListWithSearch = computed(() => {
   )
 })
 const beforeClose = () => {
-  datasourceConfigvVisible.value = false
+  datasourceConfigVisible.value = false
   keywords.value = ''
 }
 
@@ -55,12 +55,12 @@ const statusLoading = ref(false)
 
 function showDs() {
   listDs()
-  datasourceConfigvVisible.value = true
+  datasourceConfigVisible.value = true
 }
 
 function hideDs() {
   innerDs.value = undefined
-  datasourceConfigvVisible.value = false
+  datasourceConfigVisible.value = false
 }
 
 function selectDsInDialog(ds: any) {
@@ -126,7 +126,7 @@ defineExpose({
 <template>
   <div v-loading.body.fullscreen.lock="loading || statusLoading">
     <el-drawer
-      v-model="datasourceConfigvVisible"
+      v-model="datasourceConfigVisible"
       :close-on-click-modal="false"
       size="calc(100% - 100px)"
       modal-class="datasource-drawer-chat"

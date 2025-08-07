@@ -4,9 +4,9 @@ import DatasourceForm from './DatasourceForm.vue'
 import icon_close_outlined from '@/assets/svg/operate/ope-close.svg'
 
 const datasourceFormRef = ref()
-const datasourceConfigvVisible = ref(false)
+const datasourceConfigVisible = ref(false)
 const beforeClose = () => {
-  datasourceConfigvVisible.value = false
+  datasourceConfigVisible.value = false
 }
 
 const emit = defineEmits(['refresh'])
@@ -15,7 +15,7 @@ const refresh = () => {
 }
 const changeActiveStep = (val: any) => {
   if (val === 0) {
-    datasourceConfigvVisible.value = false
+    datasourceConfigVisible.value = false
   }
 }
 const save = () => {
@@ -23,7 +23,7 @@ const save = () => {
 }
 
 const open = (item: any) => {
-  datasourceConfigvVisible.value = true
+  datasourceConfigVisible.value = true
   nextTick(() => {
     datasourceFormRef.value.initForm(item, true)
   })
@@ -36,7 +36,7 @@ defineExpose({
 
 <template>
   <el-drawer
-    v-model="datasourceConfigvVisible"
+    v-model="datasourceConfigVisible"
     :close-on-click-modal="false"
     size="calc(100% - 100px)"
     modal-class="datasource-drawer-fullscreen"

@@ -34,7 +34,7 @@ const router = useRouter()
 const { t } = useI18n()
 const keywords = ref('')
 const defaultDatasourceKeywords = ref('')
-const datasourceConfigvVisible = ref(false)
+const datasourceConfigVisible = ref(false)
 const editDatasource = ref(false)
 const activeStep = ref(0)
 const activeName = ref('')
@@ -55,7 +55,7 @@ const datasourceListWithSearch = computed(() => {
   )
 })
 const beforeClose = () => {
-  datasourceConfigvVisible.value = false
+  datasourceConfigVisible.value = false
   activeStep.value = 0
   datasourceApi.cancelRequests()
 }
@@ -92,7 +92,7 @@ const formatKeywords = (item: string) => {
 const currentType = ref('')
 const handleEditDatasource = (res: any) => {
   activeStep.value = 1
-  datasourceConfigvVisible.value = true
+  datasourceConfigVisible.value = true
   editDatasource.value = true
   currentType.value = res.type_name
   nextTick(() => {
@@ -138,14 +138,14 @@ const handleQuestion = async (id: string) => {
 
 const handleAddDatasource = () => {
   editDatasource.value = false
-  datasourceConfigvVisible.value = true
+  datasourceConfigVisible.value = true
 }
 
 const refresh = () => {
   activeName.value = ''
   activeStep.value = 0
   activeType.value = ''
-  datasourceConfigvVisible.value = false
+  datasourceConfigVisible.value = false
   search()
 }
 
@@ -356,7 +356,7 @@ const back = () => {
       </div>
     </template>
     <el-drawer
-      v-model="datasourceConfigvVisible"
+      v-model="datasourceConfigVisible"
       :close-on-click-modal="false"
       size="calc(100% - 100px)"
       modal-class="datasource-drawer-fullscreen"
