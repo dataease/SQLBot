@@ -206,6 +206,7 @@ const defaultForm = {
   id: null,
   name: null,
   domain: null,
+  email:null,
   type: 0,
   configuration: null,
   description: null,
