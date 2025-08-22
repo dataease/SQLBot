@@ -205,6 +205,13 @@ const formatAdvancedSetting = (list: Array<any>) => {
 const baseModelChange = (val: string) => {
   if (!val || !modelForm.supplier) {
     return
+    
+  }
+  if (modelForm.supplier !== 12) {
+    const current_model = modelList.value?.find((model: any) => model.name == val);
+    if (current_model) {
+      modelForm.api_domain = current_model.api_domain || getSupplierDomain() || '';
+    }
   }
   const current_model = modelList.value?.find((model: any) => model.name == val)
   if (current_model) {
@@ -306,6 +313,13 @@ defineExpose({
             />
           </el-select>
         </el-form-item>
+        <el-form-item prop="api_domain" :label="t('model.api_domain')">
+    <el-input
+      v-model="modelForm.api_domain"
+      :disabled="modelForm.supplier !== 12" 
+      placeholder="请输入OpenAI兼容接口URL（如https://api.example.com/v1）"
+    />
+  </el-form-item>
         <el-form-item class="custom-require" prop="base_model">
           <template #label
             ><span class="custom-require_danger">{{ t('model.basic_model') }}</span>

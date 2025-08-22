@@ -280,6 +280,34 @@ export const supplierList: Array<{
       },
     },
   },
+   {
+    id: 12,
+    name: 'CustomOpenAI',
+    icon: icon_openai_colorful,
+    model_config: {
+      0: {
+        api_domain: '',
+        common_args: [{ key: 'temperature', val: 1.0, type: 'number', range: '[0, 2]' }],
+        model_options: [
+          { name: 'gpt-4.1' },
+          { name: 'gpt-4.1-mini' },
+          { name: 'gpt-4.1-nano' },
+          { name: 'gpt-4o' },
+          { name: 'gpt-4o-mini' },
+          { name: 'chatgpt-4o' },
+          { name: 'o4-mini' },
+          { name: 'o4-mini-deep-research' },
+          { name: 'o3' },
+          { name: 'o3-pro' },
+          { name: 'o3-mini' },
+          { name: 'o3-deep-research' },
+          { name: 'o1' },
+          { name: 'o1-pro' },
+          { name: 'o1-mini' },
+        ],
+      },
+    },
+  },
 ]
 
 export const base_model_options = (supplier_id: number, model_type?: number) => {
