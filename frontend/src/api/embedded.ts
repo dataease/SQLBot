@@ -14,6 +14,6 @@ export const embeddedApi = {
     }),
   updateEmbedded: (data: any) => request.put('/system/embedded', data),
   addEmbedded: (data: any) => request.post('/system/embedded', data),
-  deleteEmbedded: (data: any) => request.delete('/system/embedded', data),
+  deleteEmbedded: (params: any) => request.delete('/system/embedded', { data: params }),
   getOne: (id: any) => request.get(`/system/embedded/${id}`),
 }

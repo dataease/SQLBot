@@ -809,6 +809,8 @@ onUnmounted(() => {
             .navigate-preview {
               height: calc(100% - 28px);
               background-color: #fff;
+              border-radius: 6px;
+              overflow: hidden;
 
               .navigate-head {
                 width: 240px;

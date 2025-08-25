@@ -115,7 +115,7 @@ const onClickOutside = () => {
           trigger="click"
           :teleported="false"
           popper-class="popover-card"
-          placement="bottom"
+          placement="bottom-end"
         >
           <div class="content">
             <div class="item" @click.stop="handleEdit">
@@ -193,12 +193,7 @@ const onClickOutside = () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 28px;
-
-    .ed-button {
-      height: 28px;
-      min-width: 78px;
-    }
+    height: 32px;
 
     .form-rate {
       display: flex;
@@ -220,23 +215,31 @@ const onClickOutside = () => {
       .more {
         position: relative;
         cursor: pointer;
+        margin-left: 4px;
+        width: 32px;
+        height: 32px;
+
+        svg {
+          position: relative;
+          z-index: 10;
+        }
 
         &::after {
           content: '';
-          background-color: #1f23291a;
           position: absolute;
           border-radius: 6px;
-          width: 24px;
-          height: 24px;
+          width: 32px;
+          height: 32px;
           transform: translate(-50%, -50%);
           top: 50%;
           left: 50%;
-          display: none;
+          background: #fff;
+          border: 1px solid #d9dcdf;
         }
 
         &:hover {
           &::after {
-            display: block;
+            background-color: #f5f6f7;
           }
         }
       }

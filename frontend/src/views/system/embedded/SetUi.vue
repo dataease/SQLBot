@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import Assistant from '@/views/embedded/assistant.vue'
+import Assistant from '@/views/embedded/AssistantPreview.vue'
 import { ref, unref, reactive, nextTick } from 'vue'
 import { type UploadUserFile, ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'

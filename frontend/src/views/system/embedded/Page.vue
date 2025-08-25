@@ -22,6 +22,15 @@ defineProps({
   },
 })
 
+interface Form {
+  id?: string | null
+  name: string | null
+  domain: string | null
+  type: number
+  configuration?: string | null
+  description?: string | null
+}
+
 const emits = defineEmits(['btnSelectChange'])
 const { t } = useI18n()
 const multipleSelectionAll = ref<any[]>([])
@@ -45,6 +54,19 @@ const pageInfo = reactive({
   total: 0,
 })
 
+const pwd = '**********'
+
+const dialogTitle = ref('')
+const defaultForm = {
+  id: null,
+  name: null,
+  domain: null,
+  type: 4,
+  // configuration: null,
+  // description: null,
+}
+const pageForm = ref<Form>(cloneDeep(defaultForm))
+
 const cancelDelete = () => {
   handleToggleRowSelection(false)
   multipleSelectionAll.value = []
@@ -54,7 +76,7 @@ const cancelDelete = () => {
 const deleteBatchUser = () => {
   ElMessageBox.confirm(t('embedded.delete_10_apps', { msg: multipleSelectionAll.value.length }), {
     confirmButtonType: 'danger',
-    confirmButtonText: t('dashboard.delete_success'),
+    confirmButtonText: t('dashboard.delete'),
     cancelButtonText: t('common.cancel'),
     customClass: 'confirm-no_icon',
     autofocus: false,
@@ -72,7 +94,7 @@ const deleteBatchUser = () => {
 const deleteHandler = (row: any) => {
   ElMessageBox.confirm(t('embedded.delete', { msg: row.name }), {
     confirmButtonType: 'danger',
-    confirmButtonText: t('dashboard.delete_success'),
+    confirmButtonText: t('dashboard.delete'),
     cancelButtonText: t('common.cancel'),
     customClass: 'confirm-no_icon',
     autofocus: false,
@@ -187,30 +209,22 @@ const rules = {
 const saveHandler = () => {
   termFormRef.value.validate((res: any) => {
     if (res) {
-      embeddedApi.addEmbedded(unref(pageForm)).then(() => {
+      const obj = unref(pageForm)
+      if (obj.id === '') {
+        delete obj.id
+      }
+      embeddedApi.addEmbedded(obj).then(() => {
         ElMessage({
           type: 'success',
           message: t('common.save_success'),
         })
         search()
-        dialogFormVisible.value = false
+        onFormClose()
       })
     }
   })
 }
 
-const pwd = '**********'
-
-const dialogTitle = ref('')
-const defaultForm = {
-  id: null,
-  name: null,
-  domain: null,
-  type: 0,
-  configuration: null,
-  description: null,
-}
-const pageForm = ref(cloneDeep(defaultForm))
 const editHandler = (row: any) => {
   pageForm.value.id = null
   if (row) {
@@ -505,7 +519,7 @@ const copyCode = (row: any, key: any = 'app_secret') => {
         {{ $t('datasource.select_all') }}
       </el-checkbox>
 
-      <button class="danger-button" @click="deleteBatchUser">{{ $t('workspace.remove') }}</button>
+      <button class="danger-button" @click="deleteBatchUser">{{ $t('dashboard.delete') }}</button>
 
       <span class="selected">{{
         $t('user.selected_2_items', { msg: multipleSelectionAll.length })
@@ -554,16 +568,6 @@ const copyCode = (row: any, key: any = 'app_secret') => {
           "
           autocomplete="off"
           maxlength="50"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item prop="email" :label="$t('embedded.password_length')">
-        <el-input
-          v-model="pageForm.email"
-          :placeholder="
-            $t('datasource.please_enter') + $t('common.empty') + $t('embedded.password_length')
-          "
-          autocomplete="off"
           clearable
         />
       </el-form-item>

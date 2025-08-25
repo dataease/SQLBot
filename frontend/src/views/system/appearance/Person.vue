@@ -196,7 +196,7 @@ const account = computed(() => userStore.getAccount)
       }
 
       &.mr4 {
-        margin: 4px 0;
+        margin: 4px;
       }
 
       .right {

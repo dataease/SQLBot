@@ -179,7 +179,7 @@ const onClickOutside = () => {
 
       &::after {
         content: '';
-        background: #f5f6f7;
+        background: #fff;
         position: absolute;
         border-radius: 6px;
         width: 30px;
@@ -189,12 +189,11 @@ const onClickOutside = () => {
         left: 50%;
         border: 1px solid #d9dcdf;
         z-index: 1;
-        display: none;
       }
 
       &:hover {
         &::after {
-          display: block;
+          background: #f5f6f7;
         }
       }
     }

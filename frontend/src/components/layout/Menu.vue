@@ -86,7 +86,7 @@ const routerList = computed(() => {
     }
   }
 
-  .ed-sub-menu .ed-sub-menu__title:hover {
+  .ed-sub-menu .ed-sub-menu__title {
     border-radius: 6px;
   }
 
@@ -98,6 +98,26 @@ const routerList = computed(() => {
 
   .ed-sub-menu .ed-icon {
     margin-right: 8px;
+  }
+}
+.ed-popper.is-light:has(.ed-menu--popup) {
+  border: 1px solid #dee0e3;
+  border-radius: 6px;
+  box-shadow: 0px 4px 8px 0px #1f23291a;
+  background: #eff1f0;
+  overflow: hidden;
+}
+.ed-menu--popup {
+  padding: 8px;
+  background: #eff1f0;
+
+  .ed-menu-item {
+    padding: 9px 16px;
+    height: 40px !important;
+    border-radius: 6px;
+    &.is-active {
+      background-color: #fff !important;
+    }
   }
 }
 </style>

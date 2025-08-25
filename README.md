@@ -45,8 +45,7 @@ docker compose up -d
 
 如你有更多问题，可以加入我们的技术交流群与我们交流。
 
-<img width="396" height="396" alt="contact_me_qr" src="https://github.com/user-attachments/assets/2594ff29-5426-4457-b051-279855610030" />
-
+<img width="180" height="180" alt="contact_me_qr" src="https://github.com/user-attachments/assets/2594ff29-5426-4457-b051-279855610030" />
 
 ## UI 展示
 

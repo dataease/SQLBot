@@ -47,7 +47,9 @@ const languageList = [
     value: 'zh-CN',
   }, */,
 ]
+const popoverRef = ref()
 const toSystem = () => {
+  popoverRef.value.hide()
   router.push('/system')
 }
 
@@ -86,7 +88,12 @@ const logout = () => {
 </script>
 
 <template>
-  <el-popover trigger="click" popper-class="system-person" :placement="collapse ? 'right' : 'top'">
+  <el-popover
+    ref="popoverRef"
+    trigger="click"
+    popper-class="system-person"
+    :placement="collapse ? 'right' : 'top-start'"
+  >
     <template #reference>
       <button class="person" :title="name" :class="collapse && 'collapse'">
         <el-icon size="32">
@@ -155,6 +162,7 @@ const logout = () => {
           </el-icon>
           <div class="datasource-name">{{ $t('common.help') }}</div>
         </div>
+        <div style="height: 4px; width: 100%"></div>
         <div class="popover-item mr4" @click="logout">
           <el-icon size="16">
             <icon_logout_outlined></icon_logout_outlined>
@@ -245,6 +253,7 @@ const logout = () => {
   box-shadow: 0px 4px 8px 0px #1f23291a;
   border: 1px solid #dee0e3;
   position: relative;
+  border-radius: 6px;
 
   &::after {
     content: '';
@@ -314,7 +323,7 @@ const logout = () => {
       }
 
       &.mr4 {
-        margin: 4px 0;
+        margin: 4px;
       }
 
       .right {

@@ -39,7 +39,7 @@
       </div>
     </div>
     <div
-      class="sqlbot-table"
+      class="sqlbot-table_user"
       :class="[
         state.filterTexts.length && 'is-filter',
         multipleSelectionAll.length && 'show-pagination_height',
@@ -854,8 +854,7 @@ onMounted(() => {
       line-height: 28px;
     }
   }
-  .sqlbot-table {
-    border-radius: 6px;
+  .sqlbot-table_user {
     width: 100%;
     max-height: calc(100vh - 150px);
     overflow-y: auto;
