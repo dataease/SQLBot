@@ -89,7 +89,8 @@ class LLMFactory:
     _llm_types: Dict[str, Type[BaseLLM]] = {
         "openai": OpenAILLM,
         "tongyi": OpenAILLM,
-        "vllm": OpenAIvLLM
+        "vllm": OpenAIvLLM,
+        "custom_openai": OpenAILLM
     }
 
     @classmethod

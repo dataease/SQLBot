@@ -18,6 +18,7 @@ router = APIRouter(tags=["system/aimodel"], prefix="/system/aimodel")
 async def check_llm(info: AiModelCreator, trans: Trans):
     async def generate():
         try:
+            protocol = 1 if info.supplier == 12 else info.protocol
             additional_params = {item.key: prepare_model_arg(item.val) for item in info.config_list if item.key and item.val}
             config = LLMConfig(
                 model_type="openai" if info.protocol == 1 else "vllm",
@@ -112,6 +113,9 @@ async def add_model(
         session: SessionDep,
         creator: AiModelCreator
 ):
+    if creator.supplier ==12:
+        data["protocol"] = 1
+        data["model_type"] = "openai" 
     data = creator.model_dump(exclude_unset=True)
     data["config"] = json.dumps([item.model_dump(exclude_unset=True) for item in creator.config_list])
     data.pop("config_list", None)
