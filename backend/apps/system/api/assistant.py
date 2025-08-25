@@ -21,7 +21,7 @@ from sqlbot_xpack.file_utils import SQLBotFileUtils
 
 router = APIRouter(tags=["system/assistant"], prefix="/system/assistant")
 
-@router.get("/info/{id}") 
+@router.get("/info/{id}")
 async def info(request: Request, response: Response, session: SessionDep, trans: Trans, id: int) -> AssistantModel:
     if not id:
         raise Exception('miss assistant id')
@@ -29,12 +29,25 @@ async def info(request: Request, response: Response, session: SessionDep, trans:
     if not db_model:
         raise RuntimeError(f"assistant application not exist")
     db_model = AssistantModel.model_validate(db_model)
-    response.headers["Access-Control-Allow-Origin"] = db_model.domain
+
+    # 支持HTTP和HTTPS协议
+    domain = db_model.domain.rstrip('/') if db_model.domain else ''
+    response.headers["Access-Control-Allow-Origin"] = domain
+
     origin = request.headers.get("origin") or get_origin_from_referer(request)
-    origin = origin.rstrip('/')
-    if origin != db_model.domain:
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin = origin or ''))
+    origin = origin.rstrip('/') if origin else ''
+
+    # 检查是否匹配HTTP或HTTPS版本的域名
+    if domain:
+        # 移除协议部分进行比较
+        domain_without_protocol = domain.replace('http://', '').replace('https://', '')
+        origin_without_protocol = origin.replace('http://', '').replace('https://', '') if origin else ''
+
+        if domain_without_protocol != origin_without_protocol:
+            raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
+
     return db_model
+
 
 @router.get("/validator", response_model=AssistantValidator) 
 async def validator(session: SessionDep, id: int, virtual: Optional[int] = Query(None)):
