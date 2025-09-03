@@ -145,19 +145,21 @@ function adaptorChartInfoList(chatInfo: ChatInfo) {
           (record?.sql || record?.chart)) ||
         (record?.predict_record_id !== undefined &&
           record?.predict_record_id !== null &&
-          data.data.length > 0)
+          data?.data?.length > 0)
       ) {
         const recordeInfo = { id: chatInfo.id + '_' + record.id, data: data, chart: {} }
         const chartBaseInfo = JSON.parse(record.chart)
-        recordeInfo['chart'] = {
-          type: chartBaseInfo.type,
-          title: chartBaseInfo.title,
-          columns: chartBaseInfo.columns,
-          xAxis: chartBaseInfo.axis?.x ? [chartBaseInfo.axis.x] : [],
-          yAxis: chartBaseInfo.axis?.y ? [chartBaseInfo.axis.y] : [],
-          series: chartBaseInfo.axis?.series ? [chartBaseInfo.axis.series] : [],
+        if (chartBaseInfo) {
+          recordeInfo['chart'] = {
+            type: chartBaseInfo?.type,
+            title: chartBaseInfo?.title,
+            columns: chartBaseInfo?.columns,
+            xAxis: chartBaseInfo?.axis?.x ? [chartBaseInfo?.axis?.x] : [],
+            yAxis: chartBaseInfo?.axis?.y ? [chartBaseInfo?.axis.y] : [],
+            series: chartBaseInfo?.axis?.series ? [chartBaseInfo?.axis?.series] : [],
+          }
+          chartInfoList.value.push(recordeInfo)
         }
-        chartInfoList.value.push(recordeInfo)
       }
     })
   }
