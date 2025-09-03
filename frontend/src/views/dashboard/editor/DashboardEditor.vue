@@ -140,6 +140,10 @@ const emits = defineEmits(['parentAddItemBox'])
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+  }
   :deep(.ed-empty__description) {
     width: 240px !important;
   }

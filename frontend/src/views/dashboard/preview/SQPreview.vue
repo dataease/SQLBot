@@ -142,6 +142,10 @@ defineExpose({
   overflow-x: hidden;
   overflow-y: auto;
   position: relative;
+  &::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+  }
 
   div::-webkit-scrollbar {
     width: 0 !important;

@@ -40,7 +40,7 @@ const addComponent = (componentType: string, viewInfo?: any) => {
       component.propValue[0].title = t('dashboard.new_tab')
       component.activeTabName = subTabName
     }
-    component.y = maxYComponentCount() + 10
+    component.y = maxYComponentCount() + 2
     // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
     dashboardEditorInnerRef.value.addItemToBox(component)
   }
