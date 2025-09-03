@@ -119,7 +119,12 @@ const beforeHandleCommand = (item: any, param: any) => {
   }
 }
 const isEditMode = computed(() => props.showPosition === 'canvas')
-
+const outResizeEnd = () => {
+  state.tabShow = false
+  nextTick(() => {
+    state.tabShow = true
+  })
+}
 const addTabItem = (item: CanvasItem) => {
   // do addTabItem
   const index = configItem.value.propValue.findIndex(
@@ -168,6 +173,7 @@ onMounted(() => {
 
 defineExpose({
   addTabItem,
+  outResizeEnd,
 })
 </script>
 
@@ -224,35 +230,37 @@ defineExpose({
           </template>
         </el-tab-pane>
       </template>
-      <div
-        v-for="(tabItem, index) in configItem.propValue"
-        :key="tabItem.name + '-content'"
-        class="tab-content-custom"
-        :class="{ 'switch-hidden': configItem.activeTabName !== tabItem.name }"
-      >
-        <SQPreview
-          v-if="showPosition === 'preview'"
-          :ref="'tabPreviewRef_' + index"
-          class="tab-dashboard-preview"
-          :component-data="tabItem.componentData"
-          :canvas-view-info="canvasViewInfo"
-          :base-matrix-count="tabBaseMatrixCount"
-          :canvas-id="tabItem.name"
-        ></SQPreview>
-        <DashboardEditor
-          v-else
-          :ref="'tabEditorRef_' + index"
-          class="tab-dashboard-editor-main"
-          :canvas-component-data="tabItem.componentData"
-          :canvas-view-info="canvasViewInfo"
-          :move-in-active="configItem.moveInActive"
-          :base-matrix-count="tabBaseMatrixCount"
-          :canvas-id="tabItem.name"
-          :parent-config-item="configItem"
-          @parent-add-item-box="(item) => emits('parentAddItemBox', item)"
+      <template v-if="state.tabShow">
+        <div
+          v-for="(tabItem, index) in configItem.propValue"
+          :key="tabItem.name + '-content'"
+          class="tab-content-custom"
+          :class="{ 'switch-hidden': configItem.activeTabName !== tabItem.name }"
         >
-        </DashboardEditor>
-      </div>
+          <SQPreview
+            v-if="showPosition === 'preview'"
+            :ref="'tabPreviewRef_' + index"
+            class="tab-dashboard-preview"
+            :component-data="tabItem.componentData"
+            :canvas-view-info="canvasViewInfo"
+            :base-matrix-count="tabBaseMatrixCount"
+            :canvas-id="tabItem.name"
+          ></SQPreview>
+          <DashboardEditor
+            v-else
+            :ref="'tabEditorRef_' + index"
+            class="tab-dashboard-editor-main"
+            :canvas-component-data="tabItem.componentData"
+            :canvas-view-info="canvasViewInfo"
+            :move-in-active="configItem.moveInActive"
+            :base-matrix-count="tabBaseMatrixCount"
+            :canvas-id="tabItem.name"
+            :parent-config-item="configItem"
+            @parent-add-item-box="(item) => emits('parentAddItemBox', item)"
+          >
+          </DashboardEditor>
+        </div>
+      </template>
     </custom-tab>
     <el-dialog
       v-model="state.dialogVisible"

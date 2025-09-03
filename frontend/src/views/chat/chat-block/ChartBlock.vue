@@ -63,6 +63,8 @@ const dataObject = computed<{
 const assistantStore = useAssistantStore()
 const isCompletePage = computed(() => !assistantStore.getAssistant || assistantStore.getEmbedded)
 
+const isAssistant = computed(() => assistantStore.getAssistant)
+
 const chartId = computed(() => props.message?.record?.id + (props.enlarge ? '-fullscreen' : ''))
 
 const data = computed(() => {
@@ -395,7 +397,7 @@ watch(
             </div>
           </el-popover>
         </div>
-        <div v-if="message?.record?.chart && isCompletePage">
+        <div v-if="message?.record?.chart && !isAssistant">
           <el-tooltip effect="dark" :content="t('chat.add_to_dashboard')" placement="top">
             <el-button class="tool-btn" text @click="addToDashboard">
               <el-icon size="16">

@@ -864,7 +864,7 @@ function startMove(e: MouseEvent, item: CanvasItem, index: number) {
 
   html2canvas(clonedSlot).then((canvas) => {
     img.src = canvas.toDataURL()
-    infoBox.value.cloneItem.appendChild(img)
+    infoBox.value.cloneItem?.appendChild(img)
   })
 
   if (containerRef.value) {
@@ -994,6 +994,12 @@ function startMove(e: MouseEvent, item: CanvasItem, index: number) {
     if (infoBox.value.resizeItem) {
       delete infoBox.value.resizeItem.isPlayer
       props.resizeEnd(e, infoBox.value.resizeItem, infoBox.value.resizeItem._dragId)
+
+      if (infoBox.value.resizeItem.component === 'SQTab') {
+        const refTabInstance =
+          currentInstance.refs['shape_component_' + infoBox.value.resizeItem.id][0]
+        refTabInstance.outResizeEnd()
+      }
     }
     if (infoBox.value.moveItem) {
       props.dragEnd(e, infoBox.value.moveItem, infoBox.value.moveItem._dragId)
