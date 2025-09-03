@@ -52,7 +52,7 @@ const doDeleteComponent = (e: MouseEvent) => {
         trigger="click"
         placement="bottom-end"
       >
-        <el-icon class="bar-more">
+        <el-icon class="bar-more" @mousedown.stop>
           <el-tooltip :content="t('dashboard.more')" placement="bottom">
             <icon name="icon_more_outlined"><icon_more_outlined class="svg-icon" /></icon>
           </el-tooltip>
