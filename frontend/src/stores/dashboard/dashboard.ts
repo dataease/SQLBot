@@ -13,6 +13,10 @@ export const dashboardStore = defineStore('dashboard', {
       canvasViewInfo: {},
       fullscreenFlag: false,
       dataPrepareState: false,
+      baseMatrixCount: {
+        x: 72,
+        y: 36,
+      },
       dashboardInfo: {
         id: null,
         name: null,

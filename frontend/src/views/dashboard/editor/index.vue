@@ -13,7 +13,8 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const dashboardStore = dashboardStoreWithOut()
-const { componentData, canvasViewInfo, fullscreenFlag } = storeToRefs(dashboardStore)
+const { componentData, canvasViewInfo, fullscreenFlag, baseMatrixCount } =
+  storeToRefs(dashboardStore)
 
 const dataInitState = ref(true)
 const state = reactive({
@@ -23,8 +24,26 @@ const state = reactive({
 })
 
 const dashboardEditorInnerRef = ref(null)
-const addComponent = (componentType: string, viewInfo?: any) => {
+const addComponents = (componentType: string, views?: any) => {
   const component = cloneDeep(findNewComponentFromList(componentType))
+  // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  component.x = findPositionX(component.sizeX)
+  if (views) {
+    views.forEach((view: any, index: number) => {
+      const target = cloneDeep(view)
+      delete target.chart.sourceType
+      if (index > 0) {
+        // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        component.x = ((component.x + component?.sizeX - 1) % baseMatrixCount.value.x) + 1
+      }
+      addComponent(component, target)
+    })
+  } else {
+    addComponent(component)
+  }
+}
+const addComponent = (componentSource: any, viewInfo?: any) => {
+  const component = cloneDeep(componentSource)
   if (component && dashboardEditorInnerRef.value) {
     component.id = guid()
     // add view
@@ -34,9 +53,7 @@ const addComponent = (componentType: string, viewInfo?: any) => {
       dashboardStore.addCanvasViewInfo(viewInfo)
     } else if (component.component === 'SQTab') {
       const subTabName = guid('tab')
-      // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
       component.propValue[0].name = subTabName
-      // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
       component.propValue[0].title = t('dashboard.new_tab')
       component.activeTabName = subTabName
     }
@@ -85,12 +102,20 @@ const baseParams = computed(() => {
     pid: state.routerPid,
   }
 })
+const findPositionX = (width: number) => {
+  // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  return dashboardEditorInnerRef.value.findPositionX(width)
+}
 </script>
 
 <template>
   <div class="editor-content" :class="{ 'editor-content-fullscreen': fullscreenFlag }">
     <div class="editor-main">
-      <Toolbar :base-params="baseParams" @add-component="addComponent"></Toolbar>
+      <Toolbar
+        :base-params="baseParams"
+        :find-position-x="findPositionX"
+        @add-components="addComponents"
+      ></Toolbar>
       <DashboardEditor
         v-if="dataInitState"
         ref="dashboardEditorInnerRef"

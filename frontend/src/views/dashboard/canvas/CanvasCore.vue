@@ -1069,8 +1069,6 @@ const forceComputed = () => {
 }
 
 function addItemBox(item: CanvasItem) {
-  // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  item.x = findPositionX(item)
   canvasComponentData.value.push(item)
   forceComputed()
   nextTick(() => {
@@ -1177,8 +1175,7 @@ function tabMoveInCheckSQ() {
 /**
  * Find position box
  */
-function findPositionX(item: CanvasItem) {
-  const width = item.sizeX
+function findPositionX(width: number) {
   let resultX = 1
   let checkPointYIndex = -1 // -1 means not occupying any Y-direction canvas
   // Component width
@@ -1245,6 +1242,7 @@ defineExpose({
   removeItem,
   findClosetCoords,
   makeCoordinate,
+  findPositionX,
 })
 </script>
 

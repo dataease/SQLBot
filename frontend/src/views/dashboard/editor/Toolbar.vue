@@ -22,7 +22,7 @@ const { dashboardInfo, fullscreenFlag } = storeToRefs(dashboardStore)
 
 const snapshotStore = snapshotStoreWithOut()
 const { snapshotIndex } = storeToRefs(snapshotStore)
-const emits = defineEmits(['addComponent'])
+const emits = defineEmits(['addComponents'])
 const resourceGroupOptRef = ref(null)
 const chatChartSelectionRef = ref(null)
 const openViewDialog = () => {
@@ -139,10 +139,11 @@ const backToMain = () => {
 }
 
 const addChatChart = (views: any) => {
+  emits('addComponents', 'SQView', views)
   views.forEach((view: any) => {
     const target = cloneDeep(view)
     delete target.chart.sourceType
-    emits('addComponent', 'SQView', target)
+    emits('addComponents', 'SQView', target)
   })
   ElMessage({
     type: 'success',
@@ -212,14 +213,14 @@ const previewInner = () => {
         :title="t('dashboard.text')"
         themes="light"
         is-label
-        @custom-click="() => emits('addComponent', 'SQText')"
+        @custom-click="() => emits('addComponents', 'SQText')"
       ></component-button-label>
       <component-button-label
         :icon-name="dvTab"
         title="Tab"
         themes="light"
         is-label
-        @custom-click="() => emits('addComponent', 'SQTab')"
+        @custom-click="() => emits('addComponents', 'SQTab')"
       >
       </component-button-label>
     </div>

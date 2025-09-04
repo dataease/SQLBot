@@ -85,6 +85,11 @@ const addItemToBox = (item: CanvasItem) => {
   canvasCoreRef.value.addItemBox(item)
 }
 
+const findPositionX = (width: number) => {
+  // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  return canvasCoreRef.value.findPositionX(width)
+}
+
 useEmitt({
   name: 'custom-canvas-resize',
   callback: canvasSizeInit,
@@ -93,6 +98,7 @@ useEmitt({
 defineExpose({
   canvasSizeInit,
   addItemToBox,
+  findPositionX,
 })
 
 onMounted(() => {
