@@ -251,11 +251,22 @@ def get_schema(ds: CoreDatasource):
                 res = cursor.fetchall()
                 res_list = [item[0] for item in res]
                 return res_list
-        elif ds.type == 'redshift':
-            with redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
-                                            password=conf.password,
-                                            timeout=conf.timeout) as conn, conn.cursor() as cursor:
-                cursor.execute(f"""SELECT nspname FROM pg_namespace""")
+    def get_table_info(self, table_name: str) -> str:
+        """
+        Get table info for a given table name.
+        """
+        cursor = self.conn.cursor()
+        # Whitelist the table name by checking if it exists in the schema.
+        # This prevents SQL injection as PRAGMA statements do not support placeholders for table names.
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+        if cursor.fetchone() is None:
+            # Table not found. Return an empty string.
+            return ""
+
+        # The table name is now validated against the schema. It is safe to use it.
+        # We must escape single quotes to prevent SQL injection if the table name contains them.
+        safe_table_name = table_name.replace("'", "''")
+        return self._run(f"PRAGMA table_info('{safe_table_name}')")
                 res = cursor.fetchall()
                 res_list = [item[0] for item in res]
                 return res_list
@@ -434,3 +445,99 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                         "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
             except Exception as ex:
                 raise Exception(str(ex))
+
+    def get_tables(self) -> list:
+        """
+        Get list of all tables in the database
+        """
+        if self.db_type == "mysql":
+            sql = "SHOW TABLES"
+        else:
+            sql = "SELECT name FROM sqlite_master WHERE type='table'"
+        
+        try:
+            result = self.run(sql)
+            if result:
+                return [row[0] for row in result]
+            return []
+        except Exception as e:
+            logger.error(f"get_tables error: {e}")
+            return []
+
+    def _validate_table_name(self, table_name: str) -> bool:
+        """
+        Validate table name against existing tables and basic security checks
+        """
+        # Basic security check - only allow alphanumeric, underscore, and hyphen
+        if not re.match(r'^[a-zA-Z0-9_-]+$', table_name):
+            return False
+        
+        # Check if table exists
+        existing_tables = self.get_tables()
+        return table_name in existing_tables
+
+    def get_table_info(self, table_name: str) -> str:
+        """
+        Get table information
+        """
+        # Validate table name for security
+        if not self._validate_table_name(table_name):
+            logger.error(f"Invalid or non-existent table name: {table_name}")
+            return ""
+
+        if self.db_type == "mysql":
+            # For MySQL, use backticks to quote the identifier safely
+            # Since we've validated the table name, this is safe
+            sql = f"SHOW CREATE TABLE `{table_name}`"
+            params = None
+        else:
+            # For SQLite, use parameterized query
+            sql = "SELECT sql FROM sqlite_master WHERE type='table' AND name=?"
+            params = (table_name,)
+
+        try:
+            result = self.run(sql, params=params)
+            if result and len(result) > 0:
+                return result[0][0] if result[0][0] else ""
+            return ""
+        except Exception as e:
+            logger.error(f"get_table_info error: {e}")
+            return ""
+
+    def get_fields(self, table_name: str) -> list:
+        """
+        Get table fields
+        """
+        # Validate table name for security
+        if not self._validate_table_name(table_name):
+            logger.error(f"Invalid or non-existent table name: {table_name}")
+            return []
+
+        if self.db_type == "mysql":
+            # For MySQL, use backticks to quote the identifier safely
+            sql = f"DESC `{table_name}`"
+            params = None
+        else:
+            # For SQLite, PRAGMA doesn't support parameterization
+            # But we've validated the table name, so this is safe
+            sql = f"PRAGMA table_info('{table_name}')"
+            params = None
+
+        try:
+            result = self.run(sql, params=params)
+            if not result:
+                return []
+                
+            if self.db_type == "mysql":
+                return [
+                    {"field": item[0], "type": item[1]}
+                    for item in result
+                ]
+            else:
+                return [
+                    {"field": item[1], "type": item[2]}
+                    for item in result
+                ]
+        except Exception as e:
+            logger.error(f"get_fields error: {e}")
+            return []
