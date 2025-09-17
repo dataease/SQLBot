@@ -1,7 +1,7 @@
 services:
   sqlbot:
     image: dataease/sqlbot
-    container_name: sqlbot
+    container_name: sqlbot-com
     restart: always
     networks:
       - sqlbot-network
@@ -28,9 +28,9 @@ services:
       LOG_LEVEL: "INFO"
       SQL_DEBUG: False
     volumes:
-      - ./data/sqlbot/excel:/opt/sqlbot/data/excel
+      - ./data/sqlbot/data:/opt/sqlbot/data
       - ./data/sqlbot/images:/opt/sqlbot/images
-      - ./data/sqlbot/logs:/opt/sqlbot/logs
+      - ./data/sqlbot/logs:/opt/sqlbot/app/logs
       - ./data/postgresql:/var/lib/postgresql/data
 
 networks:

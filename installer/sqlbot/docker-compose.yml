@@ -11,9 +11,9 @@ services:
     env_file:
       - conf/sqlbot.conf
     volumes:
-      - ./data/sqlbot/excel:/opt/sqlbot/data/excel
+      - ./data/sqlbot/data:/opt/sqlbot/data
       - ./data/sqlbot/images:/opt/sqlbot/images
-      - ./data/sqlbot/logs:/opt/sqlbot/logs
+      - ./data/sqlbot/logs:/opt/sqlbot/app/logs
       - ./data/postgresql:/var/lib/postgresql/data
 
 networks:
