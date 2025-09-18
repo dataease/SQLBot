@@ -520,14 +520,14 @@ class LLMService:
                                                         answer=orjson.dumps({'content': full_text}).decode(),
                                                         datasource=_datasource,
                                                         engine_type=_engine_type)
+        if self.ds:
+            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
+                                                                        self.ds.oid if isinstance(self.ds,
+                                                                                                  CoreDatasource) else 1)
+            self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
+                                                                     self.ds.id, self.ds.oid)
 
-        self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
-                                                                    self.ds.oid if isinstance(self.ds,
-                                                                                              CoreDatasource) else 1)
-        self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
-                                                                 self.ds.id, self.ds.oid)
-
-        self.init_messages()
+            self.init_messages()
 
         if _error:
             raise _error
@@ -1110,6 +1110,7 @@ class LLMService:
                     SQLBotLogUtil.info(image_url)
                     yield f'![{chart["type"]}]({image_url})'
         except Exception as e:
+            traceback.print_exc()
             error_msg: str
             if isinstance(e, SingleMessageError):
                 error_msg = str(e)
