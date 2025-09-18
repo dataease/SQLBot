@@ -105,14 +105,15 @@ async def start_chat(session: SessionDep, current_user: CurrentUser):
 @router.post("/recommend_questions/{chat_record_id}")
 async def recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
                               current_assistant: CurrentAssistant):
+    def _return_empty():
+        yield 'data:' + orjson.dumps( {'content': [], 'type': 'recommended_question'}).decode() + '\n\n'
+
     try:
         record = get_chat_record_by_id(session, chat_record_id)
 
         if not record:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Chat record with id {chat_record_id} not found"
-            )
+            return StreamingResponse(_return_empty(), media_type="text/event-stream")
+
         request_question = ChatQuestion(chat_id=record.chat_id, question=record.question if record.question else '')
 
         llm_service = await LLMService.create(current_user, request_question, current_assistant, True)
@@ -120,10 +121,11 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, ch
         llm_service.run_recommend_questions_task_async()
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+
+        def _err(_e: Exception):
+            yield 'data:' + orjson.dumps({'content': str(_e), 'type': 'error'}).decode() + '\n\n'
+
+        return StreamingResponse(_err(e), media_type="text/event-stream")
 
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
 
