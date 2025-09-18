@@ -11,12 +11,12 @@
     "problem_description": "问题描述",
     "sample_sql": "示例 SQL",
     "search_problem": "搜索问题",
-    "add_training_data": "添加训练数据",
-    "training_data_details": "训练数据详情",
-    "training_data_items": "是否删除选中的 {msg} 条训练数据？",
+    "add_training_data": "添加示例 SQL",
+    "training_data_details": "示例 SQL 详情",
+    "training_data_items": "是否删除选中的 {msg} 条示例 SQL？",
     "sql_statement": "SQL 语句",
-    "edit_training_data": "编辑训练数据",
-    "sales_this_year": "是否删除训练数据：{msg}？"
+    "edit_training_data": "编辑示例 SQL",
+    "sales_this_year": "是否删除示例 SQL：{msg}？"
   },
   "professional": {
     "cannot_be_repeated": "术语名称，同义词不能重复",

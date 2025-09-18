@@ -11,12 +11,12 @@
     "problem_description": "Problem Description",
     "sample_sql": "Sample SQL",
     "search_problem": "Search Problem",
-    "add_training_data": "Add Training Data",
-    "training_data_details": "Training Data Details",
-    "training_data_items": "Do you want to delete the {msg} selected training data items?",
+    "add_training_data": "Add SQL Sample",
+    "training_data_details": "SQL Sample Details",
+    "training_data_items": "Do you want to delete the {msg} selected SQL Sample items?",
     "sql_statement": "SQL Statement",
-    "edit_training_data": "Edit Training Data",
-    "sales_this_year": "Do you want to delete the training data: {msg}?"
+    "edit_training_data": "Edit SQL Sample",
+    "sales_this_year": "Do you want to delete the SQL Sample: {msg}?"
   },
   "professional": {
     "cannot_be_repeated": "Term name, synonyms cannot be repeated",
