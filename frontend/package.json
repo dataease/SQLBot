@@ -47,7 +47,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/element-resize-detector": "^1.1.6",
     "@types/markdown-it": "^14.1.2",
-    "@types/node": "^22.14.1",
+    "@types/node": "^22.18.4",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
     "@vitejs/plugin-vue": "^5.2.2",

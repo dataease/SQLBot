@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type ChatMessage } from '@/api/chat.ts'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import MdComponent from '@/views/chat/component/MdComponent.vue'
 import icon_up_outlined from '@/assets/svg/icon_up_outlined.svg'
 import icon_down_outlined from '@/assets/svg/icon_down_outlined.svg'
@@ -25,6 +25,10 @@ const props = withDefaults(
 const { t } = useI18n()
 
 const show = ref<boolean>(false)
+const thinkingStartTime = ref<number | null>(null)
+const thinkingDuration = ref<number>(0)
+const timer = ref<any>(null)
+const isTimerRunning = ref(false)
 
 const reasoningContent = computed<Array<string>>(() => {
   const names: Array<'sql_answer' | 'chart_answer' | 'analysis_thinking' | 'predict'> = []
@@ -39,7 +43,19 @@ const reasoningContent = computed<Array<string>>(() => {
   names.forEach((item) => {
     if (props.message?.record) {
       if (props.message?.record[item]) {
-        result.push(props.message?.record[item] ?? '')
+        let content = props.message?.record[item] ?? ''
+        
+        // 尝试解析 JSON 格式的内容
+        try {
+          const parsed = JSON.parse(content)
+          if (parsed.reasoning_content) {
+            content = parsed.reasoning_content
+          }
+        } catch (e) {
+          // 如果不是 JSON 格式，直接使用原内容
+        }
+        
+        result.push(content)
       }
     }
   })
@@ -61,18 +77,64 @@ function clickShow() {
   show.value = !show.value
 }
 
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
 onMounted(() => {
   if (props.message.isTyping) {
     show.value = true
   }
 })
+
+watch(() => props.message.isTyping, (isTyping) => {
+  if (isTyping && !isTimerRunning.value) {
+    isTimerRunning.value = true
+    thinkingStartTime.value = Date.now()
+    thinkingDuration.value = 0
+    
+    timer.value = setInterval(() => {
+      if (thinkingStartTime.value) {
+        const newDuration = Math.floor((Date.now() - thinkingStartTime.value) / 1000)
+        thinkingDuration.value = newDuration
+      }
+      
+      if (!props.message.isTyping) {
+        if (timer.value) {
+          clearInterval(timer.value)
+          timer.value = null
+        }
+        isTimerRunning.value = false
+      }
+    }, 1000)
+  } else if (!isTyping && isTimerRunning.value) {
+    isTimerRunning.value = false
+    if (timer.value) {
+      clearInterval(timer.value)
+      timer.value = null
+    }
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  isTimerRunning.value = false
+  if (timer.value) {
+    cancelAnimationFrame(timer.value)
+  }
+})
+
 </script>
 
 <template>
   <div class="base-answer-block">
     <el-button v-if="message.isTyping || hasReasoning" class="thinking-btn" @click="clickShow">
       <div class="thinking-btn-inner">
-        <span v-if="message.isTyping">{{ t('qa.thinking') }}</span>
+        <span v-if="message.isTyping">
+          {{ t('qa.thinking') }} 
+          <span class="thinking-time">{{ formatTime(thinkingDuration) }}</span>
+        </span>
         <span v-else>{{ t('qa.thinking_step') }}</span>
         <span class="btn-icon">
           <el-icon v-if="show">
@@ -124,6 +186,15 @@ onMounted(() => {
       line-height: 22px;
       font-weight: 400;
       font-size: 14px;
+      .thinking-time {
+        color: #1890ff;           // 蓝色文字
+        font-weight: 600;         // 加粗
+        font-family: 'Monaco', 'Consolas', monospace; // 等宽字体
+        margin-left: 4px;         // 与"思考中"文字的间距
+        background: rgba(24, 144, 255, 0.1); // 淡蓝色背景
+        padding: 1px 4px;         // 内边距
+        border-radius: 3px;       // 圆角
+      }
     }
     .btn-icon {
       margin-left: 4px;

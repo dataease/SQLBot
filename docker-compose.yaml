@@ -6,7 +6,7 @@ services:
     networks:
       - sqlbot-network
     ports:
-      - 8000:8000
+      - 9090:8000
       - 8001:8001
     environment:
       # Database configuration
@@ -23,7 +23,7 @@ services:
       # Auth & Security
       SECRET_KEY: y5txe1mRmS_JpOrUzFzHEu-kIQn3lf7ll0AOv9DQh0s
       # CORS settings
-      BACKEND_CORS_ORIGINS: "http://localhost,http://localhost:5173,https://localhost,https://localhost:5173"
+      BACKEND_CORS_ORIGINS: "http://localhost,http://localhost:5173,http://sqlbot-frontend-dev:5173,https://localhost,https://localhost:5173"
       # Logging
       LOG_LEVEL: "INFO"
       SQL_DEBUG: False
@@ -32,6 +32,27 @@ services:
       - ./data/sqlbot/images:/opt/sqlbot/images
       - ./data/sqlbot/logs:/opt/sqlbot/logs
       - ./data/postgresql:/var/lib/postgresql/data
+      - ./backend/apps/ai_model/model_factory.py:/opt/sqlbot/app/apps/ai_model/model_factory.py
+      # - ./backend:/opt/sqlbot/app
+      - ./backend/apps:/opt/sqlbot/app/apps
+      - ./backend/common:/opt/sqlbot/app/common
+      - ./backend/main.py:/opt/sqlbot/app/main.py
 
+  frontend:
+    image: node:18
+    container_name: sqlbot-frontend-dev
+    working_dir: /opt/sqlbot/frontend
+    volumes:
+      - ./frontend:/opt/sqlbot/frontend   # 挂载源码
+      - /opt/sqlbot/frontend/node_modules  # 避免宿主机覆盖 node_modules
+    ports:
+      - "5173:5173"   # Vue3 Vite 默认端口
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    stdin_open: true
+    tty: true
+    networks:
+      - sqlbot-network
+    depends_on:
+      - sqlbot
 networks:
   sqlbot-network:

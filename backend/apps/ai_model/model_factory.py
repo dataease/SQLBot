@@ -90,12 +90,27 @@ class OpenAIAzureLLM(BaseLLM):
         )
 class OpenAILLM(BaseLLM):
     def _init_llm(self) -> BaseChatModel:
+        
+        params = {}
+        for key, value in self.config.additional_params.items():
+            if isinstance(value, str) and value.strip().startswith(('{', '[')):
+                try:
+                    import json
+                    parsed_value = json.loads(value)
+                    params[key] = parsed_value
+                except json.JSONDecodeError as e:
+                    
+                    params[key] = value
+            else:
+                params[key] = value
+
         return BaseChatOpenAI(
             model=self.config.model_name,
             api_key=self.config.api_key or 'Empty',
             base_url=self.config.api_base_url,
             stream_usage=True,
-            **self.config.additional_params,
+            # **self.config.additional_params,
+            **params,
         )
 
     def generate(self, prompt: str) -> str:

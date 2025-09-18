@@ -77,6 +77,7 @@ class LLMService:
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
                  config: LLMConfig = None):
         self.chunk_list = []
+        self._retry_thinking_updates = []  # 存储重试时的thinking更新
         engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
         session_maker = sessionmaker(bind=engine)
         self.session = session_maker()
@@ -545,6 +546,9 @@ class LLMService:
                 reasoning_content_chunk = chunk.additional_kwargs.get('reasoning_content', '')
             # else:
             #     reasoning_content_chunk = chunk.get('reasoning_content')
+            # 如果没有 reasoning_content，就用普通内容作为思考过程
+            if not reasoning_content_chunk and chunk.content:
+                reasoning_content_chunk = chunk.content
             if reasoning_content_chunk is None:
                 reasoning_content_chunk = ''
             full_thinking_text += reasoning_content_chunk
@@ -561,8 +565,29 @@ class LLMService:
                                                                               for msg in self.sql_message],
                                                                 reasoning_content=full_thinking_text,
                                                                 token_usage=token_usage)
-        self.record = save_sql_answer(session=self.session, record_id=self.record.id,
-                                      answer=orjson.dumps({'content': full_sql_text}).decode())
+    # 如果没有思考内容，用完整输出作为思考过程
+        if not full_thinking_text.strip():
+            full_thinking_text = f"""SQL 生成过程：
+    
+            用户问题：
+            {self.chat_question.question}
+            
+            AI 完整输出：
+            {full_sql_text}
+            """
+    
+        # 保存思考过程到 sql_answer 字段
+        if full_thinking_text.strip():
+            save_sql_answer(session=self.session, record_id=self.record.id,
+                        answer=full_thinking_text)
+        else:
+            # 原有逻辑
+            thinking_json = {
+                "reasoning_content": full_thinking_text,
+                "content": "SQL生成思考过程"
+            }
+            save_sql_answer(session=self.session, record_id=self.record.id,
+                        answer=orjson.dumps(thinking_json).decode())
 
     def generate_with_sub_sql(self, sql, sub_mappings: list):
         sub_query = json.dumps(sub_mappings, ensure_ascii=False)
@@ -780,7 +805,135 @@ class LLMService:
             return None
 
         return chart_type
+    def validate_and_retry_sql(self, initial_sql: str, max_retries: int = 3) -> str:
+        """验证 SQL 并在失败时重试生成新的 SQL"""
+        current_sql = initial_sql
+        retry_count = 0
+        retry_errors = [] # 用于记录每次重试的错误信息
+        while retry_count < max_retries:
+            try:
+                # 尝试执行 SQL
+                test_result = self.execute_sql(sql=current_sql)
+                # 如果执行成功，返回当前 SQL
+                return current_sql
+                
+            except Exception as sql_error:
+                retry_count += 1
+                error_msg = str(sql_error)
+                retry_errors.append(f"第{retry_count}次尝试: {error_msg}")
+                
+                # 只记录到日志，不保存到数据库
+                SQLBotLogUtil.warning(f"SQL 执行失败 (第{retry_count}次): {error_msg}")
+                
+                if retry_count >= max_retries:
+                    # 只有在最终失败时才保存错误信息
+                    final_error_msg = f"SQL验证失败，共重试{retry_count}次:\n" + "\n".join(retry_errors)
+                    save_error_message(
+                        session=self.session, 
+                        record_id=self.record.id,
+                        message=final_error_msg
+                    )
+                    raise sql_error
+                
+                
+                current_sql = self.regenerate_sql_with_error(current_sql, error_msg)
 
+        
+        return current_sql
+    
+    def regenerate_sql_with_error(self, failed_sql: str, error_message: str) -> str:
+        """基于错误信息重新生成 SQL"""
+        fix_sql_msg = []
+        fix_sql_msg.append(SystemMessage(content=self.chat_question.sql_sys_question()))
+        
+        fix_prompt = f"""
+        之前生成的 SQL 语句执行失败：
+        
+        SQL: {failed_sql}
+        错误信息: {error_message}
+        
+        请分析错误原因并生成修正后的 SQL 语句。常见错误类型：
+        1. 字段名错误 - 检查表结构中的实际字段名
+        2. 表名错误 - 确认表是否存在
+        3. 语法错误 - 检查 SQL 语法
+        4. 数据类型不匹配 - 检查字段类型
+        
+        原始问题: {self.chat_question.question}
+        数据库结构: {self.chat_question.db_schema}
+        """
+        
+        fix_sql_msg.append(HumanMessage(content=fix_prompt))
+        SQLBotLogUtil.info(f"正在重新生成 SQL，原错误: {error_message}")
+        
+        full_text = ''  # 这是 LLM 的完整输出，当作思考过程
+        res = self.llm.stream(fix_sql_msg)
+        for chunk in res:
+            full_text += chunk.content
+        
+        SQLBotLogUtil.info(f"LLM 完整输出: {full_text}")
+        
+        try:
+            # 获取当前记录的思考过程
+            from apps.chat.models.chat_model import ChatRecord
+            current_record = self.session.query(ChatRecord).filter(ChatRecord.id == self.record.id).first()
+            existing_thinking = ""
+            if current_record and current_record.sql_answer:
+                existing_thinking = current_record.sql_answer
+                SQLBotLogUtil.info(f"找到已有思考过程，长度: {len(existing_thinking)}")
+        except Exception as e:
+            SQLBotLogUtil.warning(f"获取已有思考过程失败: {e}")
+            existing_thinking = ""
+        
+        # 构建重试思考过程（追加到原有内容后面）
+        retry_thinking = f"""
+    
+            === SQL 重试修复过程 ===
+            
+            原始错误：
+            {error_message}
+            
+            AI 分析和修复过程：
+            {full_text}
+            
+            修复提示：
+            {fix_prompt}
+            """
+        
+        # 合并思考过程
+        combined_thinking = existing_thinking + retry_thinking
+        
+            # 保存为JSON格式
+        thinking_json = {
+            "reasoning_content": combined_thinking,
+            "content": "SQL思考过程"
+        }
+        save_sql_answer(session=self.session, record_id=self.record.id, 
+                    answer=orjson.dumps(thinking_json).decode())
+        SQLBotLogUtil.info(f"已保存合并思考过程，总长度: {len(combined_thinking)}")
+        # 在保存thinking后，存储更新信息而不是直接yield
+        self._retry_thinking_updates.append({
+            'content': combined_thinking, 
+            'reasoning_content': combined_thinking,
+            'type': 'sql-retry-thinking'
+        })
+        try:
+            # 解析新的 SQL
+            fixed_sql, _ = self.check_sql(full_text)
+            SQLBotLogUtil.info(f"修复后的SQL: {fixed_sql}")
+            return fixed_sql
+        except Exception as parse_error:
+            SQLBotLogUtil.error(f"重新生成的 SQL 仍无法解析: {str(parse_error)}")
+            SQLBotLogUtil.error(f"LLM 返回内容: {full_text}")
+            raise Exception(f"SQL 修复失败: {str(parse_error)}")
+
+
+    def check_save_sql_with_validation(self, res: str) -> str:
+        """带验证的 SQL 检查和保存"""
+        sql, *_ = self.check_sql(res=res)
+        validated_sql = self.validate_and_retry_sql(sql)
+        save_sql(session=self.session, sql=validated_sql, record_id=self.record.id)
+        self.chat_question.sql = validated_sql
+        return validated_sql
     def check_save_sql(self, res: str) -> str:
         sql, *_ = self.check_sql(res=res)
         save_sql(session=self.session, sql=sql, record_id=self.record.id)
@@ -1001,14 +1154,20 @@ class LLMService:
 
                 if sql_result:
                     SQLBotLogUtil.info(sql_result)
-                    sql = self.check_save_sql(res=sql_result)
+                    sql = self.check_save_sql_with_validation(res=sql_result)
                 elif dynamic_sql_result:
-                    sql = self.check_save_sql(res=dynamic_sql_result)
+                    sql = self.check_save_sql_with_validation(res=dynamic_sql_result)
                 else:
-                    sql = self.check_save_sql(res=full_sql_text)
+                    sql = self.check_save_sql_with_validation(res=full_sql_text)
             else:
-                sql = self.check_save_sql(res=full_sql_text)
-
+                sql = self.check_save_sql_with_validation(res=full_sql_text)
+            # 在这里统一发送重试thinking更新
+            for update in self._retry_thinking_updates:
+                if in_chat:
+                    yield 'data:' + orjson.dumps(update).decode() + '\n\n'
+            
+            # 清空更新列表
+            self._retry_thinking_updates.clear()
             SQLBotLogUtil.info(sql)
             format_sql = sqlparse.format(sql, reindent=True)
             if in_chat:

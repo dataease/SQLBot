@@ -11,6 +11,16 @@ export default defineConfig(({ mode }) => {
   console.info(env)
   return {
     base: './',
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      proxy: {
+        '/api': {
+          target: 'http://sqlbot:8000',  // 指向后端容器
+          changeOrigin: true,
+        }
+      }
+    },    
     plugins: [
       vue(),
       AutoImport({

@@ -25,6 +25,7 @@ import { useAssistantStore } from '@/stores/assistant'
 import AddViewDashboard from '@/views/dashboard/common/AddViewDashboard.vue'
 import html2canvas from 'html2canvas'
 import { chatApi } from '@/api/chat'
+import BaseAnswer from '@/views/chat/answer/BaseAnswer.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -481,16 +482,23 @@ watch(
       body-class="chart-sql-drawer-body"
     >
       <div class="sql-block">
-        <SQLComponent
-          v-if="message.record?.sql"
-          :sql="message.record?.sql"
-          style="margin-top: 12px"
-        />
-        <el-button v-if="message.record?.sql" circle class="input-icon" @click="copyText">
-          <el-icon size="16">
-            <icon_copy_outlined />
-          </el-icon>
-        </el-button>
+        <BaseAnswer 
+          v-if="message.record?.sql" 
+          :message="message" 
+          reasoning-name="sql_answer"
+        >
+          <SQLComponent
+            :sql="message.record?.sql"
+            style="margin-top: 12px"
+          />
+          <template #tool>
+            <el-button circle class="input-icon" @click="copyText">
+              <el-icon size="16">
+                <icon_copy_outlined />
+              </el-icon>
+            </el-button>
+          </template>
+        </BaseAnswer>
       </div>
     </el-drawer>
   </div>

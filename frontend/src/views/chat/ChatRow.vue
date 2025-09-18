@@ -28,6 +28,9 @@ const appearanceStore = useAppearanceStoreWithOut()
       </div>
       <div :class="{ 'row-full': msg.role === 'assistant', 'width-auto': msg.role === 'user' }">
         <slot></slot>
+        <div v-if="msg.role === 'assistant' && msg.record?.run_time" class="response-time">
+          响应时间: {{ msg.record.run_time.toFixed(2) }}s
+        </div>
       </div>
     </div>
     <slot name="footer"></slot>
@@ -70,6 +73,12 @@ const appearanceStore = useAppearanceStoreWithOut()
       background: transparent;
       width: 28px;
     }
+  }
+  .response-time {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    opacity: 0.7;
   }
 }
 </style>

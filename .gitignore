@@ -1,3 +1,15 @@
+# PostgreSQL 数据库文件
+data/postgresql/
+
+# Excel 文件存储
+data/sqlbot/excel/
+
+# 图片文件存储
+data/sqlbot/images/
+
+# 日志文件存储
+data/sqlbot/logs/
+
 .vscode
 node_modules/
 /test-results/

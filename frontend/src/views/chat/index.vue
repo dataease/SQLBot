@@ -397,6 +397,8 @@ const props = defineProps<{
   welcome?: string
   pageEmbedded?: boolean
 }>()
+// 在组件顶部声明
+const startTime = ref(0)
 const floatPopoverRef = ref()
 const floatPopoverVisible = ref(false)
 const assistantStore = useAssistantStore()
@@ -646,6 +648,17 @@ function quickAsk(question: string) {
 const chartAnswerRef = ref()
 
 async function onChartAnswerFinish(id: number) {
+  console.log('===== onChartAnswerFinish called =====', id)
+  // 新增：计算响应时间
+  const responseTime = (Date.now() - startTime.value) / 1000
+  
+  // 将响应时间保存到对应的record中
+  const record = currentChat.value.records.find(r => r.id === id)
+  if (record) {
+    record.run_time = responseTime
+    console.log('Set run_time in onChartAnswerFinish:', record.run_time)
+  }
+
   loading.value = false
   isTyping.value = false
   getRecommendQuestions(id)
@@ -681,6 +694,10 @@ const sendMessage = async ($event: any = {}) => {
 
   loading.value = true
   isTyping.value = true
+
+  // 新增：开始计时
+  startTime.value = Date.now()
+
   if (isCompletePage.value) {
     scrollTopVal = innerRef.value!.clientHeight
     scrollTime = setInterval(() => {
@@ -721,6 +738,17 @@ const sendMessage = async ($event: any = {}) => {
 const analysisAnswerRef = ref()
 
 async function onAnalysisAnswerFinish(id: number) {
+  console.log('===== onAnalysisAnswerFinish called =====', id)
+  // 新增：计算响应时间
+  const responseTime = (Date.now() - startTime.value) / 1000
+  
+  // 将响应时间保存到对应的record中
+  const record = currentChat.value.records.find(r => r.id === id)
+  if (record) {
+    record.run_time = responseTime
+    console.log('Set run_time in onAnalysisAnswerFinish:', record.run_time)
+  }
+
   loading.value = false
   isTyping.value = false
   console.debug(id)
@@ -781,6 +809,12 @@ async function clickAnalysis(id?: number) {
 const predictAnswerRef = ref()
 
 async function onPredictAnswerFinish(id: number) {
+  const responseTime = (Date.now() - startTime.value) / 1000  
+  const record = currentChat.value.records.find(r => r.id === id)
+  if (record) {
+    record.run_time = responseTime
+  }
+
   loading.value = false
   isTyping.value = false
   console.debug('onPredictAnswerFinish: ', id)

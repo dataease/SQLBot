@@ -236,6 +236,7 @@ def prepare_for_orjson(data):
 def prepare_model_arg(origin_arg: str):
     if not isinstance(origin_arg, str):
         return origin_arg
+    origin_arg = str(origin_arg).strip()
     if not origin_arg.strip()[0] in {'{', '['}:
         return origin_arg
     try:
