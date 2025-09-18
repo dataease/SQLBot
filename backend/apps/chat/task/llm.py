@@ -936,7 +936,7 @@ class LLMService:
                 self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
                                                                             self.ds.oid if isinstance(self.ds,
                                                                                                       CoreDatasource) else 1)
-            self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
+                self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
                                                                      self.ds.id, self.ds.oid)
 
             self.init_messages()
