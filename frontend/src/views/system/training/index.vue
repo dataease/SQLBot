@@ -235,7 +235,6 @@ const rules = {
 
 const list = () => {
   datasourceApi.list().then((res: any) => {
-    console.log(res)
     options.value = res || []
   })
 }
@@ -361,15 +360,15 @@ const onRowFormClose = () => {
           <el-table-column prop="question" :label="$t('training.problem_description')" width="280">
           </el-table-column>
           <el-table-column prop="description" :label="$t('training.sample_sql')" min-width="240">
-          </el-table-column>
-          <el-table-column prop="datasource_name" :label="$t('ds.title')" min-width="240"
-            ><template #default="scope">
+            <template #default="scope">
               <div class="field-comment_d">
-                <span :title="scope.row.datasource_name" class="notes-in_table">{{
-                  scope.row.datasource_name
+                <span :title="scope.row.description" class="notes-in_table">{{
+                  scope.row.description
                 }}</span>
               </div>
             </template>
+          </el-table-column>
+          <el-table-column prop="datasource_name" :label="$t('ds.title')" min-width="240">
           </el-table-column>
           <el-table-column
             prop="create_time"
@@ -532,7 +531,7 @@ const onRowFormClose = () => {
         </div>
       </el-form-item>
       <el-form-item :label="t('training.sample_sql')">
-        <div class="content">
+        <div style="white-space: pre-wrap" class="content">
           {{ pageForm.description }}
         </div>
         <div class="copy-icon">
@@ -610,6 +609,7 @@ const onRowFormClose = () => {
         overflow: hidden;
         text-overflow: ellipsis;
         word-break: break-word;
+        white-space: pre-wrap;
       }
       .ed-icon {
         color: #646a73;
