@@ -69,7 +69,7 @@
   const getChatContainerHtml = (data) => {
     return `
 <div id="sqlbot-assistant-chat-container">
-  <iframe id="sqlbot-assistant-chat-iframe-${data.id}" allow="microphone;clipboard-read 'src'; clipboard-write 'src'" src="${data.domain_url}/#/assistant?id=${data.id}&online=${!!data.online}&name=${encodeURIComponent(data.name)}"></iframe>
+  <iframe id="sqlbot-assistant-chat-iframe-${data.id}" allow="microphone;clipboard-read 'src'; clipboard-write 'src'" src="${data.domain_url}/#/assistant?id=${data.id}&online=${!!data.online}&name=${encodeURIComponent(data.name)}&userFlag=${data.userFlag || ''}"></iframe>
   <div class="sqlbot-assistant-operate">
   <div class="sqlbot-assistant-closeviewport sqlbot-assistant-viewportnone">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -498,6 +498,7 @@
   function loadScript(src, id) {
     const domain_url = getDomain(src)
     const online = getParam(src, 'online')
+    const userFlag = getParam(src, 'userFlag')
     let url = `${domain_url}/api/v1/system/assistant/info/${id}`
     if (domain_url.includes('5173')) {
       url = url.replace('5173', '8000')
@@ -534,6 +535,7 @@
         }
 
         tempData['online'] = online && online.toString().toLowerCase() == 'true'
+        tempData['userFlag'] = userFlag
         initsqlbot_assistant(tempData)
         if (data.type == 1) {
           registerMessageEvent(id, tempData)
@@ -708,7 +710,7 @@
         contentWindow.postMessage(params, url)
       }
     }
-    window.sqlbot_assistant_handler[id]['refresh'] = (online) => {
+    window.sqlbot_assistant_handler[id]['refresh'] = (online, userFlag) => {
       if (online != null && typeof online != 'boolean') {
         throw new Error('The parameter can only be of type boolean')
       }
@@ -719,11 +721,34 @@
         if (online != null) {
           new_url = updateParam(new_url, 'online', online)
         }
+        if (userFlag != null) {
+          new_url = updateParam(new_url, 'userFlag', userFlag)
+        }
         iframe.src = 'about:blank'
         setTimeout(() => {
           iframe.src = new_url
         }, 500)
       }
+    }
+    window.sqlbot_assistant_handler[id]['destroy'] = () => {
+      const sqlbot_root_id = 'sqlbot-assistant-root-' + id
+      const container_div = document.getElementById(sqlbot_root_id)
+      if (container_div) {
+        const root_div = container_div.parentNode
+        if (root_div?.parentNode) {
+          root_div.parentNode.removeChild(root_div)
+        }
+      }
+
+      const scriptDom = document.getElementById(`sqlbot-assistant-float-script-${id}`)
+      if (scriptDom) {
+        scriptDom.parentNode.removeChild(scriptDom)
+      }
+      const propName = script_id_prefix + id + '-state'
+      if (window[propName]) {
+        delete window[propName]
+      }
+      delete window.sqlbot_assistant_handler[id]
     }
   }
   // window.addEventListener('load', init)

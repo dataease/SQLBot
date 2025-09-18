@@ -155,6 +155,9 @@ export function colorStringToHex(colorStr: any) {
 
 export const setCurrentColor = (color: any, element: HTMLElement = document.documentElement) => {
   const currentColor = colorStringToHex(color) as any
+  if (!currentColor) {
+    return
+  }
   element.style.setProperty('--ed-color-primary', currentColor)
   element.style.setProperty('--van-blue', currentColor)
   element.style.setProperty(

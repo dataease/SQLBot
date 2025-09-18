@@ -211,7 +211,7 @@ def get_ds_engine(ds: AssistantOutDsSchema) -> Engine:
         password=ds.password,
         database=ds.dataBase,
         driver='',
-        extraJdbc=ds.extraParams,
+        extraJdbc=ds.extraParams or '',
         dbSchema=ds.db_schema or ''
     )
     conf.extraJdbc = ''
