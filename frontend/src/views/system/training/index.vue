@@ -228,7 +228,7 @@ const rules = {
   description: [
     {
       required: true,
-      message: t('datasource.please_enter') + t('common.empty') + t('training.sql_statement'),
+      message: t('datasource.please_enter') + t('common.empty') + t('training.sample_sql'),
     },
   ],
 }
@@ -488,7 +488,7 @@ const onRowFormClose = () => {
           clearable
         />
       </el-form-item>
-      <el-form-item prop="description" :label="t('training.sql_statement')">
+      <el-form-item prop="description" :label="t('training.sample_sql')">
         <el-input
           v-model="pageForm.description"
           :placeholder="$t('datasource.please_enter')"
@@ -531,7 +531,7 @@ const onRowFormClose = () => {
           {{ pageForm.question }}
         </div>
       </el-form-item>
-      <el-form-item :label="t('training.sql_statement')">
+      <el-form-item :label="t('training.sample_sql')">
         <div class="content">
           {{ pageForm.description }}
         </div>
