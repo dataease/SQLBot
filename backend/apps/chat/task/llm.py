@@ -148,8 +148,6 @@ class LLMService:
         else:
             self.chat_question.error_msg = ''
 
-        self.init_messages()
-
     @classmethod
     async def create(cls, *args, **kwargs):
         config: LLMConfig = await get_default_config()
