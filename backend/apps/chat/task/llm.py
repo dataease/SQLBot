@@ -16,7 +16,7 @@ import sqlparse
 from langchain.chat_models.base import BaseChatModel
 from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, BaseMessageChunk
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 
@@ -404,9 +404,8 @@ class LLMService:
         if self.current_assistant and self.current_assistant.type != 4:
             _ds_list = get_assistant_ds(session=self.session, llm_service=self)
         else:
-            oid: str = self.current_user.oid
             stmt = select(CoreDatasource.id, CoreDatasource.name, CoreDatasource.description).where(
-                CoreDatasource.oid == oid)
+                and_(CoreDatasource.oid == self.current_user.oid))
             _ds_list = [
                 {
                     "id": ds.id,
@@ -424,7 +423,7 @@ class LLMService:
 
         full_thinking_text = ''
         full_text = ''
-
+        json_str: Optional[str] = None
         if not ignore_auto_select:
             _ds_list_dict = []
             for _ds in _ds_list:
@@ -471,6 +470,8 @@ class LLMService:
                                                                          token_usage=token_usage)
 
             json_str = extract_nested_json(full_text)
+            if json_str is None:
+                raise SingleMessageError(f'Cannot parse datasource from answer: {full_text}')
 
         _error: Exception | None = None
         _datasource: int | None = None
@@ -522,11 +523,11 @@ class LLMService:
                                                         engine_type=_engine_type)
         if self.ds:
             oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
-            dsId = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-            
-            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, 1)
-            self.chat_question.data_training = get_training_template(self.session, self.chat_question.question, dsId, oid)
-                                                                     
+            ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+
+            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, oid)
+            self.chat_question.data_training = get_training_template(self.session, self.chat_question.question, ds_id,
+                                                                     oid)
 
             self.init_messages()
 
@@ -938,10 +939,11 @@ class LLMService:
         try:
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
-                dsId = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-                self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, oid)
-                self.chat_question.data_training = get_training_template(self.session, self.chat_question.question, dsId, oid)
-                                                                         
+                ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+                self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
+                                                                            oid)
+                self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
+                                                                         ds_id, oid)
 
             self.init_messages()
 
