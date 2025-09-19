@@ -188,6 +188,7 @@ const search = () => {
       toggleRowLoading.value = true
       fieldList.value = res.items
       pageInfo.total = res.total
+      searchLoading.value = false
       nextTick(() => {
         handleToggleRowSelection()
       })

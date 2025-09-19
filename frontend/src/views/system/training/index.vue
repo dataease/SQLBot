@@ -201,6 +201,7 @@ const search = () => {
       toggleRowLoading.value = true
       fieldList.value = res.data
       pageInfo.total = res.total_count
+      searchLoading.value = false
       nextTick(() => {
         handleToggleRowSelection()
       })
