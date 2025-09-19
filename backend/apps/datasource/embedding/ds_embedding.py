@@ -5,7 +5,8 @@ import math
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
-from apps.datasource.crud.datasource import get_table_schema, get_ds
+from apps.datasource.crud.datasource import get_table_schema
+from apps.datasource.models.datasource import CoreDatasource
 from common.core.deps import SessionDep, CurrentUser
 
 
@@ -28,7 +29,7 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, q
     _list = []
     for _ds in _ds_list:
         if _ds.get('id'):
-            ds = get_ds(session, _ds.get('id'))
+            ds = session.get(CoreDatasource, _ds.get('id'))
 
             table_schema = get_table_schema(session, current_user, ds)
             ds_info = f"{ds.name}, {ds.description}\n"
