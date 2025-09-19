@@ -13,7 +13,7 @@ from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, 
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, ExcelData
 from apps.chat.task.llm import LLMService
-from common.core.deps import CurrentAssistant, SessionDep, CurrentUser
+from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
@@ -106,7 +106,7 @@ async def start_chat(session: SessionDep, current_user: CurrentUser):
 async def recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
                               current_assistant: CurrentAssistant):
     def _return_empty():
-        yield 'data:' + orjson.dumps( {'content': '[]', 'type': 'recommended_question'}).decode() + '\n\n'
+        yield 'data:' + orjson.dumps({'content': '[]', 'type': 'recommended_question'}).decode() + '\n\n'
 
     try:
         record = get_chat_record_by_id(session, chat_record_id)
@@ -201,10 +201,16 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
 
 
 @router.post("/excel/export")
-async def export_excel(excel_data: ExcelData):
+async def export_excel(excel_data: ExcelData, trans: Trans):
     def inner():
         _fields_list = []
         data = []
+        if not excel_data.data:
+            raise HTTPException(
+                status_code=500,
+                detail=trans("i18n_excel_export.data_is_empty")
+            )
+
         for _data in excel_data.data:
             _row = []
             for field in excel_data.axis:

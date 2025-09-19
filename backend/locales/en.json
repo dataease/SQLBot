@@ -47,5 +47,8 @@
     "datasource_cannot_be_none": "Datasource cannot be none",
     "data_training_not_exists": "Example does not exists",
     "exists_in_db": "Question exists"
+  },
+  "i18n_excel_export": {
+    "data_is_empty": "The form data is empty, cannot export data"
   }
 }
