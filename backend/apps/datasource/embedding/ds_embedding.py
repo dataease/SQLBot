@@ -53,7 +53,7 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, q
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
             # print(len(_list))
             SQLBotLogUtil.info(json.dumps(
-                [{"id": ele.get("id"), "name": ele.get("name"), "cosine_similarity": ele.get("cosine_similarity")}
+                [{"id": ele.get("id"), "name": ele.get("ds").name, "cosine_similarity": ele.get("cosine_similarity")}
                  for ele in _list]))
             ds = _list[0].get('ds')
             return {"id": ds.id, "name": ds.name, "description": ds.description}
