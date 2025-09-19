@@ -21,6 +21,7 @@ import Appearance from '@/views/system/appearance/index.vue'
 import Permission from '@/views/system/permission/index.vue'
 import User from '@/views/system/user/User.vue'
 import Workspace from '@/views/system/workspace/index.vue'
+import Page401 from '@/views/error/index.vue'
 import { i18n } from '@/i18n'
 import { watchRouter } from './watch'
 
@@ -206,6 +207,13 @@ export const routes = [
     path: '/assistantTest',
     name: 'assistantTest',
     component: assistantTest,
+  },
+  {
+    path: '/401',
+    name: '401',
+    hidden: true,
+    meta: {},
+    component: Page401,
   },
 ]
 const router = createRouter({
