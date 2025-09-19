@@ -1103,11 +1103,14 @@ class LLMService:
                             _fields_list.append(field if not _fields.get(field) else _fields.get(field))
                     data.append(_row)
                     _fields_skip = True
-                df = pd.DataFrame(np.array(data), columns=_fields_list)
-                markdown_table = df.to_markdown(index=False)
-                yield markdown_table + '\n\n'
 
-            record = self.finish()
+                if not data or not _fields_list:
+                    yield 'The SQL execution result is empty.\n\n'
+                else:
+                    df = pd.DataFrame(np.array(data), columns=_fields_list)
+                    markdown_table = df.to_markdown(index=False)
+                    yield markdown_table + '\n\n'
+
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
             else:
@@ -1135,6 +1138,8 @@ class LLMService:
                 yield 'data:' + orjson.dumps({'content': error_msg, 'type': 'error'}).decode() + '\n\n'
             else:
                 yield f'> &#x274c; **ERROR**\n\n> \n\n> {error_msg}。'
+        finally:
+            self.finish()
 
     def run_recommend_questions_task_async(self):
         self.future = executor.submit(self.run_recommend_questions_task_cache)
