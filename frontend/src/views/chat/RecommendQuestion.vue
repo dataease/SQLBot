@@ -21,7 +21,7 @@ const props = withDefaults(
   }
 )
 
-const emits = defineEmits(['clickQuestion', 'update:currentChat', 'stop'])
+const emits = defineEmits(['clickQuestion', 'update:currentChat', 'stop', 'loadingOver'])
 
 const loading = ref(false)
 
@@ -134,6 +134,7 @@ async function getRecommendQuestions() {
     }
   } finally {
     loading.value = false
+    emits('loadingOver')
   }
 }
 
