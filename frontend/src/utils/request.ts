@@ -11,10 +11,12 @@ import axios, {
 import { useCache } from '@/utils/useCache'
 import { getLocale } from './utils'
 import { useAssistantStore } from '@/stores/assistant'
+import { useRouter } from 'vue-router'
 // import { i18n } from '@/i18n'
 // const t = i18n.global.t
 const assistantStore = useAssistantStore()
 const { wsCache } = useCache()
+const router = useRouter()
 // Response data structure
 export interface ApiResponse<T = unknown> {
   code: number
@@ -193,6 +195,15 @@ class HttpService {
             ? error.response.data.toString()
             : 'Unauthorized, please login again'
           // Redirect to login page if needed
+          if (assistantStore.getAssistant) {
+            wsCache.delete('user.token')
+            if (router?.push) {
+              router.push(`/401?title=${encodeURIComponent(errorMessage)}`)
+            } else {
+              window.location.href = `/#/401?title=${encodeURIComponent(errorMessage)}`
+            }
+            return
+          }
           ElMessage({
             message: errorMessage,
             type: 'error',
