@@ -521,11 +521,12 @@ class LLMService:
                                                         datasource=_datasource,
                                                         engine_type=_engine_type)
         if self.ds:
-            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
-                                                                        self.ds.oid if isinstance(self.ds,
-                                                                                                  CoreDatasource) else 1)
-            self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
-                                                                     self.ds.id, self.ds.oid)
+            oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
+            dsId = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+            
+            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, 1)
+            self.chat_question.data_training = get_training_template(self.session, self.chat_question.question, dsId, oid)
+                                                                     
 
             self.init_messages()
 
@@ -936,11 +937,11 @@ class LLMService:
     def run_task(self, in_chat: bool = True):
         try:
             if self.ds:
-                self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
-                                                                            self.ds.oid if isinstance(self.ds,
-                                                                                                      CoreDatasource) else 1)
-                self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
-                                                                         self.ds.id, self.ds.oid)
+                oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
+                dsId = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+                self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, oid)
+                self.chat_question.data_training = get_training_template(self.session, self.chat_question.question, dsId, oid)
+                                                                         
 
             self.init_messages()
 
