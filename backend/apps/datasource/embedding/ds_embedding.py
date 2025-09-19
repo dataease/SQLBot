@@ -50,7 +50,7 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, q
                 _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, item)
 
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
-            print(json.dumps(_list))
+            print(len(_list))
             ds = _list[0].get('ds')
             return {"id": ds.id, "name": ds.name, "description": ds.description}
         except Exception:
