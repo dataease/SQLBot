@@ -8,6 +8,7 @@ import requests
 from elasticsearch import Elasticsearch
 
 from apps.datasource.models.datasource import DatasourceConf
+from common.error import SingleMessageError
 
 
 def get_es_connect(conf: DatasourceConf):
@@ -109,6 +110,8 @@ def get_es_data_by_http(conf: DatasourceConf, sql: str):
 
     # print(response.json())
     res = response.json()
+    if res.get('error'):
+        raise SingleMessageError(json.dumps(res))
     fields = res.get('columns')
     result = res.get('rows')
     return result, fields
