@@ -501,7 +501,7 @@ let scrollTopVal = 0
 let scrolling = false
 const scrollBottom = () => {
   if (scrolling) return
-  if (!isTyping.value) {
+  if (!isTyping.value && !getRecommendQuestionsLoading.value) {
     clearInterval(scrollTime)
   }
   chatListRef.value!.setScrollTop(innerRef.value!.clientHeight)
@@ -671,11 +671,14 @@ function quickAsk(question: string) {
 }
 
 const chartAnswerRef = ref()
-
+const getRecommendQuestionsLoading = ref(false)
 async function onChartAnswerFinish(id: number) {
+  getRecommendQuestionsLoading.value = true
   loading.value = false
   isTyping.value = false
-  getRecommendQuestions(id)
+  getRecommendQuestions(id).finally(() => {
+    getRecommendQuestionsLoading.value = false
+  })
 }
 
 function onChartAnswerError() {
