@@ -17,16 +17,17 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         direct_paths = [
-            f"{settings.API_V1_STR}/openapi.json",
             f"{settings.API_V1_STR}/mcp/mcp_question",
             f"{settings.API_V1_STR}/mcp/mcp_assistant"
         ]
 
         route = request.scope.get("route")
         # 获取定义的路径模式，例如 '/items/{item_id}'
-        path_pattern = route.path_format
+        path_pattern = '' if not route else route.path_format
 
-        if isinstance(response, JSONResponse) or path_pattern in direct_paths:
+        if (isinstance(response, JSONResponse)
+                or request.url.path == f"{settings.API_V1_STR}/openapi.json"
+                or path_pattern in direct_paths):
             return response
         if response.status_code != 200:
             return response
