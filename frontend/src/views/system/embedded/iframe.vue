@@ -784,7 +784,7 @@ const saveHandler = () => {
               autocomplete="off"
             />
           </el-form-item>
-          <el-form-item v-if="urlForm.encrypt" prop="aes_iv" label="AES IV">
+          <!-- <el-form-item v-if="urlForm.encrypt" prop="aes_iv" label="AES IV">
             <el-input
               v-model="urlForm.aes_iv"
               clearable
@@ -797,7 +797,7 @@ const saveHandler = () => {
               "
               autocomplete="off"
             />
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item class="certificate-table_form" prop="certificate">
             <template #label>
               <div class="title-content">
