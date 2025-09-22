@@ -13,6 +13,7 @@ services:
       - conf/sqlbot.conf
     volumes:
       - ./data/sqlbot/excel:/opt/sqlbot/data/excel
+      - ./data/sqlbot/file:/opt/sqlbot/data/file
       - ./data/sqlbot/images:/opt/sqlbot/images
       - ./data/sqlbot/logs:/opt/sqlbot/app/logs
       - ./data/postgresql:/var/lib/postgresql/data
