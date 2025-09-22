@@ -8,7 +8,7 @@ from sqlmodel import SQLModel, Field
 
 class CoreDatasource(SQLModel, table=True):
     __tablename__ = "core_datasource"
-    id: int = Field(sa_column=Column(Integer, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
     name: str = Field(max_length=128, nullable=False)
     description: str = Field(max_length=512, nullable=True)
     type: str = Field(max_length=64)
@@ -23,7 +23,7 @@ class CoreDatasource(SQLModel, table=True):
 
 class CoreTable(SQLModel, table=True):
     __tablename__ = "core_table"
-    id: int = Field(sa_column=Column(Integer, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
     ds_id: int = Field(sa_column=Column(BigInteger()))
     checked: bool = Field(default=True)
     table_name: str = Field(sa_column=Column(Text))
@@ -33,7 +33,7 @@ class CoreTable(SQLModel, table=True):
 
 class CoreField(SQLModel, table=True):
     __tablename__ = "core_field"
-    id: int = Field(sa_column=Column(Integer, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
     ds_id: int = Field(sa_column=Column(BigInteger()))
     table_id: int = Field(sa_column=Column(BigInteger()))
     checked: bool = Field(default=True)
