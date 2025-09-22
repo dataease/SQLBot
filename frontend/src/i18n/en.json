@@ -7,6 +7,7 @@
     "AI Model Configuration": "AI Model Configuration"
   },
   "training": {
+    "system_anagement": "System Management",
     "data_training": "SQL Sample Lib",
     "problem_description": "Problem Description",
     "sample_sql": "Sample SQL",

@@ -55,43 +55,60 @@ const showSysmenu = computed(() => {
 <template>
   <div class="system-layout">
     <div class="left-side" :class="collapse && 'left-side-collapse'">
-      <template v-if="appearanceStore.isBlue">
-        <img
-          v-if="collapse"
-          width="30"
-          height="30"
-          :src="logo_fold_blue"
-          style="margin: 0 0 6px 5px; cursor: pointer"
-          @click="toChatIndex"
-        />
-        <img
-          v-else
-          width="130"
-          height="31"
-          :src="logo_blue"
-          style="margin-bottom: 6px; cursor: pointer"
-          @click="toChatIndex"
-        />
-      </template>
-      <template v-else-if="appearanceStore.themeColor === 'custom'">
-        <custom_small
-          v-if="collapse"
-          style="margin: 0 0 6px 5px; cursor: pointer"
-          @click="toChatIndex"
-        ></custom_small>
-        <LOGOCustom
-          v-else
-          style="margin-bottom: 6px; cursor: pointer"
-          @click="toChatIndex"
-        ></LOGOCustom>
+      <template v-if="showSysmenu">
+        <div @click="toChatIndex" class="sys-management">
+          <custom_small
+            v-if="appearanceStore.themeColor !== 'default'"
+            :style="{ marginLeft: collapse ? '5px' : 0 }"
+            :class="!collapse && 'collapse-icon'"
+          ></custom_small>
+          <LOGO_fold
+            v-else
+            :style="{ marginLeft: collapse ? '5px' : 0 }"
+            :class="!collapse && 'collapse-icon'"
+          ></LOGO_fold>
+          <span v-if="!collapse">{{ $t('training.system_anagement') }}</span>
+        </div>
       </template>
       <template v-else>
-        <LOGO_fold
-          v-if="collapse"
-          style="margin: 0 0 6px 5px; cursor: pointer"
-          @click="toChatIndex"
-        ></LOGO_fold>
-        <LOGO v-else style="margin-bottom: 6px; cursor: pointer" @click="toChatIndex"></LOGO>
+        <template v-if="appearanceStore.isBlue">
+          <img
+            v-if="collapse"
+            width="30"
+            height="30"
+            :src="logo_fold_blue"
+            style="margin: 0 0 6px 5px; cursor: pointer"
+            @click="toChatIndex"
+          />
+          <img
+            v-else
+            width="130"
+            height="31"
+            :src="logo_blue"
+            style="margin-bottom: 6px; cursor: pointer"
+            @click="toChatIndex"
+          />
+        </template>
+        <template v-else-if="appearanceStore.themeColor === 'custom'">
+          <custom_small
+            v-if="collapse"
+            style="margin: 0 0 6px 5px; cursor: pointer"
+            @click="toChatIndex"
+          ></custom_small>
+          <LOGOCustom
+            v-else
+            style="margin-bottom: 6px; cursor: pointer"
+            @click="toChatIndex"
+          ></LOGOCustom>
+        </template>
+        <template v-else>
+          <LOGO_fold
+            v-if="collapse"
+            style="margin: 0 0 6px 5px; cursor: pointer"
+            @click="toChatIndex"
+          ></LOGO_fold>
+          <LOGO v-else style="margin-bottom: 6px; cursor: pointer" @click="toChatIndex"></LOGO>
+        </template>
       </template>
       <Workspace v-if="!showSysmenu" :collapse="collapse"></Workspace>
       <Menu :collapse="collapseCopy"></Menu>
@@ -146,6 +163,18 @@ const showSysmenu = computed(() => {
     padding: 16px;
     position: relative;
     min-width: 240px;
+
+    .sys-management {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      .collapse-icon {
+        margin-right: 8px;
+      }
+    }
 
     .bottom {
       position: absolute;
