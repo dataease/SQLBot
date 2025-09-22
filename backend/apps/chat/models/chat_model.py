@@ -136,7 +136,7 @@ class CreateChat(BaseModel):
     id: int = None
     question: str = None
     datasource: int = None
-    origin: Optional[int] = 0
+    origin: Optional[int] = 0  # 0是页面上，mcp是1，小助手是2
 
 
 class RenameChat(BaseModel):
@@ -246,6 +246,7 @@ class McpQuestion(BaseModel):
     question: str = Body(description='用户提问')
     chat_id: int = Body(description='会话ID')
     token: str = Body(description='token')
+    stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)
 
 
 class AxisObj(BaseModel):
@@ -264,3 +265,4 @@ class McpAssistant(BaseModel):
     question: str = Body(description='用户提问')
     url: str = Body(description='第三方数据接口')
     authorization: str = Body(description='第三方接口凭证')
+    stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)

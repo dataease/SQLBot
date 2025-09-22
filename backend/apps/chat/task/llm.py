@@ -933,14 +933,17 @@ class LLMService:
                 break
             yield chunk
 
-    def run_task_async(self, in_chat: bool = True):
-        self.future = executor.submit(self.run_task_cache, in_chat)
+    def run_task_async(self, in_chat: bool = True, stream: bool = True):
+        if in_chat:
+            stream = True
+        self.future = executor.submit(self.run_task_cache, in_chat, stream)
 
-    def run_task_cache(self, in_chat: bool = True):
-        for chunk in self.run_task(in_chat):
+    def run_task_cache(self, in_chat: bool = True, stream: bool = True):
+        for chunk in self.run_task(in_chat, stream):
             self.chunk_list.append(chunk)
 
-    def run_task(self, in_chat: bool = True):
+    def run_task(self, in_chat: bool = True, stream: bool = True):
+        json_result = {'success': True}
         try:
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
@@ -955,6 +958,8 @@ class LLMService:
             # return id
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'id', 'id': self.get_record().id}).decode() + '\n\n'
+            if not stream:
+                json_result['record_id'] = self.get_record().id
 
             # return title
             if self.change_title:
@@ -964,8 +969,10 @@ class LLMService:
                                                                  brief=self.chat_question.question.strip()[:20]))
                     if in_chat:
                         yield 'data:' + orjson.dumps({'type': 'brief', 'brief': brief}).decode() + '\n\n'
+                    if not stream:
+                        json_result['title'] = brief
 
-            # select datasource if datasource is none
+                # select datasource if datasource is none
             if not self.ds:
                 ds_res = self.select_datasource()
 
@@ -1003,7 +1010,6 @@ class LLMService:
                          'type': 'sql-result'}).decode() + '\n\n'
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'info', 'msg': 'sql generated'}).decode() + '\n\n'
-
             # filter sql
             SQLBotLogUtil.info(full_sql_text)
 
@@ -1039,11 +1045,16 @@ class LLMService:
                 sql = self.check_save_sql(res=full_sql_text)
 
             SQLBotLogUtil.info(sql)
+
+            if not stream:
+                json_result['sql'] = sql
+
             format_sql = sqlparse.format(sql, reindent=True)
             if in_chat:
                 yield 'data:' + orjson.dumps({'content': format_sql, 'type': 'sql'}).decode() + '\n\n'
             else:
-                yield f'```sql\n{format_sql}\n```\n\n'
+                if stream:
+                    yield f'```sql\n{format_sql}\n```\n\n'
 
             # execute sql
             real_execute_sql = sql
@@ -1058,6 +1069,8 @@ class LLMService:
             self.save_sql_data(data_obj=result)
             if in_chat:
                 yield 'data:' + orjson.dumps({'content': 'execute-success', 'type': 'sql-data'}).decode() + '\n\n'
+            if not stream:
+                json_result['data'] = result.get('data')
 
             # generate chart
             chart_res = self.generate_chart(chart_type)
@@ -1075,41 +1088,46 @@ class LLMService:
             SQLBotLogUtil.info(full_chart_text)
             chart = self.check_save_chart(res=full_chart_text)
             SQLBotLogUtil.info(chart)
+
+            if not stream:
+                json_result['chart'] = chart
+
             if in_chat:
                 yield 'data:' + orjson.dumps(
                     {'content': orjson.dumps(chart).decode(), 'type': 'chart'}).decode() + '\n\n'
             else:
-                data = []
-                _fields = {}
-                if chart.get('columns'):
-                    for _column in chart.get('columns'):
-                        if _column:
-                            _fields[_column.get('value')] = _column.get('name')
-                if chart.get('axis'):
-                    if chart.get('axis').get('x'):
-                        _fields[chart.get('axis').get('x').get('value')] = chart.get('axis').get('x').get('name')
-                    if chart.get('axis').get('y'):
-                        _fields[chart.get('axis').get('y').get('value')] = chart.get('axis').get('y').get('name')
-                    if chart.get('axis').get('series'):
-                        _fields[chart.get('axis').get('series').get('value')] = chart.get('axis').get('series').get(
-                            'name')
-                _fields_list = []
-                _fields_skip = False
-                for _data in result.get('data'):
-                    _row = []
-                    for field in result.get('fields'):
-                        _row.append(_data.get(field))
-                        if not _fields_skip:
-                            _fields_list.append(field if not _fields.get(field) else _fields.get(field))
-                    data.append(_row)
-                    _fields_skip = True
+                if stream:
+                    data = []
+                    _fields = {}
+                    if chart.get('columns'):
+                        for _column in chart.get('columns'):
+                            if _column:
+                                _fields[_column.get('value')] = _column.get('name')
+                    if chart.get('axis'):
+                        if chart.get('axis').get('x'):
+                            _fields[chart.get('axis').get('x').get('value')] = chart.get('axis').get('x').get('name')
+                        if chart.get('axis').get('y'):
+                            _fields[chart.get('axis').get('y').get('value')] = chart.get('axis').get('y').get('name')
+                        if chart.get('axis').get('series'):
+                            _fields[chart.get('axis').get('series').get('value')] = chart.get('axis').get('series').get(
+                                'name')
+                    _fields_list = []
+                    _fields_skip = False
+                    for _data in result.get('data'):
+                        _row = []
+                        for field in result.get('fields'):
+                            _row.append(_data.get(field))
+                            if not _fields_skip:
+                                _fields_list.append(field if not _fields.get(field) else _fields.get(field))
+                        data.append(_row)
+                        _fields_skip = True
 
-                if not data or not _fields_list:
-                    yield 'The SQL execution result is empty.\n\n'
-                else:
-                    df = pd.DataFrame(np.array(data), columns=_fields_list)
-                    markdown_table = df.to_markdown(index=False)
-                    yield markdown_table + '\n\n'
+                    if not data or not _fields_list:
+                        yield 'The SQL execution result is empty.\n\n'
+                    else:
+                        df = pd.DataFrame(np.array(data), columns=_fields_list)
+                        markdown_table = df.to_markdown(index=False)
+                        yield markdown_table + '\n\n'
 
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
@@ -1119,7 +1137,14 @@ class LLMService:
                     yield '### generated chart picture\n\n'
                     image_url = request_picture(self.record.chat_id, self.record.id, chart, result)
                     SQLBotLogUtil.info(image_url)
-                    yield f'![{chart["type"]}]({image_url})'
+                    if stream:
+                        yield f'![{chart["type"]}]({image_url})'
+                    else:
+                        json_result['image_url'] = image_url
+
+            if not stream:
+                yield json_result
+
         except Exception as e:
             traceback.print_exc()
             error_msg: str
@@ -1137,7 +1162,12 @@ class LLMService:
             if in_chat:
                 yield 'data:' + orjson.dumps({'content': error_msg, 'type': 'error'}).decode() + '\n\n'
             else:
-                yield f'> &#x274c; **ERROR**\n\n> \n\n> {error_msg}。'
+                if stream:
+                    yield f'> &#x274c; **ERROR**\n\n> \n\n> {error_msg}。'
+                else:
+                    json_result['success'] = False
+                    json_result['message'] = error_msg
+                    yield json_result
         finally:
             self.finish()
 

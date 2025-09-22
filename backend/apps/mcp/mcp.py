@@ -1,6 +1,7 @@
 # Author: Junjun
 # Date: 2025/7/1
 import json
+import traceback
 from datetime import timedelta
 
 import jwt
@@ -10,6 +11,7 @@ from fastapi.responses import StreamingResponse
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import select
+from starlette.responses import JSONResponse
 
 from apps.chat.api.chat import create_chat
 from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion
@@ -106,11 +108,37 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
         raise HTTPException(status_code=400, detail="Inactive user")
 
     mcp_chat = ChatMcp(token=chat.token, chat_id=chat.chat_id, question=chat.question)
-    # ask
-    llm_service = await LLMService.create(session_user, mcp_chat)
-    llm_service.init_record()
 
-    return StreamingResponse(llm_service.run_task(False), media_type="text/event-stream")
+    try:
+        llm_service = await LLMService.create(session_user, mcp_chat)
+        llm_service.init_record()
+        llm_service.run_task_async(False, chat.stream)
+    except Exception as e:
+        traceback.print_exc()
+
+        if chat.stream:
+            def _err(_e: Exception):
+                yield str(_e) + '\n\n'
+
+            return StreamingResponse(_err(e), media_type="text/event-stream")
+        else:
+            return {'message': str(e)}
+    if chat.stream:
+        return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
+    else:
+        res = llm_service.await_result()
+        raw_data = {}
+        for chunk in res:
+            if chunk:
+                raw_data = chunk
+        status_code = 200
+        if not raw_data.get('success'):
+            status_code = 500
+
+        return JSONResponse(
+            content=raw_data,
+            status_code=status_code,
+        )
 
 
 @router.post("/mcp_assistant", operation_id="mcp_assistant")

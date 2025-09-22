@@ -1,8 +1,9 @@
+import re
 from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 from common.core.schemas import BaseCreatorDTO
-import re
 
 EMAIL_REGEX = re.compile(
     r"^[a-zA-Z0-9]+([._-][a-zA-Z0-9]+)*@"
@@ -14,106 +15,121 @@ PWD_REGEX = re.compile(
     r"(?=.*[~!@#$%^&*()_+\-={}|:\"<>?`\[\];',./])"
     r"[A-Za-z\d~!@#$%^&*()_+\-={}|:\"<>?`\[\];',./]{8,20}$"
 )
+
+
 class UserStatus(BaseCreatorDTO):
     status: int = 1
-    
-    
+
 
 class UserLanguage(BaseModel):
     language: str
-    
+
 
 class BaseUser(BaseModel):
     account: str = Field(min_length=1, max_length=100, description="用户账号")
     oid: int
-    
+
+
 class BaseUserDTO(BaseUser, BaseCreatorDTO):
     language: str = Field(pattern=r"^(zh-CN|en)$", default="zh-CN", description="用户语言")
     password: str
     status: int = 1
+
     def to_dict(self):
         return {
             "id": self.id,
             "account": self.account,
             "oid": self.oid
         }
+
     @field_validator("language")
     def validate_language(cls, lang: str) -> str:
         if not re.fullmatch(r"^(zh-CN|en)$", lang):
             raise ValueError("Language must be 'zh-CN' or 'en'")
         return lang
 
+
 class UserCreator(BaseUser):
     name: str = Field(min_length=1, max_length=100, description="用户名")
     email: str = Field(min_length=1, max_length=100, description="用户邮箱")
     status: int = 1
-    oid_list: Optional[list[int]] = None 
-    
+    oid_list: Optional[list[int]] = None
+
     """ @field_validator("email")
     def validate_email(cls, lang: str) -> str:
         if not re.fullmatch(EMAIL_REGEX, lang):
             raise ValueError("Email format is invalid!")
         return lang """
 
+
 class UserEditor(UserCreator, BaseCreatorDTO):
-   pass
+    pass
+
 
 class UserGrid(UserEditor):
     create_time: int
     language: str = "zh-CN"
-    #space_name: Optional[str] = None
+    # space_name: Optional[str] = None
     origin: str = ''
-    
-    
+
+
 class PwdEditor(BaseModel):
     pwd: str
     new_pwd: str
-    
+
+
 class UserWsBase(BaseModel):
     uid_list: list[int]
     oid: Optional[int] = None
+
+
 class UserWsDTO(UserWsBase):
     weight: Optional[int] = 0
 
+
 class UserWsEditor(BaseModel):
     uid: int
-    oid: int    
+    oid: int
     weight: int = 0
+
 
 class UserInfoDTO(UserEditor):
     language: str = "zh-CN"
     weight: int = 0
     isAdmin: bool = False
-    
+
 
 class AssistantBase(BaseModel):
     name: str
     domain: str
-    type: int = 0
+    type: int = 0  # 0普通小助手 1高级 4页面嵌入
     configuration: Optional[str] = None
     description: Optional[str] = None
+
+
 class AssistantDTO(AssistantBase, BaseCreatorDTO):
     pass
+
 
 class AssistantHeader(AssistantDTO):
     unique: Optional[str] = None
     certificate: Optional[str] = None
     online: bool = False
-    
+
 
 class AssistantValidator(BaseModel):
     valid: bool = False
     id_match: bool = False
     domain_match: bool = False
     token: Optional[str] = None
-    
+
     def __init__(
-        self,
-        valid: bool = False,
-        id_match: bool = False,
-        domain_match: bool = False,
-        token: Optional[str] = None,
-        **kwargs
+            self,
+            valid: bool = False,
+            id_match: bool = False,
+            domain_match: bool = False,
+            token: Optional[str] = None,
+            **kwargs
     ):
         super().__init__(
             valid=valid,
@@ -122,23 +138,28 @@ class AssistantValidator(BaseModel):
             token=token,
             **kwargs
         )
-        
+
+
 class WorkspaceUser(UserEditor):
     weight: int
     create_time: int
-    
+
+
 class UserWs(BaseCreatorDTO):
     name: str
-    
+
+
 class UserWsOption(UserWs):
     account: str
-    
-    
+
+
 class AssistantFieldSchema(BaseModel):
     id: Optional[int] = None
     name: Optional[str] = None
     type: Optional[str] = None
     comment: Optional[str] = None
+
+
 class AssistantTableSchema(BaseModel):
     id: Optional[int] = None
     name: Optional[str] = None
@@ -147,6 +168,7 @@ class AssistantTableSchema(BaseModel):
     sql: Optional[str] = None
     fields: Optional[list[AssistantFieldSchema]] = None
 
+
 class AssistantOutDsBase(BaseModel):
     id: Optional[int] = None
     name: str
@@ -154,8 +176,8 @@ class AssistantOutDsBase(BaseModel):
     type_name: Optional[str] = None
     comment: Optional[str] = None
     description: Optional[str] = None
-    
-        
+
+
 class AssistantOutDsSchema(AssistantOutDsBase):
     host: Optional[str] = None
     port: Optional[int] = None
@@ -165,7 +187,8 @@ class AssistantOutDsSchema(AssistantOutDsBase):
     db_schema: Optional[str] = None
     extraParams: Optional[str] = None
     tables: Optional[list[AssistantTableSchema]] = None
-    
+
+
 class AssistantUiSchema(BaseCreatorDTO):
     theme: Optional[str] = None
     header_font_color: Optional[str] = None
@@ -179,7 +202,3 @@ class AssistantUiSchema(BaseCreatorDTO):
     name: Optional[str] = None
     welcome: Optional[str] = None
     welcome_desc: Optional[str] = None
-    
-    
-    
-    
