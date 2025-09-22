@@ -258,3 +258,9 @@ class ExcelData(BaseModel):
     axis: list[AxisObj] = []
     data: list[dict] = []
     name: str = 'Excel'
+
+
+class McpAssistant(BaseModel):
+    question: str = Body(description='用户提问')
+    url: str = Body(description='第三方数据接口')
+    authorization: str = Body(description='第三方接口凭证')

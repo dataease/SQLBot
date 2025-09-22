@@ -1,6 +1,6 @@
 # Author: Junjun
 # Date: 2025/7/1
-
+import json
 from datetime import timedelta
 
 import jwt
@@ -12,13 +12,13 @@ from pydantic import ValidationError
 from sqlmodel import select
 
 from apps.chat.api.chat import create_chat
-from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion
+from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion
 from apps.chat.task.llm import LLMService
 from apps.system.crud.user import authenticate
 from apps.system.crud.user import get_db_user
 from apps.system.models.system_model import UserWsModel
 from apps.system.models.user import UserModel
-from apps.system.schemas.system_schema import BaseUserDTO
+from apps.system.schemas.system_schema import BaseUserDTO, AssistantHeader
 from apps.system.schemas.system_schema import UserInfoDTO
 from common.core import security
 from common.core.config import settings
@@ -111,3 +111,29 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
     llm_service.init_record()
 
     return StreamingResponse(llm_service.run_task(False), media_type="text/event-stream")
+
+
+@router.post("/mcp_assistant", operation_id="mcp_assistant")
+async def mcp_assistant(session: SessionDep, chat: McpAssistant):
+    session_user = BaseUserDTO(**{
+        "id": -1, "account": 'sqlbot-mcp-assistant', "oid": 1, "assistant_id": -1, "password": '', "language": "zh-CN"
+    })
+    # session_user: UserModel = get_db_user(session=session, user_id=1)
+    # session_user.oid = 1
+    c = create_chat(session, session_user, CreateChat(origin=1), False)
+
+    # build assistant param
+    configuration = {"endpoint": chat.url}
+    # authorization = [{"key": "x-de-token",
+    #                 "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1aWQiOjEsIm9pZCI6MSwiZXhwIjoxNzU4NTEyMDA2fQ.3NR-pgnADLdXZtI3dXX5-LuxfGYRvYD9kkr2de7KRP0",
+    #                 "target": "header"}]
+    mcp_assistant_header = AssistantHeader(id=1, name='mcp_assist', domain='', type=1,
+                                           configuration=json.dumps(configuration),
+                                           certificate=chat.authorization)
+
+    # assistant question
+    mcp_chat = ChatQuestion(chat_id=c.id, question=chat.question)
+    # ask
+    llm_service = await LLMService.create(session_user, mcp_chat, mcp_assistant_header)
+    llm_service.init_record()
+    return llm_service.run_task(False)
