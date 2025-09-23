@@ -7,6 +7,7 @@
       :welcome-desc="customSet.welcome_desc"
       :logo-assistant="logo"
       :page-embedded="true"
+      :app-name="customSet.name"
     />
   </div>
 </template>
