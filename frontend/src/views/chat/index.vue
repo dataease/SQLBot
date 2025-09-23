@@ -16,7 +16,7 @@
       v-model:current-chat-id="currentChatId"
       v-model:current-chat="currentChat"
       v-model:loading="loading"
-      :in-popover="!chatListSideBarShow"
+      in-popover
       :appName="customName"
       @go-empty="goEmpty"
       @on-chat-created="onChatCreated"
