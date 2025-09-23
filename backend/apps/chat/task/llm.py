@@ -115,7 +115,7 @@ class LLMService:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = (ds.type_name if ds.type != 'excel' else 'PostgreSQL') + get_version(ds)
                 chat_question.db_schema = get_table_schema(session=self.session, current_user=current_user, ds=ds,
-                                                           question=self.chat_question.question)
+                                                           question=chat_question.question)
 
         self.generate_sql_logs = list_generate_sql_logs(session=self.session, chart_id=chat_id)
         self.generate_chart_logs = list_generate_chart_logs(session=self.session, chart_id=chat_id)
