@@ -16,6 +16,7 @@ from common.utils.utils import deepcopy_ignore_extra
 from .table import get_tables_by_ds_id
 from ..crud.field import delete_field_by_ds_id, update_field
 from ..crud.table import delete_table_by_ds_id, update_table
+from ..embedding.ds_embedding import get_table_embedding
 from ..models.datasource import CoreDatasource, CreateDatasource, CoreTable, CoreField, ColumnSchema, TableObj, \
     DatasourceConf, TableAndFields
 
@@ -344,22 +345,25 @@ def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: Core
     return _list
 
 
-def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource) -> str:
+def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
+                     embedding: bool = True) -> str:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
         return schema_str
     db_name = table_objs[0].schema
     schema_str += f"【DB_ID】 {db_name}\n【Schema】\n"
+    tables = []
     for obj in table_objs:
-        schema_str += f"# Table: {db_name}.{obj.table.table_name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {obj.table.table_name}"
+        schema_table = ''
+        schema_table += f"# Table: {db_name}.{obj.table.table_name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {obj.table.table_name}"
         table_comment = ''
         if obj.table.custom_comment:
             table_comment = obj.table.custom_comment.strip()
         if table_comment == '':
-            schema_str += '\n[\n'
+            schema_table += '\n[\n'
         else:
-            schema_str += f", {table_comment}\n[\n"
+            schema_table += f", {table_comment}\n[\n"
 
         field_list = []
         for field in obj.fields:
@@ -370,7 +374,14 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
                 field_list.append(f"({field.field_name}:{field.field_type})")
             else:
                 field_list.append(f"({field.field_name}:{field.field_type}, {field_comment})")
-        schema_str += ",\n".join(field_list)
-        schema_str += '\n]\n'
+        schema_table += ",\n".join(field_list)
+        schema_table += '\n]\n'
+        tables.append(schema_table)
+        # do table embedding
+        if embedding:
+            tables = get_table_embedding(session, current_user, tables, question)
+
     # todo 外键
+    for s in tables:
+        schema_str += s
     return schema_str

@@ -114,7 +114,8 @@ class LLMService:
                 if not ds:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = (ds.type_name if ds.type != 'excel' else 'PostgreSQL') + get_version(ds)
-                chat_question.db_schema = get_table_schema(session=self.session, current_user=current_user, ds=ds)
+                chat_question.db_schema = get_table_schema(session=self.session, current_user=current_user, ds=ds,
+                                                           question=self.chat_question.question)
 
         self.generate_sql_logs = list_generate_sql_logs(session=self.session, chart_id=chat_id)
         self.generate_chart_logs = list_generate_chart_logs(session=self.session, chart_id=chat_id)
@@ -346,7 +347,8 @@ class LLMService:
         if self.ds and not self.chat_question.db_schema:
             self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
                 self.ds.id) if self.out_ds_instance else get_table_schema(session=self.session,
-                                                                          current_user=self.current_user, ds=self.ds)
+                                                                          current_user=self.current_user, ds=self.ds,
+                                                                          question=self.chat_question.question)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question()))
@@ -506,7 +508,8 @@ class LLMService:
                     self.chat_question.engine = (_ds.type_name if _ds.type != 'excel' else 'PostgreSQL') + get_version(
                         self.ds)
                     self.chat_question.db_schema = get_table_schema(session=self.session,
-                                                                    current_user=self.current_user, ds=self.ds)
+                                                                    current_user=self.current_user, ds=self.ds,
+                                                                    question=self.chat_question.question)
                     _engine_type = self.chat_question.engine
                     _chat.engine_type = _ds.type_name
                 # save chat
@@ -995,7 +998,8 @@ class LLMService:
                 self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
                     self.ds.id) if self.out_ds_instance else get_table_schema(session=self.session,
                                                                               current_user=self.current_user,
-                                                                              ds=self.ds)
+                                                                              ds=self.ds,
+                                                                              question=self.chat_question.question)
             else:
                 self.validate_history_ds()
 
