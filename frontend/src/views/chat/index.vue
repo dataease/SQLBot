@@ -443,7 +443,7 @@ const defaultFloatPopoverStyle = ref({
 
 const isCompletePage = computed(() => !assistantStore.getAssistant || assistantStore.getEmbedded)
 const customName = computed(() => {
-  if (props.pageEmbedded) return props.appName
+  if (!isCompletePage.value && props.pageEmbedded) return props.appName
   return ''
 })
 const { t } = useI18n()
