@@ -25,6 +25,7 @@
         :welcome="customSet.welcome"
         :welcome-desc="customSet.welcome_desc"
         :logo-assistant="logo"
+        :app-name="appName"
       />
     </div>
     <div class="drawer-assistant" @click="openHistory"></div>

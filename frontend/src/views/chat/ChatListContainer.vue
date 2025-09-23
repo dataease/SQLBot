@@ -19,6 +19,7 @@ const props = withDefaults(
     currentChatId?: number
     currentChat?: ChatInfo
     loading?: boolean
+    appName?: string
   }>(),
   {
     chatList: () => [],
@@ -26,6 +27,7 @@ const props = withDefaults(
     currentChat: () => new ChatInfo(),
     loading: false,
     inPopover: false,
+    appName: '',
   }
 )
 
@@ -214,7 +216,7 @@ function onChatRenamed(chat: Chat) {
   <el-container class="chat-container-right-container">
     <el-header class="chat-list-header" :class="{ 'in-popover': inPopover }">
       <div v-if="!inPopover" class="title">
-        <div>{{ t('qa.title') }}</div>
+        <div>{{ appName || t('qa.title') }}</div>
         <el-button link type="primary" class="icon-btn" @click="onClickSideBarBtn">
           <el-icon>
             <icon_sidebar_outlined />

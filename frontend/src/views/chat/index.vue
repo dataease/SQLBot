@@ -17,6 +17,7 @@
       v-model:current-chat="currentChat"
       v-model:loading="loading"
       :in-popover="!chatListSideBarShow"
+      :appName="customName"
       @go-empty="goEmpty"
       @on-chat-created="onChatCreated"
       @on-click-history="onClickHistory"
@@ -36,6 +37,7 @@
         v-model:current-chat="currentChat"
         v-model:loading="loading"
         :in-popover="!chatListSideBarShow"
+        :appName="customName"
         @go-empty="goEmpty"
         @on-chat-created="onChatCreated"
         @on-click-history="onClickHistory"
@@ -70,6 +72,7 @@
           v-model:current-chat="currentChat"
           v-model:loading="loading"
           :in-popover="!chatListSideBarShow"
+          :appName="customName"
           @go-empty="goEmpty"
           @on-chat-created="onChatCreated"
           @on-click-history="onClickHistory"
@@ -94,6 +97,7 @@
           v-model:current-chat-id="currentChatId"
           v-model:current-chat="currentChat"
           v-model:loading="loading"
+          :appName="customName"
           :in-popover="false"
           @go-empty="goEmpty"
           @on-chat-created="onChatCreated"
@@ -424,6 +428,7 @@ const props = defineProps<{
   welcomeDesc?: string
   logoAssistant?: string
   welcome?: string
+  appName?: string
   pageEmbedded?: boolean
 }>()
 const floatPopoverRef = ref()
@@ -437,7 +442,10 @@ const defaultFloatPopoverStyle = ref({
 })
 
 const isCompletePage = computed(() => !assistantStore.getAssistant || assistantStore.getEmbedded)
-
+const customName = computed(() => {
+  if (props.pageEmbedded) return props.appName
+  return ''
+})
 const { t } = useI18n()
 
 const inputMessage = ref('')
