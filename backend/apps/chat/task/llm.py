@@ -28,7 +28,8 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
     get_last_execute_sql_error
-from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum
+from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
+    ChatFinishStep
 from apps.data_training.curd.data_training import get_training_template
 from apps.datasource.crud.datasource import get_table_schema
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
@@ -934,17 +935,20 @@ class LLMService:
                 break
             yield chunk
 
-    def run_task_async(self, in_chat: bool = True, stream: bool = True):
+    def run_task_async(self, in_chat: bool = True, stream: bool = True,
+                       finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART):
         if in_chat:
             stream = True
-        self.future = executor.submit(self.run_task_cache, in_chat, stream)
+        self.future = executor.submit(self.run_task_cache, in_chat, stream, finish_step)
 
-    def run_task_cache(self, in_chat: bool = True, stream: bool = True):
-        for chunk in self.run_task(in_chat, stream):
+    def run_task_cache(self, in_chat: bool = True, stream: bool = True,
+                       finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART):
+        for chunk in self.run_task(in_chat, stream, finish_step):
             self.chunk_list.append(chunk)
 
-    def run_task(self, in_chat: bool = True, stream: bool = True):
-        json_result = {'success': True}
+    def run_task(self, in_chat: bool = True, stream: bool = True,
+                 finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART):
+        json_result: Dict[str, Any] = {'success': True}
         try:
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
@@ -1066,12 +1070,46 @@ class LLMService:
                                                                           subsql)
                 real_execute_sql = assistant_dynamic_sql
 
+            if finish_step.value <= ChatFinishStep.GENERATE_SQL.value:
+                if in_chat:
+                    yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
+                if not stream:
+                    yield json_result
+                return
+
             result = self.execute_sql(sql=real_execute_sql)
             self.save_sql_data(data_obj=result)
             if in_chat:
                 yield 'data:' + orjson.dumps({'content': 'execute-success', 'type': 'sql-data'}).decode() + '\n\n'
             if not stream:
                 json_result['data'] = result.get('data')
+
+            if finish_step.value <= ChatFinishStep.QUERY_DATA.value:
+                if stream:
+                    if in_chat:
+                        yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
+                    else:
+                        data = []
+                        _fields_list = []
+                        _fields_skip = False
+                        for _data in result.get('data'):
+                            _row = []
+                            for field in result.get('fields'):
+                                _row.append(_data.get(field))
+                                if not _fields_skip:
+                                    _fields_list.append(field)
+                            data.append(_row)
+                            _fields_skip = True
+
+                        if not data or not _fields_list:
+                            yield 'The SQL execution result is empty.\n\n'
+                        else:
+                            df = pd.DataFrame(np.array(data), columns=_fields_list)
+                            markdown_table = df.to_markdown(index=False)
+                            yield markdown_table + '\n\n'
+                else:
+                    yield json_result
+                return
 
             # generate chart
             chart_res = self.generate_chart(chart_type)

@@ -14,7 +14,8 @@ from sqlmodel import select
 from starlette.responses import JSONResponse
 
 from apps.chat.api.chat import create_chat
-from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion
+from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion, \
+    ChatFinishStep
 from apps.chat.task.llm import LLMService
 from apps.system.crud.user import authenticate
 from apps.system.crud.user import get_db_user
@@ -122,7 +123,10 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
 
             return StreamingResponse(_err(e), media_type="text/event-stream")
         else:
-            return {'message': str(e)}
+            return JSONResponse(
+                content={'message': str(e)},
+                status_code=500,
+            )
     if chat.stream:
         return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
     else:
@@ -162,6 +166,36 @@ async def mcp_assistant(session: SessionDep, chat: McpAssistant):
     # assistant question
     mcp_chat = ChatQuestion(chat_id=c.id, question=chat.question)
     # ask
-    llm_service = await LLMService.create(session_user, mcp_chat, mcp_assistant_header)
-    llm_service.init_record()
-    return llm_service.run_task(False)
+    try:
+        llm_service = await LLMService.create(session_user, mcp_chat, mcp_assistant_header)
+        llm_service.init_record()
+        llm_service.run_task_async(False, chat.stream, ChatFinishStep.QUERY_DATA)
+    except Exception as e:
+        traceback.print_exc()
+
+        if chat.stream:
+            def _err(_e: Exception):
+                yield str(_e) + '\n\n'
+
+            return StreamingResponse(_err(e), media_type="text/event-stream")
+        else:
+            return JSONResponse(
+                content={'message': str(e)},
+                status_code=500,
+            )
+    if chat.stream:
+        return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
+    else:
+        res = llm_service.await_result()
+        raw_data = {}
+        for chunk in res:
+            if chunk:
+                raw_data = chunk
+        status_code = 200
+        if not raw_data.get('success'):
+            status_code = 500
+
+        return JSONResponse(
+            content=raw_data,
+            status_code=status_code,
+        )

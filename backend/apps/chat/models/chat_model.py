@@ -40,6 +40,10 @@ class OperationEnum(Enum):
     CHOOSE_DATASOURCE = '6'
     GENERATE_DYNAMIC_SQL = '7'
 
+class ChatFinishStep(Enum):
+    GENERATE_SQL = 1
+    QUERY_DATA = 2
+    GENERATE_CHART = 3
 
 #     TODO choose table / check connection / generate description
 
