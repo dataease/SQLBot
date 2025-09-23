@@ -140,6 +140,8 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
                 WHERE 
                     TABLE_SCHEMA = %s
                 """, conf.database
+    elif ds.type == "es":
+        return "", None
 
 
 def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = None):
@@ -273,3 +275,5 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                 """
         sql2 = " AND TABLE_NAME = %s" if table_name is not None and table_name != "" else ""
         return sql1 + sql2, conf.database, table_name
+    elif ds.type == "es":
+        return "", None, None
