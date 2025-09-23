@@ -101,7 +101,7 @@ class Settings(BaseSettings):
     PG_POOL_RECYCLE: int = 3600
     PG_POOL_PRE_PING: bool = True
 
-    TABLE_EMBEDDING_COUNT: int = 30
+    TABLE_EMBEDDING_COUNT: int = 10
 
 
 settings = Settings()  # type: ignore
