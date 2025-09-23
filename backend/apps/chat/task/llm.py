@@ -426,7 +426,8 @@ class LLMService:
         full_text = ''
         if not ignore_auto_select:
             if settings.EMBEDDING_ENABLED:
-                ds = get_ds_embedding(self.session, self.current_user, _ds_list, self.chat_question.question)
+                ds = get_ds_embedding(self.session, self.current_user, _ds_list, self.out_ds_instance,
+                                      self.chat_question.question, self.current_assistant)
                 yield {'content': '{"id":' + str(ds.get('id')) + '}'}
             else:
                 _ds_list_dict = []

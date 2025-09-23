@@ -3,10 +3,13 @@
 import json
 import math
 import traceback
+from typing import Optional
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.crud.datasource import get_table_schema
 from apps.datasource.models.datasource import CoreDatasource
+from apps.system.crud.assistant import AssistantOutDs
+from common.core.deps import CurrentAssistant
 from common.core.deps import SessionDep, CurrentUser
 from common.utils.utils import SQLBotLogUtil
 
@@ -26,17 +29,26 @@ def cosine_similarity(vec_a, vec_b):
     return dot_product / (norm_a * norm_b)
 
 
-def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, question: str):
+def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, out_ds: AssistantOutDs,
+                     question: str,
+                     current_assistant: Optional[CurrentAssistant] = None):
     _list = []
-    for _ds in _ds_list:
-        if _ds.get('id'):
-            ds = session.get(CoreDatasource, _ds.get('id'))
-
-            table_schema = get_table_schema(session, current_user, ds)
-            ds_info = f"{ds.name}, {ds.description}\n"
-            ds_schema = ds_info + table_schema
-
-            _list.append({"id": ds.id, "ds_schema": ds_schema, "cosine_similarity": 0.0, "ds": ds})
+    if current_assistant and current_assistant.type != 4:
+        if out_ds.ds_list:
+            for _ds in out_ds.ds_list:
+                ds = out_ds.get_ds(_ds.id)
+                table_schema = out_ds.get_db_schema(_ds.id)
+                ds_info = f"{ds.name}, {ds.description}\n"
+                ds_schema = ds_info + table_schema
+                _list.append({"id": ds.id, "ds_schema": ds_schema, "cosine_similarity": 0.0, "ds": ds})
+    else:
+        for _ds in _ds_list:
+            if _ds.get('id'):
+                ds = session.get(CoreDatasource, _ds.get('id'))
+                table_schema = get_table_schema(session, current_user, ds)
+                ds_info = f"{ds.name}, {ds.description}\n"
+                ds_schema = ds_info + table_schema
+                _list.append({"id": ds.id, "ds_schema": ds_schema, "cosine_similarity": 0.0, "ds": ds})
 
     if _list:
         try:
