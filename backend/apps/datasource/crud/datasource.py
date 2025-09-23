@@ -1,22 +1,26 @@
 import datetime
 import json
+import traceback
 from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import and_, text
 from sqlmodel import select
 
+from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.crud.permission import get_column_permission_fields, get_row_permission_filters, is_normal_user
+from apps.datasource.embedding.ds_embedding import cosine_similarity
 from apps.datasource.utils.utils import aes_decrypt
 from apps.db.constant import DB
 from apps.db.db import get_tables, get_fields, exec_sql, check_connection
 from apps.db.engine import get_engine_config, get_engine_conn
+from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
+from common.utils.utils import SQLBotLogUtil
 from common.utils.utils import deepcopy_ignore_extra
 from .table import get_tables_by_ds_id
 from ..crud.field import delete_field_by_ds_id, update_field
 from ..crud.table import delete_table_by_ds_id, update_table
-from ..embedding.ds_embedding import get_table_embedding
 from ..models.datasource import CoreDatasource, CreateDatasource, CoreTable, CoreField, ColumnSchema, TableObj, \
     DatasourceConf, TableAndFields
 
@@ -385,3 +389,30 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
     for s in tables:
         schema_str += s
     return schema_str
+
+
+def get_table_embedding(session: SessionDep, current_user: CurrentUser, tables: list[str], question: str):
+    _list = []
+    for table_schema in tables:
+        _list.append({"table_schema": table_schema, "cosine_similarity": 0.0})
+
+    if _list:
+        try:
+            text = [s.get('table_schema') for s in _list]
+
+            model = EmbeddingModelCache.get_model()
+            results = model.embed_documents(text)
+
+            q_embedding = model.embed_query(question)
+            for index in range(len(results)):
+                item = results[index]
+                _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, item)
+
+            _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
+            _list = _list[:settings.TABLE_EMBEDDING_COUNT]
+            # print(len(_list))
+            SQLBotLogUtil.info(json.dumps(_list))
+            return [t.get("table_schema") for t in _list]
+        except Exception:
+            traceback.print_exc()
+    return _list
