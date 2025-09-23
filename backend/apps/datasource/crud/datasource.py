@@ -377,9 +377,10 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         schema_table += ",\n".join(field_list)
         schema_table += '\n]\n'
         tables.append(schema_table)
-        # do table embedding
-        if embedding:
-            tables = get_table_embedding(session, current_user, tables, question)
+
+    # do table embedding
+    if embedding:
+        tables = get_table_embedding(session, current_user, tables, question)
 
     # todo 外键
     for s in tables:
