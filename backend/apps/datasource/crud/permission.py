@@ -37,6 +37,7 @@ def get_row_permission_filters(session: SessionDep, current_user: CurrentUser, d
                         if p_list is not None and u_list is not None and permission.id in p_list and (
                                 current_user.id in u_list or f'{current_user.id}' in u_list):
                             flag = True
+                            break
                     if flag:
                         res.append(transRecord2DTO(session, permission))
             where_str = transFilterTree(session, res, ds)
@@ -64,6 +65,7 @@ def get_column_permission_fields(session: SessionDep, current_user: CurrentUser,
                     if p_list is not None and u_list is not None and permission.id in p_list and (
                             current_user.id in u_list or f'{current_user.id}' in u_list):
                         flag = True
+                        break
                 if flag:
                     permission_list = json.loads(permission.permissions)
                     fields = filter_list(fields, permission_list)
