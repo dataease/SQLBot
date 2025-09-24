@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import and_, text
+from sqlbot_xpack.permissions.models.ds_rules import DsRules
 from sqlmodel import select
 
 from apps.datasource.crud.permission import get_column_permission_fields, get_row_permission_filters, is_normal_user
@@ -250,8 +251,9 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
     f_list = [f for f in data.fields if f.checked]
     if is_normal_user(current_user):
         # column is checked, and, column permission for data.fields
+        contain_rules = session.query(DsRules).all()
         f_list = get_column_permission_fields(session=session, current_user=current_user, table=data.table,
-                                              fields=f_list)
+                                              fields=f_list, contain_rules=contain_rules)
 
         # row permission tree
         where_str = ''
@@ -336,11 +338,27 @@ def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: Core
     tables = session.query(CoreTable).filter(CoreTable.ds_id == ds.id).all()
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
     schema = conf.dbSchema if conf.dbSchema is not None and conf.dbSchema != "" else conf.database
+
+    # get all field
+    table_ids = [table.id for table in tables]
+    all_fields = session.query(CoreField).filter(
+        and_(CoreField.table_id.in_(table_ids), CoreField.checked == True)).all()
+    # build dict
+    fields_dict = {}
+    for field in all_fields:
+        if fields_dict.get(field.table_id):
+            fields_dict.get(field.table_id).append(field)
+        else:
+            fields_dict[field.table_id] = [field]
+
+    contain_rules = session.query(DsRules).all()
     for table in tables:
-        fields = session.query(CoreField).filter(and_(CoreField.table_id == table.id, CoreField.checked == True)).all()
+        # fields = session.query(CoreField).filter(and_(CoreField.table_id == table.id, CoreField.checked == True)).all()
+        fields = fields_dict.get(table.id)
 
         # do column permissions, filter fields
-        fields = get_column_permission_fields(session=session, current_user=current_user, table=table, fields=fields)
+        fields = get_column_permission_fields(session=session, current_user=current_user, table=table, fields=fields,
+                                              contain_rules=contain_rules)
         _list.append(TableAndFields(schema=schema, table=table, fields=fields))
     return _list
 

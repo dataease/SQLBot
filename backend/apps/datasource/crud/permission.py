@@ -2,12 +2,14 @@ import json
 from typing import List, Optional
 
 from sqlalchemy import and_
-from apps.datasource.crud.row_permission import transFilterTree
-from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
-from common.core.deps import CurrentUser, SessionDep
 from sqlbot_xpack.permissions.api.permission import transRecord2DTO
 from sqlbot_xpack.permissions.models.ds_permission import DsPermission, PermissionDTO
 from sqlbot_xpack.permissions.models.ds_rules import DsRules
+
+from apps.datasource.crud.row_permission import transFilterTree
+from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
+from common.core.deps import CurrentUser, SessionDep
+
 
 def get_row_permission_filters(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource,
                                tables: Optional[list] = None, single_table: Optional[CoreTable] = None):
@@ -20,10 +22,10 @@ def get_row_permission_filters(session: SessionDep, current_user: CurrentUser, d
 
     filters = []
     if is_normal_user(current_user):
+        contain_rules = session.query(DsRules).all()
         for table in table_list:
             row_permissions = session.query(DsPermission).filter(
                 and_(DsPermission.table_id == table.id, DsPermission.type == 'row')).all()
-            contain_rules = session.query(DsRules).all()
             res: List[PermissionDTO] = []
             if row_permissions is not None:
                 for permission in row_permissions:
@@ -43,11 +45,10 @@ def get_row_permission_filters(session: SessionDep, current_user: CurrentUser, d
 
 
 def get_column_permission_fields(session: SessionDep, current_user: CurrentUser, table: CoreTable,
-                                 fields: list[CoreField]):
+                                 fields: list[CoreField], contain_rules: list[DsRules]):
     if is_normal_user(current_user):
         column_permissions = session.query(DsPermission).filter(
             and_(DsPermission.table_id == table.id, DsPermission.type == 'column')).all()
-        contain_rules = session.query(DsRules).all()
         if column_permissions is not None:
             for permission in column_permissions:
                 # check permission and user in same rules
