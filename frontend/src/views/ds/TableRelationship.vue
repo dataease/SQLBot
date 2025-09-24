@@ -10,11 +10,11 @@ const NODE_WIDTH = 180
 
 const props = withDefaults(
   defineProps<{
-    id: string
+    id: number
     dragging: boolean
   }>(),
   {
-    id: '',
+    id: 0,
     dragging: false,
   }
 )
