@@ -221,6 +221,7 @@ const getTableData = () => {
   datasourceApi
     .relationGet(props.id)
     .then((data: any) => {
+      if (!data.length) return
       nodeIds.value = data.filter((ele: any) => ele.shape === 'er-rect').map((ele: any) => ele.id)
       nextTick(() => {
         if (!graph) {
@@ -230,8 +231,6 @@ const getTableData = () => {
           if (item.shape === 'edge') {
             cells.value.push(graph.createEdge({ ...item, ...edgeOPtion }))
           } else {
-            console.log(item)
-
             cells.value.push(
               graph.createNode({
                 ...item,
