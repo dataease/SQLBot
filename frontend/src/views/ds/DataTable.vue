@@ -8,7 +8,8 @@ import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import edit from '@/assets/svg/icon_edit_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import ParamsForm from './ParamsForm.vue'
-
+import TableRelationship from '@/views/ds/TableRelationship.vue'
+import icon_mindnote_outlined from '@/assets/svg/icon_mindnote_outlined.svg'
 interface Table {
   name: string
   host: string
@@ -54,6 +55,7 @@ const paramsFormRef = ref()
 const tableList = ref([] as any[])
 const loading = ref(false)
 const initLoading = ref(false)
+const activeRelationship = ref(false)
 const keywords = ref('')
 const tableListWithSearch = computed(() => {
   if (!keywords.value) return tableList.value
@@ -66,13 +68,29 @@ const showNum = ref(100)
 const currentTable = ref<any>({})
 const ds = ref<any>({})
 const btnSelect = ref('d')
-
+const isDrag = ref(false)
+const tableName = ref<any[]>([])
 const pageInfo = reactive({
   currentPage: 1,
   pageSize: 10,
   total: 0,
 })
+const handleRelationship = () => {
+  activeRelationship.value = !activeRelationship.value
+  currentTable.value = {}
+}
+const singleDragStartD = (e: DragEvent, ele: any) => {
+  isDrag.value = true
+  e.dataTransfer!.setData('table', JSON.stringify(ele))
+}
 
+const getTableName = (val: any) => {
+  tableName.value = val
+}
+
+const singleDragEnd = () => {
+  isDrag.value = false
+}
 const handleSizeChange = (val: number) => {
   pageInfo.currentPage = 1
   pageInfo.pageSize = val
@@ -119,6 +137,7 @@ const handleSelectTableList = () => {
 }
 
 const clickTable = (table: any) => {
+  if (activeRelationship.value) return
   loading.value = true
   currentTable.value = table
   fieldList.value = []
@@ -290,8 +309,14 @@ const btnSelectClick = (val: any) => {
             <div
               v-for="ele in tableListWithSearch"
               :key="ele.table_name"
+              :draggable="activeRelationship && !tableName.includes(ele.id)"
               class="model"
-              :class="currentTable.table_name === ele.table_name && 'isActive'"
+              @dragstart="($event: any) => singleDragStartD($event, ele)"
+              @dragend="singleDragEnd"
+              :class="[
+                currentTable.table_name === ele.table_name && 'isActive',
+                tableName.includes(ele.id) && activeRelationship && 'disabled-table',
+              ]"
               :title="ele.table_name"
               @click="clickTable(ele)"
             >
@@ -318,9 +343,32 @@ const btnSelectClick = (val: any) => {
             </div>
           </div>
         </div>
+        <div class="table-relationship">
+          <div @click="handleRelationship" :class="activeRelationship && 'active'" class="btn">
+            <el-icon size="16">
+              <icon_mindnote_outlined></icon_mindnote_outlined>
+            </el-icon>
+            {{ t('training.table_relationship_management') }}
+          </div>
+        </div>
       </div>
 
-      <div v-if="currentTable.table_name" v-loading="loading" class="info-table">
+      <div v-if="activeRelationship" class="relationship-content">
+        <div class="title">{{ t('training.table_relationship_management') }}</div>
+        <div class="content">
+          <TableRelationship
+            @getTableName="getTableName"
+            :dragging="isDrag"
+            :id="info.id"
+          ></TableRelationship>
+        </div>
+      </div>
+
+      <div
+        v-if="currentTable.table_name && !activeRelationship"
+        v-loading="loading"
+        class="info-table"
+      >
         <div class="table-name">
           <div class="name">{{ currentTable.table_name }}</div>
           <div class="notes">
@@ -336,6 +384,7 @@ const btnSelectClick = (val: any) => {
             </el-tooltip>
           </div>
         </div>
+
         <div class="table-content">
           <div class="btn-select">
             <el-button
@@ -532,6 +581,46 @@ const btnSelectClick = (val: any) => {
       padding: 8px 16px;
       height: 100%;
       border-right: 1px solid #1f232926;
+      .table-relationship {
+        height: 56px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin-top: 20px;
+        position: relative;
+
+        &::after {
+          content: '';
+          width: calc(100% + 32px);
+          position: absolute;
+          left: -16px;
+          background-color: #1f232926;
+          top: 0;
+          height: 1px;
+        }
+
+        .btn {
+          width: 248px;
+          height: 32px;
+          cursor: pointer;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          padding-left: 8px;
+          .ed-icon {
+            color: #646a73;
+            margin-right: 8px;
+          }
+
+          &.active {
+            color: var(--ed-color-primary);
+            .ed-icon {
+              color: var(--ed-color-primary);
+            }
+            background-color: var(--ed-color-primary-1a);
+          }
+        }
+      }
       .select-table_top {
         height: 40px;
         display: flex;
@@ -551,7 +640,7 @@ const btnSelectClick = (val: any) => {
       }
 
       .list-content {
-        height: calc(100% - 100px);
+        height: calc(100% - 156px);
         .no-result {
           margin-top: 72px;
           font-weight: 400;
@@ -568,6 +657,12 @@ const btnSelectClick = (val: any) => {
           padding-left: 8px;
           border-radius: 4px;
           cursor: pointer;
+
+          &.disabled-table {
+            background: #dee0e3 !important;
+            color: #646a73;
+            cursor: not-allowed;
+          }
 
           .name {
             margin-left: 8px;
@@ -602,6 +697,27 @@ const btnSelectClick = (val: any) => {
           color: var(--ed-text-color-secondary);
           font-size: var(--ed-font-size-base);
         }
+      }
+    }
+    .relationship-content {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: calc(100% - 280px);
+      height: 100%;
+
+      .content {
+        height: calc(100% - 56px);
+        width: 100%;
+      }
+
+      .title {
+        height: 56px;
+        padding-left: 24px;
+        line-height: 56px;
+        font-weight: 500;
+        font-size: 16px;
+        border-bottom: 1px solid #1f232926;
       }
     }
     .info-table {

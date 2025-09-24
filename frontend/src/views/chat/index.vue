@@ -514,6 +514,10 @@ const scrollBottom = () => {
   if (!isTyping.value && !getRecommendQuestionsLoading.value) {
     clearInterval(scrollTime)
   }
+  if (!chatListRef.value) {
+    clearInterval(scrollTime)
+    return
+  }
   chatListRef.value!.setScrollTop(innerRef.value!.clientHeight)
 }
 
