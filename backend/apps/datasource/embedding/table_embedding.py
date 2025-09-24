@@ -10,14 +10,14 @@ from common.core.deps import SessionDep, CurrentUser
 from common.utils.utils import SQLBotLogUtil
 
 
-def get_table_embedding(session: SessionDep, current_user: CurrentUser, tables: list[str], question: str):
+def get_table_embedding(session: SessionDep, current_user: CurrentUser, tables: list[dict], question: str):
     _list = []
-    for table_schema in tables:
-        _list.append({"table_schema": table_schema, "cosine_similarity": 0.0})
+    for table in tables:
+        _list.append({"id": table.get('id'), "schema_table": table.get('schema_table'), "cosine_similarity": 0.0})
 
     if _list:
         try:
-            text = [s.get('table_schema') for s in _list]
+            text = [s.get('schema_table') for s in _list]
 
             model = EmbeddingModelCache.get_model()
             results = model.embed_documents(text)
@@ -31,7 +31,7 @@ def get_table_embedding(session: SessionDep, current_user: CurrentUser, tables: 
             _list = _list[:settings.TABLE_EMBEDDING_COUNT]
             # print(len(_list))
             SQLBotLogUtil.info(json.dumps(_list))
-            return [t.get("table_schema") for t in _list]
+            return _list
         except Exception:
             traceback.print_exc()
     return _list
