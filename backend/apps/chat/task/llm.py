@@ -332,7 +332,8 @@ class LLMService:
             self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
                 self.ds.id) if self.out_ds_instance else get_table_schema(session=self.session,
                                                                           current_user=self.current_user, ds=self.ds,
-                                                                          question=self.chat_question.question)
+                                                                          question=self.chat_question.question,
+                                                                          embedding=False)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question()))
