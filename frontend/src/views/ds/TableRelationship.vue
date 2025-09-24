@@ -234,18 +234,6 @@ const getTableData = () => {
             cells.value.push(
               graph.createNode({
                 ...item,
-                attrs: {
-                  label: {
-                    text: item.attrs.text.text,
-                    textAnchor: 'left',
-                    refX: 10,
-                    textWrap: {
-                      width: 140,
-                      height: 24,
-                      ellipsis: true,
-                    },
-                  },
-                },
                 height: LINE_HEIGHT,
                 width: NODE_WIDTH,
               })
@@ -275,7 +263,25 @@ const addNode = (node: any) => {
   if (!graph) {
     initGraph()
   }
-  graph.addNode(graph.createNode({ ...node, height: LINE_HEIGHT, width: NODE_WIDTH }))
+  graph.addNode(
+    graph.createNode({
+      ...node,
+      attrs: {
+        label: {
+          text: node.label,
+          textAnchor: 'left',
+          refX: 10,
+          textWrap: {
+            width: 140,
+            height: 24,
+            ellipsis: true,
+          },
+        },
+      },
+      height: LINE_HEIGHT,
+      width: NODE_WIDTH,
+    })
+  )
 }
 
 const clickTable = (table: any) => {

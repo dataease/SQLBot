@@ -46,6 +46,10 @@ const toWorkspace = () => {
 const toChatIndex = () => {
   router.push('/chat/index')
 }
+
+const toUserIndex = () => {
+  router.push('/system/user')
+}
 const route = useRoute()
 const showSysmenu = computed(() => {
   return route.path.includes('/system')
@@ -56,7 +60,7 @@ const showSysmenu = computed(() => {
   <div class="system-layout">
     <div class="left-side" :class="collapse && 'left-side-collapse'">
       <template v-if="showSysmenu">
-        <div @click="toChatIndex" class="sys-management">
+        <div @click="toUserIndex" class="sys-management">
           <custom_small
             v-if="appearanceStore.themeColor !== 'default'"
             :style="{ marginLeft: collapse ? '5px' : 0 }"
