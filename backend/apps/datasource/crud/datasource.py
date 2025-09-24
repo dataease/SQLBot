@@ -395,7 +395,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
                 else:
                     field_list.append(f"({field.field_name}:{field.field_type}, {field_comment})")
             schema_table += ",\n".join(field_list)
-            schema_table += '\n]\n'
+        schema_table += '\n]\n'
 
         t_obj = {"id": obj.table.id, "schema_table": schema_table}
         tables.append(t_obj)
