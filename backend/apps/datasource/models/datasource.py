@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel
-from sqlalchemy import Column, Text, BigInteger, DateTime, Integer, Identity
+from sqlalchemy import Column, Text, BigInteger, DateTime, Identity
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import SQLModel, Field
 
 
@@ -19,6 +20,7 @@ class CoreDatasource(SQLModel, table=True):
     status: str = Field(max_length=64, nullable=True)
     num: str = Field(max_length=256, nullable=True)
     oid: int = Field(sa_column=Column(BigInteger()))
+    table_relation: List = Field(sa_column=Column(JSONB, nullable=True))
 
 
 class CoreTable(SQLModel, table=True):
