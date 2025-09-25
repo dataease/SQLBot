@@ -1,6 +1,7 @@
 # Author: Junjun
 # Date: 2025/9/23
 import json
+import time
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
@@ -20,7 +21,10 @@ def get_table_embedding(session: SessionDep, current_user: CurrentUser, tables: 
             text = [s.get('schema_table') for s in _list]
 
             model = EmbeddingModelCache.get_model()
+            start_time = time.time()
             results = model.embed_documents(text)
+            end_time = time.time()
+            SQLBotLogUtil.info(str(end_time - start_time))
 
             q_embedding = model.embed_query(question)
             for index in range(len(results)):
