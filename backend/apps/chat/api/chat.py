@@ -145,7 +145,7 @@ async def stream_sql(session: SessionDep, current_user: CurrentUser, request_que
     """
 
     try:
-        llm_service = await LLMService.create(current_user, request_question, current_assistant)
+        llm_service = await LLMService.create(current_user, request_question, current_assistant, embedding=True)
         llm_service.init_record()
         llm_service.run_task_async()
     except Exception as e:

@@ -85,7 +85,7 @@ class LLMService:
 
     def __init__(self, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
-                 config: LLMConfig = None):
+                 embedding: bool = False, config: LLMConfig = None):
         self.chunk_list = []
         # engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
         # session_maker = sessionmaker(bind=engine)
@@ -115,7 +115,7 @@ class LLMService:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = (ds.type_name if ds.type != 'excel' else 'PostgreSQL') + get_version(ds)
                 chat_question.db_schema = get_table_schema(session=self.session, current_user=current_user, ds=ds,
-                                                           question=chat_question.question)
+                                                           question=chat_question.question, embedding=embedding)
 
         self.generate_sql_logs = list_generate_sql_logs(session=self.session, chart_id=chat_id)
         self.generate_chart_logs = list_generate_chart_logs(session=self.session, chart_id=chat_id)
