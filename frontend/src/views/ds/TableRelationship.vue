@@ -37,7 +37,7 @@ const edgeOPtion = {
   attrs: {
     line: {
       stroke: '#DEE0E3',
-      strokeWidth: 1,
+      strokeWidth: 2,
     },
   },
 }
@@ -51,7 +51,7 @@ const initGraph = () => {
         return {
           position: {
             x: 0,
-            y: (index + 1) * LINE_HEIGHT,
+            y: (index + 1) * LINE_HEIGHT + 15,
           },
           angle: 0,
         }
@@ -66,6 +66,10 @@ const initGraph = () => {
       inherit: 'rect',
       markup: [
         {
+          tagName: 'path',
+          selector: 'top',
+        },
+        {
           tagName: 'rect',
           selector: 'body',
         },
@@ -73,12 +77,32 @@ const initGraph = () => {
           tagName: 'text',
           selector: 'label',
         },
+        {
+          tagName: 'path',
+          selector: 'div',
+        },
       ],
       attrs: {
+        top: {
+          fill: '#BBBFC4',
+          refX: 0,
+          refY: 0,
+          d: 'M0 5C0 2.23858 2.23858 0 5 0H175C177.761 0 180 2.23858 180 5H0Z',
+        },
         rect: {
-          strokeWidth: 1,
-          stroke: '#F5F6F7',
+          strokeWidth: 0.5,
+          stroke: '#DEE0E3',
           fill: '#F5F6F7',
+          refY: 5,
+        },
+        div: {
+          fillRule: 'evenodd',
+          clipRule: 'evenodd',
+          fill: '#646A73',
+          refX: 12,
+          refY: 21,
+          fontSize: 14,
+          d: 'M1.4773 1.47724C1.67618 1.27836 1.94592 1.16663 2.22719 1.16663H11.7729C12.0541 1.16663 12.3239 1.27836 12.5227 1.47724C12.7216 1.67612 12.8334 1.94586 12.8334 2.22713V11.7728C12.8334 12.0541 12.7216 12.3238 12.5227 12.5227C12.3239 12.7216 12.0541 12.8333 11.7729 12.8333H2.22719C1.64152 12.8333 1.16669 12.3585 1.16669 11.7728V2.22713C1.16669 1.94586 1.27842 1.67612 1.4773 1.47724ZM2.33335 5.83329V8.16662H4.66669V5.83329H2.33335ZM2.33335 9.33329V11.6666H4.66669V9.33329H2.33335ZM5.83335 11.6666H8.16669V9.33329H5.83335V11.6666ZM9.33335 11.6666H11.6667V9.33329H9.33335V11.6666ZM11.6667 8.16662V5.83329H9.33335V8.16662H11.6667ZM8.16669 5.83329H5.83335V8.16662H8.16669V5.83329ZM11.6667 2.33329H2.33335V4.66663H11.6667V2.33329Z',
         },
         label: {
           fill: '#1F2329',
@@ -102,15 +126,15 @@ const initGraph = () => {
               portBody: {
                 width: NODE_WIDTH,
                 height: LINE_HEIGHT,
-                strokeWidth: 1,
-                stroke: '#1F232926',
+                stroke: '#DEE0E3',
+                strokeWidth: 0.5,
                 fill: '#ffffff',
                 magnet: true,
               },
               portNameLabel: {
                 ref: 'portBody',
                 refX: 12,
-                refY: 8,
+                refY: 9.5,
                 fontSize: 14,
                 textAnchor: 'left',
                 textWrap: {
@@ -196,7 +220,7 @@ const initGraph = () => {
         ],
         x: 0,
         y: 0,
-        offset: { x: 165, y: 18 },
+        offset: { x: 165, y: 28 },
         onClick({ view }: any) {
           graph.removeNode(view.cell.id)
           nodeIds.value = nodeIds.value.filter((ele) => ele !== view.cell.id)
@@ -234,7 +258,7 @@ const getTableData = () => {
             cells.value.push(
               graph.createNode({
                 ...item,
-                height: LINE_HEIGHT,
+                height: LINE_HEIGHT + 15,
                 width: NODE_WIDTH,
               })
             )
@@ -270,15 +294,16 @@ const addNode = (node: any) => {
         label: {
           text: node.label,
           textAnchor: 'left',
-          refX: 10,
+          refX: 34,
+          refY: 28,
           textWrap: {
-            width: 140,
+            width: 120,
             height: 24,
             ellipsis: true,
           },
         },
       },
-      height: LINE_HEIGHT,
+      height: LINE_HEIGHT + 15,
       width: NODE_WIDTH,
     })
   )
@@ -341,6 +366,26 @@ const save = () => {
 </script>
 
 <template>
+  <svg style="position: fixed; top: -9999px" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+      <filter
+        x="-1"
+        y="-1"
+        width="3"
+        height="3"
+        filterUnits="objectBoundingBox"
+        id="filter-dropShadow-v0-3329848037"
+      >
+        <feDropShadow
+          stdDeviation="4"
+          dx="1"
+          dy="2"
+          flood-color="#1F23291F"
+          flood-opacity="0.65"
+        ></feDropShadow>
+      </filter>
+    </defs>
+  </svg>
   <div v-loading="loading" v-if="!nodeIds.length" class="relationship-empty">
     {{ t('training.add_it_here') }}
   </div>
@@ -392,6 +437,7 @@ const save = () => {
   min-height: 600px;
   width: 100%;
   height: 100%;
+  background-color: #f5f6f7;
   :deep(.x6-edge-tool) {
     display: none;
 
@@ -404,6 +450,10 @@ const save = () => {
     circle {
       fill: var(--ed-color-primary) !important;
     }
+  }
+
+  :deep(.x6-node) {
+    filter: url(#filter-dropShadow-v0-3329848037);
   }
 }
 </style>
