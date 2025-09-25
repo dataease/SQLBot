@@ -5,6 +5,8 @@ import urllib.parse
 from decimal import Decimal
 from typing import Optional
 
+import pymssql
+
 from apps.db.db_sql import get_table_sql, get_field_sql, get_version_sql
 from common.error import ParseSQLResultError
 
@@ -70,6 +72,18 @@ def get_uri_from_config(type: str, conf: DatasourceConf) -> str:
     return db_url
 
 
+def get_origin_connect(type: str, conf: DatasourceConf):
+    if type == "sqlServer":
+        return pymssql.connect(
+            server=conf.host,
+            port=str(conf.port),
+            user=conf.username,
+            password=conf.password,
+            database=conf.database,
+            tds_version='7.0'  # options: '4.2', '7.0', '8.0' ...
+        )
+
+
 def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
     if conf.timeout is None:
@@ -87,7 +101,8 @@ def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
                                    connect_args={"connect_timeout": conf.timeout},
                                    pool_timeout=conf.timeout)
     elif ds.type == 'sqlServer':
-        engine = create_engine(get_uri(ds), pool_timeout=conf.timeout)
+        engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds.type, conf),
+                               pool_timeout=conf.timeout)
     elif ds.type == 'oracle':
         engine = create_engine(get_uri(ds),
                                pool_timeout=conf.timeout)
