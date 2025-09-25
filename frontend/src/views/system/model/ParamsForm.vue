@@ -37,7 +37,12 @@ const rules = {
 
 const initForm = (item: any) => {
   if (item) {
-    Object.assign(paramsForm, { ...item })
+    const formData = { ...item }
+    // 如果val是对象，转换为JSON字符串
+    if (typeof formData.val === 'object' && formData.val !== null) {
+      formData.val = JSON.stringify(formData.val)
+    }
+    Object.assign(paramsForm, formData)
   }
   if (!paramsForm.id) {
     paramsForm.id = `${+new Date()}`
@@ -50,7 +55,15 @@ const emits = defineEmits(['submit'])
 const submit = () => {
   paramsRef.value.validate((res: any) => {
     if (res) {
-      emits('submit', paramsForm)
+      const submitData = { ...paramsForm }
+      // 尝试将JSON字符串转回对象
+      try {
+        const parsed = JSON.parse(submitData.val)
+        submitData.val = parsed
+      } catch (e) {
+        // 如果不是有效JSON，保持原字符串
+      }
+      emits('submit', submitData)
     }
   })
 }

@@ -383,7 +383,11 @@ defineExpose({
         <el-table :data="advancedSettingPagination" style="width: 100%">
           <el-table-column prop="key" :label="t('model.parameters')" width="280" />
           <el-table-column prop="name" :label="t('model.display_name')" width="280" />
-          <el-table-column prop="val" show-overflow-tooltip :label="t('model.parameter_value')" />
+          <el-table-column show-overflow-tooltip :label="t('model.parameter_value')">
+            <template #default="scope">
+              {{ typeof scope.row.val === 'object' ? JSON.stringify(scope.row.val) : scope.row.val }}
+            </template>
+          </el-table-column>
           <el-table-column
             fixed="right"
             width="80"

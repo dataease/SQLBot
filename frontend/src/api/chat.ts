@@ -51,6 +51,7 @@ export class ChatRecord {
   recommended_question?: string
   analysis_record_id?: number
   predict_record_id?: number
+  sql_retry_thinking?: string  // 添加SQL重试思考字段
 
   constructor()
   constructor(

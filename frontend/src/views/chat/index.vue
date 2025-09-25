@@ -184,7 +184,7 @@
                     :current-chat-id="currentChatId"
                     :loading="isTyping"
                     :message="message"
-                    :reasoning-name="['sql_answer', 'chart_answer']"
+                    :reasoning-name="['sql_answer', 'sql_retry_thinking' , 'chart_answer']"
                     @finish="onChartAnswerFinish"
                     @error="onChartAnswerError"
                     @stop="onChatStop"

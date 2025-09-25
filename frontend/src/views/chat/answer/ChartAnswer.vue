@@ -10,7 +10,7 @@ const props = withDefaults(
     currentChat?: ChatInfo
     message?: ChatMessage
     loading?: boolean
-    reasoningName: 'sql_answer' | 'chart_answer' | Array<'sql_answer' | 'chart_answer'>
+    reasoningName: 'sql_answer' | 'chart_answer' | Array<'sql_answer' | 'chart_answer' | 'sql_retry_thinking'>
   }>(),
   {
     chatList: () => [],
@@ -177,9 +177,10 @@ const sendMessage = async () => {
                 sql_answer += data.reasoning_content
                 _currentChat.value.records[index.value].sql_answer = sql_answer
                 break
-              case 'sql-retry-thinking':  // 添加这个新的 case
-                // 更新当前消息的 sql_answer 字段为完整的思考过程
-                _currentChat.value.records[index.value].sql_answer = data.reasoning_content
+              case 'sql-retry-thinking':
+                // 追加重试思考内容，而不是覆盖
+                const currentSqlAnswer = _currentChat.value.records[index.value].sql_answer || ''
+                _currentChat.value.records[index.value].sql_answer = currentSqlAnswer  + data.reasoning_content
                 break
               case 'sql':
                 _currentChat.value.records[index.value].sql = data.content

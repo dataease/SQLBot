@@ -33,11 +33,10 @@ services:
       - ./data/sqlbot/logs:/opt/sqlbot/logs
       - ./data/postgresql:/var/lib/postgresql/data
       - ./backend/apps/ai_model/model_factory.py:/opt/sqlbot/app/apps/ai_model/model_factory.py
-      # - ./backend:/opt/sqlbot/app
       - ./backend/apps:/opt/sqlbot/app/apps
       - ./backend/common:/opt/sqlbot/app/common
       - ./backend/main.py:/opt/sqlbot/app/main.py
-
+      - ./frontend/dist:/opt/sqlbot/frontend/dist
   frontend:
     image: node:18
     container_name: sqlbot-frontend-dev

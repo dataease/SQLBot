@@ -15,7 +15,8 @@ const props = withDefaults(
       | 'chart_answer'
       | 'analysis_thinking'
       | 'predict'
-      | Array<'sql_answer' | 'chart_answer' | 'analysis_thinking' | 'predict'>
+      | 'sql_retry_thinking'  // 新增
+      | Array<'sql_answer' | 'chart_answer' | 'analysis_thinking' | 'predict' | 'sql_retry_thinking'>
   }>(),
   {
     loading: false,
@@ -30,8 +31,8 @@ const thinkingDuration = ref<number>(0)
 const timer = ref<any>(null)
 const isTimerRunning = ref(false)
 
-const reasoningContent = computed<Array<string>>(() => {
-  const names: Array<'sql_answer' | 'chart_answer' | 'analysis_thinking' | 'predict'> = []
+const reasoningContent = computed<Array<{content: string, type: string, label: string}>>(() => {
+  const names: Array<'sql_answer' | 'chart_answer' | 'analysis_thinking' | 'predict' | 'sql_retry_thinking'> = []
   if (typeof props.reasoningName === 'string') {
     names.push(props.reasoningName)
   } else {
@@ -39,7 +40,17 @@ const reasoningContent = computed<Array<string>>(() => {
       names.push(item)
     })
   }
-  const result: Array<string> = []
+  const result: Array<{content: string, type: string, label: string}> = []
+  
+  // 定义字段的显示标签
+  const fieldLabels = {
+    'sql_answer': '初次思考',
+    'sql_retry_thinking': '重新思考', 
+    'chart_answer': '图表分析',
+    'analysis_thinking': '分析思考',
+    'predict': '预测分析'
+  }
+  
   names.forEach((item) => {
     if (props.message?.record) {
       if (props.message?.record[item]) {
@@ -55,7 +66,13 @@ const reasoningContent = computed<Array<string>>(() => {
           // 如果不是 JSON 格式，直接使用原内容
         }
         
-        result.push(content)
+        if (content.trim()) {  // 只添加非空内容
+          result.push({
+            content: content,
+            type: item,
+            label: fieldLabels[item] || item
+          })
+        }
       }
     }
   })
@@ -65,7 +82,7 @@ const reasoningContent = computed<Array<string>>(() => {
 const hasReasoning = computed<boolean>(() => {
   if (reasoningContent.value.length > 0) {
     for (let i = 0; i < reasoningContent.value.length; i++) {
-      if (reasoningContent.value[i] && reasoningContent.value[i].trim() !== '') {
+      if (reasoningContent.value[i] && reasoningContent.value[i].content.trim() !== '') {
         return true
       }
     }
@@ -148,7 +165,10 @@ onBeforeUnmount(() => {
     </el-button>
     <div v-if="hasReasoning && show" class="reasoning-content">
       <div v-for="(reason, _index) in reasoningContent" :key="_index" class="reasoning">
-        <MdComponent :message="reason" />
+        <div v-if="reasoningContent.length > 1" class="reasoning-header">
+          <el-divider content-position="left">{{ reason.label }}</el-divider>
+        </div>
+        <MdComponent :message="reason.content" />
       </div>
     </div>
     <div class="answer-container">

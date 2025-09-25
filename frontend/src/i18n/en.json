@@ -160,6 +160,7 @@
     "thinking": "Thinking",
     "thinking_step": "Thought Process",
     "ask_again": "Regenerate",
+    "retry_thinking": "Rethink",
     "today": "Today",
     "week": "This Week",
     "earlier": "Earlier",
