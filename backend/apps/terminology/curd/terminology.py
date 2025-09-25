@@ -1,7 +1,7 @@
 import datetime
 import logging
 import traceback
-from typing import List, Optional
+from typing import List, Optional, Any
 from xml.dom.minidom import parseString
 
 import dicttoxml
@@ -367,17 +367,22 @@ def save_embeddings(session: Session, ids: List[int]):
 embedding_sql = f"""
 SELECT id, pid, word, similarity
 FROM
-(SELECT id, pid, word, oid,
+(SELECT id, pid, word, oid, specific_ds, datasource_ids,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM terminology AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} and oid = :oid
+WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid
+AND (
+    (:datasource IS NULL AND (specific_ds = false OR specific_ds IS NULL))
+    OR
+    (:datasource IS NOT NULL AND ((specific_ds = false OR specific_ds IS NULL) OR (specific_ds = true AND datasource_ids IS NOT NULL AND datasource_ids @> jsonb_build_array(:datasource))))
+)
 ORDER BY similarity DESC
 LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
 """
 
 
-def select_terminology_by_word(session: SessionDep, word: str, oid: int):
+def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasource: int = None):
     if word.strip() == "":
         return []
 
@@ -394,7 +399,26 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int):
         )
     )
 
-    results = session.execute(stmt, {'sentence': word}).fetchall()
+    if datasource is not None:
+        stmt = stmt.where(
+            or_(
+                or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)),
+                and_(
+                    Terminology.specific_ds == True,
+                    Terminology.datasource_ids.isnot(None),
+                    text("datasource_ids @> jsonb_build_array(:datasource)")
+                )
+            )
+        )
+    else:
+        stmt = stmt.where(or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)))
+
+    # 执行查询
+    params: dict[str, Any] = {'sentence': word}
+    if datasource is not None:
+        params['datasource'] = datasource
+
+    results = session.execute(stmt, params).fetchall()
 
     for row in results:
         _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
@@ -405,7 +429,8 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int):
 
             embedding = model.embed_query(word)
 
-            results = session.execute(text(embedding_sql), {'embedding_array': str(embedding), 'oid': oid})
+            results = session.execute(text(embedding_sql), {'embedding_array': str(embedding), 'oid': oid,
+                                                            'datasource': datasource}).fetchall()
 
             for row in results:
                 _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
@@ -481,10 +506,11 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'terminologies') -> str:
     return pretty_xml
 
 
-def get_terminology_template(session: SessionDep, question: str, oid: Optional[int] = 1) -> str:
+def get_terminology_template(session: SessionDep, question: str, oid: Optional[int] = 1,
+                             datasource: Optional[int] = None) -> str:
     if not oid:
         oid = 1
-    _results = select_terminology_by_word(session, question, oid)
+    _results = select_terminology_by_word(session, question, oid, datasource)
     if _results and len(_results) > 0:
         terminology = to_xml_string(_results)
         template = get_base_terminology_template().format(terminologies=terminology)

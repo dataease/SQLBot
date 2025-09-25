@@ -241,8 +241,9 @@ class LLMService:
         self.chat_question.data = orjson.dumps(data.get('data')).decode()
         analysis_msg: List[Union[BaseMessage, dict[str, Any]]] = []
 
+        ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
         self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
-                                                                    self.current_user.oid)
+                                                                    self.current_user.oid, ds_id)
 
         analysis_msg.append(SystemMessage(content=self.chat_question.analysis_sys_question()))
         analysis_msg.append(HumanMessage(content=self.chat_question.analysis_user_question()))
@@ -504,7 +505,8 @@ class LLMService:
             oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
-            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, oid)
+            self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question, oid,
+                                                                        ds_id)
             self.chat_question.data_training = get_training_template(self.session, self.chat_question.question, ds_id,
                                                                      oid)
 
@@ -897,7 +899,7 @@ class LLMService:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
                 self.chat_question.terminologies = get_terminology_template(self.session, self.chat_question.question,
-                                                                            oid)
+                                                                            oid, ds_id)
                 self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
                                                                          ds_id, oid)
 
