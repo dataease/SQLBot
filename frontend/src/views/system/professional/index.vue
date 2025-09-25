@@ -3,6 +3,7 @@ import { nextTick, onMounted, reactive, ref, unref } from 'vue'
 import icon_export_outlined from '@/assets/svg/icon_export_outlined.svg'
 import { professionalApi } from '@/api/professional'
 import { formatTimestamp } from '@/utils/date'
+import { datasourceApi } from '@/api/datasource'
 import ccmUpload from '@/assets/svg/icon_ccm-upload_outlined.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import IconOpeEdit from '@/assets/svg/icon_edit_outlined.svg'
@@ -16,11 +17,15 @@ interface Form {
   id?: string | null
   word: string | null
   other_words: string[]
+  specific_ds: boolean
+  datasource_ids: number[]
+  datasource_names: string[]
   description: string | null
 }
 
 const { t } = useI18n()
 const multipleSelectionAll = ref<any[]>([])
+const allDsList = ref<any[]>([])
 const keywords = ref('')
 const oldKeywords = ref('')
 const searchLoading = ref(false)
@@ -48,7 +53,10 @@ const defaultForm = {
   id: null,
   word: null,
   description: null,
+  specific_ds: false,
+  datasource_ids: [],
   other_words: [''],
+  datasource_names: [],
 }
 const pageForm = ref<Form>(cloneDeep(defaultForm))
 
@@ -197,6 +205,14 @@ const search = () => {
 
 const termFormRef = ref()
 
+const validatePass = (_: any, value: any, callback: any) => {
+  if (pageForm.value.specific_ds && !value.length) {
+    callback(new Error(t('datasource.Please_select') + t('common.empty') + t('ds.title')))
+  } else {
+    callback()
+  }
+}
+
 const rules = {
   word: [
     {
@@ -211,6 +227,16 @@ const rules = {
         t('datasource.please_enter') + t('common.empty') + t('professional.term_description'),
     },
   ],
+  datasource_ids: [
+    {
+      validator: validatePass,
+      trigger: 'blur',
+    },
+  ],
+}
+
+const handleChange = () => {
+  termFormRef.value.validateField('datasource_ids')
 }
 
 const saveHandler = () => {
@@ -241,7 +267,11 @@ const saveHandler = () => {
     }
   })
 }
-
+const list = () => {
+  datasourceApi.list().then((res) => {
+    allDsList.value = res
+  })
+}
 const editHandler = (row: any) => {
   pageForm.value.id = null
   if (row) {
@@ -254,6 +284,7 @@ const editHandler = (row: any) => {
     ? t('professional.editing_terminology')
     : t('professional.create_new_term')
   dialogFormVisible.value = true
+  list()
 }
 
 const onFormClose = () => {
@@ -353,16 +384,23 @@ const deleteHandlerItem = (idx: number) => {
               }}
             </template>
           </el-table-column>
-          <el-table-column
-            prop="description"
-            :label="$t('professional.term_description')"
-            min-width="240"
+          <el-table-column :label="$t('professional.term_description')" min-width="240"
             ><template #default="scope">
               <div class="field-comment_d">
                 <span :title="scope.row.description" class="notes-in_table">{{
                   scope.row.description
                 }}</span>
               </div>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('training.effective_data_sources')" min-width="240"
+            ><template #default="scope">
+              <div v-if="scope.row.specific_ds" class="field-comment_d">
+                <span :title="scope.row.datasource_names" class="notes-in_table">{{
+                  scope.row.datasource_names.join(',')
+                }}</span>
+              </div>
+              <div v-else>{{ t('training.all_data_sources') }}</div>
             </template>
           </el-table-column>
           <el-table-column
@@ -490,6 +528,28 @@ const deleteHandlerItem = (idx: number) => {
           type="textarea"
         />
       </el-form-item>
+      <el-form-item
+        class="is-required"
+        :class="!pageForm.specific_ds && 'no-error'"
+        prop="datasource_ids"
+        :label="t('training.effective_data_sources')"
+      >
+        <el-radio-group v-model="pageForm.specific_ds">
+          <el-radio :value="false">{{ $t('training.all_data_sources') }}</el-radio>
+          <el-radio :value="true">{{ $t('training.partial_data_sources') }}</el-radio>
+        </el-radio-group>
+        <el-select
+          v-model="pageForm.datasource_ids"
+          multiple
+          v-if="pageForm.specific_ds"
+          filterable
+          @change="handleChange"
+          :placeholder="$t('datasource.Please_select') + $t('common.empty') + $t('ds.title')"
+          style="width: 100%; margin-top: 8px"
+        >
+          <el-option v-for="item in allDsList" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </el-form-item>
 
       <el-form-item>
         <template #label>
@@ -561,6 +621,15 @@ const deleteHandlerItem = (idx: number) => {
       <el-form-item :label="t('professional.synonyms')">
         <div class="content">
           {{ pageForm.other_words.join(',') }}
+        </div>
+      </el-form-item>
+      <el-form-item :label="t('training.effective_data_sources')">
+        <div class="content">
+          {{
+            pageForm.specific_ds
+              ? pageForm.datasource_names.join(',')
+              : t('training.all_data_sources')
+          }}
         </div>
       </el-form-item>
       <el-form-item :label="t('professional.term_description')">
@@ -762,6 +831,12 @@ const deleteHandlerItem = (idx: number) => {
 }
 
 .professional-add_drawer {
+  .no-error.no-error {
+    .ed-form-item__error {
+      display: none;
+    }
+    margin-bottom: 16px;
+  }
   .ed-textarea__inner {
     line-height: 22px;
   }

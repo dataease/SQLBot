@@ -7,6 +7,9 @@
     "AI Model Configuration": "模型配置"
   },
   "training": {
+    "effective_data_sources": "生效数据源",
+    "all_data_sources": "所有数据源",
+    "partial_data_sources": "部分数据源",
     "add_it_here": "拖拽左侧表名，添加到这里",
     "table_relationship_management": "表关系管理",
     "system_anagement": "系统管理",
