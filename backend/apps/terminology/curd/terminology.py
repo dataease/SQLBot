@@ -149,6 +149,16 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
             .subquery()
         )
 
+        children_subquery = (
+            select(
+                child.pid,
+                func.jsonb_agg(child.word).filter(child.word.isnot(None)).label('other_words')
+            )
+            .where(child.pid.isnot(None))
+            .group_by(child.pid)
+            .subquery()
+        )
+
         # 创建子查询来获取数据源名称
         datasource_names_subquery = (
             select(
@@ -167,10 +177,13 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
                 Terminology.description,
                 Terminology.specific_ds,
                 Terminology.datasource_ids,
-                func.jsonb_agg(child.word).filter(child.word.isnot(None)).label('other_words'),
+                children_subquery.c.other_words,
                 func.jsonb_agg(CoreDatasource.name).filter(CoreDatasource.id.isnot(None)).label('datasource_names')
             )
-            .outerjoin(child, and_(Terminology.id == child.pid))
+            .outerjoin(
+                children_subquery,
+                Terminology.id == children_subquery.c.pid
+            )
             # 关联数据源名称子查询和 CoreDatasource 表
             .outerjoin(
                 datasource_names_subquery,
@@ -181,7 +194,14 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
                 CoreDatasource.id == datasource_names_subquery.c.ds_id
             )
             .where(and_(Terminology.id.in_(paginated_parent_ids), Terminology.oid == oid))
-            .group_by(Terminology.id, Terminology.word)
+            .group_by(Terminology.id,
+                      Terminology.word,
+                      Terminology.create_time,
+                      Terminology.description,
+                      Terminology.specific_ds,
+                      Terminology.datasource_ids,
+                      children_subquery.c.other_words
+                      )
             .order_by(Terminology.create_time.desc())
         )
 
