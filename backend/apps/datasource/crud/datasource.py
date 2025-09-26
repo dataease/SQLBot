@@ -13,6 +13,7 @@ from apps.datasource.utils.utils import aes_decrypt
 from apps.db.constant import DB
 from apps.db.db import get_tables, get_fields, exec_sql, check_connection
 from apps.db.engine import get_engine_config, get_engine_conn
+from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.utils import deepcopy_ignore_extra
 from .table import get_tables_by_ds_id
@@ -402,7 +403,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         all_tables.append(t_obj)
 
     # do table embedding
-    if embedding and tables:
+    if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
         tables = get_table_embedding(session, current_user, tables, question)
     # splice schema
     if tables:
