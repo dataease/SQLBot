@@ -80,6 +80,7 @@ def get_origin_connect(type: str, conf: DatasourceConf):
             user=conf.username,
             password=conf.password,
             database=conf.database,
+            timeout=conf.timeout,
             tds_version='7.0'  # options: '4.2', '7.0', '8.0' ...
         )
 
