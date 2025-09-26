@@ -193,6 +193,7 @@ async def preview_data(session: SessionDep, trans: Trans, current_user: CurrentU
     return await asyncio.to_thread(inner)
 
 
+# not used
 @router.post("/fieldEnum/{id}")
 async def field_enum(session: SessionDep, id: int):
     def inner():
