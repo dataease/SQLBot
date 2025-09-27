@@ -193,7 +193,7 @@ async def batch_del(session: SessionDep, id_list: list[int]):
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
 async def langChange(session: SessionDep, current_user: CurrentUser, trans: Trans, language: UserLanguage):
     lang = language.language
-    if lang not in ["zh-CN", "en"]:
+    if lang not in ["zh-CN", "en", "ko-KR"]:
         raise Exception(trans('i18n_user.language_not_support', key = lang))
     db_user: UserModel = get_db_user(session=session, user_id=current_user.id)
     db_user.language = lang

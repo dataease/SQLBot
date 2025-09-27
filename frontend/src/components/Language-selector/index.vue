@@ -1,21 +1,20 @@
 <template>
   <el-dropdown trigger="hover" @command="changeLanguage">
     <div class="lang-switch">
-      <span>{{ selectedLanguage === 'zh-CN' ? '中文' : 'English' }}</span>
+      <span>{{ displayLanguageName }}</span>
       <el-icon class="el-icon--right">
         <ArrowDown />
       </el-icon>
     </div>
     <template #dropdown>
       <el-dropdown-menu>
-        <el-dropdown-item command="en" :class="{ 'selected-lang': selectedLanguage === 'en' }">
-          English
-        </el-dropdown-item>
         <el-dropdown-item
-          command="zh-CN"
-          :class="{ 'selected-lang': selectedLanguage === 'zh-CN' }"
+          v-for="option in languageOptions"
+          :key="option.value"
+          :command="option.value"
+          :class="{ 'selected-lang': selectedLanguage === option.value }"
         >
-          中文
+          {{ option.label }}
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>
@@ -29,11 +28,22 @@ import { useUserStore } from '@/stores/user'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { userApi } from '@/api/auth'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 const userStore = useUserStore()
+
+const languageOptions = computed(() => [
+  { value: 'en', label: t('common.english') },
+  { value: 'zh-CN', label: t('common.simplified_chinese') },
+  { value: 'ko-KR', label: t('common.korean') },
+])
 
 const selectedLanguage = computed(() => {
   return userStore.language
+})
+
+const displayLanguageName = computed(() => {
+  const current = languageOptions.value.find((item) => item.value === selectedLanguage.value)
+  return current?.label ?? t('common.language')
 })
 
 const changeLanguage = (lang: string) => {
