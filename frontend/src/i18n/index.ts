@@ -1,9 +1,12 @@
 import { createI18n } from 'vue-i18n'
 import en from './en.json'
 import zhCN from './zh-CN.json'
+import koKR from './ko-KR.json'
 import elementEnLocale from 'element-plus-secondary/es/locale/lang/en'
 import elementZhLocale from 'element-plus-secondary/es/locale/lang/zh-cn'
 import { useCache } from '@/utils/useCache'
+
+const elementKoLocale = elementEnLocale
 const { wsCache } = useCache()
 
 const getDefaultLocale = () => {
@@ -20,6 +23,10 @@ const messages = {
     ...zhCN,
     el: elementZhLocale,
   },
+  'ko-KR': {
+    ...koKR,
+    el: elementKoLocale,
+  },
 }
 
 export const i18n = createI18n({
@@ -30,6 +37,13 @@ export const i18n = createI18n({
   messages,
 })
 
+const elementLocales = {
+  en: elementEnLocale,
+  'zh-CN': elementZhLocale,
+  'ko-KR': elementKoLocale,
+} as const
+
 export const getElementLocale = () => {
-  return i18n.global.locale.value === 'en' ? elementEnLocale : elementZhLocale
+  const locale = i18n.global.locale.value as keyof typeof elementLocales
+  return elementLocales[locale] ?? elementEnLocale
 }

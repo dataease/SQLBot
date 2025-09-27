@@ -1,0 +1,54 @@
+{
+  "i18n_default_workspace": "기본 워크스페이스",
+  "i18n_ds_name_exist": "이미 존재하는 이름입니다",
+  "i18n_concat_admin": "관리자에게 문의해 주세요!",
+  "i18n_exist": "{msg}이(가) 이미 존재합니다!",
+  "i18n_name": "이름",
+  "i18n_not_exist": "{msg}을(를) 찾을 수 없습니다",
+  "i18n_error": "{key} 오류!",
+  "i18n_miss_args": "{key} 매개변수가 없습니다!",
+  "i18n_format_invalid": "{key} 형식이 올바르지 않습니다!",
+  "i18n_login": {
+    "account_pwd_error": "계정 또는 비밀번호가 올바르지 않습니다!",
+    "no_associated_ws": "연결된 워크스페이스가 없습니다. {msg}",
+    "user_disable": "계정이 비활성화되었습니다. {msg}"
+  },
+  "i18n_user": {
+    "account": "계정",
+    "email": "이메일",
+    "password": "비밀번호",
+    "language_not_support": "[{key}] 언어는 지원하지 않습니다!",
+    "ws_miss": "현재 사용자는 워크스페이스 [{ws}]에 속해 있지 않습니다!"
+  },
+  "i18n_ws": {
+    "title": "워크스페이스"
+  },
+  "i18n_permission": {
+    "only_admin": "관리자만 호출할 수 있습니다!",
+    "no_permission": "{url}{msg}에 접근 권한이 없습니다",
+    "authenticate_invalid": "인증이 실패했습니다 [{msg}]",
+    "token_expired": "토큰이 만료되었습니다"
+  },
+  "i18n_llm": {
+    "validate_error": "검증에 실패했습니다 [{msg}]",
+    "delete_default_error": "기본 모델 [{key}]은 삭제할 수 없습니다!",
+    "miss_default": "기본 LLM이 아직 설정되지 않았습니다"
+  },
+  "i18n_ds_invalid": "데이터 소스가 유효하지 않습니다",
+  "i18n_embedded": {
+    "invalid_origin": "도메인 검증에 실패했습니다 [{origin}]"
+  },
+  "i18n_terminology": {
+    "terminology_not_exists": "용어를 찾을 수 없습니다",
+    "cannot_be_repeated": "용어 이름과 동의어는 중복될 수 없습니다",
+    "exists_in_db": "용어 이름 또는 동의어가 이미 존재합니다"
+  },
+  "i18n_data_training": {
+    "datasource_cannot_be_none": "데이터 소스를 선택해 주세요",
+    "data_training_not_exists": "예제가 존재하지 않습니다",
+    "exists_in_db": "질문이 이미 존재합니다"
+  },
+  "i18n_excel_export": {
+    "data_is_empty": "양식 데이터가 없어 내보낼 수 없습니다"
+  }
+}

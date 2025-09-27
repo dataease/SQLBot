@@ -406,7 +406,7 @@ class LLMService:
         full_thinking_text = ''
         full_text = ''
         if not ignore_auto_select:
-            if settings.TABLE_EMBEDDING_ENABLED:
+            if settings.EMBEDDING_ENABLED:
                 ds = get_ds_embedding(self.session, self.current_user, _ds_list, self.out_ds_instance,
                                       self.chat_question.question, self.current_assistant)
                 yield {'content': '{"id":' + str(ds.get('id')) + '}'}
@@ -496,7 +496,7 @@ class LLMService:
         except Exception as e:
             _error = e
 
-        if not ignore_auto_select and not settings.TABLE_EMBEDDING_ENABLED:
+        if not ignore_auto_select and not settings.EMBEDDING_ENABLED:
             self.record = save_select_datasource_answer(session=self.session, record_id=self.record.id,
                                                         answer=orjson.dumps({'content': full_text}).decode(),
                                                         datasource=_datasource,
@@ -1425,6 +1425,11 @@ def process_stream(res: Iterator[BaseMessageChunk],
 
 
 def get_lang_name(lang: str):
-    if lang and lang == 'en':
+    if not lang:
+        return '简体中文'
+    normalized = lang.lower()
+    if normalized.startswith('en'):
         return '英文'
+    if normalized.startswith('ko'):
+        return '韩语'
     return '简体中文'
