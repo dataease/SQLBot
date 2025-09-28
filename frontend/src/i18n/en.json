@@ -6,6 +6,22 @@
     "Dashboard": "Dashboard",
     "AI Model Configuration": "AI Model Configuration"
   },
+  "prompt": {
+    "no_prompt_words": "No prompt words",
+    "customize_prompt_words": "Customize prompt words",
+    "ask_sql": "Ask SQL",
+    "data_analysis": "Data Analysis",
+    "data_prediction": "Data Prediction",
+    "add_prompt_word": "Add prompt word",
+    "prompt_word_name": "Prompt word name",
+    "prompt_word_content": "Prompt word content",
+    "training_data_details": "Training data details",
+    "selected_prompt_words": "Do you want to delete the {msg} selected prompt words?",
+    "replaced_with": "Please enter a prompt word. Example: When returning names, only the last name will be displayed, and the first name will be replaced with *.",
+    "loss_exercise_caution": "Entering high-risk operations such as deleting a database or table or modifying the table structure may result in permanent data loss. Exercise caution!",
+    "edit_prompt_word": "Edit prompt word",
+    "prompt_word_name_de": "Do you want to delete the prompt word: {msg}?"
+  },
   "training": {
     "effective_data_sources": "Effective data sources",
     "all_data_sources": "All data sources",

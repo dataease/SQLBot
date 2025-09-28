@@ -6,6 +6,22 @@
     "Dashboard": "仪表盘",
     "AI Model Configuration": "模型配置"
   },
+  "prompt": {
+    "no_prompt_words": "暂无提示词",
+    "customize_prompt_words": "自定义提示词",
+    "ask_sql": "问数 SQL",
+    "data_analysis": "数据分析",
+    "data_prediction": "数据预测",
+    "add_prompt_word": "添加提示词",
+    "prompt_word_name": "提示词名称",
+    "prompt_word_content": "提示词内容",
+    "training_data_details": "训练数据详情",
+    "selected_prompt_words": "是否删除选中的 {msg} 条提示词？",
+    "replaced_with": "请输入提示词，示例：返回姓名时，只显示姓氏，名字用*代替",
+    "loss_exercise_caution": "若输入删除数据库、数据表或修改表结构等高风险的操作指令，可能导致数据永久丢失，请务必谨慎！",
+    "edit_prompt_word": "编辑提示词",
+    "prompt_word_name_de": "是否删除提示词：{msg}？"
+  },
   "training": {
     "effective_data_sources": "生效数据源",
     "all_data_sources": "所有数据源",

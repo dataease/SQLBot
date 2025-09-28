@@ -17,6 +17,7 @@ import EmbeddedPage from '@/views/embedded/page.vue'
 import Member from '@/views/system/member/index.vue'
 import Professional from '@/views/system/professional/index.vue'
 import Training from '@/views/system/training/index.vue'
+import Prompt from '@/views/system/prompt/index.vue'
 import Appearance from '@/views/system/appearance/index.vue'
 import Permission from '@/views/system/permission/index.vue'
 import User from '@/views/system/user/User.vue'
@@ -119,6 +120,12 @@ export const routes = [
         name: 'training',
         component: Training,
         meta: { title: t('training.data_training') },
+      },
+      {
+        path: '/set/prompt',
+        name: 'prompt',
+        component: Prompt,
+        meta: { title: t('prompt.customize_prompt_words') },
       },
     ],
   },
