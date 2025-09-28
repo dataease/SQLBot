@@ -202,7 +202,7 @@ const search = () => {
   oldKeywords.value = keywords.value
   promptApi
     .getList(pageInfo.currentPage, pageInfo.pageSize, currentType.value, {
-      question: keywords.value,
+      name: keywords.value,
     })
     .then((res: any) => {
       toggleRowLoading.value = true

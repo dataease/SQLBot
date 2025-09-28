@@ -14,8 +14,9 @@ template:
           <Info>内有<db-engine><m-schema><terminologies>等信息；
           其中，<db-engine>：提供数据库引擎及版本信息；
           <m-schema>：以 M-Schema 格式提供数据库表结构信息；
-          <terminologies>：提供一组术语，块内每一个<terminology>就是术语，其中同一个<words>内的多个<word>代表术语的多种叫法，也就是术语与它的同义词，<description>即该术语对应的描述，其中也可能是能够用来参考的计算公式，或者是一些其他的查询条件
-          <sql-examples>：提供一组SQL示例，你可以参考这些示例来生成你的回答，其中<question>内是提问，<suggestion-answer>内是对于该<question>提问的解释或者对应应该回答的SQL示例
+          <terminologies>：提供一组术语，块内每一个<terminology>就是术语，其中同一个<words>内的多个<word>代表术语的多种叫法，也就是术语与它的同义词，<description>即该术语对应的描述，其中也可能是能够用来参考的计算公式，或者是一些其他的查询条件；
+          <sql-examples>：提供一组SQL示例，你可以参考这些示例来生成你的回答，其中<question>内是提问，<suggestion-answer>内是对于该<question>提问的解释或者对应应该回答的SQL示例。
+        若有<Other-Infos>块，它会提供一组<content>，可能会是额外添加的背景信息，或者是额外的生成SQL的要求，请结合额外信息或要求后生成你的回答。
         用户的提问在<user-question>内，<error-msg>内则会提供上次执行你提供的SQL时会出现的错误信息，<background-infos>内的<current-time>会告诉你用户当前提问的时间
       </Instruction>
       
@@ -219,7 +220,6 @@ template:
         </chat-examples>
       </example>
       
-      ### 下面是提供的信息
       <Info>
       <db-engine> {engine} </db-engine>
       <m-schema>
@@ -229,6 +229,7 @@ template:
       {terminologies}
       {data_training}
       </Info>
+      {custom_prompt}
       
       ### 响应, 请根据上述要求直接返回JSON结果:
       ```json
@@ -394,7 +395,11 @@ template:
         你当前的任务是根据给定的数据分析数据，并给出你的分析结果。
         我们会在<Info>块内提供给你信息，帮助你进行分析：
           <Info>内有<terminologies>等信息；
-          <terminologies>：提供一组术语，块内每一个<terminology>就是术语，其中同一个<words>内的多个<word>代表术语的多种叫法，也就是术语与它的同义词，<description>即该术语对应的描述，其中也可能是能够用来参考的计算公式，或者是一些其他的查询条件
+          <terminologies>：提供一组术语，块内每一个<terminology>就是术语，其中同一个<words>内的多个<word>代表术语的多种叫法，也就是术语与它的同义词，<description>即该术语对应的描述，其中也可能是能够用来参考的计算公式，或者是一些其他的查询条件。
+        若有<Other-Infos>块，它会提供一组<content>，可能会是额外添加的背景信息，或者是额外的分析要求，请结合额外信息或要求后生成你的回答。
+        用户会在提问中提供给你信息：
+          <data>块内是提供给你的数，以JSON格式给出；
+          <fields>块内提供给你对应的字段或字段别名。
       </Instruction>
       
       你必须遵守以下规则:
@@ -404,32 +409,60 @@ template:
         </rule>
       </Rules>
       
-      ### 下面是提供的信息
       <Info>
       {terminologies}
       </Info>
+      {custom_prompt}
     user: |
-      ### 字段(字段别名):
+      <fields>
       {fields}
+      </fields>
       
-      ### 数据:
+      <data>
       {data}
+      </data>
   predict:
     system: |
-      ### 请使用语言：{lang} 回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
+      <Instruction>
+        你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL与可视化图表。
+        你当前的任务是根据给定的数据进行数据预测，并给出你的预测结果。
+        若有<Other-Infos>块，它会提供一组<content>，可能会是额外添加的背景信息，或者是额外的分析要求，请结合额外信息或要求后生成你的回答。
+        用户会在提问中提供给你信息：
+          <data>块内是提供给你的数据，以JSON格式给出；
+          <fields>块内提供给你对应的字段或字段别名。
+      </Instruction>
       
-      ### 说明：
-      你是一个数据分析师，你的任务是根据给定的数据进行数据预测，我将以JSON格式给你一组数据，你帮我预测之后的数据（一段可以展示趋势的数据，至少2个周期），用json数组的格式返回，返回的格式需要与传入的数据格式保持一致。
+      你必须遵守以下规则:
+      <Rules>
+        <rule>
+          请使用语言：{lang} 回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
+        </rule>
+        <rule>
+          预测的数据是一段可以展示趋势的数据，至少2个周期
+        </rule>
+        <rule>
+          返回的预测数据必须与用户提供的数据同样的格式，使用JSON数组的形式返回
+        </rule>
+        <rule>
+          无法预测或者不支持预测的数据请直接返回(不需要返回JSON格式)："抱歉，该数据无法进行预测。"(若有原因，则额外返回无法预测的原因)
+        </rule>
+        <rule>
+          预测的数据不需要返回用户提供的原有数据，请直接返回你预测的部份
+        </rule>
+      </Rules>
+      {custom_prompt}
+      
+      ### 响应, 请根据上述要求直接返回JSON结果:
       ```json
       
-      无法预测或者不支持预测的数据请直接返回(不需要返回JSON格式，需要翻译为 {lang} 输出)："抱歉，该数据无法进行预测。(有原因则返回无法预测的原因)"
-      如果可以预测，则不需要返回原有数据，直接返回预测的部份
     user: |
-      ### 字段(字段别名):
+      <fields>
       {fields}
+      </fields>
       
-      ### 数据:
+      <data>
       {data}
+      </data>
   datasource:
     system: |
       ### 请使用语言：{lang} 回答

@@ -5,9 +5,7 @@ from typing import List, Optional, Any
 from xml.dom.minidom import parseString
 
 import dicttoxml
-from sqlalchemy import BigInteger
-from sqlalchemy import and_, or_, select, func, delete, update, union
-from sqlalchemy import text
+from sqlalchemy import and_, or_, select, func, delete, update, union, text, BigInteger
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.session import Session
 

@@ -40,10 +40,12 @@ class OperationEnum(Enum):
     CHOOSE_DATASOURCE = '6'
     GENERATE_DYNAMIC_SQL = '7'
 
+
 class ChatFinishStep(Enum):
     GENERATE_SQL = 1
     QUERY_DATA = 2
     GENERATE_CHART = 3
+
 
 #     TODO choose table / check connection / generate description
 
@@ -177,12 +179,13 @@ class AiModelQuestion(BaseModel):
     sub_query: Optional[list[dict]] = None
     terminologies: str = ""
     data_training: str = ""
+    custom_prompt: str = ""
     error_msg: str = ""
 
     def sql_sys_question(self):
         return get_sql_template()['system'].format(engine=self.engine, schema=self.db_schema, question=self.question,
                                                    lang=self.lang, terminologies=self.terminologies,
-                                                   data_training=self.data_training)
+                                                   data_training=self.data_training, custom_prompt=self.custom_prompt)
 
     def sql_user_question(self, current_time: str):
         return get_sql_template()['user'].format(engine=self.engine, schema=self.db_schema, question=self.question,
@@ -196,13 +199,14 @@ class AiModelQuestion(BaseModel):
                                                    chart_type=chart_type)
 
     def analysis_sys_question(self):
-        return get_analysis_template()['system'].format(lang=self.lang, terminologies=self.terminologies)
+        return get_analysis_template()['system'].format(lang=self.lang, terminologies=self.terminologies,
+                                                        custom_prompt=self.custom_prompt)
 
     def analysis_user_question(self):
         return get_analysis_template()['user'].format(fields=self.fields, data=self.data)
 
     def predict_sys_question(self):
-        return get_predict_template()['system'].format(lang=self.lang)
+        return get_predict_template()['system'].format(lang=self.lang, custom_prompt=self.custom_prompt)
 
     def predict_user_question(self):
         return get_predict_template()['user'].format(fields=self.fields, data=self.data)
