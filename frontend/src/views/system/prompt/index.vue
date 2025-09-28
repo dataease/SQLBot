@@ -322,6 +322,8 @@ const handleChange = () => {
 
 const typeChange = (val: any) => {
   currentType.value = val
+  pageInfo.currentPage = 0
+  search()
 }
 </script>
 
