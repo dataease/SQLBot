@@ -106,7 +106,7 @@ const rules = computed(() => ({
       trigger: 'blur',
     },
   ],
-  base_model: [{ required: true, message: t('model.the_basic_model_de'), trigger: 'blur' }],
+  base_model: [{ required: true, message: t('model.the_basic_model_de'), trigger: 'change' }],
   name: [
     { required: true, message: t('model.the_basic_model'), trigger: 'blur' },
     {
