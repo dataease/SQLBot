@@ -188,7 +188,11 @@ const search = () => {
   searchLoading.value = true
   oldKeywords.value = keywords.value
   professionalApi
-    .getList(pageInfo.currentPage, pageInfo.pageSize, { word: keywords.value })
+    .getList(
+      pageInfo.currentPage,
+      pageInfo.pageSize,
+      keywords.value ? { word: keywords.value } : {}
+    )
     .then((res) => {
       toggleRowLoading.value = true
       fieldList.value = res.data

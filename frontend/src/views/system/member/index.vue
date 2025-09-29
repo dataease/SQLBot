@@ -136,7 +136,11 @@ const handleToggleRowSelection = (check: boolean = true) => {
 
 const search = () => {
   searchLoading.value = true
-  workspaceUserList({ keyword: keywordsMember.value }, pageInfo.currentPage, pageInfo.pageSize)
+  workspaceUserList(
+    keywordsMember.value ? { keyword: keywordsMember.value } : {},
+    pageInfo.currentPage,
+    pageInfo.pageSize
+  )
     .then((res) => {
       toggleRowLoading.value = true
       fieldList.value = res.items

@@ -92,6 +92,7 @@ const init = () => {
       tableList.value.forEach((ele: any) => {
         if (ele.id === currentTable.value.id) {
           currentTable.value.name = ele.name
+          clickTable(ele)
         }
       })
     }

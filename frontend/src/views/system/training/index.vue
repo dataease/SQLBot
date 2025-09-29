@@ -196,7 +196,11 @@ const search = () => {
   searchLoading.value = true
   oldKeywords.value = keywords.value
   trainingApi
-    .getList(pageInfo.currentPage, pageInfo.pageSize, { question: keywords.value })
+    .getList(
+      pageInfo.currentPage,
+      pageInfo.pageSize,
+      keywords.value ? { question: keywords.value } : {}
+    )
     .then((res) => {
       toggleRowLoading.value = true
       fieldList.value = res.data
