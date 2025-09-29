@@ -851,7 +851,7 @@ const typeChange = (val: any) => {
     font-weight: 400;
     font-size: 14px;
     line-height: 22px;
-    background: #ff8800;
+    color: #ff8800;
   }
   .no-error.no-error {
     .ed-form-item__error {
