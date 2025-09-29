@@ -3,13 +3,14 @@ import { useCache } from '@/utils/useCache'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useUserStore } from '@/stores/user'
 import { request } from '@/utils/request'
+import type { Router } from 'vue-router'
 
 const appearanceStore = useAppearanceStoreWithOut()
 const userStore = useUserStore()
 const { wsCache } = useCache()
 const whiteList = ['/login']
 const assistantWhiteList = ['/assistant', '/embeddedPage', '/401']
-export const watchRouter = (router: any) => {
+export const watchRouter = (router: Router) => {
   router.beforeEach(async (to: any, from: any, next: any) => {
     await loadXpackStatic()
     await appearanceStore.setAppearance()
