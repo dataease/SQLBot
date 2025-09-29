@@ -201,9 +201,16 @@ const search = () => {
   searchLoading.value = true
   oldKeywords.value = keywords.value
   promptApi
-    .getList(pageInfo.currentPage, pageInfo.pageSize, currentType.value, {
-      name: keywords.value,
-    })
+    .getList(
+      pageInfo.currentPage,
+      pageInfo.pageSize,
+      currentType.value,
+      keywords.value
+        ? {
+            name: keywords.value,
+          }
+        : {}
+    )
     .then((res: any) => {
       toggleRowLoading.value = true
       fieldList.value = res.data
