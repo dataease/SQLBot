@@ -25,6 +25,7 @@ const emits = defineEmits([
   'finish',
   'error',
   'stop',
+  'scrollBottom',
   'update:loading',
   'update:chatList',
   'update:currentChat',
@@ -215,13 +216,18 @@ const sendMessage = async () => {
 }
 
 function getChatData(recordId?: number) {
-  chatApi.get_chart_data(recordId).then((response) => {
-    _currentChat.value.records.forEach((record) => {
-      if (record.id === recordId) {
-        record.data = response
-      }
+  chatApi
+    .get_chart_data(recordId)
+    .then((response) => {
+      _currentChat.value.records.forEach((record) => {
+        if (record.id === recordId) {
+          record.data = response
+        }
+      })
     })
-  })
+    .finally(() => {
+      emits('scrollBottom')
+    })
 }
 function stop() {
   stopFlag.value = true

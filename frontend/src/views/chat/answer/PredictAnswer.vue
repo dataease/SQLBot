@@ -24,6 +24,7 @@ const props = withDefaults(
 const emits = defineEmits([
   'finish',
   'error',
+  'scrollBottom',
   'stop',
   'update:loading',
   'update:chatList',
@@ -215,14 +216,19 @@ function getChatPredictData(recordId?: number) {
 }
 
 function getChatData(recordId?: number) {
-  chatApi.get_chart_data(recordId).then((response) => {
-    _currentChat.value.records.forEach((record) => {
-      if (record.id === recordId) {
-        record.data = response
-        console.log(record.data)
-      }
+  chatApi
+    .get_chart_data(recordId)
+    .then((response) => {
+      _currentChat.value.records.forEach((record) => {
+        if (record.id === recordId) {
+          record.data = response
+          console.log(record.data)
+        }
+      })
     })
-  })
+    .finally(() => {
+      emits('scrollBottom')
+    })
 }
 
 function stop() {

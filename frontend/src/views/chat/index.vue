@@ -216,6 +216,7 @@
                     :current-chat-id="currentChatId"
                     :loading="isTyping"
                     :message="message"
+                    @scrollBottom="scrollToBottom"
                     :reasoning-name="['sql_answer', 'chart_answer']"
                     @finish="onChartAnswerFinish"
                     @error="onChartAnswerError"
@@ -327,6 +328,7 @@
                     :current-chat-id="currentChatId"
                     :loading="isTyping"
                     :message="message"
+                    @scrollBottom="scrollToBottom"
                     @finish="onPredictAnswerFinish"
                     @error="onPredictAnswerError"
                     @stop="onChatStop"
@@ -421,6 +423,8 @@ import icon_send_filled from '@/assets/svg/icon_send_filled.svg'
 import { useAssistantStore } from '@/stores/assistant'
 import { onClickOutside } from '@vueuse/core'
 import { useUserStore } from '@/stores/user'
+import { debounce } from 'lodash-es'
+
 import router from '@/router'
 const userStore = useUserStore()
 const props = defineProps<{
@@ -454,14 +458,14 @@ const chatListRef = ref()
 const innerRef = ref()
 const chatCreatorRef = ref()
 
-function scrollToBottom() {
+const scrollToBottom = debounce(() => {
   nextTick(() => {
     chatListRef.value?.scrollTo({
       top: chatListRef.value.wrapRef.scrollHeight,
       behavior: 'smooth',
     })
   })
-}
+}, 300)
 
 const loading = ref<boolean>(false)
 const chatList = ref<Array<ChatInfo>>([])
@@ -726,12 +730,10 @@ const sendMessage = async ($event: any = {}) => {
 
   loading.value = true
   isTyping.value = true
-  if (isCompletePage.value) {
-    scrollTopVal = innerRef.value!.clientHeight
-    scrollTime = setInterval(() => {
-      scrollBottom()
-    }, 300)
-  }
+  scrollTopVal = innerRef.value!.clientHeight
+  scrollTime = setInterval(() => {
+    scrollBottom()
+  }, 300)
   await assistantPrepareSend()
   const currentRecord = new ChatRecord()
   currentRecord.create_time = new Date()
