@@ -730,7 +730,7 @@ const sendMessage = async ($event: any = {}) => {
 
   loading.value = true
   isTyping.value = true
-  if (isCompletePage.value) {
+  if (isCompletePage.value || innerRef.value) {
     scrollTopVal = innerRef.value!.clientHeight
     scrollTime = setInterval(() => {
       scrollBottom()
