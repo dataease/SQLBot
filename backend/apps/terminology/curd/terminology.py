@@ -455,12 +455,12 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
         _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
 
     if settings.EMBEDDING_ENABLED:
-        try:
-            model = EmbeddingModelCache.get_model()
+        with session.begin_nested():
+            try:
+                model = EmbeddingModelCache.get_model()
 
-            embedding = model.embed_query(word)
+                embedding = model.embed_query(word)
 
-            with session.begin():
                 if datasource is not None:
                     results = session.execute(text(embedding_sql_with_datasource),
                                               {'embedding_array': str(embedding), 'oid': oid,
@@ -472,9 +472,9 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
                 for row in results:
                     _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
 
-        except Exception:
-            traceback.print_exc()
-            session.rollback()
+            except Exception:
+                traceback.print_exc()
+                session.rollback()
 
     _map: dict = {}
     _ids: list[int] = []
