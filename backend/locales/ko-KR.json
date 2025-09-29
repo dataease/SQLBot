@@ -40,6 +40,7 @@
   },
   "i18n_terminology": {
     "terminology_not_exists": "용어를 찾을 수 없습니다",
+    "datasource_cannot_be_none": "데이터 소스를 선택해 주세요",
     "cannot_be_repeated": "용어 이름과 동의어는 중복될 수 없습니다",
     "exists_in_db": "용어 이름 또는 동의어가 이미 존재합니다"
   },

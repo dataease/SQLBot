@@ -40,11 +40,12 @@
   },
   "i18n_terminology": {
     "terminology_not_exists": "Terminology does not exists",
+    "datasource_cannot_be_none": "Datasource cannot be none or empty",
     "cannot_be_repeated": "Term name, synonyms cannot be repeated",
     "exists_in_db": "Term name, synonyms exists"
   },
   "i18n_data_training": {
-    "datasource_cannot_be_none": "Datasource cannot be none",
+    "datasource_cannot_be_none": "Datasource cannot be none or empty",
     "data_training_not_exists": "Example does not exists",
     "exists_in_db": "Question exists"
   },

@@ -40,6 +40,7 @@
   },
   "i18n_terminology": {
     "terminology_not_exists": "该术语不存在",
+    "datasource_cannot_be_none": "数据源不能为空",
     "cannot_be_repeated": "术语名称，同义词不能重复",
     "exists_in_db": "术语名称，同义词已存在"
   },
