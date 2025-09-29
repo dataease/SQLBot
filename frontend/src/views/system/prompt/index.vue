@@ -328,7 +328,7 @@ const typeChange = (val: any) => {
 </script>
 
 <template>
-  <div v-loading="searchLoading" class="prompt">
+  <div class="prompt">
     <div class="tool-left">
       <div class="btn-select">
         <el-button
@@ -464,7 +464,7 @@ const typeChange = (val: any) => {
               :description="$t('datasource.relevant_content_found')"
               img-type="tree"
             />
-            <template v-if="!keywords && !fieldList.length">
+            <template v-if="!oldKeywords && !fieldList.length">
               <EmptyBackground
                 class="datasource-yet"
                 :description="$t('prompt.no_prompt_words')"
