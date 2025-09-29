@@ -22,10 +22,6 @@ if [ $? -ne 0 ]; then
    fi
 fi
 
-#if [[ ! ${SQLBOT_EXTERNAL_DB} ]] || [ "${SQLBOT_EXTERNAL_DB}" = "false" ]; then
-#  compose_files="${compose_files} -f docker-compose-pg.yml"
-#fi
-
 function usage() {
    echo "SQLBot 控制脚本"
    echo
@@ -98,7 +94,7 @@ function status() {
 
    echo
    echo "日志文件大小 : "
-   du -Sh ${SQLBOT_RUNNING_BASE}/logs/
+   du -Sh ${SQLBOT_LOG_PATH}
 
    echo
    echo "SQLBot 运行目录及文件大小 : "
