@@ -522,7 +522,6 @@ const scrollBottom = () => {
 }
 
 const handleScroll = (val: any) => {
-  if (!isCompletePage.value) return
   scrollTopVal = val.scrollTop
   scrolling = true
   clearTimeout(scrollingTime)
