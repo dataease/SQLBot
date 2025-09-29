@@ -35,15 +35,15 @@ const dialogVisible = ref(false)
 const aboutRef = ref()
 const languageList = computed(() => [
   {
-    name: t('common.english'),
+    name: 'English',
     value: 'en',
   },
   {
-    name: t('common.simplified_chinese'),
+    name: '简体中文',
     value: 'zh-CN',
   },
   {
-    name: t('common.korean'),
+    name: '한국인',
     value: 'ko-KR',
   },
 ])
