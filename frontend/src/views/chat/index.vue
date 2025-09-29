@@ -730,10 +730,12 @@ const sendMessage = async ($event: any = {}) => {
 
   loading.value = true
   isTyping.value = true
-  scrollTopVal = innerRef.value!.clientHeight
-  scrollTime = setInterval(() => {
-    scrollBottom()
-  }, 300)
+  if (isCompletePage.value) {
+    scrollTopVal = innerRef.value!.clientHeight
+    scrollTime = setInterval(() => {
+      scrollBottom()
+    }, 300)
+  }
   await assistantPrepareSend()
   const currentRecord = new ChatRecord()
   currentRecord.create_time = new Date()
