@@ -67,9 +67,16 @@
 </div>`
 
   const getChatContainerHtml = (data) => {
+    let srcUrl = `${data.domain_url}/#/assistant?id=${data.id}&online=${!!data.online}&name=${encodeURIComponent(data.name)}&userFlag=${data.userFlag || ''}`
+    if (data.userFlag) {
+      srcUrl += `&userFlag=${data.userFlag || ''}`
+    }
+    if (data.history) {
+      srcUrl += `&userFlag=${data.history}`
+    }
     return `
 <div id="sqlbot-assistant-chat-container">
-  <iframe id="sqlbot-assistant-chat-iframe-${data.id}" allow="microphone;clipboard-read 'src'; clipboard-write 'src'" src="${data.domain_url}/#/assistant?id=${data.id}&online=${!!data.online}&name=${encodeURIComponent(data.name)}&userFlag=${data.userFlag || ''}"></iframe>
+  <iframe id="sqlbot-assistant-chat-iframe-${data.id}" allow="microphone;clipboard-read 'src'; clipboard-write 'src'" src="${srcUrl}"></iframe>
   <div class="sqlbot-assistant-operate">
   <div class="sqlbot-assistant-closeviewport sqlbot-assistant-viewportnone">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -499,6 +506,7 @@
     const domain_url = getDomain(src)
     const online = getParam(src, 'online')
     const userFlag = getParam(src, 'userFlag')
+    const history = getParam(src, 'history')
     let url = `${domain_url}/api/v1/system/assistant/info/${id}`
     if (domain_url.includes('5173')) {
       url = url.replace('5173', '8000')
@@ -536,6 +544,7 @@
 
         tempData['online'] = online && online.toString().toLowerCase() == 'true'
         tempData['userFlag'] = userFlag
+        tempData['history'] = history
         initsqlbot_assistant(tempData)
         if (data.type == 1) {
           registerMessageEvent(id, tempData)
@@ -749,6 +758,39 @@
         delete window[propName]
       }
       delete window.sqlbot_assistant_handler[id]
+    }
+    window.sqlbot_assistant_handler[id]['setHistory'] = (show) => {
+      if (show != null && typeof show != 'boolean') {
+        throw new Error('The parameter can only be of type boolean')
+      }
+      const iframe = document.getElementById(`sqlbot-assistant-chat-iframe-${id}`)
+      if (iframe) {
+        const url = iframe.src
+        const eventName = 'sqlbot_assistant_event'
+        const params = {
+          busi: 'setHistory',
+          show,
+          eventName,
+          messageId: id,
+        }
+        const contentWindow = iframe.contentWindow
+        contentWindow.postMessage(params, url)
+      }
+    }
+    window.sqlbot_assistant_handler[id]['createConversation'] = (param) => {
+      const iframe = document.getElementById(`sqlbot-assistant-chat-iframe-${id}`)
+      if (iframe) {
+        const url = iframe.src
+        const eventName = 'sqlbot_assistant_event'
+        const params = {
+          busi: 'createConversation',
+          param,
+          eventName,
+          messageId: id,
+        }
+        const contentWindow = iframe.contentWindow
+        contentWindow.postMessage(params, url)
+      }
     }
   }
   // window.addEventListener('load', init)

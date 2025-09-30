@@ -79,6 +79,12 @@ const communicationCb = async (event: any) => {
     if (event.data?.busi == 'setOnline') {
       setFormatOnline(event.data.online)
     }
+    if (event.data?.busi == 'setHistory') {
+      assistantStore.setHistory(event.data.show ?? true)
+    }
+    if (event.data?.busi == 'createConversation') {
+      createChat()
+    }
   }
 }
 const setFormatOnline = (text?: any) => {
@@ -141,6 +147,10 @@ onBeforeMount(async () => {
   if (userFlag && userFlag === '1') {
     userFlag = '100001'
   }
+
+  const history: boolean = route.query.history !== 'false'
+  assistantStore.setHistory(history)
+
   const now = Date.now()
   assistantStore.setFlag(now)
   assistantStore.setId(assistantId?.toString() || '')

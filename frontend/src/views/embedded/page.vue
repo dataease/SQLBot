@@ -69,7 +69,16 @@ const communicationCb = async (event: any) => {
     if (event.data?.busi == 'setOnline') {
       setFormatOnline(event.data.online)
     }
+    if (event.data?.busi == 'setHistory') {
+      assistantStore.setHistory(event.data.show ?? true)
+    }
+    if (event.data?.busi == 'createConversation') {
+      createChat()
+    }
   }
+}
+const createChat = () => {
+  chatRef.value?.createNewChat()
 }
 const setFormatOnline = (text?: any) => {
   if (text === null || typeof text === 'undefined') {
@@ -118,6 +127,9 @@ onBeforeMount(async () => {
   dynamicType.value = assistantType
   const online = route.query.online
   setFormatOnline(online)
+
+  const history: boolean = route.query.history !== 'false'
+  assistantStore.setHistory(history)
 
   let name = route.query.name
   if (name) {

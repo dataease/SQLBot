@@ -6,7 +6,13 @@
     popper-class="popover-chat_history popover-chat_history_small"
   >
     <template #reference>
-      <el-icon class="show-history_icon" style="" size="20" @click="showFloatPopover">
+      <el-icon
+        class="show-history_icon"
+        :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
+        style=""
+        size="20"
+        @click="showFloatPopover"
+      >
         <icon_sidebar_outlined></icon_sidebar_outlined>
       </el-icon>
     </template>
@@ -17,7 +23,7 @@
       v-model:current-chat="currentChat"
       v-model:loading="loading"
       in-popover
-      :appName="customName"
+      :app-name="customName"
       @go-empty="goEmpty"
       @on-chat-created="onChatCreated"
       @on-click-history="onClickHistory"
@@ -30,6 +36,7 @@
     <el-aside
       v-if="(isCompletePage || pageEmbedded) && chatListSideBarShow"
       class="chat-container-left"
+      :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
     >
       <ChatListContainer
         v-model:chat-list="chatList"
@@ -37,7 +44,7 @@
         v-model:current-chat="currentChat"
         v-model:loading="loading"
         :in-popover="!chatListSideBarShow"
-        :appName="customName"
+        :app-name="customName"
         @go-empty="goEmpty"
         @on-chat-created="onChatCreated"
         @on-click-history="onClickHistory"
@@ -50,7 +57,10 @@
     <div
       v-if="(!isCompletePage && !pageEmbedded) || !chatListSideBarShow"
       class="hidden-sidebar-btn"
-      :class="{ 'assistant-popover-sidebar': !isCompletePage && !pageEmbedded }"
+      :class="{
+        'assistant-popover-sidebar': !isCompletePage && !pageEmbedded,
+        'embedded-history-hidden': embeddedHistoryHidden,
+      }"
     >
       <el-popover
         :width="280"
@@ -72,7 +82,7 @@
           v-model:current-chat="currentChat"
           v-model:loading="loading"
           :in-popover="!chatListSideBarShow"
-          :appName="customName"
+          :app-name="customName"
           @go-empty="goEmpty"
           @on-chat-created="onChatCreated"
           @on-click-history="onClickHistory"
@@ -97,7 +107,7 @@
           v-model:current-chat-id="currentChatId"
           v-model:current-chat="currentChat"
           v-model:loading="loading"
-          :appName="customName"
+          :app-name="customName"
           :in-popover="false"
           @go-empty="goEmpty"
           @on-chat-created="onChatCreated"
@@ -199,7 +209,7 @@
                   :first-chat="message.first_chat"
                   @click-question="quickAsk"
                   @stop="onChatStop"
-                  @loadingOver="loadingOver"
+                  @loading-over="loadingOver"
                 />
                 <UserChat v-if="message.role === 'user'" :message="message" />
                 <template v-if="message.role === 'assistant' && !message.first_chat">
@@ -216,8 +226,8 @@
                     :current-chat-id="currentChatId"
                     :loading="isTyping"
                     :message="message"
-                    @scrollBottom="scrollToBottom"
                     :reasoning-name="['sql_answer', 'chart_answer']"
+                    @scroll-bottom="scrollToBottom"
                     @finish="onChartAnswerFinish"
                     @error="onChartAnswerError"
                     @stop="onChatStop"
@@ -292,7 +302,7 @@
                         :first-chat="message.first_chat"
                         :disabled="isTyping"
                         @click-question="quickAsk"
-                        @loadingOver="loadingOver"
+                        @loading-over="loadingOver"
                         @stop="onChatStop"
                       />
                     </template>
@@ -328,7 +338,7 @@
                     :current-chat-id="currentChatId"
                     :loading="isTyping"
                     :message="message"
-                    @scrollBottom="scrollToBottom"
+                    @scroll-bottom="scrollToBottom"
                     @finish="onPredictAnswerFinish"
                     @error="onPredictAnswerError"
                     @stop="onChatStop"
@@ -446,6 +456,9 @@ const defaultFloatPopoverStyle = ref({
 })
 
 const isCompletePage = computed(() => !assistantStore.getAssistant || assistantStore.getEmbedded)
+const embeddedHistoryHidden = computed(
+  () => assistantStore.getAssistant && !assistantStore.getHistory
+)
 const customName = computed(() => {
   if (!isCompletePage.value && props.pageEmbedded) return props.appName
   return ''
@@ -1321,7 +1334,9 @@ onMounted(() => {
   border: 1px solid rgba(222, 224, 227, 1);
   border-radius: 6px;
 }
-
+.embedded-history-hidden {
+  display: none !important;
+}
 .show-history_icon {
   cursor: pointer;
   position: absolute;

@@ -20,6 +20,7 @@ interface AssistantState {
   certificate: string
   online: boolean
   pageEmbedded?: boolean
+  history: boolean
   requestPromiseMap: Map<string, PendingRequest>
 }
 
@@ -34,6 +35,7 @@ export const AssistantStore = defineStore('assistant', {
       certificate: '',
       online: false,
       pageEmbedded: false,
+      history: true,
       requestPromiseMap: new Map<string, PendingRequest>(),
     }
   },
@@ -58,6 +60,9 @@ export const AssistantStore = defineStore('assistant', {
     },
     getOnline(): boolean {
       return this.online
+    },
+    getHistory(): boolean {
+      return this.history
     },
     getPageEmbedded(): boolean {
       return this.pageEmbedded || false
@@ -129,6 +134,9 @@ export const AssistantStore = defineStore('assistant', {
     },
     setOnline(online: boolean) {
       this.online = !!online
+    },
+    setHistory(history: boolean) {
+      this.history = history ?? true
     },
     async setChat() {
       if (!this.assistant) {
