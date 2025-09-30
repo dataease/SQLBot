@@ -78,14 +78,18 @@ template:
           如数据库引擎是 MySQL、Doris，则在表名、字段名、别名外层加反引号；
           如数据库引擎是 Microsoft SQL Server，则在schema、表名、字段名、别名外层加方括号。
           <example>
-          以PostgreSQL为例，查询Schema为TEST表TABLE下前1000条id字段，则生成的SQL为：
+          以 PostgreSQL 为例，查询Schema为TEST表TABLE下前1000条id字段，则生成的SQL为：
             SELECT "id" FROM "TEST"."TABLE" LIMIT 1000
             - 注意在表名外双引号的位置，千万不要生成为:
               SELECT "id" FROM "TEST.TABLE" LIMIT 1000
-          以Microsoft SQL Server为例，查询Schema为TEST表TABLE下前1000条id字段，则生成的SQL为：
+          以 Microsoft SQL Server 为例，查询Schema为TEST表TABLE下前1000条id字段，则生成的SQL为：
             SELECT TOP 1000 [id] FROM [TEST].[TABLE]
             - 注意在表名外方括号的位置，千万不要生成为:
               SELECT TOP 1000 [id] FROM [TEST.TABLE]
+          以 MySQL 为例，查询Schema为TEST表TABLE下前1000条id字段，则生成的SQL为：
+            SELECT `id` FROM `TEST`.`TABLE` LIMIT 1000
+            - 注意在表名外反引号的位置，千万不要生成为:
+            SELECT `id` FROM `TEST.TABLE` LIMIT 1000
           </example>
         </rule>
         <rule>
@@ -104,12 +108,22 @@ template:
         <rule>
           如果用户没有指定数据条数的限制，输出的查询SQL必须加上1000条的数据条数限制
           如果用户指定的限制大于1000，则按1000处理
-          <example>
-          以PostgreSQL为例，查询Schema为TEST表TABLE下id字段，则生成的SQL为：
+          <rule-example>
+          以 PostgreSQL 为例，查询Schema为TEST表TABLE下id字段，则生成的SQL为：
             SELECT "id" FROM "TEST"."TABLE" LIMIT 1000
-          以Microsoft SQL Server为例，查询Schema为TEST表TABLE下id字段，则生成的SQL为：
+          以 Microsoft SQL Server 为例，查询Schema为TEST表TABLE下id字段，则生成的SQL为：
+            - 使用 TOP（适用于所有 SQL Server 版本，需要注意 TOP 在SQL中的位置）：
             SELECT TOP 1000 [id] FROM [TEST].[TABLE]
-          </example>
+            - 使用 OFFSET-FETCH（SQL Server 2012+）：
+            SELECT "id" FROM "TEST"."TABLE" 
+            ORDER BY "id"  -- 必须指定 ORDER BY
+            OFFSET 0 ROWS FETCH NEXT 1000 ROWS ONLY
+          以 Oracle 为例，查询Schema为TEST表TABLE下id字段，则生成的SQL为：
+            - 使用ROWNUM（适用于所有Oracle版本）：
+            SELECT "id" FROM "TEST"."TABLE" WHERE ROWNUM <= 1000
+            - 使用FETCH FIRST（Oracle 12c及以上版本）：
+            SELECT "id" FROM "TEST"."TABLE" FETCH FIRST 1000 ROWS ONLY
+          </rule-example>
         </rule>
         <rule>
           若需关联多表，优先使用<m-schema>中标记为"Primary key"/"ID"/"主键"的字段作为关联条件。
@@ -119,7 +133,8 @@ template:
         </rule>
       </Rules>
       
-      ### 以下<example>帮助你理解问题及返回格式的例子，不要将<example>内的表结构用来回答用户的问题，<example>内的<input>为后续用户提问传入的内容，<output>为根据模版与输入的输出回答
+      以下<example>帮助你理解问题及返回格式的例子，不要将<example>内的表结构用来回答用户的问题，<example>内的<input>为后续用户提问传入的内容，<output>为根据模版与输入的输出回答
+      以下<example>内的例子的SQL语法只是针对该例子的<db-engine>内PostgreSQL的对应数据库语法，你生成的SQL语法必须按照当前对话实际给出的<db-engine>来生成
       <example>
         <Info>
         <db-engine> PostgreSQL17.6 (Debian 17.6-1.pgdg12+1) </db-engine>
@@ -220,6 +235,7 @@ template:
         </chat-examples>
       </example>
       
+      以下是正式的信息：
       <Info>
       <db-engine> {engine} </db-engine>
       <m-schema>
