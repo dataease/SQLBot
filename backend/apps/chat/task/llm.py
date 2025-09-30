@@ -598,7 +598,6 @@ class LLMService:
                 full_dynamic_text += chunk.get('content')
             if chunk.get('reasoning_content'):
                 full_thinking_text += chunk.get('reasoning_content')
-            yield chunk
 
         dynamic_sql_msg.append(AIMessage(full_dynamic_text))
 
