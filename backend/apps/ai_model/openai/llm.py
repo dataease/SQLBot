@@ -1,11 +1,20 @@
-from typing import Dict, Optional, Any, Iterator, cast, Mapping
+from collections.abc import Iterator, Mapping
+from typing import Any, cast
 
 from langchain_core.language_models import LanguageModelInput
-from langchain_core.messages import BaseMessage, BaseMessageChunk, HumanMessageChunk, AIMessageChunk, \
-    SystemMessageChunk, FunctionMessageChunk, ChatMessageChunk
+from langchain_core.messages import (
+    AIMessageChunk,
+    BaseMessage,
+    BaseMessageChunk,
+    ChatMessageChunk,
+    FunctionMessageChunk,
+    HumanMessageChunk,
+    SystemMessageChunk,
+)
 from langchain_core.messages.ai import UsageMetadata
-from langchain_core.messages.tool import tool_call_chunk, ToolMessageChunk
+from langchain_core.messages.tool import ToolMessageChunk, tool_call_chunk
 from langchain_core.outputs import ChatGenerationChunk
+from langchain_core.outputs.chat_generation import ChatGeneration
 from langchain_core.runnables import RunnableConfig, ensure_config
 from langchain_openai import ChatOpenAI
 from langchain_openai.chat_models.base import _create_usage_metadata
@@ -75,7 +84,7 @@ class BaseChatOpenAI(ChatOpenAI):
 
     # custom_get_token_ids = custom_get_token_ids
 
-    def get_last_generation_info(self) -> Optional[Dict[str, Any]]:
+    def get_last_generation_info(self) -> dict[str, Any] | None:
         return self.usage_metadata
 
     def _stream(self, *args: Any, **kwargs: Any) -> Iterator[ChatGenerationChunk]:
@@ -86,11 +95,11 @@ class BaseChatOpenAI(ChatOpenAI):
             yield chunk
 
     def _convert_chunk_to_generation_chunk(
-            self,
-            chunk: dict,
-            default_chunk_class: type,
-            base_generation_info: Optional[dict],
-    ) -> Optional[ChatGenerationChunk]:
+        self,
+        chunk: dict,
+        default_chunk_class: type,
+        base_generation_info: dict | None,
+    ) -> ChatGenerationChunk | None:
         if chunk.get("type") == "content.delta":  # from beta.chat.completions.stream
             return None
         token_usage = chunk.get("usage")
@@ -100,8 +109,10 @@ class BaseChatOpenAI(ChatOpenAI):
                 or chunk.get("chunk", {}).get("choices", [])
         )
 
-        usage_metadata: Optional[UsageMetadata] = (
-            _create_usage_metadata(token_usage) if token_usage and token_usage.get("prompt_tokens") else None
+        usage_metadata: UsageMetadata | None = (
+            _create_usage_metadata(token_usage)
+            if token_usage and token_usage.get("prompt_tokens")
+            else None
         )
         if len(choices) == 0:
             # logprobs is implicitly None
@@ -139,16 +150,16 @@ class BaseChatOpenAI(ChatOpenAI):
         return generation_chunk
 
     def invoke(
-            self,
-            input: LanguageModelInput,
-            config: Optional[RunnableConfig] = None,
-            *,
-            stop: Optional[list[str]] = None,
-            **kwargs: Any,
+        self,
+        input: LanguageModelInput,
+        config: RunnableConfig | None = None,
+        *,
+        stop: list[str] | None = None,
+        **kwargs: Any,
     ) -> BaseMessage:
         config = ensure_config(config)
         chat_result = cast(
-            "ChatGeneration",
+            ChatGeneration,
             self.generate_prompt(
                 [self._convert_input(input)],
                 stop=stop,
@@ -159,7 +170,6 @@ class BaseChatOpenAI(ChatOpenAI):
                 run_id=config.pop("run_id", None),
                 **kwargs,
             ).generations[0][0],
-
         ).message
 
         self.usage_metadata = chat_result.response_metadata[
