@@ -459,6 +459,7 @@ const innerRef = ref()
 const chatCreatorRef = ref()
 
 const scrollToBottom = debounce(() => {
+  if (scrolling) return
   nextTick(() => {
     chatListRef.value?.scrollTo({
       top: chatListRef.value.wrapRef.scrollHeight,
