@@ -4,7 +4,8 @@
     "Data Q&A": "智能问数",
     "Data Connections": "数据源",
     "Dashboard": "仪表盘",
-    "AI Model Configuration": "模型配置"
+    "AI Model Configuration": "模型配置",
+    "Details": "详情"
   },
   "prompt": {
     "no_prompt_words": "暂无提示词",

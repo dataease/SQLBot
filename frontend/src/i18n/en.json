@@ -4,7 +4,8 @@
     "Data Q&A": "Data Q&A",
     "Data Connections": "Data Sources",
     "Dashboard": "Dashboard",
-    "AI Model Configuration": "AI Model Configuration"
+    "AI Model Configuration": "AI Model Configuration",
+    "Details": "Details"
   },
   "prompt": {
     "no_prompt_words": "No prompt words",

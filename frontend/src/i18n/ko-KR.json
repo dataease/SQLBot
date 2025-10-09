@@ -4,7 +4,8 @@
     "Data Q&A": "스마트 데이터 조회",
     "Data Connections": "데이터 소스",
     "Dashboard": "대시보드",
-    "AI Model Configuration": "모델 구성"
+    "AI Model Configuration": "모델 구성",
+    "Details": "세부"
   },
   "prompt": {
     "no_prompt_words": "프롬프트가 없습니다",
