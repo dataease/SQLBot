@@ -7,11 +7,10 @@ import traceback
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.embedding.utils import cosine_similarity
 from common.core.config import settings
-from common.core.deps import SessionDep, CurrentUser
 from common.utils.utils import SQLBotLogUtil
 
 
-def get_table_embedding(session: SessionDep, current_user: CurrentUser, tables: list[dict], question: str):
+def get_table_embedding(tables: list[dict], question: str):
     _list = []
     for table in tables:
         _list.append({"id": table.get('id'), "schema_table": table.get('schema_table'), "cosine_similarity": 0.0})

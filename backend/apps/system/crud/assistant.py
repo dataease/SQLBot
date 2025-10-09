@@ -8,6 +8,7 @@ from sqlalchemy import Engine, create_engine
 from sqlmodel import Session, select
 from starlette.middleware.cors import CORSMiddleware
 
+from apps.datasource.embedding.table_embedding import get_table_embedding
 from apps.datasource.models.datasource import CoreDatasource, DatasourceConf
 from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
@@ -17,6 +18,7 @@ from common.core.db import engine
 from common.core.sqlbot_cache import cache
 from common.utils.aes_crypto import simple_aes_decrypt
 from common.utils.utils import string_to_numeric_hash
+
 
 @cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="assistant_id")
 async def get_assistant_info(*, session: Session, assistant_id: int) -> AssistantModel | None:
@@ -141,18 +143,22 @@ class AssistantOutDs:
         else:
             raise Exception("Datasource list is not found.")
 
-    def get_db_schema(self, ds_id: int) -> str:
+    def get_db_schema(self, ds_id: int, question: str, embedding: bool = True) -> str:
         ds = self.get_ds(ds_id)
         schema_str = ""
         db_name = ds.db_schema if ds.db_schema is not None and ds.db_schema != "" else ds.dataBase
         schema_str += f"【DB_ID】 {db_name}\n【Schema】\n"
+        tables = []
+        i = 0
         for table in ds.tables:
-            schema_str += f"# Table: {db_name}.{table.name}" if ds.type != "mysql" else f"# Table: {table.name}"
+            i += 1
+            schema_table = ''
+            schema_table += f"# Table: {db_name}.{table.name}" if ds.type != "mysql" else f"# Table: {table.name}"
             table_comment = table.comment
             if table_comment == '':
-                schema_str += '\n[\n'
+                schema_table += '\n[\n'
             else:
-                schema_str += f", {table_comment}\n[\n"
+                schema_table += f", {table_comment}\n[\n"
 
             field_list = []
             for field in table.fields:
@@ -161,8 +167,19 @@ class AssistantOutDs:
                     field_list.append(f"({field.name}:{field.type})")
                 else:
                     field_list.append(f"({field.name}:{field.type}, {field_comment})")
-            schema_str += ",\n".join(field_list)
-            schema_str += '\n]\n'
+            schema_table += ",\n".join(field_list)
+            schema_table += '\n]\n'
+            t_obj = {"id": i, "schema_table": schema_table}
+            tables.append(t_obj)
+
+        # do table embedding
+        if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
+            tables = get_table_embedding(tables, question)
+
+        if tables:
+            for s in tables:
+                schema_str += s.get('schema_table')
+
         return schema_str
 
     def get_ds(self, ds_id: int):
@@ -186,7 +203,8 @@ class AssistantOutDs:
                     try:
                         ds_dict[attr] = simple_aes_decrypt(ds_dict[attr], key, iv)
                     except Exception as e:
-                        raise Exception(f"Failed to encrypt {attr} for datasource {ds_dict.get('name')}, error: {str(e)}")
+                        raise Exception(
+                            f"Failed to encrypt {attr} for datasource {ds_dict.get('name')}, error: {str(e)}")
         for attr in attr_list:
             if attr in ds_dict:
                 id_marker += str(ds_dict.get(attr, '')) + '--sqlbot--'
@@ -194,6 +212,7 @@ class AssistantOutDs:
         db_schema = ds_dict.get('schema', ds_dict.get('db_schema', ''))
         ds_dict.pop("schema", None)
         return AssistantOutDsSchema(**{**ds_dict, "id": id, "db_schema": db_schema})
+
 
 class AssistantOutDsFactory:
     @staticmethod

@@ -404,7 +404,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
 
     # do table embedding
     if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
-        tables = get_table_embedding(session, current_user, tables, question)
+        tables = get_table_embedding(tables, question)
     # splice schema
     if tables:
         for s in tables:

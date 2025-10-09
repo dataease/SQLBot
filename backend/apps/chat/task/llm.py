@@ -18,6 +18,9 @@ from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, BaseMessageChunk
 from sqlalchemy import and_, select
 from sqlalchemy.orm import sessionmaker
+from sqlbot_xpack.custom_prompt.curd.custom_prompt import find_custom_prompts
+from sqlbot_xpack.custom_prompt.models.custom_prompt_model import CustomPromptTypeEnum
+from sqlbot_xpack.license.license_manage import SQLBotLicenseUtil
 from sqlmodel import Session
 
 from apps.ai_model.model_factory import LLMConfig, LLMFactory, get_default_config
@@ -30,9 +33,6 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     get_last_execute_sql_error
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep
-from sqlbot_xpack.license.license_manage import SQLBotLicenseUtil
-from sqlbot_xpack.custom_prompt.curd.custom_prompt import find_custom_prompts
-from sqlbot_xpack.custom_prompt.models.custom_prompt_model import CustomPromptTypeEnum
 from apps.data_training.curd.data_training import get_training_template
 from apps.datasource.crud.datasource import get_table_schema
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
@@ -111,7 +111,7 @@ class LLMService:
                 if not ds:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = ds.type + get_version(ds)
-                chat_question.db_schema = self.out_ds_instance.get_db_schema(ds.id)
+                chat_question.db_schema = self.out_ds_instance.get_db_schema(ds.id, chat_question.question)
             else:
                 ds = self.session.get(CoreDatasource, chat.datasource)
                 if not ds:
@@ -249,7 +249,7 @@ class LLMService:
                                                                     self.current_user.oid, ds_id)
         if SQLBotLicenseUtil.valid():
             self.chat_question.custom_prompt = find_custom_prompts(self.session, CustomPromptTypeEnum.ANALYSIS,
-                                                               self.current_user.oid, ds_id)
+                                                                   self.current_user.oid, ds_id)
 
         analysis_msg.append(SystemMessage(content=self.chat_question.analysis_sys_question()))
         analysis_msg.append(HumanMessage(content=self.chat_question.analysis_user_question()))
@@ -298,7 +298,7 @@ class LLMService:
         if SQLBotLicenseUtil.valid():
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
             self.chat_question.custom_prompt = find_custom_prompts(self.session, CustomPromptTypeEnum.PREDICT_DATA,
-                                                               self.current_user.oid, ds_id)
+                                                                   self.current_user.oid, ds_id)
 
         predict_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         predict_msg.append(SystemMessage(content=self.chat_question.predict_sys_question()))
@@ -343,10 +343,11 @@ class LLMService:
         # get schema
         if self.ds and not self.chat_question.db_schema:
             self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
-                self.ds.id) if self.out_ds_instance else get_table_schema(session=self.session,
-                                                                          current_user=self.current_user, ds=self.ds,
-                                                                          question=self.chat_question.question,
-                                                                          embedding=False)
+                self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
+                session=self.session,
+                current_user=self.current_user, ds=self.ds,
+                question=self.chat_question.question,
+                embedding=False)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question()))
@@ -478,7 +479,8 @@ class LLMService:
                     _ds = self.out_ds_instance.get_ds(data['id'])
                     self.ds = _ds
                     self.chat_question.engine = _ds.type + get_version(self.ds)
-                    self.chat_question.db_schema = self.out_ds_instance.get_db_schema(self.ds.id)
+                    self.chat_question.db_schema = self.out_ds_instance.get_db_schema(self.ds.id,
+                                                                                      self.chat_question.question)
                     _engine_type = self.chat_question.engine
                     _chat.engine_type = _ds.type
                 else:
@@ -529,7 +531,7 @@ class LLMService:
                                                                      oid)
             if SQLBotLicenseUtil.valid():
                 self.chat_question.custom_prompt = find_custom_prompts(self.session, CustomPromptTypeEnum.GENERATE_SQL,
-                                                                   oid, ds_id)
+                                                                       oid, ds_id)
 
             self.init_messages()
 
@@ -923,8 +925,9 @@ class LLMService:
                 self.chat_question.data_training = get_training_template(self.session, self.chat_question.question,
                                                                          ds_id, oid)
                 if SQLBotLicenseUtil.valid():
-                    self.chat_question.custom_prompt = find_custom_prompts(self.session, CustomPromptTypeEnum.GENERATE_SQL,
-                                                                       oid, ds_id)
+                    self.chat_question.custom_prompt = find_custom_prompts(self.session,
+                                                                           CustomPromptTypeEnum.GENERATE_SQL,
+                                                                           oid, ds_id)
 
             self.init_messages()
 
@@ -961,10 +964,11 @@ class LLMService:
                                                   'type': 'datasource'}).decode() + '\n\n'
 
                 self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
-                    self.ds.id) if self.out_ds_instance else get_table_schema(session=self.session,
-                                                                              current_user=self.current_user,
-                                                                              ds=self.ds,
-                                                                              question=self.chat_question.question)
+                    self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
+                    session=self.session,
+                    current_user=self.current_user,
+                    ds=self.ds,
+                    question=self.chat_question.question)
             else:
                 self.validate_history_ds()
 

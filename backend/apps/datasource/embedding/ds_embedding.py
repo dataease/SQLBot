@@ -22,7 +22,7 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
         if out_ds.ds_list:
             for _ds in out_ds.ds_list:
                 ds = out_ds.get_ds(_ds.id)
-                table_schema = out_ds.get_db_schema(_ds.id)
+                table_schema = out_ds.get_db_schema(_ds.id, question, embedding=False)
                 ds_info = f"{ds.name}, {ds.description}\n"
                 ds_schema = ds_info + table_schema
                 _list.append({"id": ds.id, "ds_schema": ds_schema, "cosine_similarity": 0.0, "ds": ds})
