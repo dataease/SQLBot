@@ -76,19 +76,23 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
               """, conf.dbSchema
     elif ds.type == "oracle":
         return """
-                SELECT 
+                SELECT DISTINCT
                     t.TABLE_NAME AS "TABLE_NAME",
                     NVL(c.COMMENTS, '') AS "TABLE_COMMENT"
                 FROM (
                     SELECT TABLE_NAME, 'TABLE' AS OBJECT_TYPE
-                    FROM DBA_TABLES
+                    FROM ALL_TABLES
                     WHERE OWNER = :param  
                     UNION ALL
                     SELECT VIEW_NAME AS TABLE_NAME, 'VIEW' AS OBJECT_TYPE
-                    FROM DBA_VIEWS
+                    FROM ALL_VIEWS
+                    WHERE OWNER = :param  
+                    UNION ALL
+                    SELECT MVIEW_NAME AS TABLE_NAME, 'MATERIALIZED VIEW' AS OBJECT_TYPE
+                    FROM ALL_MVIEWS
                     WHERE OWNER = :param  
                 ) t
-                LEFT JOIN DBA_TAB_COMMENTS c 
+                LEFT JOIN ALL_TAB_COMMENTS c 
                     ON t.TABLE_NAME = c.TABLE_NAME 
                     AND c.TABLE_TYPE = t.OBJECT_TYPE
                     AND c.OWNER = :param   
