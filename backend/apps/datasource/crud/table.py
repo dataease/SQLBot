@@ -42,13 +42,13 @@ def update_table(session: SessionDep, item: CoreTable):
 
 def run_fill_empty_table_embedding(session: Session):
     try:
-        if not settings.EMBEDDING_ENABLED:
+        if not settings.TABLE_EMBEDDING_ENABLED:
             return
 
         SQLBotLogUtil.info('get tables')
         stmt = select(CoreTable.id).where(and_(CoreTable.embedding.is_(None)))
         results = session.execute(stmt).scalars().all()
-        SQLBotLogUtil.info('result:' + str(len(results)))
+        SQLBotLogUtil.info('result: ' + str(len(results)))
 
         save_table_embedding(session, results)
     except Exception:
@@ -56,7 +56,7 @@ def run_fill_empty_table_embedding(session: Session):
 
 
 def save_table_embedding(session: Session, ids: List[int]):
-    if not settings.EMBEDDING_ENABLED:
+    if not settings.TABLE_EMBEDDING_ENABLED:
         return
 
     if not ids or len(ids) == 0:
@@ -99,7 +99,7 @@ def save_table_embedding(session: Session, ids: List[int]):
             session.commit()
 
         end_time = time.time()
-        SQLBotLogUtil.info('table embedding finished in:' + str(end_time - start_time) + 'seconds')
+        SQLBotLogUtil.info('table embedding finished in: ' + str(end_time - start_time) + ' seconds')
     except Exception:
         traceback.print_exc()
 
