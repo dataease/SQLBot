@@ -12,14 +12,14 @@ from starlette.middleware.cors import CORSMiddleware
 
 from alembic import command
 from apps.api import api_router
+from apps.datasource.crud.table import fill_empty_table_embeddings
 from apps.system.crud.aimodel_manage import async_model_info
 from apps.system.crud.assistant import init_dynamic_cors
 from apps.system.middleware.auth import TokenMiddleware
 from common.core.config import settings
 from common.core.response_middleware import ResponseMiddleware, exception_handler
 from common.core.sqlbot_cache import init_sqlbot_cache
-from common.utils.embedding_threads import fill_empty_terminology_embeddings, fill_empty_data_training_embeddings, \
-    fill_empty_table_embeddings
+from common.utils.embedding_threads import fill_empty_terminology_embeddings, fill_empty_data_training_embeddings
 from common.utils.utils import SQLBotLogUtil
 
 

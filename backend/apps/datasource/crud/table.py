@@ -1,9 +1,11 @@
 import json
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from sqlalchemy import and_, select, update
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
 from apps.ai_model.embedding import EmbeddingModelCache
@@ -11,6 +13,13 @@ from common.core.config import settings
 from common.core.deps import SessionDep
 from common.utils.utils import SQLBotLogUtil
 from ..models.datasource import CoreTable, CoreField
+
+executor = ThreadPoolExecutor(max_workers=200)
+
+from common.core.db import engine
+
+session_maker = sessionmaker(bind=engine)
+session = session_maker()
 
 
 def delete_table_by_ds_id(session: SessionDep, id: int):
@@ -32,14 +41,18 @@ def update_table(session: SessionDep, item: CoreTable):
 
 
 def run_fill_empty_table_embedding(session: Session):
-    if not settings.EMBEDDING_ENABLED:
-        return
+    try:
+        if not settings.EMBEDDING_ENABLED:
+            return
 
-    SQLBotLogUtil.info('get tables')
-    stmt = select(CoreTable.id).where(and_(CoreTable.embedding.is_(None)))
-    results = session.execute(stmt).scalars().all()
+        SQLBotLogUtil.info('get tables')
+        stmt = select(CoreTable.id).where(and_(CoreTable.embedding.is_(None)))
+        results = session.execute(stmt).scalars().all()
+        SQLBotLogUtil.info('result:' + str(len(results)))
 
-    save_table_embedding(session, results)
+        save_table_embedding(session, results)
+    except Exception:
+        traceback.print_exc()
 
 
 def save_table_embedding(session: Session, ids: List[int]):
@@ -87,5 +100,16 @@ def save_table_embedding(session: Session, ids: List[int]):
 
         end_time = time.time()
         SQLBotLogUtil.info('table embedding finished in:' + str(end_time - start_time) + 'seconds')
+    except Exception:
+        traceback.print_exc()
+
+
+def run_save_table_embeddings(ids: List[int]):
+    executor.submit(save_table_embedding, session, ids)
+
+
+def fill_empty_table_embeddings():
+    try:
+        executor.submit(run_fill_empty_table_embedding, session)
     except Exception:
         traceback.print_exc()
