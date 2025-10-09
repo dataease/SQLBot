@@ -67,12 +67,12 @@
 </div>`
 
   const getChatContainerHtml = (data) => {
-    let srcUrl = `${data.domain_url}/#/assistant?id=${data.id}&online=${!!data.online}&name=${encodeURIComponent(data.name)}&userFlag=${data.userFlag || ''}`
+    let srcUrl = `${data.domain_url}/#/assistant?id=${data.id}&online=${!!data.online}&name=${encodeURIComponent(data.name)}`
     if (data.userFlag) {
       srcUrl += `&userFlag=${data.userFlag || ''}`
     }
     if (data.history) {
-      srcUrl += `&userFlag=${data.history}`
+      srcUrl += `&history=${data.history}`
     }
     return `
 <div id="sqlbot-assistant-chat-container">
