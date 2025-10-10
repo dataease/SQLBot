@@ -71,7 +71,7 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
                 for index in range(len(results)):
                     item = results[index]
                     if item:
-                        _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, item)
+                        _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, json.loads(item))
 
                 _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
                 # print(len(_list))
