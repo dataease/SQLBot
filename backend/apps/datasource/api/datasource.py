@@ -96,7 +96,10 @@ async def get_tables(session: SessionDep, id: int):
 @router.post("/getTablesByConf")
 async def get_tables_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasource):
     try:
-        return getTablesByDs(session, ds)
+        def inner():
+            return getTablesByDs(session, ds)
+
+        await asyncio.to_thread(inner)
     except Exception as e:
         # check ds status
         def inner():
@@ -111,7 +114,10 @@ async def get_tables_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasour
 @router.post("/getSchemaByConf")
 async def get_schema_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasource):
     try:
-        return get_schema(ds)
+        def inner():
+            return get_schema(ds)
+
+        await asyncio.to_thread(inner)
     except Exception as e:
         # check ds status
         def inner():
