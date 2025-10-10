@@ -7,7 +7,6 @@ from xml.dom.minidom import parseString
 import dicttoxml
 from sqlalchemy import and_, or_, select, func, delete, update, union, text, BigInteger
 from sqlalchemy.orm import aliased
-from sqlalchemy.orm.session import Session
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.models.datasource import CoreDatasource
@@ -407,26 +406,36 @@ def delete_terminology(session: SessionDep, ids: list[int]):
 #
 # def fill_empty_embeddings():
 #     executor.submit(run_fill_empty_embeddings)
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import sessionmaker,scoped_session
+# engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+# session_maker = scoped_session(sessionmaker(bind=engine))
+
+def run_fill_empty_embeddings(session_maker):
+    try:
+        if not settings.EMBEDDING_ENABLED:
+            return
+        session = session_maker()
+        stmt1 = select(Terminology.id).where(and_(Terminology.embedding.is_(None), Terminology.pid.is_(None)))
+        stmt2 = select(Terminology.pid).where(
+            and_(Terminology.embedding.is_(None), Terminology.pid.isnot(None))).distinct()
+        combined_stmt = union(stmt1, stmt2)
+        results = session.execute(combined_stmt).scalars().all()
+        save_embeddings(session_maker, results)
+    except Exception:
+        traceback.print_exc()
+    finally:
+        session_maker.remove()
 
 
-def run_fill_empty_embeddings(session: Session):
-    if not settings.EMBEDDING_ENABLED:
-        return
-    stmt1 = select(Terminology.id).where(and_(Terminology.embedding.is_(None), Terminology.pid.is_(None)))
-    stmt2 = select(Terminology.pid).where(and_(Terminology.embedding.is_(None), Terminology.pid.isnot(None))).distinct()
-    combined_stmt = union(stmt1, stmt2)
-    results = session.execute(combined_stmt).scalars().all()
-    save_embeddings(session, results)
-
-
-def save_embeddings(session: Session, ids: List[int]):
+def save_embeddings(session_maker, ids: List[int]):
     if not settings.EMBEDDING_ENABLED:
         return
 
     if not ids or len(ids) == 0:
         return
     try:
-
+        session = session_maker()
         _list = session.query(Terminology).filter(or_(Terminology.id.in_(ids), Terminology.pid.in_(ids))).all()
 
         _words_list = [item.word for item in _list]
@@ -443,6 +452,8 @@ def save_embeddings(session: Session, ids: List[int]):
 
     except Exception:
         traceback.print_exc()
+    finally:
+        session_maker.remove()
 
 
 embedding_sql = f"""

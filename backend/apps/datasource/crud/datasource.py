@@ -15,7 +15,7 @@ from apps.db.db import get_tables, get_fields, exec_sql, check_connection
 from apps.db.engine import get_engine_config, get_engine_conn
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
-from apps.datasource.crud.table import run_save_table_embeddings
+from common.utils.embedding_threads import run_save_table_embeddings
 from common.utils.utils import deepcopy_ignore_extra
 from .table import get_tables_by_ds_id
 from ..crud.field import delete_field_by_ds_id, update_field

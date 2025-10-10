@@ -7,7 +7,6 @@ from xml.dom.minidom import parseString
 import dicttoxml
 from sqlalchemy import and_, select, func, delete, update, or_
 from sqlalchemy import text
-from sqlalchemy.orm.session import Session
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.data_training.models.data_training_model import DataTrainingInfo, DataTraining
@@ -160,24 +159,30 @@ def delete_training(session: SessionDep, ids: list[int]):
 #     executor.submit(run_fill_empty_embeddings)
 
 
-def run_fill_empty_embeddings(session: Session):
-    if not settings.EMBEDDING_ENABLED:
-        return
+def run_fill_empty_embeddings(session_maker):
+    try:
+        if not settings.EMBEDDING_ENABLED:
+            return
 
-    stmt = select(DataTraining.id).where(and_(DataTraining.embedding.is_(None)))
-    results = session.execute(stmt).scalars().all()
+        session = session_maker()
+        stmt = select(DataTraining.id).where(and_(DataTraining.embedding.is_(None)))
+        results = session.execute(stmt).scalars().all()
 
-    save_embeddings(session, results)
+        save_embeddings(session_maker, results)
+    except Exception:
+        traceback.print_exc()
+    finally:
+        session_maker.remove()
 
 
-def save_embeddings(session: Session, ids: List[int]):
+def save_embeddings(session_maker, ids: List[int]):
     if not settings.EMBEDDING_ENABLED:
         return
 
     if not ids or len(ids) == 0:
         return
     try:
-
+        session = session_maker()
         _list = session.query(DataTraining).filter(and_(DataTraining.id.in_(ids))).all()
 
         _question_list = [item.question for item in _list]
@@ -194,6 +199,8 @@ def save_embeddings(session: Session, ids: List[int]):
 
     except Exception:
         traceback.print_exc()
+    finally:
+        session_maker.remove()
 
 
 embedding_sql = f"""

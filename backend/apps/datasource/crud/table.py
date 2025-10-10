@@ -1,25 +1,15 @@
 import json
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from sqlalchemy import and_, select, update
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.session import Session
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from common.core.config import settings
 from common.core.deps import SessionDep
 from common.utils.utils import SQLBotLogUtil
 from ..models.datasource import CoreTable, CoreField
-
-executor = ThreadPoolExecutor(max_workers=200)
-
-from common.core.db import engine
-
-session_maker = sessionmaker(bind=engine)
-session = session_maker()
 
 
 def delete_table_by_ds_id(session: SessionDep, id: int):
@@ -40,12 +30,13 @@ def update_table(session: SessionDep, item: CoreTable):
     session.commit()
 
 
-def run_fill_empty_table_embedding(session: Session):
+def run_fill_empty_table_embedding(session_maker):
     try:
         if not settings.TABLE_EMBEDDING_ENABLED:
             return
 
         SQLBotLogUtil.info('get tables')
+        session = session_maker()
         stmt = select(CoreTable.id).where(and_(CoreTable.embedding.is_(None)))
         results = session.execute(stmt).scalars().all()
         SQLBotLogUtil.info('result: ' + str(len(results)))
@@ -53,9 +44,11 @@ def run_fill_empty_table_embedding(session: Session):
         save_table_embedding(session, results)
     except Exception:
         traceback.print_exc()
+    finally:
+        session_maker.remove()
 
 
-def save_table_embedding(session: Session, ids: List[int]):
+def save_table_embedding(session_maker, ids: List[int]):
     if not settings.TABLE_EMBEDDING_ENABLED:
         return
 
@@ -65,6 +58,7 @@ def save_table_embedding(session: Session, ids: List[int]):
         SQLBotLogUtil.info('start table embedding')
         start_time = time.time()
         model = EmbeddingModelCache.get_model()
+        session = session_maker()
         for _id in ids:
             table = session.query(CoreTable).filter(CoreTable.id == _id).first()
             fields = session.query(CoreField).filter(CoreField.table_id == table.id).all()
@@ -102,14 +96,5 @@ def save_table_embedding(session: Session, ids: List[int]):
         SQLBotLogUtil.info('table embedding finished in: ' + str(end_time - start_time) + ' seconds')
     except Exception:
         traceback.print_exc()
-
-
-def run_save_table_embeddings(ids: List[int]):
-    executor.submit(save_table_embedding, session, ids)
-
-
-def fill_empty_table_embeddings():
-    try:
-        executor.submit(run_fill_empty_table_embedding, session)
-    except Exception:
-        traceback.print_exc()
+    finally:
+        session_maker.remove()
