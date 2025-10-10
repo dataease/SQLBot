@@ -173,8 +173,8 @@ class AssistantOutDs:
             tables.append(t_obj)
 
         # do table embedding
-        if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
-            tables = get_table_embedding(tables, question)
+        # if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
+        #     tables = get_table_embedding(tables, question)
 
         if tables:
             for s in tables:

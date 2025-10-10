@@ -419,7 +419,8 @@ class LLMService:
         full_thinking_text = ''
         full_text = ''
         if not ignore_auto_select:
-            if settings.TABLE_EMBEDDING_ENABLED:
+            if settings.TABLE_EMBEDDING_ENABLED and (
+                    not self.current_assistant or (self.current_assistant and self.current_assistant.type != 1)):
                 ds = get_ds_embedding(self.session, self.current_user, _ds_list, self.out_ds_instance,
                                       self.chat_question.question, self.current_assistant)
                 yield {'content': '{"id":' + str(ds.get('id')) + '}'}
