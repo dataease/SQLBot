@@ -10,7 +10,7 @@ import icon_txhy_colorful from '@/assets/model/icon_txhy_colorful.png'
 import icon_hsyq_colorful from '@/assets/model/icon_hsyq_colorful.png'
 // import icon_vllm_colorful from '@/assets/model/icon_vllm_colorful.png'
 import icon_common_openai from '@/assets/model/icon_common_openai.png'
-import icon_azure_openAI_colorful from '@/assets/model/icon_Azure_OpenAI_colorful.png'
+// import icon_azure_openAI_colorful from '@/assets/model/icon_Azure_OpenAI_colorful.png'
 
 type ModelArg = { key: string; val?: string | number; type: string; range?: string }
 type ModelOption = { name: string; api_domain?: string; args?: ModelArg[] }
@@ -279,7 +279,7 @@ export const supplierList: Array<{
       },
     },
   }, */
-  {
+  /* {
     id: 12,
     name: 'Azure OpenAI',
     icon: icon_azure_openAI_colorful,
@@ -307,7 +307,7 @@ export const supplierList: Array<{
         ],
       },
     },
-  },
+  }, */
   {
     id: 15,
     name: '通用OpenAI',
