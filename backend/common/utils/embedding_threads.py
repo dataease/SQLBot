@@ -38,6 +38,11 @@ def run_save_table_embeddings(ids: List[int]):
     executor.submit(save_table_embedding, session_maker, ids)
 
 
-def fill_empty_table_embeddings():
-    from apps.datasource.crud.table import run_fill_empty_table_embedding
-    executor.submit(run_fill_empty_table_embedding, session_maker)
+def run_save_ds_embeddings(ids: List[int]):
+    from apps.datasource.crud.table import save_ds_embedding
+    executor.submit(save_ds_embedding, session_maker, ids)
+
+
+def fill_empty_table_and_ds_embeddings():
+    from apps.datasource.crud.table import run_fill_empty_table_and_ds_embedding
+    executor.submit(run_fill_empty_table_and_ds_embedding, session_maker)

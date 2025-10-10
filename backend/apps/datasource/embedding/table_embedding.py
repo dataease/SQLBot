@@ -52,7 +52,7 @@ def calc_table_embedding(tables: list[dict], question: str):
             # text = [s.get('schema_table') for s in _list]
             #
             model = EmbeddingModelCache.get_model()
-            # start_time = time.time()
+            start_time = time.time()
             # results = model.embed_documents(text)
             # end_time = time.time()
             # SQLBotLogUtil.info(str(end_time - start_time))
@@ -67,7 +67,11 @@ def calc_table_embedding(tables: list[dict], question: str):
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
             _list = _list[:settings.TABLE_EMBEDDING_COUNT]
             # print(len(_list))
-            SQLBotLogUtil.info(json.dumps(_list))
+            end_time = time.time()
+            SQLBotLogUtil.info(str(end_time - start_time))
+            SQLBotLogUtil.info(json.dumps([{"id": ele.get('id'), "schema_table": ele.get('schema_table'),
+                                            "cosine_similarity": ele.get('cosine_similarity')}
+                                           for ele in _list]))
             return _list
         except Exception:
             traceback.print_exc()

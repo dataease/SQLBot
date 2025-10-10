@@ -15,7 +15,7 @@ from apps.db.db import get_tables, get_fields, exec_sql, check_connection
 from apps.db.engine import get_engine_config, get_engine_conn
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
-from common.utils.embedding_threads import run_save_table_embeddings
+from common.utils.embedding_threads import run_save_table_embeddings, run_save_ds_embeddings
 from common.utils.utils import deepcopy_ignore_extra
 from .table import get_tables_by_ds_id
 from ..crud.field import delete_field_by_ds_id, update_field
@@ -105,6 +105,8 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
         setattr(record, field, value)
     session.add(record)
     session.commit()
+
+    run_save_ds_embeddings([ds.id])
     return ds
 
 
@@ -197,6 +199,7 @@ def sync_table(session: SessionDep, ds: CoreDatasource, tables: List[CoreTable])
 
     # do table embedding
     run_save_table_embeddings(id_list)
+    run_save_ds_embeddings([ds.id])
 
 
 def sync_fields(session: SessionDep, ds: CoreDatasource, table: CoreTable, fields: List[ColumnSchema]):
@@ -238,6 +241,7 @@ def update_table_and_fields(session: SessionDep, data: TableObj):
 
     # do table embedding
     run_save_table_embeddings([data.table.id])
+    run_save_ds_embeddings([data.table.ds_id])
 
 
 def updateTable(session: SessionDep, table: CoreTable):
@@ -245,6 +249,7 @@ def updateTable(session: SessionDep, table: CoreTable):
 
     # do table embedding
     run_save_table_embeddings([table.id])
+    run_save_ds_embeddings([table.ds_id])
 
 
 def updateField(session: SessionDep, field: CoreField):
@@ -252,6 +257,7 @@ def updateField(session: SessionDep, field: CoreField):
 
     # do table embedding
     run_save_table_embeddings([field.table_id])
+    run_save_ds_embeddings([field.ds_id])
 
 
 def preview(session: SessionDep, current_user: CurrentUser, id: int, data: TableObj):
