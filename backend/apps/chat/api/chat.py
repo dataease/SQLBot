@@ -23,7 +23,7 @@ async def chats(session: SessionDep, current_user: CurrentUser):
     return list_chats(session, current_user)
 
 
-@router.get("/get/{chart_id}")
+@router.get("/{chart_id}")
 async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int, current_assistant: CurrentAssistant):
     def inner():
         return get_chat_with_records(chart_id=chart_id, session=session, current_user=current_user,
@@ -32,7 +32,7 @@ async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int
     return await asyncio.to_thread(inner)
 
 
-@router.get("/get/with_data/{chart_id}")
+@router.get("/{chart_id}/with_data")
 async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, chart_id: int,
                              current_assistant: CurrentAssistant):
     def inner():
@@ -42,7 +42,7 @@ async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, cha
     return await asyncio.to_thread(inner)
 
 
-@router.get("/record/get/{chart_record_id}/data")
+@router.get("/record/{chart_record_id}/data")
 async def chat_record_data(session: SessionDep, chart_record_id: int):
     def inner():
         data = get_chat_chart_data(chart_record_id=chart_record_id, session=session)
@@ -51,7 +51,7 @@ async def chat_record_data(session: SessionDep, chart_record_id: int):
     return await asyncio.to_thread(inner)
 
 
-@router.get("/record/get/{chart_record_id}/predict_data")
+@router.get("/record/{chart_record_id}/predict_data")
 async def chat_predict_data(session: SessionDep, chart_record_id: int):
     def inner():
         data = get_chat_predict_data(chart_record_id=chart_record_id, session=session)
@@ -71,7 +71,7 @@ async def rename(session: SessionDep, chat: RenameChat):
         )
 
 
-@router.get("/delete/{chart_id}")
+@router.delete("/{chart_id}")
 async def delete(session: SessionDep, chart_id: int):
     try:
         return delete_chat(session=session, chart_id=chart_id)

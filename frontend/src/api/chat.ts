@@ -299,16 +299,16 @@ export const chatApi = {
     return request.get('/chat/list')
   },
   get: (id: number): Promise<ChatInfo> => {
-    return request.get(`/chat/get/${id}`)
+    return request.get(`/chat/${id}`)
   },
   get_with_Data: (id: number): Promise<ChatInfo> => {
-    return request.get(`/chat/get/with_data/${id}`)
+    return request.get(`/chat/${id}/with_data`)
   },
   get_chart_data: (record_id?: number): Promise<any> => {
-    return request.get(`/chat/record/get/${record_id}/data`)
+    return request.get(`/chat/record/${record_id}/data`)
   },
   get_chart_predict_data: (record_id?: number): Promise<any> => {
-    return request.get(`/chat/record/get/${record_id}/predict_data`)
+    return request.get(`/chat/record/${record_id}/predict_data`)
   },
   startChat: (data: any): Promise<ChatInfo> => {
     return request.post('/chat/start', data)
@@ -320,7 +320,7 @@ export const chatApi = {
     return request.post('/chat/rename', { id: chat_id, brief: brief })
   },
   deleteChat: (id: number | undefined): Promise<string> => {
-    return request.get(`/chat/delete/${id}`)
+    return request.delete(`/chat/${id}`)
   },
   analysis: (record_id: number | undefined, controller?: AbortController) => {
     return request.fetchStream(`/chat/record/${record_id}/analysis`, {}, controller)
