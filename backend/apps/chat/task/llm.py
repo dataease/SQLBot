@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime
 from typing import Any, List, Optional, Union, Dict, Iterator
 
-import numpy as np
 import orjson
 import pandas as pd
 import requests
@@ -1077,7 +1076,7 @@ class LLMService:
                         if not data or not _fields_list:
                             yield 'The SQL execution result is empty.\n\n'
                         else:
-                            df = pd.DataFrame(np.array(data), columns=_fields_list)
+                            df = pd.DataFrame(data, columns=_fields_list)
                             markdown_table = df.to_markdown(index=False)
                             yield markdown_table + '\n\n'
                 else:
@@ -1137,7 +1136,7 @@ class LLMService:
                     if not data or not _fields_list:
                         yield 'The SQL execution result is empty.\n\n'
                     else:
-                        df = pd.DataFrame(np.array(data), columns=_fields_list)
+                        df = pd.DataFrame(data, columns=_fields_list)
                         markdown_table = df.to_markdown(index=False)
                         yield markdown_table + '\n\n'
 

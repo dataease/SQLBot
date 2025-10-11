@@ -51,6 +51,7 @@ export class Line extends BaseG2Chart {
         },
         y: {
           nice: true,
+          type: 'linear',
         },
       },
       children: [

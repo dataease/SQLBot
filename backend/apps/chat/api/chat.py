@@ -2,7 +2,6 @@ import asyncio
 import io
 import traceback
 
-import numpy as np
 import orjson
 import pandas as pd
 from fastapi import APIRouter, HTTPException
@@ -10,7 +9,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, select
 
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
-    delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id
+    delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
+    format_json_data
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, ExcelData
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
@@ -45,7 +45,8 @@ async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, cha
 @router.get("/record/get/{chart_record_id}/data")
 async def chat_record_data(session: SessionDep, chart_record_id: int):
     def inner():
-        return get_chat_chart_data(chart_record_id=chart_record_id, session=session)
+        data = get_chat_chart_data(chart_record_id=chart_record_id, session=session)
+        return format_json_data(data)
 
     return await asyncio.to_thread(inner)
 
@@ -53,7 +54,8 @@ async def chat_record_data(session: SessionDep, chart_record_id: int):
 @router.get("/record/get/{chart_record_id}/predict_data")
 async def chat_predict_data(session: SessionDep, chart_record_id: int):
     def inner():
-        return get_chat_predict_data(chart_record_id=chart_record_id, session=session)
+        data = get_chat_predict_data(chart_record_id=chart_record_id, session=session)
+        return format_json_data(data)
 
     return await asyncio.to_thread(inner)
 
@@ -211,20 +213,52 @@ async def export_excel(excel_data: ExcelData, trans: Trans):
                 detail=trans("i18n_excel_export.data_is_empty")
             )
 
+        # 预处理数据并记录每列的格式类型
+        col_formats = {}  # 格式类型：'text'（文本）、'number'（数字）、'default'（默认）
+        for field_idx, field in enumerate(excel_data.axis):
+            _fields_list.append(field.name)
+            col_formats[field_idx] = 'default'  # 默认不特殊处理
+
         for _data in excel_data.data:
             _row = []
-            for field in excel_data.axis:
-                _row.append(_data.get(field.value))
+            for field_idx, field in enumerate(excel_data.axis):
+                value = _data.get(field.value)
+                if value is not None:
+                    # 检查是否为数字且需要特殊处理
+                    if isinstance(value, (int, float)):
+                        # 整数且超过15位 → 转字符串并标记为文本列
+                        if isinstance(value, int) and len(str(abs(value))) > 15:
+                            value = str(value)
+                            col_formats[field_idx] = 'text'
+                        # 小数且超过15位有效数字 → 转字符串并标记为文本列
+                        elif isinstance(value, float):
+                            decimal_str = format(value, '.16f').rstrip('0').rstrip('.')
+                            if len(decimal_str) > 15:
+                                value = str(value)
+                                col_formats[field_idx] = 'text'
+                        # 其他数字列标记为数字格式（避免科学记数法）
+                        elif col_formats[field_idx] != 'text':
+                            col_formats[field_idx] = 'number'
+                _row.append(value)
             data.append(_row)
-        for field in excel_data.axis:
-            _fields_list.append(field.name)
-        df = pd.DataFrame(np.array(data), columns=_fields_list)
+
+        df = pd.DataFrame(data, columns=_fields_list)
 
         buffer = io.BytesIO()
 
         with pd.ExcelWriter(buffer, engine='xlsxwriter',
-                            engine_kwargs={'options': {'strings_to_numbers': True}}) as writer:
+                            engine_kwargs={'options': {'strings_to_numbers': False}}) as writer:
             df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+            # 获取 xlsxwriter 的工作簿和工作表对象
+            workbook = writer.book
+            worksheet = writer.sheets['Sheet1']
+
+            for col_idx, fmt_type in col_formats.items():
+                if fmt_type == 'text':
+                    worksheet.set_column(col_idx, col_idx, None, workbook.add_format({'num_format': '@'}))
+                elif fmt_type == 'number':
+                    worksheet.set_column(col_idx, col_idx, None, workbook.add_format({'num_format': '0'}))
 
         buffer.seek(0)
         return io.BytesIO(buffer.getvalue())

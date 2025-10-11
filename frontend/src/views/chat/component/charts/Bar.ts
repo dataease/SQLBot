@@ -88,6 +88,7 @@ export class Bar extends BaseG2Chart {
         },
         y: {
           nice: true,
+          type: 'linear',
         },
       },
       interaction: {

@@ -42,6 +42,7 @@ function getLineOptions(baseOptions, axis, data) {
             },
             y: {
                 nice: true,
+                type: 'linear',
             },
         },
         children: [

@@ -69,6 +69,7 @@ function getBarOptions(baseOptions, axis, data) {
             },
             y: {
                 nice: true,
+                type: 'linear',
             },
         },
         interaction: {
