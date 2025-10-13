@@ -8,7 +8,7 @@ from sqlbot_xpack.permissions.models.ds_rules import DsRules
 from sqlmodel import select
 
 from apps.datasource.crud.permission import get_column_permission_fields, get_row_permission_filters, is_normal_user
-from apps.datasource.embedding.table_embedding import get_table_embedding, calc_table_embedding
+from apps.datasource.embedding.table_embedding import calc_table_embedding
 from apps.datasource.utils.utils import aes_decrypt
 from apps.db.constant import DB
 from apps.db.db import get_tables, get_fields, exec_sql, check_connection

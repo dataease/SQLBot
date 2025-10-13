@@ -8,7 +8,7 @@ from sqlalchemy import Engine, create_engine
 from sqlmodel import Session, select
 from starlette.middleware.cors import CORSMiddleware
 
-from apps.datasource.embedding.table_embedding import get_table_embedding
+# from apps.datasource.embedding.table_embedding import get_table_embedding
 from apps.datasource.models.datasource import CoreDatasource, DatasourceConf
 from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
