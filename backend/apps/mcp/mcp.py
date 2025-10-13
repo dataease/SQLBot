@@ -111,8 +111,8 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
     mcp_chat = ChatMcp(token=chat.token, chat_id=chat.chat_id, question=chat.question)
 
     try:
-        llm_service = await LLMService.create(session_user, mcp_chat)
-        llm_service.init_record()
+        llm_service = await LLMService.create(session, session_user, mcp_chat)
+        llm_service.init_record(session=session)
         llm_service.run_task_async(False, chat.stream)
     except Exception as e:
         traceback.print_exc()
@@ -167,8 +167,8 @@ async def mcp_assistant(session: SessionDep, chat: McpAssistant):
     mcp_chat = ChatQuestion(chat_id=c.id, question=chat.question)
     # ask
     try:
-        llm_service = await LLMService.create(session_user, mcp_chat, mcp_assistant_header)
-        llm_service.init_record()
+        llm_service = await LLMService.create(session, session_user, mcp_chat, mcp_assistant_header)
+        llm_service.init_record(session=session)
         llm_service.run_task_async(False, chat.stream, ChatFinishStep.QUERY_DATA)
     except Exception as e:
         traceback.print_exc()
