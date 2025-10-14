@@ -8,6 +8,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "lodash": "^4.17.21",
     "nan": "^2.22.2",
+    "pm2": "^6.0.13",
     "node-canvas": "^2.9.0",
     "nprogress": "^0.2.0"
   },
