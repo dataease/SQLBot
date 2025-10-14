@@ -56,7 +56,7 @@ executor = ThreadPoolExecutor(max_workers=200)
 dynamic_ds_types = [1, 3]
 dynamic_subsql_prefix = 'select * from sqlbot_dynamic_temp_table_'
 
-session_maker = scoped_session(sessionmaker(bind=engine))
+session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 
 
 class LLMService:
@@ -88,7 +88,6 @@ class LLMService:
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
                  embedding: bool = False, config: LLMConfig = None):
         self.chunk_list = []
-        session.exec = session.exec if hasattr(session, "exec") else session.execute
         self.current_user = current_user
         self.current_assistant = current_assistant
         chat_id = chat_question.chat_id
