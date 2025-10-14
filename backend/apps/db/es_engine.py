@@ -106,7 +106,7 @@ def get_es_data_by_http(conf: DatasourceConf, sql: str):
         "Authorization": f"Basic {encoded_credentials}"
     }
 
-    response = requests.post(host, data=json.dumps({"query": sql}), headers=headers)
+    response = requests.post(host, data=json.dumps({"query": sql}), headers=headers, verify=False)
 
     # print(response.json())
     res = response.json()
