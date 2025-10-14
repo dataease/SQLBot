@@ -4,7 +4,7 @@ from apps.datasource.models.datasource import CoreDatasource, DatasourceConf
 
 
 def get_version_sql(ds: CoreDatasource, conf: DatasourceConf):
-    if ds.type == "mysql" or ds.type == "doris":
+    if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks":
         return """
                 SELECT VERSION()
                 """
@@ -134,7 +134,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
                   relkind in  ('r','p', 'f') 
                   AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = %s)
                 """, conf.dbSchema
-    elif ds.type == "doris":
+    elif ds.type == "doris" or ds.type == "starrocks":
         return """
                 SELECT 
                     TABLE_NAME, 
@@ -281,7 +281,7 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                 """
         sql2 = " AND c.TABLE_NAME = :param2" if table_name is not None and table_name != "" else ""
         return sql1 + sql2, conf.dbSchema, table_name
-    elif ds.type == "doris":
+    elif ds.type == "doris" or ds.type == "starrocks":
         sql1 = """
                 SELECT 
                     COLUMN_NAME,

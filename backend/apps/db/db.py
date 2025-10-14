@@ -164,7 +164,7 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         if is_raise:
                             raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                         return False
-            elif ds.type == 'doris':
+            elif ds.type == 'doris' or ds.type == "starrocks":
                 with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                      port=conf.port, db=conf.database, connect_timeout=10,
                                      read_timeout=10, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -259,7 +259,7 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
                     cursor.execute(sql, timeout=10, **extra_config_dict)
                     res = cursor.fetchall()
                     version = res[0][0]
-            elif ds.type == 'doris':
+            elif ds.type == 'doris' or ds.type == "starrocks":
                 with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                      port=conf.port, db=conf.database, connect_timeout=10,
                                      read_timeout=10, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -337,7 +337,7 @@ def get_tables(ds: CoreDatasource):
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'doris':
+        elif ds.type == 'doris' or ds.type == "starrocks":
             with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                  port=conf.port, db=conf.database, connect_timeout=conf.timeout,
                                  read_timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -387,7 +387,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'doris':
+        elif ds.type == 'doris' or ds.type == "starrocks":
             with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                  port=conf.port, db=conf.database, connect_timeout=conf.timeout,
                                  read_timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -459,7 +459,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
-        elif ds.type == 'doris':
+        elif ds.type == 'doris' or ds.type == "starrocks":
             with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                  port=conf.port, db=conf.database, connect_timeout=conf.timeout,
                                  read_timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
