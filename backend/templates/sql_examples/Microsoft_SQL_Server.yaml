@@ -1,0 +1,87 @@
+template:
+  quot_rule: |
+    <rule>
+      必须对数据库名、表名、字段名、别名外层加方括号（[]）。
+      <note>
+        1. 点号（.）不能包含在方括号内，必须写成 [schema].[table]
+        2. 当标识符为关键字、含特殊字符或需保留大小写时必须加方括号
+        3. SQL Server 标识符默认不区分大小写
+      </note>
+    </rule>
+
+  limit_rule: |
+    <rule>
+      行数限制使用标准SQL语法：
+      <note>
+        1. 标准写法：TOP [count]
+        2. 分页写法：OFFSET [start] ROWS FETCH NEXT [count] ROWS ONLY
+        3. 禁止使用 MySQL 的 LIMIT 语法
+      </note>
+    </rule>
+
+  other_rule: |
+    <rule>必须为每个表生成别名（不加AS）</rule>
+    <rule>禁止使用星号(*)，必须明确字段名</rule>
+    <rule>中文/特殊字符字段需保留原名并添加英文别名</rule>
+    <rule>函数字段必须加别名</rule>
+    <rule>百分比显示为：CONVERT(VARCHAR, ROUND(x*100,2)) + '%'</rule>
+    <rule>避免与SQL Server关键字冲突（如[user]/[order]/[desc]）</rule>
+
+  basic_example: |
+    <basic-examples>
+      <intro>
+        📌 以下示例严格遵循<Rules>中的 Microsoft SQL Server 规范，展示符合要求的 SQL 写法与典型错误案例。
+        ⚠️ 注意：示例中的表名、字段名均为演示虚构，实际使用时需替换为用户提供的真实标识符。
+        🔍 重点观察：
+          1. 双引号包裹所有数据库对象的规范用法
+          2. 中英别名/百分比/函数等特殊字段的处理
+          3. 关键字冲突的规避方式
+      </intro>
+      <example>
+        <input>查询 Sales.Orders 表的前100条订单（含中文字段和百分比）</input>
+        <output-bad>
+          SELECT * FROM Sales.Orders  -- 错误：使用星号
+          SELECT [订单ID], [金额] FROM [Sales].[Orders] [o]  -- 错误：缺少英文别名
+          SELECT COUNT([订单ID]) FROM [Sales].[Orders] [o]  -- 错误：函数未加别名
+        </output-bad>
+        <output-good>
+          SELECT TOP 100
+            [o].[订单ID] AS [order_id],
+            [o].[金额] AS [amount],
+            COUNT([o].[订单ID]) AS [total_orders],
+            CONVERT(VARCHAR, ROUND([o].[折扣率] * 100, 2)) + '%' AS [discount_percent]
+          FROM [Sales].[Orders] [o]
+        </output-good>
+      </example>
+
+      <example>
+        <input>统计用户表 dbo.Users（含关键字字段user）的活跃占比</input>
+        <output-bad>
+          SELECT user, status FROM dbo.Users  -- 错误：未处理关键字
+          SELECT [user], ROUND(active_ratio*100) FROM [dbo].[Users]  -- 错误：百分比格式错误
+        </output-bad>
+        <output-good>
+          SELECT 
+            [u].[user] AS [user_name],
+            CONVERT(VARCHAR, ROUND([u].[active_ratio] * 100, 2)) + '%' AS [active_percent]
+          FROM [dbo].[Users] [u]
+          WHERE [u].[status] = 1
+          ORDER BY [u].[create_date]
+          OFFSET 0 ROWS FETCH NEXT 1000 ROWS ONLY
+        </output-good>
+      </example>
+    </basic-examples>
+
+  example_engine: Microsoft SQL Server 2022
+  example_answer_1: |
+    {"success":true,"sql":"SELECT [country] AS [country_name], [continent] AS [continent_name], [year] AS [year], [gdp] AS [gdp_usd] FROM [Sample_Database].[sample_country_gdp] ORDER BY [country], [year]","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_1_with_limit: |
+    {"success":true,"sql":"SELECT TOP 1000 [country] AS [country_name], [continent] AS [continent_name], [year] AS [year], [gdp] AS [gdp_usd] FROM [Sample_Database].[sample_country_gdp] ORDER BY [country], [year]","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_2: |
+    {"success":true,"sql":"SELECT [country] AS [country_name], [gdp] AS [gdp_usd] FROM [Sample_Database].[sample_country_gdp] WHERE [year] = '2024' ORDER BY [gdp] DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_2_with_limit: |
+    {"success":true,"sql":"SELECT TOP 1000 [country] AS [country_name], [gdp] AS [gdp_usd] FROM [Sample_Database].[sample_country_gdp] WHERE [year] = '2024' ORDER BY [gdp] DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_3: |
+    {"success":true,"sql":"SELECT [country] AS [country_name], [gdp] AS [gdp_usd] FROM [Sample_Database].[sample_country_gdp] WHERE [year] = '2025' AND [country] = N'中国'","tables":["sample_country_gdp"],"chart-type":"table"}
+  example_answer_3_with_limit: |
+    {"success":true,"sql":"SELECT TOP 1000 [country] AS [country_name], [gdp] AS [gdp_usd] FROM [Sample_Database].[sample_country_gdp] WHERE [year] = '2025' AND [country] = N'中国'","tables":["sample_country_gdp"],"chart-type":"table"}

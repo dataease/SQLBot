@@ -13,29 +13,33 @@ class ConnectType(Enum):
 
 
 class DB(Enum):
-    mysql = ('mysql', 'MySQL', '`', '`', ConnectType.sqlalchemy)
-    sqlServer = ('sqlServer', 'Microsoft SQL Server', '[', ']', ConnectType.sqlalchemy)
-    pg = ('pg', 'PostgreSQL', '"', '"', ConnectType.sqlalchemy)
-    excel = ('excel', 'Excel/CSV', '"', '"', ConnectType.sqlalchemy)
-    oracle = ('oracle', 'Oracle', '"', '"', ConnectType.sqlalchemy)
-    ck = ('ck', 'ClickHouse', '"', '"', ConnectType.sqlalchemy)
-    dm = ('dm', '达梦', '"', '"', ConnectType.py_driver)
-    doris = ('doris', 'Apache Doris', '`', '`', ConnectType.py_driver)
-    redshift = ('redshift', 'AWS Redshift', '"', '"', ConnectType.py_driver)
-    es = ('es', 'Elasticsearch', '"', '"', ConnectType.py_driver)
-    kingbase = ('kingbase', 'Kingbase', '"', '"', ConnectType.py_driver)
-    starrocks = ('starrocks', 'StarRocks', '`', '`', ConnectType.py_driver)
+    excel = ('excel', 'Excel/CSV', '"', '"', ConnectType.sqlalchemy, 'PostgreSQL')
+    redshift = ('redshift', 'AWS Redshift', '"', '"', ConnectType.py_driver, 'AWS_Redshift')
+    ck = ('ck', 'ClickHouse', '"', '"', ConnectType.sqlalchemy, 'ClickHouse')
+    dm = ('dm', '达梦', '"', '"', ConnectType.py_driver, 'DM')
+    doris = ('doris', 'Apache Doris', '`', '`', ConnectType.py_driver, 'Doris')
+    es = ('es', 'Elasticsearch', '"', '"', ConnectType.py_driver, 'Elasticsearch')
+    kingbase = ('kingbase', 'Kingbase', '"', '"', ConnectType.py_driver, 'Kingbase')
+    sqlServer = ('sqlServer', 'Microsoft SQL Server', '[', ']', ConnectType.sqlalchemy, 'Microsoft_SQL_Server')
+    mysql = ('mysql', 'MySQL', '`', '`', ConnectType.sqlalchemy, 'MySQL')
+    oracle = ('oracle', 'Oracle', '"', '"', ConnectType.sqlalchemy, 'Oracle')
+    pg = ('pg', 'PostgreSQL', '"', '"', ConnectType.sqlalchemy, 'PostgreSQL')
+    starrocks = ('starrocks', 'StarRocks', '`', '`', ConnectType.py_driver, 'StarRocks')
 
-    def __init__(self, type, db_name, prefix, suffix, connect_type: ConnectType):
+    def __init__(self, type, db_name, prefix, suffix, connect_type: ConnectType, template_name: str):
         self.type = type
         self.db_name = db_name
         self.prefix = prefix
         self.suffix = suffix
         self.connect_type = connect_type
+        self.template_name = template_name
 
     @classmethod
-    def get_db(cls, type):
+    def get_db(cls, type, default_if_none=False):
         for db in cls:
             if db.type == type:
                 return db
-        raise ValueError(f"Invalid db type: {type}")
+        if default_if_none:
+            return DB.pg
+        else:
+            raise ValueError(f"Invalid db type: {type}")

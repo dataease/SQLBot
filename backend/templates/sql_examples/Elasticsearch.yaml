@@ -1,0 +1,91 @@
+template:
+  quot_rule: |
+    <rule>
+      必须对索引名（表名）、字段名、别名外层加双引号（"）。
+      <note>
+        1. 通配符索引需整体加引号：`"logs-*"`
+        2. 嵌套字段用点号连接：`"user.name"`
+        3. 时间字段必须显式转换：`CAST("@timestamp" AS TIMESTAMP)`
+      </note>
+    </rule>
+
+  limit_rule: |
+    <rule>
+      行数限制必须使用标准SQL语法：
+      <note>
+        1. 首选：`LIMIT [count]`
+        2. 分页：`LIMIT [count] OFFSET [start]`
+        3. 禁止使用Elasticsearch原生`size/from`参数
+      </note>
+    </rule>
+
+  other_rule: |
+    <rule>必须为每个索引生成别名（不加AS）</rule>
+    <rule>禁止使用星号(*)，必须明确字段名</rule>
+    <rule>中文/特殊字符字段需保留原名并添加英文别名</rule>
+    <rule>函数字段必须加别名</rule>
+    <rule>百分比显示为：`ROUND(x*100,2) || '%'`</rule>
+    <rule>避免与Elasticsearch关键字冲突（如`score`/`type`）</rule>
+
+  basic_example: |
+    <basic-examples>
+      <intro>
+        📌 以下示例严格遵循<Rules>中的 Elasticsearch 规范，展示符合要求的 SQL 写法与典型错误案例。
+        ⚠️ 注意：示例中的表名、字段名均为演示虚构，实际使用时需替换为用户提供的真实标识符。
+        🔍 重点观察：
+          1. 双引号包裹所有数据库对象的规范用法
+          2. 中英别名/百分比/函数等特殊字段的处理
+          3. 关键字冲突的规避方式
+      </intro>
+      <example>
+        <input>查询 logs-* 索引的前100条错误日志（含时间过滤）</input>
+        <output-bad>
+          SELECT * FROM logs-* WHERE level = 'error' LIMIT 100  -- 错误1：使用星号
+          SELECT message FROM "logs-*" WHERE @timestamp > NOW() - 1d  -- 错误2：未转换时间
+          SELECT "message", "@timestamp" FROM "logs-*" LIMIT 100  -- 错误3：未处理时间字段
+        </output-bad>
+        <output-good>
+          SELECT 
+            "l"."message" AS "log_content",
+            "l"."host.ip" AS "client_ip",
+            CAST("l"."@timestamp" AS TIMESTAMP) AS "log_time"
+          FROM "logs-*" "l"
+          WHERE "l"."level" = 'error'
+          AND CAST("l"."@timestamp" AS TIMESTAMP) > DATE_SUB(NOW(), INTERVAL 1 DAY)
+          LIMIT 100
+        </output-good>
+      </example>
+
+      <example>
+        <input>统计各地区的错误日志占比（Top 5）</input>
+        <output-bad>
+          SELECT region, COUNT(*) FROM "logs-*" GROUP BY region  -- 错误1：使用COUNT(*)
+          SELECT "region", MAX("count") FROM "logs-*" GROUP BY 1  -- 错误2：使用序号分组
+        </output-bad>
+        <output-good>
+          SELECT 
+            "l"."region" AS "area",
+            COUNT("l"."message") AS "error_count",
+            ROUND(COUNT("l"."message") * 100.0 / SUM(COUNT("l"."message")) OVER (), 2) || '%' AS "error_percent"
+          FROM "logs-*" "l"
+          WHERE "l"."level" = 'error'
+          GROUP BY "l"."region"
+          ORDER BY "error_count" DESC
+          LIMIT 5
+        </output-good>
+      </example>
+    </basic-examples>
+
+  example_engine: Elasticsearch SQL 8.9
+  example_answer_1: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_1_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\" LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_2: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_2_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_3: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国'","tables":["sample_country_gdp"],"chart-type":"table"}
+  example_answer_3_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国' LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"table"}

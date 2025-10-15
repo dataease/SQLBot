@@ -1,0 +1,90 @@
+template:
+  quot_rule: |
+    <rule>
+      必须对数据库名、表名、字段名、别名外层加双引号（"）。
+      <note>
+        1. 点号（.）不能包含在引号内，必须写成 "database"."table"
+        2. ClickHouse 严格区分大小写，必须通过引号保留原始大小写
+        3. 嵌套字段使用点号连接：`"json_column.field"`
+      </note>
+    </rule>
+
+  limit_rule: |
+    <rule>
+      行数限制使用标准SQL语法：
+      <note>
+        1. 标准写法：LIMIT [count]
+        2. 分页写法：LIMIT [count] OFFSET [start]
+        3. 禁止使用原生 `topk()` 等函数替代
+      </note>
+    </rule>
+
+  other_rule: |
+    <rule>必须为每个表生成简短别名（如t1/t2）</rule>
+    <rule>禁止使用星号(*)，必须明确字段名</rule>
+    <rule>JSON字段需用点号语法访问：`"column.field"`</rule>
+    <rule>函数字段必须加别名</rule>
+    <rule>百分比显示为：`ROUND(x*100,2) || '%'`</rule>
+    <rule>避免与ClickHouse关键字冲突（如`timestamp`/`default`）</rule>
+
+  basic_example: |
+    <basic-examples>
+      <intro>
+        📌 以下示例严格遵循<Rules>中的 ClickHouse 规范，展示符合要求的 SQL 写法与典型错误案例。
+        ⚠️ 注意：示例中的表名、字段名均为演示虚构，实际使用时需替换为用户提供的真实标识符。
+        🔍 重点观察：
+          1. 双引号包裹所有数据库对象的规范用法
+          2. 中英别名/百分比/函数等特殊字段的处理
+          3. 关键字冲突的规避方式
+      </intro>
+      <example>
+        <input>查询 events 表的前100条错误日志（含JSON字段）</input>
+        <output-bad>
+          SELECT * FROM default.events LIMIT 100  -- 错误1：使用星号
+          SELECT message FROM "default"."events" WHERE level = 'error'  -- 错误2：未处理JSON字段
+          SELECT "message", "extra.error_code" FROM events LIMIT 100  -- 错误3：表名未加引号
+        </output-bad>
+        <output-good>
+          SELECT 
+            "e"."message" AS "log_content",
+            "e"."extra"."error_code" AS "error_id",
+            toDateTime("e"."timestamp") AS "log_time"
+          FROM "default"."events" "e"
+          WHERE "e"."level" = 'error'
+          LIMIT 100
+        </output-good>
+      </example>
+
+      <example>
+        <input>统计各地区的错误率Top 5（含百分比）</input>
+        <output-bad>
+          SELECT region, COUNT(*) FROM events GROUP BY region  -- 错误1：使用COUNT(*)
+          SELECT "region", MAX("count") FROM "events" GROUP BY 1  -- 错误2：使用序号分组
+        </output-bad>
+        <output-good>
+          SELECT 
+            "e"."region" AS "area",
+            COUNT(*) AS "total",
+            COUNTIf("e"."level" = 'error') AS "error_count",
+            ROUND(error_count * 100.0 / total, 2) || '%' AS "error_rate"
+          FROM "default"."events" "e"
+          GROUP BY "e"."region"
+          ORDER BY "error_rate" DESC
+          LIMIT 5
+        </output-good>
+      </example>
+    </basic-examples>
+
+  example_engine: ClickHouse 23.3
+  example_answer_1: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_1_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\" LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_2: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_2_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_3: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国'","tables":["sample_country_gdp"],"chart-type":"table"}
+  example_answer_3_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国' LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"table"}

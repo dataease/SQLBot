@@ -171,7 +171,8 @@ class LLMService:
 
         self.sql_message = []
         # add sys prompt
-        self.sql_message.append(SystemMessage(content=self.chat_question.sql_sys_question()))
+        self.sql_message.append(SystemMessage(
+            content=self.chat_question.sql_sys_question(self.ds.type, settings.GENERATE_SQL_QUERY_LIMIT_ENABLED)))
         if last_sql_messages is not None and len(last_sql_messages) > 0:
             # limit count
             for last_sql_message in last_sql_messages[count_limit:]:

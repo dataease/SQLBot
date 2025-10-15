@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from fastapi import Body
 from pydantic import BaseModel
@@ -9,13 +9,14 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import SQLModel, Field
 
+from apps.db.constant import DB
 from apps.template.filter.generator import get_permissions_template
 from apps.template.generate_analysis.generator import get_analysis_template
 from apps.template.generate_chart.generator import get_chart_template
 from apps.template.generate_dynamic.generator import get_dynamic_template
 from apps.template.generate_guess_question.generator import get_guess_question_template
 from apps.template.generate_predict.generator import get_predict_template
-from apps.template.generate_sql.generator import get_sql_template
+from apps.template.generate_sql.generator import get_sql_template, get_sql_example_template
 from apps.template.select_datasource.generator import get_datasource_template
 
 
@@ -182,10 +183,27 @@ class AiModelQuestion(BaseModel):
     custom_prompt: str = ""
     error_msg: str = ""
 
-    def sql_sys_question(self):
+    def sql_sys_question(self, db_type: Union[str, DB], enable_query_limit: bool = True):
+        _sql_template = get_sql_example_template(db_type)
+        _base_sql_rules = _sql_template['quot_rule'] + _sql_template['limit_rule'] + _sql_template['other_rule']
+        _query_limit = get_sql_template()['query_limit'] if enable_query_limit else ''
+        _sql_examples = _sql_template['basic_example']
+        _example_engine = _sql_template['example_engine']
+        _example_answer_1 = _sql_template['example_answer_1_with_limit'] if enable_query_limit else _sql_template[
+            'example_answer_1']
+        _example_answer_2 = _sql_template['example_answer_2_with_limit'] if enable_query_limit else _sql_template[
+            'example_answer_2']
+        _example_answer_3 = _sql_template['example_answer_3_with_limit'] if enable_query_limit else _sql_template[
+            'example_answer_3']
         return get_sql_template()['system'].format(engine=self.engine, schema=self.db_schema, question=self.question,
                                                    lang=self.lang, terminologies=self.terminologies,
-                                                   data_training=self.data_training, custom_prompt=self.custom_prompt)
+                                                   data_training=self.data_training, custom_prompt=self.custom_prompt,
+                                                   base_sql_rules=_base_sql_rules, query_limit=_query_limit,
+                                                   basic_sql_examples=_sql_examples,
+                                                   example_engine=_example_engine,
+                                                   example_answer_1=_example_answer_1,
+                                                   example_answer_2=_example_answer_2,
+                                                   example_answer_3=_example_answer_3)
 
     def sql_user_question(self, current_time: str):
         return get_sql_template()['user'].format(engine=self.engine, schema=self.db_schema, question=self.question,

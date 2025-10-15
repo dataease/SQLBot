@@ -1,0 +1,83 @@
+template:
+  quot_rule: |
+    <rule>
+      必须对数据库名、表名、字段名、别名外层加双引号（"）。
+      <note>
+        1. 点号（.）不能包含在引号内，必须写成 "schema"."table"
+        2. 即使标识符不含特殊字符或非关键字，也需强制加双引号
+        3. Kingbase 默认将未加引号的标识符转为小写
+      </note>
+    </rule>
+
+  limit_rule: |
+    <rule>
+      行数限制使用标准语法：
+      <note>
+        1. 标准写法：LIMIT [count]
+        2. 分页写法：LIMIT [count] OFFSET [start]
+        3. 兼容 Oracle 写法：WHERE ROWNUM <= 100（需开启兼容模式）
+      </note>
+    </rule>
+
+  other_rule: |
+    <rule>必须为每个表生成别名（不加AS）</rule>
+    <rule>禁止使用星号(*)，必须明确字段名</rule>
+    <rule>中文/特殊字符字段需保留原名并添加英文别名</rule>
+    <rule>函数字段必须加别名</rule>
+    <rule>百分比显示为：TO_CHAR(x*100,'990.99') || '%'</rule>
+    <rule>避免与Kingbase关键字冲突（如SYSDATE/LEVEL等）</rule>
+
+  basic_example: |
+    <basic-examples>
+      <intro>
+        📌 以下示例严格遵循 Kingbase 语法规范（兼容 PostgreSQL）
+        ⚠️ 注意：示例中的表名、字段名均为演示虚构，实际使用时需替换为用户提供的真实标识符。
+        🔍 重点观察：
+          1. 双引号包裹所有数据库对象
+          2. 中英别名/百分比/函数等特殊字段处理
+          3. 关键字冲突规避（如SYSDATE/LEVEL）
+      </intro>
+      <example>
+        <input>查询 TEST.ORDERS 表的前100条订单（含中文字段）</input>
+        <output-bad>
+          SELECT * FROM TEST.ORDERS LIMIT 100  -- 错误：未加引号、使用星号
+          SELECT "订单ID", "金额" FROM "TEST"."ORDERS" "t1"  -- 错误：缺少英文别名
+        </output-bad>
+        <output-good>
+          SELECT 
+            "t1"."订单ID" AS "order_id",
+            "t1"."金额" AS "amount_usd",
+            TO_CHAR("t1"."折扣率" * 100, '990.99') || '%' AS "discount_percent"
+          FROM "TEST"."ORDERS" "t1"
+          LIMIT 100
+        </output-good>
+      </example>
+      <example>
+        <input>统计用户表 PUBLIC.USERS（含关键字字段LEVEL）</input>
+        <output-bad>
+          SELECT LEVEL, status FROM PUBLIC.USERS  -- 错误：未处理关键字
+          SELECT "LEVEL", "active_ratio" FROM "PUBLIC"."USERS"  -- 错误：百分比未格式化
+        </output-bad>
+        <output-good>
+          SELECT 
+            "u"."LEVEL" AS "user_level",
+            TO_CHAR("u"."active_ratio" * 100, '990.99') || '%' AS "active_percent"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+        </output-good>
+      </example>
+    </basic-examples>
+
+  example_engine: Kingbase V8
+  example_answer_1: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_1_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\" LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_2: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_2_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_3: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国'","tables":["sample_country_gdp"],"chart-type":"table"}
+  example_answer_3_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp_usd\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国' LIMIT 1000","tables":["sample_country_gdp"],"chart-type":"table"}

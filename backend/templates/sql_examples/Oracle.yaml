@@ -1,0 +1,86 @@
+template:
+  quot_rule: |
+    <rule>
+      必须对数据库名、表名、字段名、别名外层加双引号（"）。
+      <note>
+        1. 点号（.）不能包含在引号内，必须写成 "schema"."table"
+        2. 即使标识符不含特殊字符或非关键字，也需强制加双引号
+        3. Oracle 对象名默认大写，如需小写必须加双引号
+      </note>
+    </rule>
+
+  limit_rule: |
+    <rule>
+      使用 ROWNUM 或 FETCH FIRST 限制行数（Oracle 12c+）
+      <note>
+        1. 传统写法：WHERE ROWNUM <= 100
+        2. 现代写法：FETCH FIRST 100 ROWS ONLY
+      </note>
+    </rule>
+
+  other_rule: |
+    <rule>必须为每个表生成别名（不加AS）</rule>
+    <rule>禁止使用星号(*)，必须明确字段名</rule>
+    <rule>中文/特殊字符字段需保留原名并添加英文别名</rule>
+    <rule>函数字段必须加别名</rule>
+    <rule>百分比字段保留两位小数并以%结尾</rule>
+    <rule>避免与 Oracle 关键字冲突（如 DATE/LEVEL/ORDER 等）</rule>
+
+  basic_example: |
+    <basic-examples>
+      <intro>
+        📌 以下示例严格遵循<Rules>中的 Oracle 规范，展示符合要求的 SQL 写法与典型错误案例。
+        ⚠️ 注意：示例中的表名、字段名均为演示虚构，实际使用时需替换为用户提供的真实标识符。
+        🔍 重点观察：
+          1. 双引号包裹所有数据库对象的规范用法
+          2. 中英别名/百分比/函数等特殊字段的处理
+          3. 关键字冲突的规避方式
+      </intro>
+      <example>
+        <input>查询 TEST.ORDERS 表的前100条订单（含中文字段和百分比）</input>
+        <output-bad>
+          SELECT * FROM TEST.ORDERS WHERE ROWNUM <= 100  -- 错误：未加引号、使用星号
+          SELECT "订单ID", "金额" FROM "TEST"."ORDERS" "t1" WHERE ROWNUM <= 100  -- 错误：缺少英文别名
+          SELECT COUNT("订单ID") FROM "TEST"."ORDERS" "t1"  -- 错误：函数未加别名
+        </output-bad>
+        <output-good>
+          SELECT 
+            "t1"."订单ID" AS "order_id",
+            "t1"."金额" AS "amount",
+            COUNT("t1"."订单ID") AS "total_orders",
+            TO_CHAR("t1"."折扣率" * 100, '990.99') || '%' AS "discount_percent"
+          FROM "TEST"."ORDERS" "t1"
+          WHERE ROWNUM <= 100
+        </output-good>
+      </example>
+    
+      <example>
+        <input>统计用户表 PUBLIC.USERS（含关键字字段DATE）的活跃占比</input>
+        <output-bad>
+          SELECT DATE, status FROM PUBLIC.USERS  -- 错误：未处理关键字和引号
+          SELECT "DATE", ROUND(active_ratio) FROM "PUBLIC"."USERS"  -- 错误：百分比格式错误
+        </output-bad>
+        <output-good>
+          SELECT 
+            "u"."DATE" AS "create_date",
+            TO_CHAR("u"."active_ratio" * 100, '990.99') || '%' AS "active_percent"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          AND ROWNUM <= 1000
+        </output-good>
+      </example>
+    </basic-examples>
+
+  example_engine: Oracle 19c
+  example_answer_1: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_1_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE ROWNUM <= 1000 ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
+  example_answer_2: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_2_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' AND ROWNUM <= 1000 ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+  example_answer_3: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国'","tables":["sample_country_gdp"],"chart-type":"table"}
+  example_answer_3_with_limit: |
+    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国' AND ROWNUM <= 1000","tables":["sample_country_gdp"],"chart-type":"table"}
