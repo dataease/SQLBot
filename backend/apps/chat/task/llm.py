@@ -923,8 +923,7 @@ class LLMService:
                     self.chat_question.custom_prompt = find_custom_prompts(_session,
                                                                            CustomPromptTypeEnum.GENERATE_SQL,
                                                                            oid, ds_id)
-
-            self.init_messages()
+                self.init_messages()
 
             # return id
             if in_chat:
