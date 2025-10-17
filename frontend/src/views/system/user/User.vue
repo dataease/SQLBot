@@ -157,7 +157,7 @@
                     <span class="header-span">{{ t('datasource.the_original_one') }}</span>
                   </div>
                   <div class="confirm-content">
-                    <span>SQLBot@123456</span>
+                    <span>{{ defaultPwd }}</span>
                     <el-button style="margin-left: 4px" text @click="copyText">{{
                       t('datasource.copy')
                     }}</el-button>
@@ -387,6 +387,7 @@ import { useClipboard } from '@vueuse/core'
 const { copy } = useClipboard({ legacy: true })
 
 const { t } = useI18n()
+const defaultPwd = ref('SQLBot@123456')
 const keyword = ref('')
 const dialogFormVisible = ref(false)
 const termFormRef = ref()
@@ -511,7 +512,7 @@ const setPopoverRef = (el: any, row: any) => {
 }
 
 const copyText = () => {
-  copy('SQLBot@123456')
+  copy(defaultPwd.value)
     .then(function () {
       ElMessage.success(t('embedded.copy_successful'))
     })
@@ -793,12 +794,20 @@ const formatSpaceName = (row_oid_list: Array<any>) => {
   })
   return row_oid_list.map((id: any) => wsMap[id]).join(',')
 }
+const loadDefaultPwd = () => {
+  userApi.defaultPwd().then((res) => {
+    if (res) {
+      defaultPwd.value = res
+    }
+  })
+}
 onMounted(() => {
   workspaceList().then((res) => {
     options.value = res || []
     filterOption.value[2].option = [...options.value]
   })
   search()
+  loadDefaultPwd()
 })
 </script>
 

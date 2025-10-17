@@ -12,12 +12,17 @@ from common.core.pagination import Paginator
 from common.core.schemas import PaginatedResponse, PaginationParams
 from common.core.security import default_md5_pwd, md5pwd, verify_md5pwd
 from common.core.sqlbot_cache import clear_cache
+from common.core.config import settings
 
 router = APIRouter(tags=["user"], prefix="/user")
 
 @router.get("/info")
 async def user_info(current_user: CurrentUser):
     return current_user
+
+@router.get("/defaultPwd")
+async def default_pwd() -> str:
+    return settings.DEFAULT_PWD
 
 @router.get("/pager/{pageNum}/{pageSize}", response_model=PaginatedResponse[UserGrid])
 async def pager(
