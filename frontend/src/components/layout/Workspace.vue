@@ -40,7 +40,7 @@ const formatKeywords = (item: string) => {
 const emit = defineEmits(['selectWorkspace'])
 
 const handleDefaultWorkspaceChange = (item: any) => {
-  if (item.id.toString() === currentWorkspace.value.id.toString()) {
+  if (currentWorkspace.value?.id && item.id.toString() === currentWorkspace.value.id.toString()) {
     return
   }
   currentWorkspace.value = { id: item.id, name: item.name }
@@ -81,8 +81,8 @@ onMounted(async () => {
         <el-icon size="18">
           <icon_moments_categories_outlined></icon_moments_categories_outlined>
         </el-icon>
-        <span v-if="!collapse" :title="currentWorkspace.name" class="name ellipsis">{{
-          currentWorkspace.name
+        <span v-if="!collapse" :title="currentWorkspace?.name || ''" class="name ellipsis">{{
+          currentWorkspace?.name || ''
         }}</span>
         <el-icon v-if="!collapse" style="transform: scale(0.5)" class="expand" size="24">
           <icon_expand_down_filled></icon_expand_down_filled>
@@ -107,7 +107,7 @@ onMounted(async () => {
             v-for="ele in defaultWorkspaceListWithSearch"
             :key="ele.name"
             class="popover-item"
-            :class="currentWorkspace.id === ele.id && 'isActive'"
+            :class="currentWorkspace?.id === ele.id && 'isActive'"
             @click="handleDefaultWorkspaceChange(ele)"
           >
             <el-icon size="16">

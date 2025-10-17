@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import exists, or_, select, delete as sqlmodel_delete   
+from sqlmodel import exists, or_, select, delete as sqlmodel_delete, update as sqlmodel_update   
 from apps.system.crud.user import clean_user_cache
 from apps.system.crud.workspace import reset_single_user_oid, reset_user_oid
 from apps.system.models.system_model import UserWsModel, WorkspaceBase, WorkspaceEditor, WorkspaceModel
@@ -204,12 +204,20 @@ async def get_one(session: SessionDep, trans: Trans, id: int):
     return db_model
 
 @router.delete("/{id}")  
-async def single_delete(session: SessionDep, id: int):
+async def single_delete(session: SessionDep, current_user: CurrentUser, id: int):
+    if not current_user.isAdmin:
+        raise HTTPException("only admin can delete workspace")
     if id == 1:
         raise HTTPException(f"Can not delete default workspace")
     db_model = session.get(WorkspaceModel, id)
     if not db_model:
         raise HTTPException(f"WorkspaceModel with id {id} not found")
+    
+    if current_user.oid == id:
+            current_user.oid = 1  # reset to default workspace
+            update_stmt = sqlmodel_update(UserModel).where(UserModel.id == current_user.id).values(oid=1)
+            session.exec(update_stmt)
+            await clean_user_cache(current_user.id)
     
     user_ws_list = session.exec(select(UserWsModel).where(UserWsModel.oid == id)).all()
     if user_ws_list:

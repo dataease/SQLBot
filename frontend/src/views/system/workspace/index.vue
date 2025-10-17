@@ -25,6 +25,10 @@ import delIcon from '@/assets/svg/icon_delete.svg'
 import icon_more_outlined from '@/assets/svg/icon_more_outlined.svg'
 import icon_done_outlined from '@/assets/svg/icon_done_outlined.svg'
 
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+
 const { t } = useI18n()
 const multipleSelectionAll = ref<any[]>([])
 const tableList = ref([] as any[])
@@ -259,12 +263,16 @@ const delWorkspace = (row: any) => {
     customClass: 'confirm-no_icon',
     autofocus: false,
   }).then(() => {
-    workspaceDelete(row.id).then(() => {
+    workspaceDelete(row.id).then(async () => {
       ElMessage({
         type: 'success',
         message: t('dashboard.delete_success'),
       })
       init()
+      if (row.id === userStore.getOid) {
+        userStore.setOid('1')
+        await userStore.info()
+      }
     })
   })
 }
