@@ -59,7 +59,7 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       login: '',
       slogan: '',
       web: '',
-      name: '',
+      name: 'SQLBot',
       foot: 'false',
       footContent: '',
       loaded: false,

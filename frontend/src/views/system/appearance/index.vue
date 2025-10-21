@@ -162,17 +162,10 @@
                 <div class="navigate-preview" style="height: 425px">
                   <div class="navigate-head">
                     <div class="header-sql">
-                      <custom_small v-if="themeColor === 'custom'" class="logo" />
-
-                      <img
-                        v-else-if="isBlue"
-                        width="131"
-                        height="30"
-                        class="logo"
-                        :src="logoBlue"
-                        alt=""
-                      />
+                      <img height="30" width="30" v-if="pageLogin" :src="pageLogin" alt="" />
+                      <custom_small v-else-if="themeColor === 'custom'" class="logo" />
                       <logo v-else></logo>
+                      <span style="margin-left: 8px">{{ loginForm.name }}</span>
                     </div>
                     <div class="bottom-sql">
                       <Person
@@ -232,8 +225,8 @@
 </template>
 
 <script lang="ts" setup>
-import logo from '@/assets/LOGO.svg'
-import custom_small from '@/assets/svg/LOGO-custom.svg'
+import logo from '@/assets/LOGO-fold.svg'
+import custom_small from '@/assets/svg/logo-custom_small.svg'
 import { ref, unref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import {
   type FormInstance,
@@ -241,7 +234,6 @@ import {
   type UploadUserFile,
   ElMessage,
 } from 'element-plus-secondary'
-import logoBlue from '@/assets/blue/LOGO-blue.png'
 import { useI18n } from 'vue-i18n'
 import { request } from '@/utils/request'
 import icon_side_fold_outlined from '@/assets/svg/icon_side-fold_outlined.svg'
@@ -249,6 +241,7 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import LoginPreview from './LoginPreview.vue'
 import Person from './Person.vue'
 import { setCurrentColor } from '@/utils/utils'
+
 // import TinymceEditor from '@/components/rich-text/TinymceEditor.vue'
 import { cloneDeep } from 'lodash-es'
 const appearanceStore = useAppearanceStoreWithOut()
@@ -278,6 +271,8 @@ const COLOR_PANEL = [
   '#000000',
   '#FFFFFF',
 ]
+const basePath = import.meta.env.VITE_API_BASE_URL
+const baseUrl = basePath + '/system/appearance/picture/'
 const fileList = ref<(UploadUserFile & { flag: string })[]>([])
 const navigateBg = ref('dark')
 const themeColor = ref('default')
@@ -301,7 +296,9 @@ const defaultLoginForm = reactive<LoginForm>({
   footContent: '',
 })
 const loginForm = reactive<LoginForm>(cloneDeep(defaultLoginForm))
-
+const pageLogin = computed(() =>
+  !login.value ? null : login.value.startsWith('blob') ? login.value : baseUrl + login.value
+)
 const rules = reactive<FormRules>({
   name: [
     {
@@ -816,6 +813,14 @@ onUnmounted(() => {
                 padding: 16px;
                 height: 100%;
                 position: relative;
+
+                .header-sql {
+                  width: 131px;
+                  display: flex;
+                  align-items: center;
+                  font-size: 16px;
+                  font-weight: 500;
+                }
 
                 .bottom-sql {
                   position: absolute;

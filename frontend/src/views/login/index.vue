@@ -5,7 +5,16 @@
     </div>
     <div class="login-content">
       <div class="login-right">
-        <img width="auto" height="52" :src="loginBg" alt="" />
+        <div class="login-logo-icon">
+          <img height="52" v-if="loginBg" :src="loginBg" alt="" />
+          <el-icon size="52" v-else
+            ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
+            <LOGO_fold v-else></LOGO_fold
+          ></el-icon>
+          <span style="margin-left: 14px; font-size: 34px; font-weight: 900; color: #485559">{{
+            appearanceStore.name
+          }}</span>
+        </div>
         <div v-if="appearanceStore.getShowSlogan" class="welcome">
           {{ appearanceStore.slogan || $t('common.intelligent_questioning_platform') }}
         </div>
@@ -54,10 +63,10 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
-import aboutBg from '@/assets/embedded/LOGO-about.png'
+import custom_small from '@/assets/svg/logo-custom_small.svg'
+import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
-import logo from '@/assets/blue/LOGO-blue.png'
 import loginImage from '@/assets/blue/login-image_blue.png'
 
 const router = useRouter()
@@ -75,7 +84,7 @@ const bg = computed(() => {
 })
 
 const loginBg = computed(() => {
-  return appearanceStore.getLogin || (appearanceStore.isBlue ? logo : aboutBg)
+  return appearanceStore.getLogin
 })
 
 const rules = {
@@ -126,6 +135,14 @@ const submitForm = () => {
       align-items: center;
       flex-direction: column;
       position: relative;
+
+      .login-logo-icon {
+        width: auto;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .welcome {
         margin: 8px 0 40px 0;
         font-weight: 400;

@@ -675,7 +675,7 @@
     "tab": "Tab",
     "replace_image": "Replace Image",
     "larger_than_200kb": "Logo displayed at the top of the website: Recommended size: 48 x 48 pixels, supports JPG, PNG, and SVG, and no larger than 200KB",
-    "login_logo": "Login Logo",
+    "login_logo": "System Logo",
     "larger_than_200kb_de": "Logo on the right side of the login page: Recommended size: 204 x 52 pixels, supports JPG, PNG, and SVG, and no larger than 200KB",
     "login_background_image": "Login Background Image",
     "larger_than_5mb": "Background image on the left: Recommended size: 576 x 900 for vector images, 1152 x 1800 for bitmap images, supports JPG, PNG, and SVG, and no larger than 5MB",

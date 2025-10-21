@@ -1,19 +1,15 @@
 <script lang="ts" setup>
 import { ref, computed, onUnmounted } from 'vue'
 import Menu from './Menu.vue'
-import LOGOCustom from '@/assets/svg/LOGO-custom.svg'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import Workspace from './Workspace.vue'
 import Person from './Person.vue'
-import LOGO from '@/assets/LOGO.svg'
 import LOGO_fold from '@/assets/LOGO-fold.svg'
 import icon_moments_categories_outlined from '@/assets/svg/icon_moments-categories_outlined.svg'
 import icon_side_fold_outlined from '@/assets/svg/icon_side-fold_outlined.svg'
 import icon_side_expand_outlined from '@/assets/svg/icon_side-expand_outlined.svg'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
-import logo_blue from '@/assets/blue/LOGO-blue.png'
-import logo_fold_blue from '@/assets/blue/LOGO-head_blue.png'
 import { useEmitt } from '@/utils/useEmitt'
 
 const router = useRouter()
@@ -23,6 +19,9 @@ const appearanceStore = useAppearanceStoreWithOut()
 let time: any
 onUnmounted(() => {
   clearTimeout(time)
+})
+const loginBg = computed(() => {
+  return appearanceStore.getLogin
 })
 const handleCollapseChange = (val: any = true) => {
   collapseCopy.value = val
@@ -61,8 +60,18 @@ const showSysmenu = computed(() => {
     <div class="left-side" :class="collapse && 'left-side-collapse'">
       <template v-if="showSysmenu">
         <div @click="toUserIndex" class="sys-management">
+          <img
+            :style="{ marginLeft: collapse ? '5px' : 0 }"
+            @click="toChatIndex"
+            height="30"
+            width="30"
+            v-if="loginBg"
+            :src="loginBg"
+            :class="!collapse && 'collapse-icon'"
+            alt=""
+          />
           <custom_small
-            v-if="appearanceStore.themeColor !== 'default'"
+            v-else-if="appearanceStore.themeColor !== 'default'"
             :style="{ marginLeft: collapse ? '5px' : 0 }"
             :class="!collapse && 'collapse-icon'"
           ></custom_small>
@@ -77,41 +86,109 @@ const showSysmenu = computed(() => {
       <template v-else>
         <template v-if="appearanceStore.isBlue">
           <img
-            v-if="collapse"
-            width="30"
-            height="30"
-            :src="logo_fold_blue"
             style="margin: 0 0 6px 5px; cursor: pointer"
             @click="toChatIndex"
+            height="30"
+            width="30"
+            v-if="loginBg && collapse"
+            :src="loginBg"
+            alt=""
           />
-          <img
-            v-else
-            width="130"
-            height="31"
-            :src="logo_blue"
-            style="margin-bottom: 6px; cursor: pointer"
-            @click="toChatIndex"
-          />
+          <div v-else-if="loginBg && !collapse" class="default-sqlbot">
+            <img
+              @click="toChatIndex"
+              height="30"
+              width="30"
+              :src="loginBg"
+              alt=""
+              class="collapse-icon"
+            />
+            <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
+              appearanceStore.name
+            }}</span>
+          </div>
+          <custom_small
+            v-else-if="collapse"
+            :style="{ marginLeft: collapse ? '5px' : 0 }"
+            :class="!collapse && 'collapse-icon'"
+          ></custom_small>
+
+          <div v-else class="default-sqlbot">
+            <custom_small class="collapse-icon"></custom_small>
+            <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
+              appearanceStore.name
+            }}</span>
+          </div>
         </template>
         <template v-else-if="appearanceStore.themeColor === 'custom'">
+          <img
+            style="margin: 0 0 6px 5px; cursor: pointer"
+            @click="toChatIndex"
+            height="30"
+            width="30"
+            v-if="loginBg && collapse"
+            :src="loginBg"
+            alt=""
+          />
+          <div v-else-if="loginBg && !collapse" class="default-sqlbot">
+            <img
+              @click="toChatIndex"
+              height="30"
+              width="30"
+              :src="loginBg"
+              alt=""
+              class="collapse-icon"
+            />
+            <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
+              appearanceStore.name
+            }}</span>
+          </div>
           <custom_small
-            v-if="collapse"
+            v-else-if="collapse"
             style="margin: 0 0 6px 5px; cursor: pointer"
             @click="toChatIndex"
           ></custom_small>
-          <LOGOCustom
-            v-else
-            style="margin-bottom: 6px; cursor: pointer"
-            @click="toChatIndex"
-          ></LOGOCustom>
+          <div v-else class="default-sqlbot">
+            <custom_small class="collapse-icon"></custom_small>
+            <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
+              appearanceStore.name
+            }}</span>
+          </div>
         </template>
         <template v-else>
+          <img
+            style="margin: 0 0 6px 5px; cursor: pointer"
+            @click="toChatIndex"
+            height="30"
+            width="30"
+            v-if="loginBg && collapse"
+            :src="loginBg"
+            alt=""
+          />
+          <div v-else-if="loginBg && !collapse" class="default-sqlbot">
+            <img
+              @click="toChatIndex"
+              height="30"
+              width="30"
+              :src="loginBg"
+              alt=""
+              class="collapse-icon"
+            />
+            <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
+              appearanceStore.name
+            }}</span>
+          </div>
           <LOGO_fold
-            v-if="collapse"
+            v-else-if="collapse"
             style="margin: 0 0 6px 5px; cursor: pointer"
             @click="toChatIndex"
           ></LOGO_fold>
-          <LOGO v-else style="margin-bottom: 6px; cursor: pointer" @click="toChatIndex"></LOGO>
+          <div v-else class="default-sqlbot">
+            <LOGO_fold class="collapse-icon" @click="toChatIndex"></LOGO_fold>
+            <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
+              appearanceStore.name
+            }}</span>
+          </div>
         </template>
       </template>
       <Workspace v-if="!showSysmenu" :collapse="collapse"></Workspace>
@@ -167,6 +244,18 @@ const showSysmenu = computed(() => {
     padding: 16px;
     position: relative;
     min-width: 240px;
+
+    .default-sqlbot {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      .collapse-icon {
+        margin-right: 8px;
+      }
+    }
 
     .sys-management {
       display: flex;

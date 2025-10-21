@@ -675,7 +675,7 @@
     "tab": "페이지 탭",
     "replace_image": "이미지 교체",
     "larger_than_200kb": "상단 웹사이트에 표시되는 로고, 권장 크기 48 x 48, JPG, PNG, SVG 지원, 크기 200KB 이하",
-    "login_logo": "로그인 로고",
+    "login_logo": "시스템 로고",
     "larger_than_200kb_de": "로그인 페이지 오른쪽 로고, 권장 크기 204*52, JPG, PNG, SVG 지원, 크기 200KB 이하",
     "login_background_image": "로그인 배경 이미지",
     "larger_than_5mb": "왼쪽 배경 이미지, 벡터 이미지 권장 크기 576*900, 비트맵 권장 크기 1152*1800; JPG, PNG, SVG 지원, 크기 5MB 이하",

@@ -675,7 +675,7 @@
     "tab": "页签",
     "replace_image": "替换图片",
     "larger_than_200kb": "顶部网站显示的 Logo，建议尺寸 48 x 48，支持 JPG、PNG、SVG，大小不超过 200KB",
-    "login_logo": "登录 Logo",
+    "login_logo": "系统 Logo",
     "larger_than_200kb_de": "登录页面右侧 Logo，建议尺寸 204*52，支持 JPG、PNG、SVG，大小不超过 200KB",
     "login_background_image": "登录背景图",
     "larger_than_5mb": "左侧背景图，矢量图建议尺寸 576*900，位图建议尺寸 1152*1800；支持 JPG、PNG、SVG，大小不超过 5M",

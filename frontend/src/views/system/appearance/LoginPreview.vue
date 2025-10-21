@@ -39,7 +39,17 @@
         <div class="login-form-center">
           <div class="config-area">
             <div class="login-logo">
-              <img class="login-logo-icon" :src="pageLogin" alt="" />
+              <div class="login-logo-icon">
+                <img height="52" v-if="pageLogin" :src="pageLogin" alt="" />
+                <el-icon size="52" v-else
+                  ><custom_small v-if="themeColor !== 'default'"></custom_small>
+                  <LOGO_fold v-else></LOGO_fold
+                ></el-icon>
+                <span
+                  style="margin-left: 14px; font-size: 34px; font-weight: 900; color: #485559"
+                  >{{ name }}</span
+                >
+              </div>
             </div>
             <div v-if="isBtnShow(showSlogan)" class="login-welcome">
               {{ pageSlogan || t('system.available_to_everyone') }}
@@ -92,10 +102,10 @@
 
 <script lang="ts" setup>
 import icon_close_outlined from '@/assets/svg/icon_close_outlined.svg'
+import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
-import aboutBg from '@/assets/embedded/LOGO-about.png'
 import logoHeader from '@/assets/blue/LOGO-head_blue.png'
-import logo from '@/assets/blue/LOGO-blue.png'
+import custom_small from '@/assets/svg/logo-custom_small.svg'
 import loginImage from '@/assets/blue/login-image_blue.png'
 import { propTypes } from '@/utils/propTypes'
 import { isBtnShow } from '@/utils/utils'
@@ -132,13 +142,7 @@ const pageWeb = computed(() => {
       : baseUrl + props.web
 })
 const pageLogin = computed(() =>
-  !props.login
-    ? props.isBlue
-      ? logo
-      : aboutBg
-    : props.login.startsWith('blob')
-      ? props.login
-      : baseUrl + props.login
+  !props.login ? null : props.login.startsWith('blob') ? props.login : baseUrl + props.login
 )
 const pageBg = computed(() =>
   !props.bg
@@ -273,6 +277,9 @@ onMounted(() => {
             .login-logo-icon {
               width: auto;
               height: 52px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
             }
           }
           .login-welcome {
