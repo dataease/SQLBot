@@ -96,6 +96,52 @@
 </div>
 `
   }
+
+  function getHighestZIndexValue() {
+    try {
+      let maxZIndex = -Infinity
+      let foundAny = false
+
+      const allElements = document.all || document.querySelectorAll('*')
+
+      for (let i = 0; i < allElements.length; i++) {
+        const element = allElements[i]
+
+        if (!element || element.nodeType !== 1) continue
+
+        const styles = window.getComputedStyle(element)
+
+        const position = styles.position
+        if (position === 'static') continue
+
+        const zIndex = styles.zIndex
+        let zIndexValue
+
+        if (zIndex === 'auto') {
+          zIndexValue = 0
+        } else {
+          zIndexValue = parseInt(zIndex, 10)
+          if (isNaN(zIndexValue)) continue
+        }
+
+        foundAny = true
+
+        // 快速返回：如果找到很大的z-index，很可能就是最大值
+        /* if (zIndexValue > 10000) {
+          return zIndexValue;
+        } */
+
+        if (zIndexValue > maxZIndex) {
+          maxZIndex = zIndexValue
+        }
+      }
+      return foundAny ? maxZIndex : 0
+    } catch (error) {
+      console.warn('获取最高z-index时出错，返回默认值0:', error)
+      return 0
+    }
+  }
+
   /**
    * 初始化引导
    * @param {*} root
@@ -256,6 +302,9 @@
 
   // 初始化全局样式
   function initsqlbot_assistantStyle(root, sqlbot_assistantId, data) {
+    const maxZIndex = getHighestZIndexValue()
+    const zIndex = Math.max((maxZIndex || 0) + 1, 10000)
+    const maskZIndex = zIndex + 1
     style = document.createElement('style')
     style.type = 'text/css'
     style.innerText = `
@@ -279,7 +328,7 @@
 
   #sqlbot-assistant .sqlbot-assistant-mask {
       position: fixed;
-      z-index: 10001;
+      z-index: ${maskZIndex};
       background-color: transparent;
       height: 100%;
       width: 100%;
@@ -293,7 +342,7 @@
       position: absolute;
       ${data.x_type}: ${data.x_val}px;
       ${data.y_type}: ${data.y_val}px;
-      z-index: 10001;
+      z-index: ${maskZIndex};
   }
   #sqlbot-assistant .sqlbot-assistant-tips {
       position: fixed;
@@ -304,7 +353,7 @@
       color: #ffffff;
       font-size: 14px;
       background: #3370FF;
-      z-index: 10001;
+      z-index: ${maskZIndex};
   }
   #sqlbot-assistant .sqlbot-assistant-tips .sqlbot-assistant-arrow {
       position: absolute;
@@ -366,10 +415,11 @@
     ${data.x_type}: ${data.x_val}px;
     ${data.y_type}: ${data.y_val}px;
     cursor: pointer;
-    z-index:10000;
+    z-index: ${zIndex};
   }
   #sqlbot-assistant #sqlbot-assistant-chat-container{
-    z-index:10000;position: relative;
+    z-index: ${zIndex};
+    position: relative;
     border-radius: 8px;
     //border: 1px solid #ffffff;
     background: linear-gradient(188deg, rgba(235, 241, 255, 0.20) 39.6%, rgba(231, 249, 255, 0.20) 94.3%), #EFF0F1;
