@@ -89,6 +89,7 @@ function showTraceBack() {
   line-height: 24px;
   color: rgba(31, 35, 41, 1);
   white-space: pre-wrap;
+  word-break: break-word;
 
   &.row {
     display: flex;

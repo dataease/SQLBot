@@ -175,6 +175,7 @@ onMounted(async () => {
 
 <style lang="less">
 .system-workspace.system-workspace {
+  --ed-popover-border-radius: 6px;
   padding: 4px 0;
   width: 280px !important;
   box-shadow: 0 4px 8px 0 #1f23291a;
