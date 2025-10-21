@@ -75,7 +75,7 @@ class HttpService {
   private setupInterceptors() {
     // Request interceptor
     this.instance.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
+      async (config: InternalAxiosRequestConfig) => {
         // Add auth token
         const token = wsCache.get('user.token')
         if (token && config.headers) {
@@ -90,6 +90,9 @@ class HttpService {
             !!(assistantStore.getType % 2) &&
             assistantStore.getCertificate
           ) {
+            if (config.method?.toLowerCase() === 'get' && /\/chat\/\d+$/.test(config.url || '')) {
+              await assistantStore.refreshCertificate()
+            }
             config.headers['X-SQLBOT-ASSISTANT-CERTIFICATE'] = btoa(
               encodeURIComponent(assistantStore.getCertificate)
             )
