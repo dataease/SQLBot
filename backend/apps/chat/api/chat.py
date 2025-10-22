@@ -10,7 +10,7 @@ from sqlalchemy import and_, select
 
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
-    format_json_data
+    format_json_data, format_json_list_data
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, ExcelData
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
@@ -55,7 +55,7 @@ async def chat_record_data(session: SessionDep, chart_record_id: int):
 async def chat_predict_data(session: SessionDep, chart_record_id: int):
     def inner():
         data = get_chat_predict_data(chart_record_id=chart_record_id, session=session)
-        return format_json_data(data)
+        return format_json_list_data(data)
 
     return await asyncio.to_thread(inner)
 
