@@ -80,10 +80,6 @@ const currentChat = ref<ChatInfo>(new ChatInfo())
 const chartInfoList = ref<Array<any>>([])
 const emits = defineEmits(['addChatChart'])
 
-onMounted(() => {
-  getChatList()
-})
-
 function selectChange(value: boolean, viewInfo: any) {
   if (value) {
     // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -200,7 +196,10 @@ function getChatList() {
 
 const dialogInit = () => {
   dialogShow.value = true
+  currentChatId.value = undefined
   state.curMultiplexingComponents = []
+  chartInfoList.value = []
+  getChatList()
 }
 
 const saveMultiplexing = () => {
