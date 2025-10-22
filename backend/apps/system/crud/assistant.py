@@ -17,7 +17,7 @@ from common.core.config import settings
 from common.core.db import engine
 from common.core.sqlbot_cache import cache
 from common.utils.aes_crypto import simple_aes_decrypt
-from common.utils.utils import string_to_numeric_hash
+from common.utils.utils import equals_ignore_case, string_to_numeric_hash
 
 
 @cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="assistant_id")
@@ -236,18 +236,15 @@ def get_ds_engine(ds: AssistantOutDsSchema) -> Engine:
     conf.extraJdbc = ''
     from apps.db.db import get_uri_from_config
     uri = get_uri_from_config(ds.type, conf)
-    # if ds.type == "pg" and ds.db_schema:
-    #     connect_args.update({"options": f"-c search_path={ds.db_schema}"})
-    # engine = create_engine(uri, connect_args=connect_args, pool_timeout=timeout, pool_size=20, max_overflow=10)
 
-    if ds.type == "pg" and ds.db_schema:
+    if equals_ignore_case(ds.type, "pg") and ds.db_schema:
         engine = create_engine(uri,
                                connect_args={"options": f"-c search_path={urllib.parse.quote(ds.db_schema)}",
                                              "connect_timeout": timeout},
                                pool_timeout=timeout)
-    elif ds.type == 'sqlServer':
+    elif equals_ignore_case(ds.type, 'sqlServer'):
         engine = create_engine(uri, pool_timeout=timeout)
-    elif ds.type == 'oracle':
+    elif equals_ignore_case(ds.type, 'oracle'):
         engine = create_engine(uri,
                                pool_timeout=timeout)
     else:

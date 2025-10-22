@@ -263,3 +263,13 @@ def get_origin_from_referer(request: Request):
         SQLBotLogUtil.error(f"解析 Referer 出错: {e}")
         return referer
 
+
+def equals_ignore_case(str1: str, *args: str) -> bool:
+    if str1 is None:
+        return None in args
+    for arg in args:
+        if arg is None:
+            continue
+        if str1.casefold() == arg.casefold():
+            return True
+    return False

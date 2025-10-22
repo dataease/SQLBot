@@ -24,35 +24,35 @@ from apps.db.engine import get_engine_config
 from apps.system.crud.assistant import get_ds_engine
 from apps.system.schemas.system_schema import AssistantOutDsSchema
 from common.core.deps import Trans
-from common.utils.utils import SQLBotLogUtil
+from common.utils.utils import SQLBotLogUtil, equals_ignore_case
 from fastapi import HTTPException
 from apps.db.es_engine import get_es_connect, get_es_index, get_es_fields, get_es_data_by_http
 
 
 def get_uri(ds: CoreDatasource) -> str:
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
     return get_uri_from_config(ds.type, conf)
 
 
 def get_uri_from_config(type: str, conf: DatasourceConf) -> str:
     db_url: str
-    if type == "mysql":
+    if equals_ignore_case(type, "mysql"):
         if conf.extraJdbc is not None and conf.extraJdbc != '':
             db_url = f"mysql+pymysql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
             db_url = f"mysql+pymysql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
-    elif type == "sqlServer":
+    elif equals_ignore_case(type, "sqlServer"):
         if conf.extraJdbc is not None and conf.extraJdbc != '':
             db_url = f"mssql+pymssql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
             db_url = f"mssql+pymssql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
-    elif type == "pg" or type == "excel":
+    elif equals_ignore_case(type, "pg", "excel"):
         if conf.extraJdbc is not None and conf.extraJdbc != '':
             db_url = f"postgresql+psycopg2://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
             db_url = f"postgresql+psycopg2://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
-    elif type == "oracle":
-        if conf.mode == "service_name":
+    elif equals_ignore_case(type, "oracle"):
+        if equals_ignore_case(conf.mode, "service_name"):
             if conf.extraJdbc is not None and conf.extraJdbc != '':
                 db_url = f"oracle+oracledb://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}?service_name={conf.database}&{conf.extraJdbc}"
             else:
@@ -62,7 +62,7 @@ def get_uri_from_config(type: str, conf: DatasourceConf) -> str:
                 db_url = f"oracle+oracledb://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
             else:
                 db_url = f"oracle+oracledb://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
-    elif type == "ck":
+    elif equals_ignore_case(type, "ck"):
         if conf.extraJdbc is not None and conf.extraJdbc != '':
             db_url = f"clickhouse+http://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
@@ -87,7 +87,7 @@ def get_extra_config(conf: DatasourceConf):
 
 def get_origin_connect(type: str, conf: DatasourceConf):
     extra_config_dict = get_extra_config(conf)
-    if type == "sqlServer":
+    if equals_ignore_case(type, "sqlServer"):
         return pymssql.connect(
             server=conf.host,
             port=str(conf.port),
@@ -102,12 +102,12 @@ def get_origin_connect(type: str, conf: DatasourceConf):
 
 # use sqlalchemy
 def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
     if conf.timeout is None:
         conf.timeout = timeout
     if timeout > 0:
         conf.timeout = timeout
-    if ds.type == "pg":
+    if equals_ignore_case(ds.type, "pg"):
         if conf.dbSchema is not None and conf.dbSchema != "":
             engine = create_engine(get_uri(ds),
                                    connect_args={"options": f"-c search_path={urllib.parse.quote(conf.dbSchema)}",
@@ -117,10 +117,10 @@ def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
             engine = create_engine(get_uri(ds),
                                    connect_args={"connect_timeout": conf.timeout},
                                    pool_timeout=conf.timeout)
-    elif ds.type == 'sqlServer':
+    elif equals_ignore_case(ds.type, 'sqlServer'):
         engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds.type, conf),
                                pool_timeout=conf.timeout)
-    elif ds.type == 'oracle':
+    elif equals_ignore_case(ds.type, 'oracle'):
         engine = create_engine(get_uri(ds),
                                pool_timeout=conf.timeout)
     else:  # mysql, ck
@@ -152,7 +152,7 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
         else:
             conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
             extra_config_dict = get_extra_config(conf)
-            if ds.type == 'dm':
+            if equals_ignore_case(ds.type, 'dm'):
                 with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
                                       port=conf.port, **extra_config_dict) as conn, conn.cursor() as cursor:
                     try:
@@ -164,7 +164,7 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         if is_raise:
                             raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                         return False
-            elif ds.type == 'doris' or ds.type == "starrocks":
+            elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
                 with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                      port=conf.port, db=conf.database, connect_timeout=10,
                                      read_timeout=10, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -177,7 +177,7 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         if is_raise:
                             raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                         return False
-            elif ds.type == 'redshift':
+            elif equals_ignore_case(ds.type, 'redshift'):
                 with redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database,
                                                 user=conf.username,
                                                 password=conf.password,
@@ -191,7 +191,7 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         if is_raise:
                             raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                         return False
-            elif ds.type == 'kingbase':
+            elif equals_ignore_case(ds.type, 'kingbase'):
                 with psycopg2.connect(host=conf.host, port=conf.port, database=conf.database,
                                       user=conf.username,
                                       password=conf.password,
@@ -205,7 +205,7 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         if is_raise:
                             raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                         return False
-            elif ds.type == 'es':
+            elif equals_ignore_case(ds.type, 'es'):
                 es_conn = get_es_connect(conf)
                 if es_conn.ping():
                     SQLBotLogUtil.info("success")
@@ -233,7 +233,7 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
     conf = None
     if isinstance(ds, CoreDatasource):
         conf = DatasourceConf(
-            **json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
+            **json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
     if isinstance(ds, AssistantOutDsSchema):
         conf = DatasourceConf()
         conf.host = ds.host
@@ -253,20 +253,20 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
                     version = res[0][0]
         else:
             extra_config_dict = get_extra_config(conf)
-            if ds.type == 'dm':
+            if equals_ignore_case(ds.type, 'dm'):
                 with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
                                       port=conf.port) as conn, conn.cursor() as cursor:
                     cursor.execute(sql, timeout=10, **extra_config_dict)
                     res = cursor.fetchall()
                     version = res[0][0]
-            elif ds.type == 'doris' or ds.type == "starrocks":
+            elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
                 with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                      port=conf.port, db=conf.database, connect_timeout=10,
                                      read_timeout=10, **extra_config_dict) as conn, conn.cursor() as cursor:
                     cursor.execute(sql)
                     res = cursor.fetchall()
                     version = res[0][0]
-            elif ds.type == 'redshift' or ds.type == 'es':
+            elif equals_ignore_case(ds.type, 'redshift', 'es'):
                 version = ''
     except Exception as e:
         print(e)
@@ -280,11 +280,11 @@ def get_schema(ds: CoreDatasource):
     if db.connect_type == ConnectType.sqlalchemy:
         with get_session(ds) as session:
             sql: str = ''
-            if ds.type == "sqlServer":
+            if equals_ignore_case(ds.type, "sqlServer"):
                 sql = """select name from sys.schemas"""
-            elif ds.type == "pg" or ds.type == "excel":
+            elif equals_ignore_case(ds.type, "pg", "excel"):
                 sql = """SELECT nspname FROM pg_namespace"""
-            elif ds.type == "oracle":
+            elif equals_ignore_case(ds.type, "oracle"):
                 sql = """select * from all_users"""
             with session.execute(text(sql)) as result:
                 res = result.fetchall()
@@ -292,14 +292,14 @@ def get_schema(ds: CoreDatasource):
                 return res_list
     else:
         extra_config_dict = get_extra_config(conf)
-        if ds.type == 'dm':
+        if equals_ignore_case(ds.type, 'dm'):
             with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
                                   port=conf.port, **extra_config_dict) as conn, conn.cursor() as cursor:
                 cursor.execute("""select OBJECT_NAME from dba_objects where object_type='SCH'""", timeout=conf.timeout)
                 res = cursor.fetchall()
                 res_list = [item[0] for item in res]
                 return res_list
-        elif ds.type == 'redshift':
+        elif equals_ignore_case(ds.type, 'redshift'):
             with redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                             password=conf.password,
                                             timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -307,7 +307,7 @@ def get_schema(ds: CoreDatasource):
                 res = cursor.fetchall()
                 res_list = [item[0] for item in res]
                 return res_list
-        elif ds.type == 'kingbase':
+        elif equals_ignore_case(ds.type, 'kingbase'):
             with psycopg2.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                   password=conf.password,
                                   options=f"-c statement_timeout={conf.timeout * 1000}",
@@ -319,7 +319,7 @@ def get_schema(ds: CoreDatasource):
 
 
 def get_tables(ds: CoreDatasource):
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
     db = DB.get_db(ds.type)
     sql, sql_param = get_table_sql(ds, conf, get_version(ds))
     if db.connect_type == ConnectType.sqlalchemy:
@@ -330,14 +330,14 @@ def get_tables(ds: CoreDatasource):
                 return res_list
     else:
         extra_config_dict = get_extra_config(conf)
-        if ds.type == 'dm':
+        if equals_ignore_case(ds.type, 'dm'):
             with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
                                   port=conf.port, **extra_config_dict) as conn, conn.cursor() as cursor:
                 cursor.execute(sql, {"param": sql_param}, timeout=conf.timeout)
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'doris' or ds.type == "starrocks":
+        elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
             with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                  port=conf.port, db=conf.database, connect_timeout=conf.timeout,
                                  read_timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -345,7 +345,7 @@ def get_tables(ds: CoreDatasource):
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'redshift':
+        elif equals_ignore_case(ds.type, 'redshift'):
             with redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                             password=conf.password,
                                             timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -353,7 +353,7 @@ def get_tables(ds: CoreDatasource):
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'kingbase':
+        elif equals_ignore_case(ds.type, 'kingbase'):
             with psycopg2.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                   password=conf.password,
                                   options=f"-c statement_timeout={conf.timeout * 1000}",
@@ -362,14 +362,14 @@ def get_tables(ds: CoreDatasource):
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'es':
+        elif equals_ignore_case(ds.type, 'es'):
             res = get_es_index(conf)
             res_list = [TableSchema(*item) for item in res]
             return res_list
 
 
 def get_fields(ds: CoreDatasource, table_name: str = None):
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
     db = DB.get_db(ds.type)
     sql, p1, p2 = get_field_sql(ds, conf, table_name)
     if db.connect_type == ConnectType.sqlalchemy:
@@ -380,14 +380,14 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                 return res_list
     else:
         extra_config_dict = get_extra_config(conf)
-        if ds.type == 'dm':
+        if equals_ignore_case(ds.type, 'dm'):
             with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
                                   port=conf.port, **extra_config_dict) as conn, conn.cursor() as cursor:
                 cursor.execute(sql, {"param1": p1, "param2": p2}, timeout=conf.timeout)
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'doris' or ds.type == "starrocks":
+        elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
             with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                  port=conf.port, db=conf.database, connect_timeout=conf.timeout,
                                  read_timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -395,7 +395,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'redshift':
+        elif equals_ignore_case(ds.type, 'redshift'):
             with redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                             password=conf.password,
                                             timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -403,7 +403,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'kingbase':
+        elif equals_ignore_case(ds.type, 'kingbase'):
             with psycopg2.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                   password=conf.password,
                                   options=f"-c statement_timeout={conf.timeout * 1000}",
@@ -412,7 +412,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
-        elif ds.type == 'es':
+        elif equals_ignore_case(ds.type, 'es'):
             res = get_es_fields(conf, table_name)
             res_list = [ColumnSchema(*item) for item in res]
             return res_list
@@ -441,7 +441,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
     else:
         conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
         extra_config_dict = get_extra_config(conf)
-        if ds.type == 'dm':
+        if equals_ignore_case(ds.type, 'dm'):
             with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
                                   port=conf.port, **extra_config_dict) as conn, conn.cursor() as cursor:
                 try:
@@ -459,7 +459,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
-        elif ds.type == 'doris' or ds.type == "starrocks":
+        elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
             with pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                  port=conf.port, db=conf.database, connect_timeout=conf.timeout,
                                  read_timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -478,7 +478,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
-        elif ds.type == 'redshift':
+        elif equals_ignore_case(ds.type, 'redshift'):
             with redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                             password=conf.password,
                                             timeout=conf.timeout, **extra_config_dict) as conn, conn.cursor() as cursor:
@@ -497,7 +497,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
-        elif ds.type == 'kingbase':
+        elif equals_ignore_case(ds.type, 'kingbase'):
             with psycopg2.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
                                   password=conf.password,
                                   options=f"-c statement_timeout={conf.timeout * 1000}",
@@ -517,7 +517,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
-        elif ds.type == 'es':
+        elif equals_ignore_case(ds.type, 'es'):
             try:
                 res, columns = get_es_data_by_http(conf, sql)
                 columns = [field.get('name') for field in columns] if origin_column else [field.get('name').lower() for

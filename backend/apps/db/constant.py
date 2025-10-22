@@ -3,6 +3,8 @@
 
 from enum import Enum
 
+from common.utils.utils import equals_ignore_case
+
 
 class ConnectType(Enum):
     sqlalchemy = ('sqlalchemy')
@@ -37,7 +39,8 @@ class DB(Enum):
     @classmethod
     def get_db(cls, type, default_if_none=False):
         for db in cls:
-            if db.type == type:
+            """ if db.type == type: """
+            if equals_ignore_case(db.type, type):
                 return db
         if default_if_none:
             return DB.pg
