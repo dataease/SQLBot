@@ -413,50 +413,50 @@ class LLMService:
         if not ignore_auto_select:
             if settings.TABLE_EMBEDDING_ENABLED and (
                     not self.current_assistant or (self.current_assistant and self.current_assistant.type != 1)):
-                ds = get_ds_embedding(_session, self.current_user, _ds_list, self.out_ds_instance,
+                _ds_list = get_ds_embedding(_session, self.current_user, _ds_list, self.out_ds_instance,
                                       self.chat_question.question, self.current_assistant)
-                yield {'content': '{"id":' + str(ds.get('id')) + '}'}
-            else:
-                _ds_list_dict = []
-                for _ds in _ds_list:
-                    _ds_list_dict.append(_ds)
-                datasource_msg.append(
-                    HumanMessage(self.chat_question.datasource_user_question(orjson.dumps(_ds_list_dict).decode())))
+                # yield {'content': '{"id":' + str(ds.get('id')) + '}'}
 
-                self.current_logs[OperationEnum.CHOOSE_DATASOURCE] = start_log(session=_session,
-                                                                               ai_modal_id=self.chat_question.ai_modal_id,
-                                                                               ai_modal_name=self.chat_question.ai_modal_name,
-                                                                               operate=OperationEnum.CHOOSE_DATASOURCE,
-                                                                               record_id=self.record.id,
-                                                                               full_message=[{'type': msg.type,
-                                                                                              'content': msg.content}
-                                                                                             for
-                                                                                             msg in datasource_msg])
+            _ds_list_dict = []
+            for _ds in _ds_list:
+                _ds_list_dict.append(_ds)
+            datasource_msg.append(
+                HumanMessage(self.chat_question.datasource_user_question(orjson.dumps(_ds_list_dict).decode())))
 
-                token_usage = {}
-                res = process_stream(self.llm.stream(datasource_msg), token_usage)
-                for chunk in res:
-                    if chunk.get('content'):
-                        full_text += chunk.get('content')
-                    if chunk.get('reasoning_content'):
-                        full_thinking_text += chunk.get('reasoning_content')
-                    yield chunk
-                datasource_msg.append(AIMessage(full_text))
+            self.current_logs[OperationEnum.CHOOSE_DATASOURCE] = start_log(session=_session,
+                                                                           ai_modal_id=self.chat_question.ai_modal_id,
+                                                                           ai_modal_name=self.chat_question.ai_modal_name,
+                                                                           operate=OperationEnum.CHOOSE_DATASOURCE,
+                                                                           record_id=self.record.id,
+                                                                           full_message=[{'type': msg.type,
+                                                                                          'content': msg.content}
+                                                                                         for
+                                                                                         msg in datasource_msg])
 
-                self.current_logs[OperationEnum.CHOOSE_DATASOURCE] = end_log(session=_session,
-                                                                             log=self.current_logs[
-                                                                                 OperationEnum.CHOOSE_DATASOURCE],
-                                                                             full_message=[
-                                                                                 {'type': msg.type,
-                                                                                  'content': msg.content}
-                                                                                 for msg in datasource_msg],
-                                                                             reasoning_content=full_thinking_text,
-                                                                             token_usage=token_usage)
+            token_usage = {}
+            res = process_stream(self.llm.stream(datasource_msg), token_usage)
+            for chunk in res:
+                if chunk.get('content'):
+                    full_text += chunk.get('content')
+                if chunk.get('reasoning_content'):
+                    full_thinking_text += chunk.get('reasoning_content')
+                yield chunk
+            datasource_msg.append(AIMessage(full_text))
 
-                json_str = extract_nested_json(full_text)
-                if json_str is None:
-                    raise SingleMessageError(f'Cannot parse datasource from answer: {full_text}')
-                ds = orjson.loads(json_str)
+            self.current_logs[OperationEnum.CHOOSE_DATASOURCE] = end_log(session=_session,
+                                                                         log=self.current_logs[
+                                                                             OperationEnum.CHOOSE_DATASOURCE],
+                                                                         full_message=[
+                                                                             {'type': msg.type,
+                                                                              'content': msg.content}
+                                                                             for msg in datasource_msg],
+                                                                         reasoning_content=full_thinking_text,
+                                                                         token_usage=token_usage)
+
+            json_str = extract_nested_json(full_text)
+            if json_str is None:
+                raise SingleMessageError(f'Cannot parse datasource from answer: {full_text}')
+            ds = orjson.loads(json_str)
 
         _error: Exception | None = None
         _datasource: int | None = None

@@ -9,6 +9,7 @@ from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.embedding.utils import cosine_similarity
 from apps.datasource.models.datasource import CoreDatasource
 from apps.system.crud.assistant import AssistantOutDs
+from common.core.config import settings
 from common.core.deps import CurrentAssistant
 from common.core.deps import SessionDep, CurrentUser
 from common.utils.utils import SQLBotLogUtil
@@ -45,8 +46,9 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
                     [{"id": ele.get("id"), "name": ele.get("ds").name,
                       "cosine_similarity": ele.get("cosine_similarity")}
                      for ele in _list]))
-                ds = _list[0].get('ds')
-                return {"id": ds.id, "name": ds.name, "description": ds.description}
+                ds_l = _list[:settings.DS_EMBEDDING_COUNT]
+                return [{"id": obj.get('ds').id, "name": obj.get('ds').name, "description": obj.get('ds').description}
+                        for obj in ds_l]
             except Exception:
                 traceback.print_exc()
     else:
@@ -81,8 +83,9 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
                     [{"id": ele.get("id"), "name": ele.get("ds").name,
                       "cosine_similarity": ele.get("cosine_similarity")}
                      for ele in _list]))
-                ds = _list[0].get('ds')
-                return {"id": ds.id, "name": ds.name, "description": ds.description}
+                ds_l = _list[:settings.DS_EMBEDDING_COUNT]
+                return [{"id": obj.get('ds').id, "name": obj.get('ds').name, "description": obj.get('ds').description}
+                        for obj in ds_l]
             except Exception:
                 traceback.print_exc()
     return _list

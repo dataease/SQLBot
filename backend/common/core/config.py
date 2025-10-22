@@ -109,6 +109,7 @@ class Settings(BaseSettings):
 
     TABLE_EMBEDDING_ENABLED: bool = True
     TABLE_EMBEDDING_COUNT: int = 10
+    DS_EMBEDDING_COUNT: int = 10
 
 
 settings = Settings()  # type: ignore
