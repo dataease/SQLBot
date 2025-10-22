@@ -11,7 +11,7 @@ template:
 
   limit_rule: |
     <rule>
-      使用 LIMIT 或 FETCH FIRST 限制行数（Redshift 兼容 PostgreSQL）
+      当需要限制行数时，必须使用 LIMIT 或 FETCH FIRST 来限制行数（Redshift 兼容 PostgreSQL）
       <note>
         1. 标准写法：LIMIT 100
         2. 可选写法：FETCH FIRST 100 ROWS ONLY

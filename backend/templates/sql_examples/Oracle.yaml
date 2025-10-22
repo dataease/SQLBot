@@ -11,7 +11,9 @@ template:
 
   limit_rule: |
     <rule>
-      使用 ROWNUM 或 FETCH FIRST 限制行数（Oracle 12c+）
+      当需要限制行数时：
+      1. 12c以下版本必须使用ROWNUM语法
+      2. 12c+版本推荐使用FETCH FIRST语法
       <note>
         1. 传统写法：WHERE ROWNUM <= 100
         2. 现代写法：FETCH FIRST 100 ROWS ONLY

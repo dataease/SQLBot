@@ -10,7 +10,7 @@ template:
 
   limit_rule: |
     <rule>
-      使用 LIMIT 来限制行数
+      当需要限制行数时，必须使用标准的LIMIT语法
     </rule>
 
   other_rule: |

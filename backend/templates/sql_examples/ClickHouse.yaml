@@ -11,7 +11,7 @@ template:
 
   limit_rule: |
     <rule>
-      行数限制使用标准SQL语法：
+      当需要限制行数时，必须使用标准的LIMIT语法
       <note>
         1. 标准写法：LIMIT [count]
         2. 分页写法：LIMIT [count] OFFSET [start]
