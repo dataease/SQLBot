@@ -42,5 +42,8 @@ const curSelectChange = (value: boolean) => {
     top: 26px;
     right: 20px;
   }
+  ::v-deep(.chart-show-area) {
+    height: calc(100% - 46px);
+  }
 }
 </style>
