@@ -242,6 +242,14 @@ def get_chat_with_records(session: SessionDep, chart_id: int, current_user: Curr
 
     result = list(map(format_record, record_list))
 
+    for row in result:
+        try:
+            data_value = row.get('data')
+            if data_value is not None:
+                row['data'] = format_json_data(data_value)
+        except Exception:
+            pass
+
     chat_info.records = result
 
     return chat_info
