@@ -9,6 +9,7 @@ withDefaults(
     msg: ChatMessage
     currentChat: ChatInfo
     hideAvatar?: boolean
+    logoAssistant?: string
   }>(),
   {
     hideAvatar: false,
@@ -21,7 +22,14 @@ const appearanceStore = useAppearanceStoreWithOut()
   <div class="chat-row-container">
     <div class="chat-row" :class="{ 'right-to-left': msg.role === 'user' }">
       <div v-if="msg.role === 'assistant'" class="ai-avatar">
-        <el-icon v-if="!hideAvatar">
+        <img
+          v-if="!hideAvatar && appearanceStore.getLogin"
+          :src="logoAssistant ? logoAssistant : appearanceStore.getLogin"
+          alt=""
+          width="28"
+          height="28"
+        />
+        <el-icon v-else-if="!hideAvatar">
           <custom_small v-if="appearanceStore.themeColor === 'custom'"></custom_small>
           <logo_fold v-else />
         </el-icon>

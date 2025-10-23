@@ -629,7 +629,7 @@ const typeChange = (val: any) => {
       <el-form-item :label="t('ds.title')">
         <div class="content">
           {{
-            pageForm.datasource_names.length
+            pageForm.datasource_names.length && pageForm.specific_ds
               ? pageForm.datasource_names.join()
               : t('training.all_data_sources')
           }}

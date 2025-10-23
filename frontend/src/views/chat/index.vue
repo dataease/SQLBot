@@ -183,7 +183,20 @@
           </div>
         </div>
         <div v-else-if="computedMessages.length == 0 && loading" class="welcome-content-block">
-          <logo />
+          <div style="display: flex; align-items: center; height: 30px">
+            <img
+              height="30"
+              width="30"
+              v-if="logoAssistant || loginBg"
+              :src="logoAssistant ? logoAssistant : loginBg"
+              alt=""
+            />
+            <el-icon size="30" v-else
+              ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
+              <LOGO_fold v-else></LOGO_fold
+            ></el-icon>
+            <span style="margin-left: 12px">{{ appearanceStore.name }}</span>
+          </div>
         </div>
         <el-scrollbar
           v-if="computedMessages.length > 0"
@@ -200,7 +213,12 @@
             }"
           >
             <template v-for="(message, _index) in computedMessages" :key="_index">
-              <ChatRow :current-chat="currentChat" :msg="message" :hide-avatar="message.first_chat">
+              <ChatRow
+                :logoAssistant="logoAssistant"
+                :current-chat="currentChat"
+                :msg="message"
+                :hide-avatar="message.first_chat"
+              >
                 <RecommendQuestion
                   v-if="message.role === 'assistant' && message.first_chat"
                   ref="recommendQuestionRef"
@@ -432,7 +450,6 @@ import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
 import icon_screen_outlined from '@/assets/svg/icon_screen_outlined.svg'
 import icon_start_outlined from '@/assets/svg/icon_start_outlined.svg'
 import logo_fold from '@/assets/svg/logo-custom_small.svg'
-import logo from '@/assets/LOGO.svg'
 import icon_send_filled from '@/assets/svg/icon_send_filled.svg'
 import { useAssistantStore } from '@/stores/assistant'
 import { onClickOutside } from '@vueuse/core'
