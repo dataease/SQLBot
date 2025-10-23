@@ -11,12 +11,26 @@ from apps.datasource.models.datasource import DatasourceConf
 from common.error import SingleMessageError
 
 
+def get_es_auth(conf: DatasourceConf):
+    username = f"{conf.username}"
+    password = f"{conf.password}"
+
+    credentials = f"{username}:{password}"
+    encoded_credentials = b64encode(credentials.encode()).decode()
+
+    return {
+        "Content-Type": "application/json",
+        "Authorization": f"Basic {encoded_credentials}"
+    }
+
+
 def get_es_connect(conf: DatasourceConf):
     es_client = Elasticsearch(
         [conf.host],  # ES address
         basic_auth=(conf.username, conf.password),
         verify_certs=False,
-        compatibility_mode=True
+        compatibility_mode=True,
+        headers=get_es_auth(conf)
     )
     return es_client
 
@@ -95,18 +109,8 @@ def get_es_data_by_http(conf: DatasourceConf, sql: str):
         url = url[:-1]
 
     host = f'{url}/_sql?format=json'
-    username = f"{conf.username}"
-    password = f"{conf.password}"
 
-    credentials = f"{username}:{password}"
-    encoded_credentials = b64encode(credentials.encode()).decode()
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Basic {encoded_credentials}"
-    }
-
-    response = requests.post(host, data=json.dumps({"query": sql}), headers=headers, verify=False)
+    response = requests.post(host, data=json.dumps({"query": sql}), headers=get_es_auth(conf), verify=False)
 
     # print(response.json())
     res = response.json()
