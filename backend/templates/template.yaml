@@ -9,7 +9,6 @@ template:
     query_limit: |
       <rule>
         如果用户没有指定数据条数的限制，输出的查询SQL必须加上1000条的数据条数限制。
-        如果用户指定的限制大于1000，则按1000处理。
       </rule>
     no_query_limit: |
       <rule>
