@@ -10,6 +10,20 @@ export default defineConfig(({ mode }) => {
   console.info(mode)
   console.info(env)
   return {
+    server: {
+      host: '0.0.0.0',
+      open: true,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        '/xpack_static': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+      },
+    },
     base: './',
     plugins: [
       vue(),
