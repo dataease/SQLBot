@@ -42,13 +42,13 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
 
                 _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
                 # print(len(_list))
+                _list = _list[:settings.DS_EMBEDDING_COUNT]
                 SQLBotLogUtil.info(json.dumps(
                     [{"id": ele.get("id"), "name": ele.get("ds").name,
                       "cosine_similarity": ele.get("cosine_similarity")}
                      for ele in _list]))
-                ds_l = _list[:settings.DS_EMBEDDING_COUNT]
                 return [{"id": obj.get('ds').id, "name": obj.get('ds').name, "description": obj.get('ds').description}
-                        for obj in ds_l]
+                        for obj in _list]
             except Exception:
                 traceback.print_exc()
     else:
@@ -79,13 +79,13 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
                 # print(len(_list))
                 end_time = time.time()
                 SQLBotLogUtil.info(str(end_time - start_time))
+                _list = _list[:settings.DS_EMBEDDING_COUNT]
                 SQLBotLogUtil.info(json.dumps(
                     [{"id": ele.get("id"), "name": ele.get("ds").name,
                       "cosine_similarity": ele.get("cosine_similarity")}
                      for ele in _list]))
-                ds_l = _list[:settings.DS_EMBEDDING_COUNT]
                 return [{"id": obj.get('ds').id, "name": obj.get('ds').name, "description": obj.get('ds').description}
-                        for obj in ds_l]
+                        for obj in _list]
             except Exception:
                 traceback.print_exc()
     return _list
