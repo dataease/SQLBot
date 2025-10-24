@@ -303,10 +303,16 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
             {where} 
             LIMIT 100"""
     elif ds.type == "oracle":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}"
-            {where} 
-            ORDER BY "{fields[0]}"
-            OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY"""
+        # sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}"
+        #     {where}
+        #     ORDER BY "{fields[0]}"
+        #     OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY"""
+        sql = f"""SELECT * FROM
+                    (SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}"
+                    {where} 
+                    ORDER BY "{fields[0]}")
+                    WHERE ROWNUM <= 100
+                    """
     elif ds.type == "ck":
         sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}" 
             {where} 

@@ -111,5 +111,7 @@ class Settings(BaseSettings):
     TABLE_EMBEDDING_COUNT: int = 10
     DS_EMBEDDING_COUNT: int = 10
 
+    ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
+
 
 settings = Settings()  # type: ignore

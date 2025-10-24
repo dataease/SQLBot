@@ -5,8 +5,10 @@ import urllib.parse
 from decimal import Decimal
 from typing import Optional
 
+import oracledb
 import psycopg2
 import pymssql
+
 from apps.db.db_sql import get_table_sql, get_field_sql, get_version_sql
 from common.error import ParseSQLResultError
 
@@ -27,10 +29,20 @@ from common.core.deps import Trans
 from common.utils.utils import SQLBotLogUtil, equals_ignore_case
 from fastapi import HTTPException
 from apps.db.es_engine import get_es_connect, get_es_index, get_es_fields, get_es_data_by_http
+from common.core.config import settings
+
+try:
+    oracledb.init_oracle_client(
+        lib_dir=settings.ORACLE_CLIENT_PATH
+    )
+    SQLBotLogUtil.info("init oracle client success, use thick mode")
+except Exception:
+    SQLBotLogUtil.error("init oracle client failed, use thin mode")
 
 
 def get_uri(ds: CoreDatasource) -> str:
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
+                                                                                                 "excel") else get_engine_config()
     return get_uri_from_config(ds.type, conf)
 
 
@@ -102,7 +114,8 @@ def get_origin_connect(type: str, conf: DatasourceConf):
 
 # use sqlalchemy
 def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
+                                                                                                 "excel") else get_engine_config()
     if conf.timeout is None:
         conf.timeout = timeout
     if timeout > 0:
@@ -233,7 +246,8 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
     conf = None
     if isinstance(ds, CoreDatasource):
         conf = DatasourceConf(
-            **json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
+            **json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
+                                                                                   "excel") else get_engine_config()
     if isinstance(ds, AssistantOutDsSchema):
         conf = DatasourceConf()
         conf.host = ds.host
@@ -319,7 +333,8 @@ def get_schema(ds: CoreDatasource):
 
 
 def get_tables(ds: CoreDatasource):
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
+                                                                                                 "excel") else get_engine_config()
     db = DB.get_db(ds.type)
     sql, sql_param = get_table_sql(ds, conf, get_version(ds))
     if db.connect_type == ConnectType.sqlalchemy:
@@ -369,7 +384,8 @@ def get_tables(ds: CoreDatasource):
 
 
 def get_fields(ds: CoreDatasource, table_name: str = None):
-    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type, "excel") else get_engine_config()
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
+                                                                                                 "excel") else get_engine_config()
     db = DB.get_db(ds.type)
     sql, p1, p2 = get_field_sql(ds, conf, table_name)
     if db.connect_type == ConnectType.sqlalchemy:
