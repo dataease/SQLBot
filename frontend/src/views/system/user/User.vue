@@ -517,7 +517,7 @@ const copyText = () => {
       ElMessage.success(t('embedded.copy_successful'))
     })
     .catch(function () {
-      ElMessage.error(t('embedded.copy_successful'))
+      ElMessage.error(t('embedded.copy_failed'))
     })
 }
 
