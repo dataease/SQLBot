@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && chmod g+xr /usr/bin/ld.so \
     && chmod g+x /usr/local/bin/python*
 
+# Download Oracle instant client
 ENV DB_CLIENT=/opt/sqlbot/db_client
 ARG TARGETARCH
 RUN apt-get update && \
