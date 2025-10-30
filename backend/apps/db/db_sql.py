@@ -242,9 +242,9 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                     END) AS "DATA_TYPE",
                     NVL(com.COMMENTS, '') AS "COLUMN_COMMENT"
                 FROM 
-                    DBA_TAB_COLUMNS col
+                    ALL_TAB_COLUMNS col
                 LEFT JOIN 
-                    DBA_COL_COMMENTS com 
+                    ALL_COL_COMMENTS com 
                     ON col.OWNER = com.OWNER 
                     AND col.TABLE_NAME = com.TABLE_NAME 
                     AND col.COLUMN_NAME = com.COLUMN_NAME
