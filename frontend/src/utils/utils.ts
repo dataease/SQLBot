@@ -204,3 +204,37 @@ export const setCurrentColor = (color: any, element: HTMLElement = document.docu
       .toRGB()
   )
 }
+export const getQueryString = (name: string) => {
+  const reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i')
+  const r = window.location.search.substr(1).match(reg)
+  if (r != null) {
+    return unescape(r[2])
+  }
+  return null
+}
+
+export const isLarkPlatform = () => {
+  return !!getQueryString('state') && !!getQueryString('code')
+}
+
+export const isPlatformClient = () => {
+  return !!getQueryString('client') || getQueryString('state')?.includes('client')
+}
+
+export const checkPlatform = () => {
+  const flagArray = ['/casbi', 'oidcbi']
+  const pathname = window.location.pathname
+  if (
+    !flagArray.some((flag) => pathname.includes(flag)) &&
+    !isLarkPlatform() &&
+    !isPlatformClient()
+  ) {
+    return cleanPlatformFlag()
+  }
+  return true
+}
+export const cleanPlatformFlag = () => {
+  const platformKey = 'out_auth_platform'
+  wsCache.delete(platformKey)
+  return false
+}

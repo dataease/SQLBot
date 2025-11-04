@@ -14,6 +14,6 @@ export const AuthApi = {
       },
     })
   },
-  logout: () => request.post('/auth/logout'),
+  logout: (data: any) => request.post('/login/logout', data),
   info: () => request.get('/user/info'),
 }

@@ -6,8 +6,8 @@
     <div class="login-content">
       <div class="login-right">
         <div class="login-logo-icon">
-          <img height="52" v-if="loginBg" :src="loginBg" alt="" />
-          <el-icon size="52" v-else
+          <img v-if="loginBg" height="52" :src="loginBg" alt="" />
+          <el-icon v-else size="52"
             ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
             <LOGO_fold v-else></LOGO_fold
           ></el-icon>
@@ -52,6 +52,7 @@
               }}</el-button>
             </el-form-item>
           </el-form>
+          <Handler ref="xpackLoginHandler" jsname="L2NvbXBvbmVudC9sb2dpbi9IYW5kbGVy" />
         </div>
       </div>
     </div>
@@ -68,12 +69,13 @@ import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import loginImage from '@/assets/blue/login-image_blue.png'
+import Handler from './xpack/Handler.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const appearanceStore = useAppearanceStoreWithOut()
 const { t } = useI18n()
-
+const xpackLoginHandler = ref<any>(null)
 const loginForm = ref({
   username: '',
   password: '',

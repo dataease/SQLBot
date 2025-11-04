@@ -33,7 +33,10 @@ wlist = [
     "/system/assistant/info/*",
     "/system/assistant/app/*",
     "/system/assistant/picture/*",
-    "/datasource/uploadExcel"
+    "/datasource/uploadExcel",
+    "/system/authentication/platform/status",
+    "/system/authentication/login/*",
+    "/system/authentication/sso/*",
 ]
 
 class WhitelistChecker:

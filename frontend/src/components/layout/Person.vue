@@ -82,8 +82,8 @@ const toAbout = () => {
 const savePwdHandler = () => {
   pwdFormRef.value?.submit()
 }
-const logout = () => {
-  userStore.logout()
+const logout = async () => {
+  await userStore.logout()
   router.push('/login')
 }
 </script>

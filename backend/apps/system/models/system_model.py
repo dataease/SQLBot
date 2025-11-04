@@ -56,3 +56,15 @@ class AssistantBaseModel(SQLModel):
 class AssistantModel(SnowflakeBase, AssistantBaseModel, table=True):
     __tablename__ = "sys_assistant"
     
+
+class AuthenticationBaseModel(SQLModel):
+    name: str = Field(max_length=255, nullable=False)
+    type: int = Field(nullable=False, default=0)
+    config: Optional[str] = Field(sa_type = Text(), nullable=True)
+    
+    
+class AuthenticationModel(SnowflakeBase, AuthenticationBaseModel, table=True):
+    __tablename__ = "sys_authentication"
+    create_time: Optional[int] = Field(default=0, sa_type=BigInteger())
+    enable: bool = Field(default=False, nullable=False)
+    valid: bool = Field(default=False, nullable=False)

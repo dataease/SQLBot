@@ -235,8 +235,8 @@ const resolveIcon = (iconName: any) => {
 const menuSelect = (e: any) => {
   router.push(e.index)
 }
-const logout = () => {
-  userStore.logout()
+const logout = async () => {
+  await userStore.logout()
   router.push('/login')
 }
 const toSystem = () => {

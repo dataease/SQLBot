@@ -664,6 +664,7 @@
   "system": {
     "system_settings": "System Settings",
     "appearance_settings": "Appearance Settings",
+    "authentication_settings": "Authentication Settings",
     "platform_display_theme": "Platform Display Theme",
     "default_turquoise": "Default (Turquoise)",
     "tech_blue": "Tech Blue",
@@ -692,5 +693,27 @@
     "save_and_apply": "Save and Apply",
     "setting_successfully": "Setting Successfully",
     "customize_theme_color": "Customize theme color"
+  },
+  "authentication": {
+    "invalid": "Invalid",
+    "valid": "Valid",
+    "cas_settings": "CAS Settings",
+    "callback_domain_name": "Callback Domain",
+    "field_mapping": "User Attribute Mapping",
+    "field_mapping_placeholder": "Example: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
+    "incorrect_please_re_enter": "Incorrect format, please re-enter",
+    "in_json_format": "Please enter JSON format"
+  },
+  "login": {
+    "default_login": "Default",
+    "ldap_login": "LDAP Login",
+    "account_login": "Account Login",
+    "other_login": "Other Login Methods",
+    "pwd_invalid_error": "Password has expired, please contact administrator to modify or reset",
+    "pwd_exp_tips": "Password will expire in {0} days, please change it as soon as possible",
+    "qr_code": "QR Code",
+    "platform_disable": "{0} settings are not enabled!",
+    "input_account": "Please enter account",
+    "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds..."
   }
 }

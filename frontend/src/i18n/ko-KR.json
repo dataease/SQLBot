@@ -664,6 +664,7 @@
   "system": {
     "system_settings": "시스템 설정",
     "appearance_settings": "외관 설정",
+    "authentication_settings": "인증 설정",
     "platform_display_theme": "플랫폼 표시 테마",
     "default_turquoise": "기본 (터키석 녹색)",
     "tech_blue": "테크 블루",
@@ -692,5 +693,27 @@
     "save_and_apply": "저장 및 적용",
     "setting_successfully": "설정 성공",
     "customize_theme_color": "사용자 정의 테마 색상"
+  },
+  "authentication": {
+    "invalid": "유효하지 않음",
+    "valid": "유효함",
+    "cas_settings": "CAS 설정",
+    "callback_domain_name": "콜백 도메인",
+    "field_mapping": "사용자 속성 매핑",
+    "field_mapping_placeholder": "예: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
+    "incorrect_please_re_enter": "형식이 잘못되었습니다. 다시 입력해 주세요",
+    "in_json_format": "JSON 형식으로 입력해 주세요"
+  },
+  "login": {
+    "default_login": "기본값",
+    "ldap_login": "LDAP 로그인",
+    "account_login": "계정 로그인",
+    "other_login": "기타 로그인 방식",
+    "pwd_invalid_error": "비밀번호가 만료되었습니다. 관리자에게 문의하여 수정 또는 재설정해 주세요",
+    "pwd_exp_tips": "비밀번호가 {0}일 후에 만료됩니다.尽快尽快 비밀번호를 변경해 주세요",
+    "qr_code": "QR 코드",
+    "platform_disable": "{0} 설정이 활성화되지 않았습니다!",
+    "input_account": "계정을 입력해 주세요",
+    "redirect_2_auth": "{0} 인증으로 리디렉션 중입니다, {1}초..."
   }
 }

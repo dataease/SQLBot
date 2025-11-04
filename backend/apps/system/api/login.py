@@ -1,6 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from apps.system.schemas.logout_schema import LogoutSchema
 from apps.system.schemas.system_schema import BaseUserDTO
 from common.core.deps import SessionDep, Trans
 from common.utils.crypto import sqlbot_decrypt
@@ -9,6 +10,7 @@ from common.core.security import create_access_token
 from datetime import timedelta
 from common.core.config import settings
 from common.core.schemas import Token
+from sqlbot_xpack.authentication.manage import logout as xpack_logout
 router = APIRouter(tags=["login"], prefix="/login")
 
 @router.post("/access-token")
@@ -31,3 +33,9 @@ async def local_login(
     return Token(access_token=create_access_token(
         user_dict, expires_delta=access_token_expires
     ))
+
+@router.post("/logout")    
+async def logout(session: SessionDep, request: Request, dto: LogoutSchema):
+    if dto.origin != 0:
+        return await xpack_logout(session, request, dto)
+    return None

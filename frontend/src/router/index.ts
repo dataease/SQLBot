@@ -19,6 +19,7 @@ import Professional from '@/views/system/professional/index.vue'
 import Training from '@/views/system/training/index.vue'
 import Prompt from '@/views/system/prompt/index.vue'
 import Appearance from '@/views/system/appearance/index.vue'
+import Authentication from '@/views/system/authentication/index.vue'
 import Permission from '@/views/system/permission/index.vue'
 import User from '@/views/system/user/User.vue'
 import Workspace from '@/views/system/workspace/index.vue'
@@ -194,6 +195,12 @@ export const routes = [
             name: 'appearance',
             component: Appearance,
             meta: { title: t('system.appearance_settings') },
+          },
+          {
+            path: 'authentication',
+            name: 'authentication',
+            component: Authentication,
+            meta: { title: t('system.authentication_settings') },
           },
         ],
       },

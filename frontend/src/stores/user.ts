@@ -17,7 +17,8 @@ interface UserState {
   exp: number
   time: number
   weight: number
-  [key: string]: string | number
+  platformInfo: any | null
+  [key: string]: string | number | any | null
 }
 
 export const UserStore = defineStore('user', {
@@ -32,6 +33,7 @@ export const UserStore = defineStore('user', {
       exp: 0,
       time: 0,
       weight: 0,
+      platformInfo: null,
     }
   },
   getters: {
@@ -68,6 +70,9 @@ export const UserStore = defineStore('user', {
     isSpaceAdmin(): boolean {
       return this.uid === '1' || !!this.weight
     },
+    getPlatformInfo(): any | null {
+      return this.platformInfo
+    },
   },
   actions: {
     async login(formData: { username: string; password: string }) {
@@ -75,8 +80,14 @@ export const UserStore = defineStore('user', {
       this.setToken(res.access_token)
     },
 
-    logout() {
+    async logout() {
+      const param = { ...{ token: this.token }, ...this.platformInfo }
+      const res: any = await AuthApi.logout(param)
       this.clear()
+      if (res) {
+        window.location.href = res
+        window.open(res, '_self')
+      }
     },
 
     async info() {
@@ -145,6 +156,10 @@ export const UserStore = defineStore('user', {
       wsCache.set('user.weight', weight)
       this.weight = weight
     },
+    setPlatformInfo(info: any | null) {
+      wsCache.set('user.platformInfo', info)
+      this.platformInfo = info
+    },
     clear() {
       const keys: string[] = [
         'token',
@@ -156,6 +171,7 @@ export const UserStore = defineStore('user', {
         'exp',
         'time',
         'weight',
+        'platformInfo',
       ]
       keys.forEach((key) => wsCache.delete('user.' + key))
       this.$reset()
