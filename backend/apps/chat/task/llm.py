@@ -841,7 +841,7 @@ class LLMService:
             limit = 1000
             if data_result:
                 data_result = prepare_for_orjson(data_result)
-                if data_result and len(data_result) > limit:
+                if data_result and len(data_result) > limit and settings.GENERATE_SQL_QUERY_LIMIT_ENABLED:
                     data_obj['data'] = data_result[:limit]
                     data_obj['limit'] = limit
                 else:
