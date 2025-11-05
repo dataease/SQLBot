@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import platform
 import urllib.parse
 from decimal import Decimal
@@ -32,12 +33,15 @@ from apps.db.es_engine import get_es_connect, get_es_index, get_es_fields, get_e
 from common.core.config import settings
 
 try:
-    oracledb.init_oracle_client(
-        lib_dir=settings.ORACLE_CLIENT_PATH
-    )
-    SQLBotLogUtil.info("init oracle client success, use thick mode")
-except Exception:
-    SQLBotLogUtil.error("init oracle client failed, use thin mode")
+    if os.path.exists(settings.ORACLE_CLIENT_PATH):
+        oracledb.init_oracle_client(
+            lib_dir=settings.ORACLE_CLIENT_PATH
+        )
+        SQLBotLogUtil.info("init oracle client success, use thick mode")
+    else:
+        SQLBotLogUtil.info("init oracle client failed, because not found oracle client, use thin mode")
+except Exception as e:
+    SQLBotLogUtil.error("init oracle client failed, check your client is installed, use thin mode")
 
 
 def get_uri(ds: CoreDatasource) -> str:
