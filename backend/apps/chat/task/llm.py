@@ -29,7 +29,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     save_select_datasource_answer, save_recommend_question_answer, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
-    get_last_execute_sql_error
+    get_last_execute_sql_error, format_json_data
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj
 from apps.data_training.curd.data_training import get_training_template
@@ -1133,7 +1133,7 @@ class LLMService:
                 # todo generate picture
                 if chart['type'] != 'table':
                     yield '### generated chart picture\n\n'
-                    image_url = request_picture(self.record.chat_id, self.record.id, chart, result)
+                    image_url = request_picture(self.record.chat_id, self.record.id, chart, format_json_data(result))
                     SQLBotLogUtil.info(image_url)
                     if stream:
                         yield f'![{chart["type"]}]({image_url})'
