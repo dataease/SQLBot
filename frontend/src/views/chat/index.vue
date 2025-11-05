@@ -4,6 +4,7 @@
     :width="280"
     placement="bottom-start"
     popper-class="popover-chat_history popover-chat_history_small"
+    :disabled="isPhone"
   >
     <template #reference>
       <el-icon
@@ -67,6 +68,7 @@
         placement="bottom-start"
         popper-class="popover-chat_history"
         :popper-style="{ ...defaultFloatPopoverStyle }"
+        :disabled="isPhone"
       >
         <template #reference>
           <el-button link type="primary" class="icon-btn" @click="showSideBar">
@@ -138,8 +140,8 @@
           <div class="welcome-content">
             <template v-if="isCompletePage">
               <div class="greeting">
-                <img height="32" width="32" v-if="loginBg" :src="loginBg" alt="" />
-                <el-icon size="32" v-else
+                <img v-if="loginBg" height="32" width="32" :src="loginBg" alt="" />
+                <el-icon v-else size="32"
                   ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
                   <LOGO_fold v-else></LOGO_fold
                 ></el-icon>
@@ -185,13 +187,13 @@
         <div v-else-if="computedMessages.length == 0 && loading" class="welcome-content-block">
           <div style="display: flex; align-items: center; height: 30px">
             <img
+              v-if="logoAssistant || loginBg"
               height="30"
               width="30"
-              v-if="logoAssistant || loginBg"
               :src="logoAssistant ? logoAssistant : loginBg"
               alt=""
             />
-            <el-icon size="30" v-else
+            <el-icon v-else size="30"
               ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
               <LOGO_fold v-else></LOGO_fold
             ></el-icon>
@@ -214,7 +216,7 @@
           >
             <template v-for="(message, _index) in computedMessages" :key="_index">
               <ChatRow
-                :logoAssistant="logoAssistant"
+                :logo-assistant="logoAssistant"
                 :current-chat="currentChat"
                 :msg="message"
                 :hide-avatar="message.first_chat"
@@ -456,7 +458,7 @@ import { onClickOutside } from '@vueuse/core'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useUserStore } from '@/stores/user'
 import { debounce } from 'lodash-es'
-
+import { isMobile } from '@/utils/utils'
 import router from '@/router'
 const userStore = useUserStore()
 const props = defineProps<{
@@ -486,7 +488,9 @@ const customName = computed(() => {
   return ''
 })
 const { t } = useI18n()
-
+const isPhone = computed(() => {
+  return isMobile()
+})
 const inputMessage = ref('')
 
 const chatListRef = ref()
@@ -675,7 +679,7 @@ function onChatRenamed(chat: Chat) {
 
 const chatListSideBarShow = ref<boolean>(true)
 function hideSideBar() {
-  if (!isCompletePage.value && !props.pageEmbedded) {
+  if ((!isCompletePage.value && !props.pageEmbedded) || isPhone.value) {
     floatPopoverVisible.value = false
     return
   }
@@ -683,6 +687,10 @@ function hideSideBar() {
 }
 
 function showSideBar() {
+  if (isPhone.value) {
+    showFloatPopover()
+    return
+  }
   chatListSideBarShow.value = true
 }
 
@@ -991,15 +999,7 @@ const showFloatPopover = () => {
     floatPopoverVisible.value = true
   }
 }
-const assistantPrepareInit = () => {
-  if (isCompletePage.value || props.pageEmbedded) {
-    return
-  }
-  Object.assign(defaultFloatPopoverStyle.value, {
-    height: '100% !important',
-    inset: '0px auto auto 0px',
-  })
-  goEmpty()
+const registerClickOutside = () => {
   onClickOutside(floatPopoverRef, (event: any) => {
     if (floatPopoverVisible.value) {
       let parentElement: any = event.target
@@ -1016,6 +1016,17 @@ const assistantPrepareInit = () => {
       floatPopoverVisible.value = false
     }
   })
+}
+const assistantPrepareInit = () => {
+  if (isCompletePage.value || props.pageEmbedded) {
+    return
+  }
+  Object.assign(defaultFloatPopoverStyle.value, {
+    height: '100% !important',
+    inset: '0px auto auto 0px',
+  })
+  goEmpty()
+  registerClickOutside()
 }
 defineExpose({
   createNewChat,
@@ -1036,6 +1047,12 @@ function jumpCreatChat() {
 }
 
 onMounted(() => {
+  if (isPhone.value) {
+    chatListSideBarShow.value = false
+    if (props.pageEmbedded) {
+      registerClickOutside()
+    }
+  }
   getChatList(jumpCreatChat)
   assistantPrepareInit()
 })

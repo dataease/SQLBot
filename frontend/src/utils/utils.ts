@@ -238,3 +238,15 @@ export const cleanPlatformFlag = () => {
   wsCache.delete(platformKey)
   return false
 }
+export function isTablet() {
+  const userAgent = navigator.userAgent
+  const tabletRegex = /iPad|Silk|Galaxy Tab|PlayBook|BlackBerry|(tablet|ipad|playbook)/i
+  return tabletRegex.test(userAgent)
+}
+export function isMobile() {
+  return (
+    navigator.userAgent.match(
+      /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+    ) && !isTablet()
+  )
+}
