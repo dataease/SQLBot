@@ -206,42 +206,14 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
 @router.post("/excel/export")
 async def export_excel(excel_data: ExcelData, trans: Trans):
     def inner():
-        _fields_list = []
-        data = []
+
         if not excel_data.data:
             raise HTTPException(
                 status_code=500,
                 detail=trans("i18n_excel_export.data_is_empty")
             )
 
-        # 预处理数据并记录每列的格式类型
-        col_formats = {}  # 格式类型：'text'（文本）、'number'（数字）、'default'（默认）
-        for field_idx, field in enumerate(excel_data.axis):
-            _fields_list.append(field.name)
-            col_formats[field_idx] = 'default'  # 默认不特殊处理
-
-        for _data in excel_data.data:
-            _row = []
-            for field_idx, field in enumerate(excel_data.axis):
-                value = _data.get(field.value)
-                if value is not None:
-                    # 检查是否为数字且需要特殊处理
-                    if isinstance(value, (int, float)):
-                        # 整数且超过15位 → 转字符串并标记为文本列
-                        if isinstance(value, int) and len(str(abs(value))) > 15:
-                            value = str(value)
-                            col_formats[field_idx] = 'text'
-                        # 小数且超过15位有效数字 → 转字符串并标记为文本列
-                        elif isinstance(value, float):
-                            decimal_str = format(value, '.16f').rstrip('0').rstrip('.')
-                            if len(decimal_str) > 15:
-                                value = str(value)
-                                col_formats[field_idx] = 'text'
-                        # 其他数字列标记为数字格式（避免科学记数法）
-                        elif col_formats[field_idx] != 'text':
-                            col_formats[field_idx] = 'number'
-                _row.append(value)
-            data.append(_row)
+        data, _fields_list, col_formats = LLMService.format_pd_data(excel_data.axis, excel_data.data)
 
         df = pd.DataFrame(data, columns=_fields_list)
 
