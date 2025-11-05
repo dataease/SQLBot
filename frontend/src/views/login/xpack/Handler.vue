@@ -50,7 +50,13 @@ import { loadClient, type LoginCategory } from './PlatformClient'
 // import { logoutHandler } from '@/utils/logout'
 import { useI18n } from 'vue-i18n'
 // import PlatformError from './PlatformError.vue'
-
+defineProps<{
+  loading: boolean
+}>()
+const emits = defineEmits(['switchTab', 'autoCallback', 'update:loading'])
+const updateLoading = (show: boolean) => {
+  emits('update:loading', show)
+}
 const { t } = useI18n()
 interface Categoryparam {
   category: string
@@ -71,7 +77,6 @@ const saml2Handler = ref()
     ready: false,
   },
 }) */
-const emits = defineEmits(['switchTab', 'autoCallback'])
 const init = (cb?: () => void) => {
   queryCategoryStatus()
     .then((res) => {
@@ -195,6 +200,10 @@ const casLogin = () => {
       setTimeout(() => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
+        setTimeout(() => {
+          window.location.href =
+            window.location.origin + window.location.pathname + window.location.hash
+        }, 2000)
       }, 1500)
     })
 }
@@ -363,13 +372,22 @@ const callBackType = () => {
 } */
 
 onMounted(() => {
+  // eslint-disable-next-line no-undef
+  const obj = LicenseGenerator.getLicense()
+  if (obj?.status !== 'valid') {
+    updateLoading(false)
+    return
+  }
   wsCache.delete('de-platform-client')
   init(async () => {
     const state = callBackType()
     if (state?.includes('cas') && getQueryString('ticket')) {
       // platformLogin(1)
       casLogin()
-    } /*  else if (window.location.pathname.includes('/oidcbi/')) {
+    } else {
+      updateLoading(false)
+    }
+    /*  else if (window.location.pathname.includes('/oidcbi/')) {
       platformLogin(2)
     } else if (state?.includes('dingtalk')) {
       await dingtalkToken()

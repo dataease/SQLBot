@@ -81,7 +81,10 @@ export const UserStore = defineStore('user', {
     },
 
     async logout() {
-      const param = { ...{ token: this.token }, ...this.platformInfo }
+      let param = { token: this.token }
+      if (wsCache.get('user.platformInfo')) {
+        param = { ...param, ...wsCache.get('user.platformInfo') }
+      }
       const res: any = await AuthApi.logout(param)
       this.clear()
       if (res) {

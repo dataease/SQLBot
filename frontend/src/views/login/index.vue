@@ -1,5 +1,13 @@
 <template>
-  <div class="login-container">
+  <div
+    v-if="showLoading"
+    v-loading="true"
+    :element-loading-text="t('qa.loading')"
+    class="xpack-login-handler-mask"
+    element-loading-background="#F5F6F7"
+  ></div>
+
+  <div class="login-container" :class="{ 'hide-login-container': showLoading }">
     <div class="login-left">
       <img :src="bg" alt="" />
     </div>
@@ -52,7 +60,11 @@
               }}</el-button>
             </el-form-item>
           </el-form>
-          <Handler ref="xpackLoginHandler" jsname="L2NvbXBvbmVudC9sb2dpbi9IYW5kbGVy" />
+          <Handler
+            ref="xpackLoginHandler"
+            v-model:loading="showLoading"
+            jsname="L2NvbXBvbmVudC9sb2dpbi9IYW5kbGVy"
+          />
         </div>
       </div>
     </div>
@@ -71,6 +83,7 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import loginImage from '@/assets/blue/login-image_blue.png'
 import Handler from './xpack/Handler.vue'
 
+const showLoading = ref(true)
 const router = useRouter()
 const userStore = useUserStore()
 const appearanceStore = useAppearanceStoreWithOut()
@@ -194,8 +207,18 @@ const submitForm = () => {
     }
   }
 }
-
+.hide-login-container {
+  display: none;
+}
 :deep(.ed-input__wrapper) {
   background-color: #f5f7fa;
+}
+.xpack-login-handler-mask {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 999;
 }
 </style>
