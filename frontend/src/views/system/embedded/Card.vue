@@ -260,7 +260,7 @@ const pageLogo = computed(() => {
   box-shadow: 0px 4px 8px 0px #1f23291a;
   border-radius: 4px;
   border: 1px solid #dee0e3;
-  width: 120px !important;
+  width: fit-content !important;
   min-width: 120px !important;
   padding: 0;
 
@@ -279,7 +279,7 @@ const pageLogo = computed(() => {
 
     .item {
       position: relative;
-      padding-left: 12px;
+      padding: 0 12px;
       height: 40px;
       display: flex;
       align-items: center;
@@ -298,7 +298,7 @@ const pageLogo = computed(() => {
 
       &::after {
         content: '';
-        width: 112px;
+        width: calc(100% - 8px);
         height: 32px;
         border-radius: 4px;
         position: absolute;
