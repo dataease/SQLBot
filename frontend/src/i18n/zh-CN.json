@@ -1,6 +1,8 @@
 {
   "menu": {
+    "Dashboard1": "默认密码：{msg}",
     "add_interface_credentials": "请添加接口凭证",
+    "kkk:": "默认密码：{msg}",
     "Data Q&A": "智能问数",
     "Data Connections": "数据源",
     "Dashboard": "仪表盘",

@@ -1,5 +1,6 @@
 {
   "menu": {
+    "Dashboard1:": "Default password:{msg}",
     "add_interface_credentials": "Please add interface credentials",
     "Data Q&A": "Data Q&A",
     "Data Connections": "Data Sources",

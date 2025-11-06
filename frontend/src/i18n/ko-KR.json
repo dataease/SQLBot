@@ -1,5 +1,6 @@
 {
   "menu": {
+    "Dashboard1:": "기본 비밀번호:{msg}",
     "add_interface_credentials": "인터페이스 자격 증명을 추가하십시오",
     "Data Q&A": "스마트 데이터 조회",
     "Data Connections": "데이터 소스",
