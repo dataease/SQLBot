@@ -62,6 +62,7 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
             DataTraining.question,
             DataTraining.create_time,
             DataTraining.description,
+            DataTraining.enabled,
         )
         .outerjoin(CoreDatasource, and_(DataTraining.datasource == CoreDatasource.id))
         .where(and_(DataTraining.id.in_(paginated_parent_ids)))
@@ -79,6 +80,7 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
             question=row.question,
             create_time=row.create_time,
             description=row.description,
+            enabled=row.enabled,
         ))
 
     return current_page, page_size, total_count, total_pages, _list
@@ -221,11 +223,11 @@ def save_embeddings(session_maker, ids: List[int]):
 embedding_sql = f"""
 SELECT id, datasource, question, similarity
 FROM
-(SELECT id, datasource, question, oid,
+(SELECT id, datasource, question, oid, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM data_training AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and datasource = :datasource
+WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and datasource = :datasource and enabled = true
 ORDER BY similarity DESC
 LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
 """
@@ -246,7 +248,8 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
         .where(
             and_(or_(text(":sentence ILIKE '%' || question || '%'"), text("question ILIKE '%' || :sentence || '%'")),
                  DataTraining.oid == oid,
-                 DataTraining.datasource == datasource)
+                 DataTraining.datasource == datasource,
+                 DataTraining.enabled == True,)
         )
     )
 
