@@ -56,10 +56,13 @@ async def user_ws_options(session: Session, uid: int, trans: Optional[I18n] = No
     result = session.exec(stmt)
     if not trans:
         return result.all()
-    return [
+    list_result = [
         UserWs(id = id, name = trans(name) if name.startswith('i18n') else name) 
         for id, name in result.all()
     ]
+    if list_result:
+        list_result.sort(key=lambda x: x.name)
+    return list_result
     
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="id")
 async def single_delete(session: SessionDep, id: int):

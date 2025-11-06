@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import SQLModel, func, or_, select, delete as sqlmodel_delete
+from fastapi import APIRouter, Query
+from sqlmodel import SQLModel, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.models.user import UserModel
@@ -38,7 +38,14 @@ async def pager(
     paginator = Paginator(session)
     filters = {}
     
-    origin_stmt = select(UserModel.id).join(UserWsModel, UserModel.id == UserWsModel.uid, isouter=True).where(UserModel.id != 1).distinct()
+    origin_stmt = (
+        select(UserModel.id, UserModel.account)
+        .join(UserWsModel, UserModel.id == UserWsModel.uid, isouter=True)
+        .where(UserModel.id != 1)
+        .distinct()
+        .order_by(UserModel.account)
+    )
+    
     if oidlist:
         origin_stmt = origin_stmt.where(UserWsModel.oid.in_(oidlist))
     if status is not None:

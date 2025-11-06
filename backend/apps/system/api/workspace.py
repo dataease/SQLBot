@@ -171,10 +171,11 @@ async def delete(session: SessionDep, current_user: CurrentUser, trans: Trans, d
 
 @router.get("", response_model=list[WorkspaceModel])
 async def query(session: SessionDep, trans: Trans):
-    list_result = session.exec(select(WorkspaceModel).order_by(WorkspaceModel.create_time.asc())).all()
+    list_result = session.exec(select(WorkspaceModel)).all()
     for ws in list_result:
         if ws.name.startswith('i18n'):
-            ws.name =  trans(ws.name)
+            ws.name = trans(ws.name)
+    list_result.sort(key=lambda x: x.name)
     return list_result
 
 @router.post("")
