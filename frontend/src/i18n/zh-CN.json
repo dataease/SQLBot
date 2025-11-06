@@ -1,6 +1,5 @@
 {
   "menu": {
-    "Dashboard1": "默认密码：{msg}",
     "add_interface_credentials": "请添加接口凭证",
     "Data Q&A": "智能问数",
     "Data Connections": "数据源",
@@ -9,6 +8,7 @@
     "Details": "详情"
   },
   "prompt": {
+    "default_password": "默认密码：{msg}",
     "no_prompt_words": "暂无提示词",
     "customize_prompt_words": "自定义提示词",
     "ask_sql": "问数 SQL",

@@ -1,6 +1,5 @@
 {
   "menu": {
-    "Dashboard1:": "Default password:{msg}",
     "add_interface_credentials": "Please add interface credentials",
     "Data Q&A": "Data Q&A",
     "Data Connections": "Data Sources",
@@ -9,6 +8,7 @@
     "Details": "Details"
   },
   "prompt": {
+    "default_password": "Default password:{msg}",
     "no_prompt_words": "No prompt words",
     "customize_prompt_words": "Customize prompt words",
     "ask_sql": "Ask SQL",
