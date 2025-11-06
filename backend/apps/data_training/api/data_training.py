@@ -40,6 +40,6 @@ async def delete(session: SessionDep, id_list: list[int]):
     delete_training(session, id_list)
 
 
-@router.get("{id}/enable/{enabled}")
+@router.get("/{id}/enable/{enabled}")
 async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
     enable_training(session, id, enabled, trans)
