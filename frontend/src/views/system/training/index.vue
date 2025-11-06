@@ -302,6 +302,20 @@ const handleRowClick = (row: any) => {
   rowInfoDialog.value = true
 }
 
+const changeStatus = (id: any, val: any) => {
+  trainingApi
+    .enable(id, val + '')
+    .then(() => {
+      ElMessage({
+        message: t('common.save_success'),
+        type: 'success',
+      })
+    })
+    .finally(() => {
+      search()
+    })
+}
+
 const onRowFormClose = () => {
   pageForm.value = cloneDeep(defaultForm)
   rowInfoDialog.value = false
@@ -374,6 +388,17 @@ const onRowFormClose = () => {
             </template>
           </el-table-column>
           <el-table-column prop="datasource_name" :label="$t('ds.title')" min-width="240">
+          </el-table-column>
+          <el-table-column :label="t('ds.status')" width="180">
+            <template #default="scope">
+              <div @click.stop style="display: flex; align-items: center">
+                <el-switch
+                  v-model="scope.row.enabled"
+                  size="small"
+                  @change="(val: any) => changeStatus(scope.row.id, val)"
+                />
+              </div>
+            </template>
           </el-table-column>
           <el-table-column
             prop="create_time"

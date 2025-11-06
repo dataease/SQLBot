@@ -8,4 +8,5 @@ export const trainingApi = {
   updateEmbedded: (data: any) => request.put('/system/data-training', data),
   deleteEmbedded: (params: any) => request.delete('/system/data-training', { data: params }),
   getOne: (id: any) => request.get(`/system/data-training/${id}`),
+  enable: (id: any, enabled: any) => request.get(`/system/data-training/${id}/enable/${enabled}`),
 }
