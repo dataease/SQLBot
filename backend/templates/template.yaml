@@ -55,6 +55,10 @@ template:
           图表类型选择原则推荐：趋势 over time 用 line，分类对比用 column/bar，占比用 pie，原始数据查看用 table
         </rule>
         <rule>
+          如果图表类型为柱状图(column)、条形图(bar)或折线图(line), 在生成的SQL中必须指定一个维度字段和一个指标字段，其中维度字段必须参与排序。
+          如果有分类用的字段，该字段参与次一级的排序
+        </rule>
+        <rule>
           如果问题是图表展示相关且与生成SQL查询无关时，请参考上一次回答的SQL来生成SQL
         </rule>
         <rule>
