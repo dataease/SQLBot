@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Query
 
 from apps.terminology.curd.terminology import page_terminology, create_terminology, update_terminology, \
-    delete_terminology
+    delete_terminology, enable_terminology
 from apps.terminology.models.terminology_model import TerminologyInfo
 from common.core.deps import SessionDep, CurrentUser, Trans
 
@@ -37,3 +37,8 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 @router.delete("")
 async def delete(session: SessionDep, id_list: list[int]):
     delete_terminology(session, id_list)
+
+
+@router.get("{id}/enable/{enabled}")
+async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
+    enable_terminology(session, id, enabled, trans)

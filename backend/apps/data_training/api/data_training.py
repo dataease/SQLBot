@@ -2,7 +2,8 @@ from typing import Optional
 
 from fastapi import APIRouter, Query
 
-from apps.data_training.curd.data_training import page_data_training, create_training, update_training, delete_training
+from apps.data_training.curd.data_training import page_data_training, create_training, update_training, delete_training, \
+    enable_training
 from apps.data_training.models.data_training_model import DataTrainingInfo
 from common.core.deps import SessionDep, CurrentUser, Trans
 
@@ -37,3 +38,8 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 @router.delete("")
 async def delete(session: SessionDep, id_list: list[int]):
     delete_training(session, id_list)
+
+
+@router.get("{id}/enable/{enabled}")
+async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
+    enable_training(session, id, enabled, trans)

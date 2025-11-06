@@ -230,7 +230,7 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
             raise Exception(trans("i18n_terminology.datasource_cannot_be_none"))
 
     parent = Terminology(word=info.word, create_time=create_time, description=info.description, oid=oid,
-                         specific_ds=specific_ds,
+                         specific_ds=specific_ds, enabled=info.enabled,
                          datasource_ids=datasource_ids)
 
     words = [info.word]
@@ -289,7 +289,7 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
             if other_word.strip() == "":
                 continue
             _list.append(
-                Terminology(pid=result.id, word=other_word, create_time=create_time, oid=oid,
+                Terminology(pid=result.id, word=other_word, create_time=create_time, oid=oid, enabled=result.enabled,
                             specific_ds=specific_ds, datasource_ids=datasource_ids))
     session.bulk_save_objects(_list)
     session.flush()
@@ -366,7 +366,8 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         word=info.word,
         description=info.description,
         specific_ds=specific_ds,
-        datasource_ids=datasource_ids
+        datasource_ids=datasource_ids,
+        enabled=info.enabled,
     )
     session.execute(stmt)
     session.commit()
@@ -383,7 +384,7 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                 continue
             _list.append(
                 Terminology(pid=info.id, word=other_word, create_time=create_time, oid=oid,
-                            specific_ds=specific_ds, datasource_ids=datasource_ids))
+                            specific_ds=specific_ds, datasource_ids=datasource_ids, enabled=info.enabled))
     session.bulk_save_objects(_list)
     session.flush()
     session.commit()
@@ -396,6 +397,20 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
 
 def delete_terminology(session: SessionDep, ids: list[int]):
     stmt = delete(Terminology).where(or_(Terminology.id.in_(ids), Terminology.pid.in_(ids)))
+    session.execute(stmt)
+    session.commit()
+
+
+def enable_terminology(session: SessionDep, id: int, enabled: bool, trans: Trans):
+    count = session.query(Terminology).filter(
+        Terminology.id == id
+    ).count()
+    if count == 0:
+        raise Exception(trans('i18n_terminology.terminology_not_exists'))
+
+    stmt = update(Terminology).where(or_(Terminology.id == id, Terminology.pid == id)).values(
+        enabled=enabled,
+    )
     session.execute(stmt)
     session.commit()
 

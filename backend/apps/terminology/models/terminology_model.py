@@ -19,6 +19,7 @@ class Terminology(SQLModel, table=True):
     embedding: Optional[List[float]] = Field(sa_column=Column(VECTOR(), nullable=True))
     specific_ds: Optional[bool] = Field(sa_column=Column(Boolean, default=False))
     datasource_ids: Optional[list[int]] = Field(sa_column=Column(JSONB), default=[])
+    enabled: Optional[bool] = Field(sa_column=Column(Boolean, default=True))
 
 
 class TerminologyInfo(BaseModel):
@@ -30,3 +31,4 @@ class TerminologyInfo(BaseModel):
     specific_ds: Optional[bool] = False
     datasource_ids: Optional[list[int]] = []
     datasource_names: Optional[list[str]] = []
+    enabled: Optional[bool] = True

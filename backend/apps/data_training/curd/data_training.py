@@ -89,7 +89,7 @@ def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
     if info.datasource is None:
         raise Exception(trans("i18n_data_training.datasource_cannot_be_none"))
     parent = DataTraining(question=info.question, create_time=create_time, description=info.description, oid=oid,
-                          datasource=info.datasource)
+                          datasource=info.datasource, enabled=info.enabled)
 
     exists = session.query(
         session.query(DataTraining).filter(
@@ -135,6 +135,7 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         question=info.question,
         description=info.description,
         datasource=info.datasource,
+        enabled=info.enabled,
     )
     session.execute(stmt)
     session.commit()
@@ -147,6 +148,20 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
 
 def delete_training(session: SessionDep, ids: list[int]):
     stmt = delete(DataTraining).where(and_(DataTraining.id.in_(ids)))
+    session.execute(stmt)
+    session.commit()
+
+
+def enable_training(session: SessionDep, id: int, enabled: bool, trans: Trans):
+    count = session.query(DataTraining).filter(
+        DataTraining.id == id
+    ).count()
+    if count == 0:
+        raise Exception(trans('i18n_data_training.data_training_not_exists'))
+
+    stmt = update(DataTraining).where(and_(DataTraining.id == id)).values(
+        enabled=enabled,
+    )
     session.execute(stmt)
     session.commit()
 
