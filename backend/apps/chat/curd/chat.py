@@ -70,6 +70,23 @@ def get_chart_config(session: SessionDep, chart_record_id: int):
             pass
     return {}
 
+def format_chart_fields(chart_info: dict):
+    fields = []
+    if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
+        for column in chart_info.get('columns'):
+            column_str = column.get('value')
+            if column.get('value') != column.get('name'):
+                column_str = column_str + '(' + column.get('name') + ')'
+            fields.append(column_str)
+    if chart_info.get('axis'):
+        for _type in ['x', 'y', 'series']:
+            if chart_info.get('axis').get(_type):
+                column = chart_info.get('axis').get(_type)
+                column_str = column.get('value')
+                if column.get('value') != column.get('name'):
+                    column_str = column_str + '(' + column.get('name') + ')'
+                fields.append(column_str)
+    return fields
 
 def get_last_execute_sql_error(session: SessionDep, chart_id: int):
     stmt = select(ChatRecord.error).where(and_(ChatRecord.chat_id == chart_id)).order_by(
@@ -117,8 +134,8 @@ def format_json_list_data(origin_data: list[dict]):
     return data
 
 
-def get_chat_chart_data(session: SessionDep, chart_record_id: int):
-    stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chart_record_id))
+def get_chat_chart_data(session: SessionDep, chat_record_id: int):
+    stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chat_record_id))
     res = session.execute(stmt)
     for row in res:
         try:
@@ -128,8 +145,8 @@ def get_chat_chart_data(session: SessionDep, chart_record_id: int):
     return {}
 
 
-def get_chat_predict_data(session: SessionDep, chart_record_id: int):
-    stmt = select(ChatRecord.predict_data).where(and_(ChatRecord.id == chart_record_id))
+def get_chat_predict_data(session: SessionDep, chat_record_id: int):
+    stmt = select(ChatRecord.predict_data).where(and_(ChatRecord.id == chat_record_id))
     res = session.execute(stmt)
     for row in res:
         try:

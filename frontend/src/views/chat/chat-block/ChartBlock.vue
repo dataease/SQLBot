@@ -28,12 +28,14 @@ import { chatApi } from '@/api/chat'
 
 const props = withDefaults(
   defineProps<{
+    recordId?: number
     message: ChatMessage
     isPredict?: boolean
     chatType?: ChartTypes
     enlarge?: boolean
   }>(),
   {
+    recordId: undefined,
     isPredict: false,
     chatType: undefined,
     enlarge: false,
@@ -240,10 +242,10 @@ function copyText() {
 const exportRef = ref()
 
 function exportToExcel() {
-  if (chartRef.value) {
+  if (chartRef.value && props.recordId) {
     loading.value = true
     chatApi
-      .export2Excel({ ...chartRef.value?.getExcelData(), name: chartObject.value.title })
+      .export2Excel(props.recordId)
       .then((res) => {
         const blob = new Blob([res], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

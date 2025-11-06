@@ -29,7 +29,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     save_select_datasource_answer, save_recommend_question_answer, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
-    get_last_execute_sql_error, format_json_data
+    get_last_execute_sql_error, format_json_data, format_chart_fields
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj
 from apps.data_training.curd.data_training import get_training_template
@@ -214,22 +214,7 @@ class LLMService:
 
     def get_fields_from_chart(self, _session: Session):
         chart_info = get_chart_config(_session, self.record.id)
-        fields = []
-        if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
-            for column in chart_info.get('columns'):
-                column_str = column.get('value')
-                if column.get('value') != column.get('name'):
-                    column_str = column_str + '(' + column.get('name') + ')'
-                fields.append(column_str)
-        if chart_info.get('axis'):
-            for _type in ['x', 'y', 'series']:
-                if chart_info.get('axis').get(_type):
-                    column = chart_info.get('axis').get(_type)
-                    column_str = column.get('value')
-                    if column.get('value') != column.get('name'):
-                        column_str = column_str + '(' + column.get('name') + ')'
-                    fields.append(column_str)
-        return fields
+        return format_chart_fields(chart_info)
 
     def generate_analysis(self, _session: Session):
         fields = self.get_fields_from_chart(_session)

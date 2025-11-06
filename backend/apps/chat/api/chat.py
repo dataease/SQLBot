@@ -10,8 +10,8 @@ from sqlalchemy import and_, select
 
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
-    format_json_data, format_json_list_data
-from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, ExcelData
+    format_json_data, format_json_list_data, get_chart_config
+from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 
@@ -42,19 +42,19 @@ async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, cha
     return await asyncio.to_thread(inner)
 
 
-@router.get("/record/{chart_record_id}/data")
-async def chat_record_data(session: SessionDep, chart_record_id: int):
+@router.get("/record/{chat_record_id}/data")
+async def chat_record_data(session: SessionDep, chat_record_id: int):
     def inner():
-        data = get_chat_chart_data(chart_record_id=chart_record_id, session=session)
+        data = get_chat_chart_data(chat_record_id=chat_record_id, session=session)
         return format_json_data(data)
 
     return await asyncio.to_thread(inner)
 
 
-@router.get("/record/{chart_record_id}/predict_data")
-async def chat_predict_data(session: SessionDep, chart_record_id: int):
+@router.get("/record/{chat_record_id}/predict_data")
+async def chat_predict_data(session: SessionDep, chat_record_id: int):
     def inner():
-        data = get_chat_predict_data(chart_record_id=chart_record_id, session=session)
+        data = get_chat_predict_data(chat_record_id=chat_record_id, session=session)
         return format_json_list_data(data)
 
     return await asyncio.to_thread(inner)
@@ -203,17 +203,49 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
 
 
-@router.post("/excel/export")
-async def export_excel(excel_data: ExcelData, trans: Trans):
+@router.get("/record/{chat_record_id}/excel/export")
+async def export_excel(session: SessionDep, chat_record_id: int, trans: Trans):
+    chat_record = session.get(ChatRecord, chat_record_id)
+    if not chat_record:
+        raise HTTPException(
+            status_code=500,
+            detail=f"ChatRecord with id {chat_record_id} not found"
+        )
+
+    is_predict_data = chat_record.predict_record_id is not None
+
+    _origin_data = format_json_data(get_chat_chart_data(chat_record_id=chat_record_id, session=session))
+
+    _base_field = _origin_data.get('fields')
+    _data = _origin_data.get('data')
+
+    if not _data:
+        raise HTTPException(
+            status_code=500,
+            detail=trans("i18n_excel_export.data_is_empty")
+        )
+
+    chart_info = get_chart_config(session, chat_record_id)
+
+    _title = chart_info.get('title') if chart_info.get('title') else 'Excel'
+
+    fields = []
+    if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
+        for column in chart_info.get('columns'):
+            fields.append(AxisObj(name=column.get('name'), value=column.get('value')))
+    if chart_info.get('axis'):
+        for _type in ['x', 'y', 'series']:
+            if chart_info.get('axis').get(_type):
+                column = chart_info.get('axis').get(_type)
+                fields.append(AxisObj(name=column.get('name'), value=column.get('value')))
+
+    _predict_data = []
+    if is_predict_data:
+        _predict_data = format_json_list_data(get_chat_predict_data(chat_record_id=chat_record_id, session=session))
+
     def inner():
 
-        if not excel_data.data:
-            raise HTTPException(
-                status_code=500,
-                detail=trans("i18n_excel_export.data_is_empty")
-            )
-
-        data, _fields_list, col_formats = LLMService.format_pd_data(excel_data.axis, excel_data.data)
+        data, _fields_list, col_formats = LLMService.format_pd_data(fields, _data + _predict_data)
 
         df = pd.DataFrame(data, columns=_fields_list)
 

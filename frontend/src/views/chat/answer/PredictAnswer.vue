@@ -4,8 +4,10 @@ import { chatApi, ChatInfo, type ChatMessage, ChatRecord } from '@/api/chat.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import MdComponent from '@/views/chat/component/MdComponent.vue'
 import ChartBlock from '@/views/chat/chat-block/ChartBlock.vue'
+
 const props = withDefaults(
   defineProps<{
+    recordId?: number
     chatList?: Array<ChatInfo>
     currentChatId?: number
     currentChat?: ChatInfo
@@ -13,6 +15,7 @@ const props = withDefaults(
     loading?: boolean
   }>(),
   {
+    recordId: undefined,
     chatList: () => [],
     currentChatId: undefined,
     currentChat: () => new ChatInfo(),
@@ -257,6 +260,7 @@ defineExpose({ sendMessage, index: () => index.value, chatList: () => _chatList,
       v-if="message.record?.predict_data?.length > 0 && message.record?.data"
       ref="chartBlockRef"
       style="margin-top: 12px"
+      :record-id="recordId"
       :message="message"
       is-predict
     />
