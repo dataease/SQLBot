@@ -621,6 +621,7 @@
     "excel": "Excel",
     "picture": "이미지",
     "add_to_dashboard": "대시보드에 추가",
+    "add_to_dataV_ko": "캔버스에 추가",
     "full_screen": "전체 화면",
     "exit_full_screen": "전체 화면 종료",
     "sql_generation": "SQL 생성",

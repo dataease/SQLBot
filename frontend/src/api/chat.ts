@@ -51,6 +51,7 @@ export class ChatRecord {
   recommended_question?: string
   analysis_record_id?: number
   predict_record_id?: number
+  sql_prase?: string
 
   constructor()
   constructor(

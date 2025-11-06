@@ -181,6 +181,9 @@ const sendMessage = async () => {
               case 'sql':
                 _currentChat.value.records[index.value].sql = data.content
                 break
+              case 'sql_prase':
+                _currentChat.value.records[index.value].sql_prase = data.content
+                break
               case 'sql-data':
                 getChatData(_currentChat.value.records[index.value].id)
                 break

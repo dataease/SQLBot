@@ -207,6 +207,18 @@ function showSql() {
   sqlShow.value = true
 }
 
+function addToResource() {
+  // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  const readyData = {
+    eventName: 'sqlbot_add_to_resource',
+    busi: props.message?.record?.sql_prase,
+    ready: true,
+    messageId: 100001,
+  }
+  console.log('sqlbot-readyData', JSON.stringify(readyData))
+  window.parent.postMessage(readyData, '*')
+}
+
 function addToDashboard() {
   const recordeInfo = {
     id: '1-1',
@@ -421,6 +433,15 @@ watch(
               </div>
             </div>
           </el-popover>
+        </div>
+        <div v-if="message?.record?.sql_prase">
+          <el-tooltip effect="dark" :content="t('chat.add_to_dataV')" placement="top">
+            <el-button class="tool-btn" text @click="addToResource">
+              <el-icon size="16">
+                <icon_into_item_outlined />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
         </div>
         <div v-if="message?.record?.chart && !isAssistant">
           <el-tooltip effect="dark" :content="t('chat.add_to_dashboard')" placement="top">

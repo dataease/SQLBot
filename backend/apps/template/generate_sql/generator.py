@@ -12,3 +12,4 @@ def get_sql_template():
 def get_sql_example_template(db_type: Union[str, DB]):
     template = get_base_sql_template(db_type)
     return template['template']
+

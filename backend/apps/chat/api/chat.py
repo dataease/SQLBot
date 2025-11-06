@@ -172,14 +172,14 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
 
         stmt = select(ChatRecord.id, ChatRecord.question, ChatRecord.chat_id, ChatRecord.datasource,
                       ChatRecord.engine_type,
-                      ChatRecord.ai_modal_id, ChatRecord.create_by, ChatRecord.chart, ChatRecord.data).where(
+                      ChatRecord.ai_modal_id, ChatRecord.create_by, ChatRecord.chart, ChatRecord.data,ChatRecord.sql_prase).where(
             and_(ChatRecord.id == chat_record_id))
         result = session.execute(stmt)
         for r in result:
             record = ChatRecord(id=r.id, question=r.question, chat_id=r.chat_id, datasource=r.datasource,
                                 engine_type=r.engine_type, ai_modal_id=r.ai_modal_id, create_by=r.create_by,
                                 chart=r.chart,
-                                data=r.data)
+                                data=r.data,sql_prase=r.sql_prase)
 
         if not record:
             raise Exception(f"Chat record with id {chat_record_id} not found")

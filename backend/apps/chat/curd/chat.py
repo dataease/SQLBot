@@ -644,17 +644,19 @@ def save_chart_answer(session: SessionDep, record_id: int, answer: str) -> ChatR
     return record
 
 
-def save_chart(session: SessionDep, record_id: int, chart: str) -> ChatRecord:
+def save_chart(session: SessionDep, record_id: int, chart: str, sql_prase: str) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")
     record = get_chat_record_by_id(session, record_id)
 
     record.chart = chart
+    record.sql_prase = sql_prase
 
     result = ChatRecord(**record.model_dump())
 
     stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
-        chart=record.chart
+        chart=record.chart,
+        sql_prase=record.sql_prase
     )
 
     session.execute(stmt)

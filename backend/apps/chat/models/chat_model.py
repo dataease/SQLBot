@@ -17,6 +17,7 @@ from apps.template.generate_dynamic.generator import get_dynamic_template
 from apps.template.generate_guess_question.generator import get_guess_question_template
 from apps.template.generate_predict.generator import get_predict_template
 from apps.template.generate_sql.generator import get_sql_template, get_sql_example_template
+from apps.template.prase_sql.generator import get_prase_sql_template
 from apps.template.select_datasource.generator import get_datasource_template
 
 
@@ -40,6 +41,7 @@ class OperationEnum(Enum):
     GENERATE_SQL_WITH_PERMISSIONS = '5'
     CHOOSE_DATASOURCE = '6'
     GENERATE_DYNAMIC_SQL = '7'
+    PRASE_SQL = '8'
 
 
 class ChatFinishStep(Enum):
@@ -109,6 +111,7 @@ class ChatRecord(SQLModel, table=True):
     error: str = Field(sa_column=Column(Text, nullable=True))
     analysis_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
     predict_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
+    sql_prase: str = Field(sa_column=Column(Text, nullable=True))
 
 
 class ChatRecordResult(BaseModel):
@@ -228,6 +231,12 @@ class AiModelQuestion(BaseModel):
 
     def predict_user_question(self):
         return get_predict_template()['user'].format(fields=self.fields, data=self.data)
+
+    def prase_sql_sys_question(self):
+        return get_prase_sql_template()['system'].format(lang=self.lang)
+
+    def prase_sql_user_question(self,sql='',chart=''):
+        return get_prase_sql_template()['user'].format(sql=sql,chart=chart)
 
     def datasource_sys_question(self):
         return get_datasource_template()['system'].format(lang=self.lang)

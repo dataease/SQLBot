@@ -774,7 +774,7 @@ class LLMService:
 
         return sql
 
-    def check_save_chart(self, session: Session, res: str) -> Dict[str, Any]:
+    def check_save_chart(self, session: Session, res: str, sql_prase: str) -> Dict[str, Any]:
 
         json_str = extract_nested_json(res)
         if json_str is None:
@@ -814,7 +814,7 @@ class LLMService:
         if error:
             raise SingleMessageError(message)
 
-        save_chart(session=session, chart=orjson.dumps(chart).decode(), record_id=self.record.id)
+        save_chart(session=session, chart=orjson.dumps(chart).decode(), record_id=self.record.id,sql_prase=sql_prase)
 
         return chart
 
@@ -989,6 +989,7 @@ class LLMService:
 
             use_dynamic_ds: bool = self.current_assistant and self.current_assistant.type in dynamic_ds_types
             is_page_embedded: bool = self.current_assistant and self.current_assistant.type == 4
+            is_assistant_embedded: bool = self.current_assistant and self.current_assistant.type == 1
             dynamic_sql_result = None
             sqlbot_temp_sql_text = None
             assistant_dynamic_sql = None
@@ -1092,7 +1093,16 @@ class LLMService:
 
             # filter chart
             SQLBotLogUtil.info(full_chart_text)
-            chart = self.check_save_chart(session=_session, res=full_chart_text)
+
+            # sql prase
+            if is_assistant_embedded:
+                sql_prase = self.generate_sql_paras(_session,real_execute_sql,full_chart_text)
+                if in_chat:
+                    yield 'data:' + orjson.dumps(
+                        {'content': sql_prase,
+                         'type': 'sql_prase'}).decode() + '\n\n'
+
+                chart = self.check_save_chart(session=_session, res=full_chart_text,sql_prase=sql_prase)
             SQLBotLogUtil.info(chart)
 
             if not stream:
@@ -1283,6 +1293,49 @@ class LLMService:
             except Exception as e:
                 raise SingleMessageError(f"ds is invalid [{str(e)}]")
 
+    def generate_sql_paras(self, _session: Session, real_execute_sql: Optional[str] = '',chart: Optional[str] = ''):
+        # prase sql
+        prase_sql_msg: List[Union[BaseMessage, dict[str, Any]]] = []
+        prase_sql_msg.append(SystemMessage(self.chat_question.prase_sql_sys_question()))
+        prase_sql_msg.append(HumanMessage(self.chat_question.prase_sql_user_question(real_execute_sql,chart)))
+        self.current_logs[OperationEnum.PRASE_SQL] = start_log(session=_session,
+                                                               ai_modal_id=self.chat_question.ai_modal_id,
+                                                               ai_modal_name=self.chat_question.ai_modal_name,
+                                                               operate=OperationEnum.PRASE_SQL,
+                                                               record_id=self.record.id,
+                                                               full_message=[{'type': msg.type,
+                                                                              'content': msg.content}
+                                                                             for
+                                                                             msg in prase_sql_msg])
+
+        token_usage = {}
+        prase_res = process_stream(self.llm.stream(prase_sql_msg), token_usage)
+        prase_full_thinking_text = ''
+        prase_full_text = ''
+        for chunk in prase_res:
+            if chunk.get('content'):
+                prase_full_text += chunk.get('content')
+            if chunk.get('reasoning_content'):
+                prase_full_thinking_text += chunk.get('reasoning_content')
+        prase_sql_msg.append(AIMessage(prase_full_text))
+
+        self.current_logs[OperationEnum.PRASE_SQL] = end_log(session=_session,
+                                                             log=self.current_logs[
+                                                                 OperationEnum.PRASE_SQL],
+                                                             full_message=[
+                                                                 {'type': msg.type,
+                                                                  'content': msg.content}
+                                                                 for msg in prase_sql_msg],
+                                                             reasoning_content=prase_full_thinking_text,
+                                                             token_usage=token_usage)
+
+        prase_json_str = extract_nested_json(prase_full_text)
+        return prase_json_str
+        # if prase_json_str is None:
+        #     raise SingleMessageError(f'Cannot parse datasource from answer: {prase_full_text}')
+        # ds = orjson.loads(prase_json_str)
+        # return ds['info']
+
 
 def execute_sql_with_db(db: SQLDatabase, sql: str) -> str:
     """Execute SQL query using SQLDatabase
@@ -1454,7 +1507,6 @@ def process_stream(res: Iterator[BaseMessageChunk],
             'reasoning_content': reasoning_content_chunk
         }
         get_token_usage(chunk, token_usage)
-
 
 def get_lang_name(lang: str):
     if not lang:

@@ -621,6 +621,7 @@
     "excel": "Excel",
     "picture": "图片",
     "add_to_dashboard": "添加到仪表板",
+    "add_to_dataV": "添加到画布",
     "full_screen": "全屏",
     "exit_full_screen": "退出全屏",
     "sql_generation": "生成SQL",

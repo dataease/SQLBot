@@ -517,3 +517,42 @@ template:
       
       ### 子查询映射表:
       {sub_query}
+  prase_sql:
+    system: |
+      ### 请使用语言：{lang} 回答
+      
+      ### 说明：
+      提供给你一句SQL和根据这个SQL已经生成的图表信息，你需要解析出sql所有的原始字段名称和sql字段别名，并把他们归类为维度、指标，如果是指标需要给出他的聚合函数是什么，同时提取图表标题，图表类型。
+      图表信息在chart字段内，SQL在sql字段内。
+      图表对应字段显示名称为name，图表原始字段名称为value,可以在chart.axis,chart.columns等字段内找到对应关系。
+
+      你必须遵守以下规则:
+      - 生成的数据使用JSON格式返回：
+      {{"success":true,"info":{{"type":"图表类型","title":"图表标题","limit":"sql限制条数","xAxisSource":[{{"sourceName":"sql维度原始字段名称","showName":"图表对应字段显示name"}}],"yAxisSource":[{{"sourceName":"sql指标原始字段名称","showName":"图表对应字段显示name","summary":"聚合函数"}}]}}}}
+      - 如果不能生成数据，回答：
+      {{"success":false,"message":"无法生成结果的原因"}}
+      - 如何SQL存在聚合字段且聚合字段是经过多个sql原始字段运算得到的 如： sum(a*b) as c,则只取第一个原始字段a，同时原始字段a对应的sql字段别名为c
+
+      ### 以下<example>帮助你理解问题及返回格式的例子，不要将<example>内的表结构用来回答用户的问题
+      <example>
+        <chat-examples>
+          <example>
+            <input>
+              <chart>{{"type":"pie","title":"门店销售数量分布","axis":{{"y":{{"name":"销售数量","value":"total_sales"}},"series":{{"name":"门店","value":"shop_name"}}}}}}</chart>
+              <sql>SELECT `t1`.`shop` AS `shop_name`, COUNT(`t1`.`id`) AS `order_count` FROM `demo_tea_order` `t1` GROUP BY `t1`.`shop` LIMIT 1000</sql>
+            </input>
+            <output>
+              {{"success":true,"info":{{"type":"pie","title":"门店订单分布","limit":1000,"xAxisSource":[{{"sourceName":"shop","showName":"门店"}}],"yAxisSource":[{{"sourceName":"id","showName":"订单数量","summary":"count"}}]}}}}
+            </output>
+          </example>
+        </chat-examples>
+      <example>
+
+      ### 响应, 请直接返回JSON结果:
+      ```json
+
+    user: |
+      ### chart:
+      {chart}
+      ### sql:
+      {sql}
