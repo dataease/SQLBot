@@ -321,6 +321,20 @@ const onRowFormClose = () => {
 const deleteHandlerItem = (idx: number) => {
   pageForm.value.other_words = pageForm.value.other_words!.filter((_, index) => index !== idx)
 }
+
+const changeStatus = (id: any, val: any) => {
+  professionalApi
+    .enable(id, val + '')
+    .then(() => {
+      ElMessage({
+        message: t('common.save_success'),
+        type: 'success',
+      })
+    })
+    .finally(() => {
+      search()
+    })
+}
 </script>
 
 <template>
@@ -405,6 +419,17 @@ const deleteHandlerItem = (idx: number) => {
                 }}</span>
               </div>
               <div v-else>{{ t('training.all_data_sources') }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('ds.status')" width="180">
+            <template #default="scope">
+              <div @click.stop style="display: flex; align-items: center">
+                <el-switch
+                  v-model="scope.row.enabled"
+                  size="small"
+                  @change="(val: any) => changeStatus(scope.row.id, val)"
+                />
+              </div>
             </template>
           </el-table-column>
           <el-table-column

@@ -5,7 +5,9 @@ export const professionalApi = {
     request.get(`/system/terminology/page/${pageNum}/${pageSize}`, {
       params,
     }),
+
   updateEmbedded: (data: any) => request.put('/system/terminology', data),
   deleteEmbedded: (params: any) => request.delete('/system/terminology', { data: params }),
   getOne: (id: any) => request.get(`/system/terminology/${id}`),
+  enable: (id: any, enabled: any) => request.get(`/system/data-training/${id}/enable/${enabled}`),
 }
