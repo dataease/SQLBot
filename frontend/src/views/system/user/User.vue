@@ -243,7 +243,7 @@
         </el-icon>
       </span>
       <div class="down-template-content" style="align-items: center">
-        <span>{{ t('prompt.default_password', { msg: 'SQLBot@123456' }) }}</span>
+        <span>{{ t('prompt.default_password', { msg: defaultPwd }) }}</span>
         <el-button style="margin-left: 4px" size="small" text @click="copyPassword">{{
           t('datasource.copy')
         }}</el-button>
@@ -535,7 +535,7 @@ const copyText = () => {
 }
 
 const copyPassword = () => {
-  copy('SQLBot@123456')
+  copy(defaultPwd.value)
     .then(function () {
       ElMessage.success(t('embedded.copy_successful'))
     })
