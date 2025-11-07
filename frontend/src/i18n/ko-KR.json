@@ -716,5 +716,21 @@
     "platform_disable": "{0} 설정이 활성화되지 않았습니다!",
     "input_account": "계정을 입력해 주세요",
     "redirect_2_auth": "{0} 인증으로 리디렉션 중입니다, {1}초..."
+  },
+  "supplier": {
+    "alibaba_cloud_bailian": "알리바바 클라우드 바이리엔",
+    "qianfan_model": "치엔판 모델",
+    "deepseek": "DeepSeek",
+    "tencent_hunyuan": "텐센트 훈위안",
+    "iflytek_spark": "아이플라이텍 스파크",
+    "gemini": "Gemini",
+    "openai": "OpenAI",
+    "kimi": "Kimi",
+    "tencent_cloud": "텐센트 클라우드",
+    "volcano_engine": "볼케이노 엔진",
+    "generic_openai": "범용 OpenAI"
+  },
+  "modelType": {
+    "llm": "대형 언어 모델"
   }
 }

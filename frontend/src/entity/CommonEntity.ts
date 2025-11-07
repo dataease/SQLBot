@@ -1,10 +1,11 @@
 export interface SelectOption {
   label: string
   value: string | number
+  i18nKey?: string
 }
 
 export const modelTypeOptions: SelectOption[] = [
-  { label: '大语言模型', value: 0 },
+  { label: '大语言模型', value: 0, i18nKey: 'modelType.llm' },
   /* { label: 'Anthropic', value: 1 },
   { label: 'Baidu', value: 2 },
   { label: 'iFLYTEK', value: 3 },
@@ -17,5 +18,5 @@ export const modelTypeOptions: SelectOption[] = [
 export const getModelTypeName = (value: any) => {
   const tv = parseInt(value)
   const item = modelTypeOptions.find((item) => item.value === tv)
-  return item?.label || ''
+  return item?.i18nKey || item?.label || ''
 }

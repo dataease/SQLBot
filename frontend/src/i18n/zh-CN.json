@@ -716,5 +716,21 @@
     "platform_disable": "{0}设置未开启！",
     "input_account": "请输入账号",
     "redirect_2_auth": "正在跳转至 {0} 认证，{1} 秒..."
+  },
+  "supplier": {
+    "alibaba_cloud_bailian": "阿里云百炼",
+    "qianfan_model": "千帆大模型",
+    "deepseek": "DeepSeek",
+    "tencent_hunyuan": "腾讯混元",
+    "iflytek_spark": "讯飞星火",
+    "gemini": "Gemini",
+    "openai": "OpenAI",
+    "kimi": "Kimi",
+    "tencent_cloud": "腾讯云",
+    "volcano_engine": "火山引擎",
+    "generic_openai": "通用OpenAI"
+  },
+  "modelType": {
+    "llm": "大语言模型"
   }
 }

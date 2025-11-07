@@ -716,5 +716,21 @@
     "platform_disable": "{0} settings are not enabled!",
     "input_account": "Please enter account",
     "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds..."
+  },
+  "supplier": {
+    "alibaba_cloud_bailian": "Alibaba Cloud Bailian",
+    "qianfan_model": "Qianfan Model",
+    "deepseek": "DeepSeek",
+    "tencent_hunyuan": "Tencent Hunyuan",
+    "iflytek_spark": "iFlytek Spark",
+    "gemini": "Gemini",
+    "openai": "OpenAI",
+    "kimi": "Kimi",
+    "tencent_cloud": "Tencent Cloud",
+    "volcano_engine": "Volcano Engine",
+    "generic_openai": "Generic OpenAI"
+  },
+  "modelType": {
+    "llm": "Large Language Model"
   }
 }

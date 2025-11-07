@@ -26,6 +26,7 @@ type ModelConfig = Record<
 export const supplierList: Array<{
   id: number
   name: string
+  i18nKey: string
   icon: any
   type?: string
   is_private?: boolean
@@ -34,6 +35,7 @@ export const supplierList: Array<{
   {
     id: 1,
     name: '阿里云百炼',
+    i18nKey: 'supplier.alibaba_cloud_bailian',
     icon: icon_alybl_colorful,
     model_config: {
       0: {
@@ -60,6 +62,7 @@ export const supplierList: Array<{
   {
     id: 2,
     name: '千帆大模型',
+    i18nKey: 'supplier.qianfan_model',
     icon: icon_bdyzn_colorful,
     model_config: {
       0: {
@@ -71,6 +74,7 @@ export const supplierList: Array<{
   {
     id: 3,
     name: 'DeepSeek',
+    i18nKey: 'supplier.deepseek',
     icon: icon_deepseek_colorful,
     model_config: {
       0: {
@@ -85,6 +89,7 @@ export const supplierList: Array<{
   {
     id: 4,
     name: '腾讯混元',
+    i18nKey: 'supplier.tencent_hunyuan',
     icon: icon_txhy_colorful,
     model_config: {
       0: {
@@ -104,6 +109,7 @@ export const supplierList: Array<{
   {
     id: 5,
     name: '讯飞星火',
+    i18nKey: 'supplier.iflytek_spark',
     icon: icon_xfhx_colorful,
     model_config: {
       0: {
@@ -156,6 +162,7 @@ export const supplierList: Array<{
   {
     id: 6,
     name: 'Gemini',
+    i18nKey: 'supplier.gemini',
     icon: icon_gemini_colorful,
     model_config: {
       0: {
@@ -174,6 +181,7 @@ export const supplierList: Array<{
   {
     id: 7,
     name: 'OpenAI',
+    i18nKey: 'supplier.openai',
     icon: icon_openai_colorful,
     model_config: {
       0: {
@@ -202,6 +210,7 @@ export const supplierList: Array<{
   {
     id: 8,
     name: 'Kimi',
+    i18nKey: 'supplier.kimi',
     icon: icon_kimi_colorful,
     model_config: {
       0: {
@@ -232,6 +241,7 @@ export const supplierList: Array<{
   {
     id: 9,
     name: '腾讯云',
+    i18nKey: 'supplier.tencent_cloud',
     icon: icon_txy_colorful,
     model_config: {
       0: {
@@ -249,6 +259,7 @@ export const supplierList: Array<{
   {
     id: 10,
     name: '火山引擎',
+    i18nKey: 'supplier.volcano_engine',
     icon: icon_hsyq_colorful,
     model_config: {
       0: {
@@ -311,6 +322,7 @@ export const supplierList: Array<{
   {
     id: 15,
     name: '通用OpenAI',
+    i18nKey: 'supplier.generic_openai',
     icon: icon_common_openai,
     is_private: true,
     model_config: {

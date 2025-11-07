@@ -308,7 +308,7 @@ defineExpose({
             <el-option
               v-for="item in modelTypeOptions"
               :key="item.value"
-              :label="item.label"
+              :label="item.i18nKey ? $t(item.i18nKey) : item.label"
               :value="item.value"
             />
           </el-select>

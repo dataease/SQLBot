@@ -33,6 +33,7 @@ const searchLoading = ref(false)
 const editModel = ref(false)
 const activeStep = ref(0)
 const activeName = ref('')
+const activeNameI18nKey = ref('')
 const activeType = ref('')
 const modelFormRef = ref()
 const cardRefs = ref<any[]>([])
@@ -185,6 +186,7 @@ const handleEditModel = (row: any) => {
   editModel.value = true
   activeType.value = row.supplier
   activeName.value = row.supplier_item.name
+  activeNameI18nKey.value = row.supplier_item.i18nKey
   modelApi.query(row.id).then((res: any) => {
     modelConfigvVisible.value = true
     nextTick(() => {
@@ -256,6 +258,7 @@ const clickModel = (ele: any) => {
 
 const supplierChang = (ele: any) => {
   activeName.value = ele.name
+  activeNameI18nKey.value = ele.i18nKey
   nextTick(() => {
     modelFormRef.value.supplierChang({ ...ele })
   })
@@ -425,7 +428,7 @@ const submit = (item: any) => {
     >
       <template #header="{ close }">
         <span style="white-space: nowrap">{{
-          editModel ? $t('dashboard.edit') + $t('common.empty') + activeName : t('model.add_model')
+          editModel ? $t('dashboard.edit') + $t('common.empty') + $t(activeNameI18nKey) : t('model.add_model')
         }}</span>
         <div v-if="!editModel" class="flex-center" style="width: 100%">
           <el-steps custom style="max-width: 500px; flex: 1" :active="activeStep" align-center>
