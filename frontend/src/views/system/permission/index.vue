@@ -632,129 +632,141 @@ const columnRules = {
       </template>
 
       <div v-show="activeStep === 0" class="drawer-content">
-        <div class="title">
-          {{ $t('ds.form.base_info') }}
-        </div>
-
-        <el-form
-          ref="termFormRef"
-          :model="currentPermission"
-          label-width="180px"
-          label-position="top"
-          :rules="rules"
-          class="form-content_error"
-          @submit.prevent
-        >
-          <el-form-item prop="name" :label="t('permission.rule_group_name')">
-            <el-input
-              v-model="currentPermission.name"
-              maxlength="50"
-              clearable
-              :placeholder="
-                $t('datasource.please_enter') +
-                $t('common.empty') +
-                $t('permission.rule_group_name')
-              "
-              autocomplete="off"
-            />
-          </el-form-item>
-
-          <el-form-item class="add-permission_form">
-            <template #label>
-              <div
-                style="
-                  width: 100%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  font-size: 16px;
-                  font-weight: 500;
-                "
-              >
-                {{ t('permission.permission_rule') }}
-
-                <el-popover popper-class="system-permission_user" placement="bottom">
-                  <template #reference>
-                    <el-button class="add-btn" type="primary">
-                      {{ $t('model.add') }}
-                      <el-icon style="margin-left: 4px" size="16">
-                        <icon_down_outlined></icon_down_outlined>
-                      </el-icon>
-                    </el-button>
-                  </template>
-                  <div class="popover">
-                    <div class="popover-content">
-                      <div
-                        v-for="ele in userTypeList"
-                        :key="ele.name"
-                        class="popover-item"
-                        @click="handleAddPermission(ele.value)"
-                      >
-                        <div class="model-name">{{ ele.name }}</div>
-                      </div>
-                    </div>
-                  </div>
-                </el-popover>
-              </div>
-            </template>
-            <div
-              class="table-content"
-              :class="!currentPermission.permissions.length && 'border-bottom'"
-            >
-              <el-table
-                :empty-text="$t('permission.no_rule')"
-                :data="currentPermission.permissions"
-                style="width: 100%"
-              >
-                <el-table-column prop="name" :label="$t('permission.rule_name')" />
-                <el-table-column prop="type" :label="$t('permission.type')">
-                  <template #default="scope">
-                    {{
-                      scope.row.type === 'row'
-                        ? $t('permission.row_permission')
-                        : $t('permission.column_permission')
-                    }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="ds_name" :label="$t('permission.data_source')" />
-                <el-table-column prop="table_name" :label="$t('permission.data_table')" />
-                <el-table-column
-                  class-name="actions-methods"
-                  fixed="right"
-                  width="80"
-                  :label="$t('ds.actions')"
-                >
-                  <template #default="scope">
-                    <el-tooltip
-                      :offset="14"
-                      effect="dark"
-                      :content="$t('datasource.edit')"
-                      placement="top"
-                    >
-                      <el-icon class="action-btn" size="16" @click="editForm(scope.row)">
-                        <IconOpeEdit></IconOpeEdit>
-                      </el-icon>
-                    </el-tooltip>
-
-                    <el-tooltip
-                      :offset="14"
-                      effect="dark"
-                      :content="$t('dashboard.delete')"
-                      placement="top"
-                    >
-                      <el-icon class="action-btn" size="16" @click="deleteRuleHandler(scope.row)">
-                        <IconOpeDelete></IconOpeDelete>
-                      </el-icon>
-                    </el-tooltip>
-                  </template>
-                </el-table-column>
-              </el-table>
+        <el-scrollbar>
+          <div class="scroll-content">
+            <div class="title">
+              {{ $t('ds.form.base_info') }}
             </div>
-          </el-form-item>
-        </el-form>
+
+            <el-form
+              ref="termFormRef"
+              :model="currentPermission"
+              label-width="180px"
+              label-position="top"
+              :rules="rules"
+              class="form-content_error"
+              @submit.prevent
+            >
+              <el-form-item prop="name" :label="t('permission.rule_group_name')">
+                <el-input
+                  v-model="currentPermission.name"
+                  maxlength="50"
+                  clearable
+                  :placeholder="
+                    $t('datasource.please_enter') +
+                    $t('common.empty') +
+                    $t('permission.rule_group_name')
+                  "
+                  autocomplete="off"
+                />
+              </el-form-item>
+
+              <el-form-item class="add-permission_form">
+                <template #label>
+                  <div
+                    style="
+                      width: 100%;
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      font-size: 16px;
+                      font-weight: 500;
+                    "
+                  >
+                    {{ t('permission.permission_rule') }}
+
+                    <el-popover popper-class="system-permission_user" placement="bottom">
+                      <template #reference>
+                        <el-button class="add-btn" type="primary">
+                          {{ $t('model.add') }}
+                          <el-icon style="margin-left: 4px" size="16">
+                            <icon_down_outlined></icon_down_outlined>
+                          </el-icon>
+                        </el-button>
+                      </template>
+                      <div class="popover">
+                        <div class="popover-content">
+                          <div
+                            v-for="ele in userTypeList"
+                            :key="ele.name"
+                            class="popover-item"
+                            @click="handleAddPermission(ele.value)"
+                          >
+                            <div class="model-name">{{ ele.name }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </el-popover>
+                  </div>
+                </template>
+                <div
+                  class="table-content"
+                  :class="!currentPermission.permissions.length && 'border-bottom'"
+                >
+                  <el-table
+                    :empty-text="$t('permission.no_rule')"
+                    :data="currentPermission.permissions"
+                    style="width: 100%"
+                  >
+                    <el-table-column prop="name" :label="$t('permission.rule_name')" />
+                    <el-table-column prop="type" :label="$t('permission.type')">
+                      <template #default="scope">
+                        {{
+                          scope.row.type === 'row'
+                            ? $t('permission.row_permission')
+                            : $t('permission.column_permission')
+                        }}
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="ds_name" :label="$t('permission.data_source')" />
+                    <el-table-column prop="table_name" :label="$t('permission.data_table')" />
+                    <el-table-column
+                      class-name="actions-methods"
+                      fixed="right"
+                      width="80"
+                      :label="$t('ds.actions')"
+                    >
+                      <template #default="scope">
+                        <el-tooltip
+                          :offset="14"
+                          effect="dark"
+                          :content="$t('datasource.edit')"
+                          placement="top"
+                        >
+                          <el-icon class="action-btn" size="16" @click="editForm(scope.row)">
+                            <IconOpeEdit></IconOpeEdit>
+                          </el-icon>
+                        </el-tooltip>
+
+                        <el-tooltip
+                          :offset="14"
+                          effect="dark"
+                          :content="$t('dashboard.delete')"
+                          placement="top"
+                        >
+                          <el-icon
+                            class="action-btn"
+                            size="16"
+                            @click="deleteRuleHandler(scope.row)"
+                          >
+                            <IconOpeDelete></IconOpeDelete>
+                          </el-icon>
+                        </el-tooltip>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-scrollbar>
       </div>
       <div v-show="activeStep !== 0" class="select-permission_content">
-        <SelectPermission ref="selectPermissionRef"></SelectPermission>
+        <el-scrollbar>
+          <div class="scroll-content">
+            <SelectPermission ref="selectPermissionRef"></SelectPermission>
+          </div>
+        </el-scrollbar>
       </div>
       <template #footer>
         <el-button secondary @click="beforeClose"> {{ $t('common.cancel') }} </el-button>
@@ -938,6 +950,10 @@ const columnRules = {
 
 <style lang="less">
 .permission-drawer-fullscreen {
+  .ed-drawer__body {
+    padding-left: 0;
+    padding-right: 0;
+  }
   .title {
     font-weight: 500;
     font-size: 16px;
@@ -948,11 +964,15 @@ const columnRules = {
 
   .select-permission_content,
   .drawer-content {
-    width: 800px;
-    margin: 0 auto;
+    width: 100%;
     height: 100%;
     padding-bottom: 24px;
-    overflow-y: auto;
+    & > .ed-scrollbar {
+      .scroll-content {
+        width: 800px;
+        margin: 0 auto;
+      }
+    }
   }
 
   .drawer-content {

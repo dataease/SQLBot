@@ -697,103 +697,113 @@ const saveHandler = () => {
       </template>
 
       <div v-if="activeStep === 0" class="drawer-content">
-        <div class="title">
-          {{ $t('embedded.basic_information') }}
-        </div>
+        <el-scrollbar>
+          <div class="scroll-content">
+            <div class="title">
+              {{ $t('embedded.basic_information') }}
+            </div>
 
-        <el-form
-          ref="embeddedFormRef"
-          :model="currentEmbedded"
-          label-width="180px"
-          label-position="top"
-          :rules="rules"
-          class="form-content_error"
-          @submit.prevent
-        >
-          <el-form-item prop="name" :label="t('embedded.application_name')">
-            <el-input
-              v-model="currentEmbedded.name"
-              :placeholder="
-                $t('datasource.please_enter') + $t('common.empty') + $t('embedded.application_name')
-              "
-              clearable
-              maxlength="50"
-              autocomplete="off"
-            />
-          </el-form-item>
+            <el-form
+              ref="embeddedFormRef"
+              :model="currentEmbedded"
+              label-width="180px"
+              label-position="top"
+              :rules="rules"
+              class="form-content_error"
+              @submit.prevent
+            >
+              <el-form-item prop="name" :label="t('embedded.application_name')">
+                <el-input
+                  v-model="currentEmbedded.name"
+                  :placeholder="
+                    $t('datasource.please_enter') +
+                    $t('common.empty') +
+                    $t('embedded.application_name')
+                  "
+                  clearable
+                  maxlength="50"
+                  autocomplete="off"
+                />
+              </el-form-item>
 
-          <el-form-item prop="description" :label="t('embedded.application_description')">
-            <el-input
-              v-model="currentEmbedded.description"
-              :rows="3"
-              type="textarea"
-              maxlength="200"
-              show-word-limit
-              clearable
-              :placeholder="$t('datasource.please_enter')"
-              autocomplete="off"
-            />
-          </el-form-item>
+              <el-form-item prop="description" :label="t('embedded.application_description')">
+                <el-input
+                  v-model="currentEmbedded.description"
+                  :rows="3"
+                  type="textarea"
+                  maxlength="200"
+                  show-word-limit
+                  clearable
+                  :placeholder="$t('datasource.please_enter')"
+                  autocomplete="off"
+                />
+              </el-form-item>
 
-          <el-form-item prop="domain" :label="t('embedded.cross_domain_settings')">
-            <el-input
-              v-model="currentEmbedded.domain"
-              clearable
-              :placeholder="$t('embedded.third_party_address')"
-              autocomplete="off"
-            />
-          </el-form-item>
-        </el-form>
+              <el-form-item prop="domain" :label="t('embedded.cross_domain_settings')">
+                <el-input
+                  v-model="currentEmbedded.domain"
+                  clearable
+                  :placeholder="$t('embedded.third_party_address')"
+                  autocomplete="off"
+                />
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-scrollbar>
       </div>
       <div v-if="activeStep === 1 && advancedApplication" class="drawer-content">
-        <div class="title">
-          {{ $t('embedded.configure_interface') }}
-        </div>
+        <el-scrollbar>
+          <div class="scroll-content">
+            <div class="title">
+              {{ $t('embedded.configure_interface') }}
+            </div>
 
-        <el-form
-          ref="urlFormRef"
-          :model="urlForm"
-          label-width="180px"
-          label-position="top"
-          :rules="urlRules"
-          class="form-content_error"
-          @submit.prevent
-        >
-          <el-form-item prop="endpoint" :label="t('embedded.interface_url')">
-            <el-input
-              v-model="urlForm.endpoint"
-              clearable
-              :placeholder="
-                $t('datasource.please_enter') + $t('common.empty') + $t('embedded.interface_url')
-              "
-              autocomplete="off"
-            />
-          </el-form-item>
-          <el-form-item prop="AES" class="custom-require">
-            <template #label>
-              <span class="custom-require_danger">{{ t('embedded.aes_enable') }}</span>
-            </template>
+            <el-form
+              ref="urlFormRef"
+              :model="urlForm"
+              label-width="180px"
+              label-position="top"
+              :rules="urlRules"
+              class="form-content_error"
+              @submit.prevent
+            >
+              <el-form-item prop="endpoint" :label="t('embedded.interface_url')">
+                <el-input
+                  v-model="urlForm.endpoint"
+                  clearable
+                  :placeholder="
+                    $t('datasource.please_enter') +
+                    $t('common.empty') +
+                    $t('embedded.interface_url')
+                  "
+                  autocomplete="off"
+                />
+              </el-form-item>
+              <el-form-item prop="AES" class="custom-require">
+                <template #label>
+                  <span class="custom-require_danger">{{ t('embedded.aes_enable') }}</span>
+                </template>
 
-            <el-switch v-model="urlForm.encrypt" />
-            <span class="aes-encrypt-tips">{{ t('embedded.aes_enable_tips') }}</span>
-          </el-form-item>
-          <el-form-item v-if="urlForm.encrypt" prop="aes_key" label="AES Key">
-            <el-input
-              v-model="urlForm.aes_key"
-              clearable
-              type="password"
-              show-password
-              :placeholder="
-                $t('datasource.please_enter') +
-                $t('common.empty') +
-                ' 32 ' +
-                $t('embedded.bit') +
-                ' AES Key'
-              "
-              autocomplete="off"
-            />
-          </el-form-item>
-          <!-- <el-form-item v-if="urlForm.encrypt" prop="aes_iv" label="AES IV">
+                <el-switch v-model="urlForm.encrypt" />
+                <span class="aes-encrypt-tips">{{ t('embedded.aes_enable_tips') }}</span>
+              </el-form-item>
+              <el-form-item v-if="urlForm.encrypt" prop="aes_key" label="AES Key">
+                <el-input
+                  v-model="urlForm.aes_key"
+                  clearable
+                  type="password"
+                  show-password
+                  :placeholder="
+                    $t('datasource.please_enter') +
+                    $t('common.empty') +
+                    ' 32 ' +
+                    $t('embedded.bit') +
+                    ' AES Key'
+                  "
+                  autocomplete="off"
+                />
+              </el-form-item>
+              <!-- <el-form-item v-if="urlForm.encrypt" prop="aes_iv" label="AES IV">
             <el-input
               v-model="urlForm.aes_iv"
               clearable
@@ -807,124 +817,135 @@ const saveHandler = () => {
               autocomplete="off"
             />
           </el-form-item> -->
-          <el-form-item class="certificate-table_form" prop="certificate">
-            <template #label>
-              <div class="title-content">
-                <span class="title-form">{{ t('embedded.interface_credentials') }}</span>
-                <span class="add btn" @click="initCertificate(null)">
-                  <el-icon size="16">
-                    <icon_add_outlined></icon_add_outlined>
-                  </el-icon>
-                  {{ t('model.add') }}
-                </span>
-              </div>
-            </template>
-            <div
-              class="table-content"
-              :class="!!urlForm.certificate.length && 'no-credentials_yet'"
-            >
-              <el-table
-                :empty-text="$t('embedded.no_credentials_yet')"
-                :data="urlForm.certificate"
-                style="width: 100%"
-              >
-                <el-table-column prop="source" :label="t('embedded.credential_name')" width="180" />
-                <el-table-column
-                  prop="type"
-                  :label="t('embedded.system_credential_type')"
-                  width="180"
-                />
-                <el-table-column
-                  prop="target_key"
-                  :label="t('embedded.target_credential_name')"
-                  width="180"
-                />
-                <el-table-column prop="target" :label="t('embedded.target_credential_location')" />
-                <el-table-column
-                  fixed="right"
-                  width="80"
-                  class-name="operation-column_text"
-                  :label="$t('ds.actions')"
+              <el-form-item class="certificate-table_form" prop="certificate">
+                <template #label>
+                  <div class="title-content">
+                    <span class="title-form">{{ t('embedded.interface_credentials') }}</span>
+                    <span class="add btn" @click="initCertificate(null)">
+                      <el-icon size="16">
+                        <icon_add_outlined></icon_add_outlined>
+                      </el-icon>
+                      {{ t('model.add') }}
+                    </span>
+                  </div>
+                </template>
+                <div
+                  class="table-content"
+                  :class="!!urlForm.certificate.length && 'no-credentials_yet'"
                 >
-                  <template #default="scope">
-                    <el-button text type="primary" @click="initCertificate(scope.row)">
-                      <el-icon size="16">
-                        <icon_edit_outlined></icon_edit_outlined>
-                      </el-icon>
-                    </el-button>
-                    <el-button text type="primary" @click="handleCredentialsDel(scope.row)">
-                      <el-icon size="16">
-                        <icon_delete></icon_delete>
-                      </el-icon>
-                    </el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-          </el-form-item>
-        </el-form>
+                  <el-table
+                    :empty-text="$t('embedded.no_credentials_yet')"
+                    :data="urlForm.certificate"
+                    style="width: 100%"
+                  >
+                    <el-table-column
+                      prop="source"
+                      :label="t('embedded.credential_name')"
+                      width="180"
+                    />
+                    <el-table-column
+                      prop="type"
+                      :label="t('embedded.system_credential_type')"
+                      width="180"
+                    />
+                    <el-table-column
+                      prop="target_key"
+                      :label="t('embedded.target_credential_name')"
+                      width="180"
+                    />
+                    <el-table-column
+                      prop="target"
+                      :label="t('embedded.target_credential_location')"
+                    />
+                    <el-table-column
+                      fixed="right"
+                      width="80"
+                      class-name="operation-column_text"
+                      :label="$t('ds.actions')"
+                    >
+                      <template #default="scope">
+                        <el-button text type="primary" @click="initCertificate(scope.row)">
+                          <el-icon size="16">
+                            <icon_edit_outlined></icon_edit_outlined>
+                          </el-icon>
+                        </el-button>
+                        <el-button text type="primary" @click="handleCredentialsDel(scope.row)">
+                          <el-icon size="16">
+                            <icon_delete></icon_delete>
+                          </el-icon>
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-scrollbar>
       </div>
       <div v-if="activeStep === 1 && !advancedApplication" class="drawer-content">
         <el-scrollbar>
-          <div class="title">
-            {{ $t('embedded.set_data_source') }}
-          </div>
+          <div class="scroll-content">
+            <div class="title">
+              {{ $t('embedded.set_data_source') }}
+            </div>
 
-          <el-form
-            ref="dsFormRef"
-            :model="dsForm"
-            label-width="180px"
-            label-position="top"
-            :rules="dsRules"
-            class="form-content_error"
-            @submit.prevent
-          >
-            <el-form-item prop="oid" :label="t('user.workspace')">
-              <el-select
-                v-model="dsForm.oid"
-                filterable
-                :placeholder="
-                  $t('datasource.please_enter') + $t('common.empty') + $t('user.workspace')
-                "
-                @change="wsChanged"
-              >
-                <el-option
-                  v-for="item in workspaces"
-                  :key="item.id"
-                  :label="item.name"
-                  :value="item.id"
-                />
-              </el-select>
-            </el-form-item>
+            <el-form
+              ref="dsFormRef"
+              :model="dsForm"
+              label-width="180px"
+              label-position="top"
+              :rules="dsRules"
+              class="form-content_error"
+              @submit.prevent
+            >
+              <el-form-item prop="oid" :label="t('user.workspace')">
+                <el-select
+                  v-model="dsForm.oid"
+                  filterable
+                  :placeholder="
+                    $t('datasource.please_enter') + $t('common.empty') + $t('user.workspace')
+                  "
+                  @change="wsChanged"
+                >
+                  <el-option
+                    v-for="item in workspaces"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  />
+                </el-select>
+              </el-form-item>
 
-            <el-form-item class="private-list_form">
-              <template #label>
-                <div class="private-list">
-                  {{ t('embedded.set_data_source') }}
-                  <span :title="$t('embedded.open_the_query')" class="open-the_query ellipsis"
-                    >{{ $t('embedded.open_the_query') }}
-                  </span>
+              <el-form-item class="private-list_form">
+                <template #label>
+                  <div class="private-list">
+                    {{ t('embedded.set_data_source') }}
+                    <span :title="$t('embedded.open_the_query')" class="open-the_query ellipsis"
+                      >{{ $t('embedded.open_the_query') }}
+                    </span>
+                  </div>
+                </template>
+                <div class="card-ds_content">
+                  <DsCard
+                    v-for="(ele, index) in dsListOptions"
+                    :id="ele.id"
+                    :key="ele.id"
+                    :class="[0, 1].includes(index) && 'no-margin_top'"
+                    :name="ele.name"
+                    :type="ele.type"
+                    :type-name="ele.type_name"
+                    :description="ele.description"
+                    :is-private="!dsForm.public_list.includes(ele.id)"
+                    :num="ele.num"
+                    @active="handleActive(ele)"
+                    @private="handlePrivate(ele)"
+                    @public="handlePublic(ele)"
+                  ></DsCard>
                 </div>
-              </template>
-              <div class="card-ds_content">
-                <DsCard
-                  v-for="(ele, index) in dsListOptions"
-                  :id="ele.id"
-                  :key="ele.id"
-                  :class="[0, 1].includes(index) && 'no-margin_top'"
-                  :name="ele.name"
-                  :type="ele.type"
-                  :type-name="ele.type_name"
-                  :description="ele.description"
-                  :is-private="!dsForm.public_list.includes(ele.id)"
-                  :num="ele.num"
-                  @active="handleActive(ele)"
-                  @private="handlePrivate(ele)"
-                  @public="handlePublic(ele)"
-                ></DsCard>
-              </div>
-            </el-form-item>
-          </el-form>
+              </el-form-item>
+            </el-form>
+          </div>
         </el-scrollbar>
       </div>
 
@@ -1175,6 +1196,10 @@ const saveHandler = () => {
 
 <style lang="less">
 .embedded-drawer-fullscreen {
+  .ed-drawer__body {
+    padding-left: 0;
+    padding-right: 0;
+  }
   .title {
     font-weight: 500;
     font-size: 16px;
@@ -1218,11 +1243,15 @@ const saveHandler = () => {
   }
 
   .drawer-content {
-    width: 800px;
-    margin: 0 auto;
+    width: 100%;
     height: 100%;
     padding-bottom: 24px;
-    overflow-y: auto;
+    & > .ed-scrollbar {
+      .scroll-content {
+        width: 800px;
+        margin: 0 auto;
+      }
+    }
 
     .ed-form-item {
       &:last-child {

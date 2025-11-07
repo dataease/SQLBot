@@ -1,135 +1,136 @@
 <template>
-  <div class="appearance">
-    <p class="router-title">{{ t('system.appearance_settings') }}</p>
-    <div class="appearance-table__content">
-      <el-scrollbar>
-        <div class="theme">
-          <div class="show-theme">{{ $t('system.platform_display_theme') }}</div>
-          <div class="theme-color">
-            <div class="btn-select">
-              <el-button
-                :class="[themeColor === 'default' && 'is-active']"
-                text
-                @click="themeColorChange('default')"
-              >
-                {{ $t('system.default_turquoise') }}
-              </el-button>
-              <el-button
-                :class="[themeColor === 'blue' && 'is-active']"
-                text
-                @click="themeColorChange('blue')"
-              >
-                {{ $t('system.tech_blue') }}
-              </el-button>
-              <el-button
-                :class="[themeColor === 'custom' && 'is-active']"
-                text
-                @click="themeColorChange('custom')"
-              >
-                {{ $t('system.custom') }}
-              </el-button>
-            </div>
-          </div>
-
-          <template v-if="themeColor === 'custom'">
-            <div class="theme-bg">{{ t('system.customize_theme_color') }}</div>
-            <el-color-picker
-              v-model="customColor"
-              :trigger-width="28"
-              :predefine="COLOR_PANEL"
-              is-custom
-              effect="light"
-              @change="customColorChange"
-            />
-          </template>
-        </div>
-        <div class="login" :class="themeColor">
-          <div class="platform-login">
-            {{ t('system.platform_login_settings') }}
-          </div>
-          <div class="page-preview">
-            <div class="title">
-              <span class="left">{{ t('system.page_preview') }}</span>
-              <el-button text @click="resetLoginForm(true)">{{
-                t('system.restore_default')
-              }}</el-button>
-            </div>
-            <div class="page-setting">
-              <div class="page-content">
-                <!-- <img :src="loginPreview" alt="" /> -->
-                <login-preview
-                  :navigate-bg="navigateBg"
-                  :theme-color="themeColor"
-                  :custom-color="customColor"
-                  :name="loginForm.name"
-                  :slogan="loginForm.slogan"
-                  :web="web"
-                  :show-slogan="loginForm.showSlogan"
-                  :bg="bg"
-                  :login="login"
-                  :is-blue="isBlue"
-                  :height="navigateHeight"
-                  :foot="loginForm.foot"
-                  :foot-content="loginForm.footContent"
-                />
-                <div class="tips-page">
-                  {{
-                    t('system.screen_customization_supported', {
-                      msg: loginForm.name || 'SQLBot',
-                    })
-                  }}
-                </div>
-              </div>
-              <div class="config-list">
-                <div v-for="ele in configList" :key="ele.type" class="config-item">
-                  <div class="config-logo">
-                    <span class="logo">{{ ele.logo }}</span>
-                    <el-upload
-                      :name="ele.type"
-                      :show-file-list="false"
-                      class="upload-demo"
-                      accept=".jpeg,.jpg,.png,.gif,.svg"
-                      :before-upload="(e: any) => beforeUpload(e, ele)"
-                      :http-request="uploadImg"
-                    >
-                      <el-button secondary>{{ t('system.replace_image') }}</el-button>
-                    </el-upload>
-                  </div>
-                  <div class="tips">{{ ele.tips }}</div>
-                </div>
-                <el-form
-                  ref="loginFormRef"
-                  :model="loginForm"
-                  label-position="top"
-                  :rules="rules"
-                  require-asterisk-position="right"
-                  label-width="120px"
-                  class="page-Form form-content_error_a"
+  <div class="appearance no-padding">
+    <el-scrollbar>
+      <div class="scroll-content">
+        <p class="router-title">{{ t('system.appearance_settings') }}</p>
+        <div class="appearance-table__content">
+          <div class="theme">
+            <div class="show-theme">{{ $t('system.platform_display_theme') }}</div>
+            <div class="theme-color">
+              <div class="btn-select">
+                <el-button
+                  :class="[themeColor === 'default' && 'is-active']"
+                  text
+                  @click="themeColorChange('default')"
                 >
-                  <el-form-item :label="t('system.website_name')" prop="name">
-                    <el-input
-                      v-model="loginForm.name"
-                      :placeholder="
-                        $t('datasource.please_enter') +
-                        $t('common.empty') +
-                        $t('system.website_name')
-                      "
-                      maxlength="20"
-                    />
-                    <div class="form-tips">{{ t('system.on_webpage_tabs') }}</div>
-                  </el-form-item>
-                  <el-form-item>
-                    <template #label>
-                      <el-checkbox
-                        v-model="loginForm.showSlogan"
-                        true-value="0"
-                        false-value="1"
-                        :label="$t('system.welcome_message')"
+                  {{ $t('system.default_turquoise') }}
+                </el-button>
+                <el-button
+                  :class="[themeColor === 'blue' && 'is-active']"
+                  text
+                  @click="themeColorChange('blue')"
+                >
+                  {{ $t('system.tech_blue') }}
+                </el-button>
+                <el-button
+                  :class="[themeColor === 'custom' && 'is-active']"
+                  text
+                  @click="themeColorChange('custom')"
+                >
+                  {{ $t('system.custom') }}
+                </el-button>
+              </div>
+            </div>
+
+            <template v-if="themeColor === 'custom'">
+              <div class="theme-bg">{{ t('system.customize_theme_color') }}</div>
+              <el-color-picker
+                v-model="customColor"
+                :trigger-width="28"
+                :predefine="COLOR_PANEL"
+                is-custom
+                effect="light"
+                @change="customColorChange"
+              />
+            </template>
+          </div>
+          <div class="login" :class="themeColor">
+            <div class="platform-login">
+              {{ t('system.platform_login_settings') }}
+            </div>
+            <div class="page-preview">
+              <div class="title">
+                <span class="left">{{ t('system.page_preview') }}</span>
+                <el-button text @click="resetLoginForm(true)">{{
+                  t('system.restore_default')
+                }}</el-button>
+              </div>
+              <div class="page-setting">
+                <div class="page-content">
+                  <!-- <img :src="loginPreview" alt="" /> -->
+                  <login-preview
+                    :navigate-bg="navigateBg"
+                    :theme-color="themeColor"
+                    :custom-color="customColor"
+                    :name="loginForm.name"
+                    :slogan="loginForm.slogan"
+                    :web="web"
+                    :show-slogan="loginForm.showSlogan"
+                    :bg="bg"
+                    :login="login"
+                    :is-blue="isBlue"
+                    :height="navigateHeight"
+                    :foot="loginForm.foot"
+                    :foot-content="loginForm.footContent"
+                  />
+                  <div class="tips-page">
+                    {{
+                      t('system.screen_customization_supported', {
+                        msg: loginForm.name || 'SQLBot',
+                      })
+                    }}
+                  </div>
+                </div>
+                <div class="config-list">
+                  <div v-for="ele in configList" :key="ele.type" class="config-item">
+                    <div class="config-logo">
+                      <span class="logo">{{ ele.logo }}</span>
+                      <el-upload
+                        :name="ele.type"
+                        :show-file-list="false"
+                        class="upload-demo"
+                        accept=".jpeg,.jpg,.png,.gif,.svg"
+                        :before-upload="(e: any) => beforeUpload(e, ele)"
+                        :http-request="uploadImg"
+                      >
+                        <el-button secondary>{{ t('system.replace_image') }}</el-button>
+                      </el-upload>
+                    </div>
+                    <div class="tips">{{ ele.tips }}</div>
+                  </div>
+                  <el-form
+                    ref="loginFormRef"
+                    :model="loginForm"
+                    label-position="top"
+                    :rules="rules"
+                    require-asterisk-position="right"
+                    label-width="120px"
+                    class="page-Form form-content_error_a"
+                  >
+                    <el-form-item :label="t('system.website_name')" prop="name">
+                      <el-input
+                        v-model="loginForm.name"
+                        :placeholder="
+                          $t('datasource.please_enter') +
+                          $t('common.empty') +
+                          $t('system.website_name')
+                        "
+                        maxlength="20"
                       />
-                    </template>
-                    <el-input v-model="loginForm.slogan" maxlength="50" />
-                  </el-form-item>
-                  <!-- <el-form-item :label="t('system.footer')" prop="foot">
+                      <div class="form-tips">{{ t('system.on_webpage_tabs') }}</div>
+                    </el-form-item>
+                    <el-form-item>
+                      <template #label>
+                        <el-checkbox
+                          v-model="loginForm.showSlogan"
+                          true-value="0"
+                          false-value="1"
+                          :label="$t('system.welcome_message')"
+                        />
+                      </template>
+                      <el-input v-model="loginForm.slogan" maxlength="50" />
+                    </el-form-item>
+                    <!-- <el-form-item :label="t('system.footer')" prop="foot">
                   <el-switch v-model="loginForm.foot" active-value="true" inactive-value="false" />
                 </el-form-item>
                 <el-form-item
@@ -142,79 +143,82 @@
                     v-model="loginForm.footContent"
                   />
                 </el-form-item> -->
-                </el-form>
+                  </el-form>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="login">
-          <div class="platform-login">{{ t('system.platform_settings') }}</div>
-          <div class="page-preview">
-            <div class="title">
-              <span class="left">{{ t('system.page_preview') }}</span>
-              <el-button text @click="resetTopForm(true)">{{
-                t('system.restore_default')
-              }}</el-button>
-            </div>
-            <div class="page-setting">
-              <div class="page-content">
-                <!-- <div class="navigate-preview" :style="{'height': `${navigateHeight}px`}"> -->
-                <div class="navigate-preview" style="height: 425px">
-                  <div class="navigate-head">
-                    <div class="header-sql">
-                      <img height="30" width="30" v-if="pageLogin" :src="pageLogin" alt="" />
-                      <custom_small v-else-if="themeColor === 'custom'" class="logo" />
-                      <logo v-else></logo>
-                      <span style="margin-left: 8px">{{ loginForm.name }}</span>
-                    </div>
-                    <div class="bottom-sql">
-                      <Person
-                        :is-blue="isBlue"
-                        :show-about="topForm.showAbout === '0'"
-                        :show-doc="topForm.showDoc === '0'"
-                      ></Person>
-                      <el-icon size="20" class="fold">
-                        <icon_side_fold_outlined></icon_side_fold_outlined>
-                      </el-icon>
+          <div class="login">
+            <div class="platform-login">{{ t('system.platform_settings') }}</div>
+            <div class="page-preview">
+              <div class="title">
+                <span class="left">{{ t('system.page_preview') }}</span>
+                <el-button text @click="resetTopForm(true)">{{
+                  t('system.restore_default')
+                }}</el-button>
+              </div>
+              <div class="page-setting">
+                <div class="page-content">
+                  <!-- <div class="navigate-preview" :style="{'height': `${navigateHeight}px`}"> -->
+                  <div class="navigate-preview" style="height: 425px">
+                    <div class="navigate-head">
+                      <div class="header-sql">
+                        <img height="30" width="30" v-if="pageLogin" :src="pageLogin" alt="" />
+                        <custom_small v-else-if="themeColor === 'custom'" class="logo" />
+                        <logo v-else></logo>
+                        <span style="margin-left: 8px">{{ loginForm.name }}</span>
+                      </div>
+                      <div class="bottom-sql">
+                        <Person
+                          :is-blue="isBlue"
+                          :show-about="topForm.showAbout === '0'"
+                          :show-doc="topForm.showDoc === '0'"
+                        ></Person>
+                        <el-icon size="20" class="fold">
+                          <icon_side_fold_outlined></icon_side_fold_outlined>
+                        </el-icon>
+                      </div>
                     </div>
                   </div>
+                  <div class="tips-page">
+                    {{
+                      t('system.screen_customization_settings', {
+                        msg: loginForm.name || 'SQLBot',
+                      })
+                    }}
+                  </div>
                 </div>
-                <div class="tips-page">
-                  {{
-                    t('system.screen_customization_settings', { msg: loginForm.name || 'SQLBot' })
-                  }}
-                </div>
-              </div>
-              <div class="config-list">
-                <el-checkbox
-                  v-model="topForm.showDoc"
-                  true-value="0"
-                  false-value="1"
-                  :label="$t('system.help_documentation')"
-                />
-                <div class="doc-input">
-                  <el-input
-                    v-model="topForm.help"
-                    style="width: 100%"
-                    :placeholder="
-                      $t('datasource.please_enter') +
-                      $t('common.empty') +
-                      $t('system.help_documentation')
-                    "
+                <div class="config-list">
+                  <el-checkbox
+                    v-model="topForm.showDoc"
+                    true-value="0"
+                    false-value="1"
+                    :label="$t('system.help_documentation')"
+                  />
+                  <div class="doc-input">
+                    <el-input
+                      v-model="topForm.help"
+                      style="width: 100%"
+                      :placeholder="
+                        $t('datasource.please_enter') +
+                        $t('common.empty') +
+                        $t('system.help_documentation')
+                      "
+                    />
+                  </div>
+                  <el-checkbox
+                    v-model="topForm.showAbout"
+                    true-value="0"
+                    false-value="1"
+                    :label="$t('system.show_about')"
                   />
                 </div>
-                <el-checkbox
-                  v-model="topForm.showAbout"
-                  true-value="0"
-                  false-value="1"
-                  :label="$t('system.show_about')"
-                />
               </div>
             </div>
           </div>
         </div>
-      </el-scrollbar>
-    </div>
+      </div>
+    </el-scrollbar>
     <div class="appearance-foot">
       <el-button secondary @click="giveUp">{{ $t('system.abort_update') }}</el-button>
       <el-button v-if="showSaveButton" type="primary" @click="saveHandler">{{
@@ -610,6 +614,14 @@ onUnmounted(() => {
 .appearance {
   position: relative;
   height: 100%;
+  & > .ed-scrollbar {
+    .scroll-content {
+      padding: 16px 24px 80px 24px;
+      height: 100%;
+      position: relative;
+      z-index: 10;
+    }
+  }
   .router-title {
     color: #1f2329;
     font-feature-settings:
@@ -625,8 +637,7 @@ onUnmounted(() => {
     width: 100%;
     min-width: 840px;
     margin-top: 16px;
-    overflow-y: auto;
-    height: calc(100vh - 180px);
+    height: 100%;
     box-sizing: border-box;
 
     :deep(.ed-form-item__error) {
@@ -910,13 +921,13 @@ onUnmounted(() => {
     display: flex;
     justify-content: flex-end;
     padding: 16px 24px;
-    padding-bottom: 0;
     background: var(--ContentBG, #ffffff);
     position: absolute;
-    left: -24px;
+    left: 0;
     bottom: 0;
-    width: calc(100% + 48px);
+    width: 100%;
     border-top: 1px solid #1f232926;
+    z-index: 100;
   }
 }
 </style>
