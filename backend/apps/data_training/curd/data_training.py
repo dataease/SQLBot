@@ -266,9 +266,9 @@ ORDER BY similarity DESC
 LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
 """
 embedding_sql_in_advanced_application = f"""
-SELECT id, datasource, question, similarity
+SELECT id, advanced_application, question, similarity
 FROM
-(SELECT id, datasource, question, oid, enabled,
+(SELECT id, advanced_application, question, oid, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM data_training AS child
 ) TEMP
@@ -340,8 +340,7 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
     if len(_ids) == 0:
         return []
 
-    t_list = session.query(DataTraining.id, DataTraining.datasource, DataTraining.question,
-                           DataTraining.description).filter(
+    t_list = session.query(DataTraining.id, DataTraining.question, DataTraining.description).filter(
         and_(DataTraining.id.in_(_ids))).all()
 
     for row in t_list:
