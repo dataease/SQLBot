@@ -308,24 +308,26 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
         _list.append(DataTraining(id=row.id, question=row.question))
 
     if settings.EMBEDDING_ENABLED:
-        try:
-            model = EmbeddingModelCache.get_model()
+        with session.begin_nested():
+            try:
+                model = EmbeddingModelCache.get_model()
 
-            embedding = model.embed_query(question)
+                embedding = model.embed_query(question)
 
-            if advanced_application_id is not None:
-                results = session.execute(text(embedding_sql_in_advanced_application),
-                                          {'embedding_array': str(embedding), 'oid': oid,
-                                           'advanced_application': advanced_application_id})
-            else:
-                results = session.execute(text(embedding_sql),
-                                          {'embedding_array': str(embedding), 'oid': oid, 'datasource': datasource})
+                if advanced_application_id is not None:
+                    results = session.execute(text(embedding_sql_in_advanced_application),
+                                              {'embedding_array': str(embedding), 'oid': oid,
+                                               'advanced_application': advanced_application_id})
+                else:
+                    results = session.execute(text(embedding_sql),
+                                              {'embedding_array': str(embedding), 'oid': oid, 'datasource': datasource})
 
-            for row in results:
-                _list.append(DataTraining(id=row.id, question=row.question))
+                for row in results:
+                    _list.append(DataTraining(id=row.id, question=row.question))
 
-        except Exception:
-            traceback.print_exc()
+            except Exception:
+                traceback.print_exc()
+                session.rollback()
 
     _map: dict = {}
     _ids: list[int] = []
