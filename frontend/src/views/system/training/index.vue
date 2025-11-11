@@ -14,7 +14,7 @@ import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useClipboard } from '@vueuse/core'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
-import { cloneDeep, forEach } from 'lodash-es'
+import { cloneDeep } from 'lodash-es'
 import { getAdvancedApplicationList } from '@/api/embedded.ts'
 
 interface Form {
