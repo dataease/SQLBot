@@ -1038,6 +1038,10 @@ class LLMService:
                 return
 
             result = self.execute_sql(sql=real_execute_sql)
+
+            _data = self.convert_large_numbers_in_object_array(result.get('data'))
+            result["data"] = _data
+
             self.save_sql_data(session=_session, data_obj=result)
             if in_chat:
                 yield 'data:' + orjson.dumps({'content': 'execute-success', 'type': 'sql-data'}).decode() + '\n\n'
@@ -1053,12 +1057,14 @@ class LLMService:
                         for field in result.get('fields'):
                             _column_list.append(AxisObj(name=field, value=field))
 
-                        data, _fields_list, col_formats = self.format_pd_data(_column_list, result.get('data'))
+                        md_data, _fields_list = self.convert_object_array_for_pandas(_column_list, result.get('data'))
 
-                        if not data or not _fields_list:
+                        # data, _fields_list, col_formats = self.format_pd_data(_column_list, result.get('data'))
+
+                        if not _data or not _fields_list:
                             yield 'The SQL execution result is empty.\n\n'
                         else:
-                            df = pd.DataFrame(data, columns=_fields_list)
+                            df = pd.DataFrame(_data, columns=_fields_list)
                             df_safe = self.safe_convert_to_string(df)
                             markdown_table = df_safe.to_markdown(index=False)
                             yield markdown_table + '\n\n'
@@ -1091,7 +1097,6 @@ class LLMService:
                     {'content': orjson.dumps(chart).decode(), 'type': 'chart'}).decode() + '\n\n'
             else:
                 if stream:
-                    data = []
                     _fields = {}
                     if chart.get('columns'):
                         for _column in chart.get('columns'):
@@ -1110,12 +1115,14 @@ class LLMService:
                         _column_list.append(
                             AxisObj(name=field if not _fields.get(field) else _fields.get(field), value=field))
 
-                    data, _fields_list, col_formats = self.format_pd_data(_column_list, result.get('data'))
+                    md_data, _fields_list = self.convert_object_array_for_pandas(_column_list, result.get('data'))
 
-                    if not data or not _fields_list:
+                    # data, _fields_list, col_formats = self.format_pd_data(_column_list, result.get('data'))
+
+                    if not md_data or not _fields_list:
                         yield 'The SQL execution result is empty.\n\n'
                     else:
-                        df = pd.DataFrame(data, columns=_fields_list)
+                        df = pd.DataFrame(md_data, columns=_fields_list)
                         df_safe = self.safe_convert_to_string(df)
                         markdown_table = df_safe.to_markdown(index=False)
                         yield markdown_table + '\n\n'
@@ -1182,6 +1189,67 @@ class LLMService:
                     continue
 
         return df_copy
+
+    @staticmethod
+    def convert_large_numbers_in_object_array(obj_array, int_threshold=1e15, float_threshold=1e10):
+        """处理对象数组，将每个对象中的大数字转换为字符串"""
+
+        def format_float_without_scientific(value):
+            """格式化浮点数，避免科学记数法"""
+            if value == 0:
+                return "0"
+            formatted = f"{value:.15f}"
+            if '.' in formatted:
+                formatted = formatted.rstrip('0').rstrip('.')
+            return formatted
+
+        def process_object(obj):
+            """处理单个对象"""
+            if not isinstance(obj, dict):
+                return obj
+
+            processed_obj = {}
+            for key, value in obj.items():
+                if isinstance(value, (int, float)):
+                    # 只转换大数字
+                    if isinstance(value, int) and abs(value) >= int_threshold:
+                        processed_obj[key] = str(value)
+                    elif isinstance(value, float) and (abs(value) >= float_threshold or abs(value) < 1e-6):
+                        processed_obj[key] = format_float_without_scientific(value)
+                    else:
+                        processed_obj[key] = value
+                elif isinstance(value, dict):
+                    # 处理嵌套对象
+                    processed_obj[key] = process_object(value)
+                elif isinstance(value, list):
+                    # 处理对象中的数组
+                    processed_obj[key] = [process_item(item) for item in value]
+                else:
+                    processed_obj[key] = value
+            return processed_obj
+
+        def process_item(item):
+            """处理数组中的项目"""
+            if isinstance(item, dict):
+                return process_object(item)
+            return item
+
+        return [process_item(obj) for obj in obj_array]
+
+    @staticmethod
+    def convert_object_array_for_pandas(column_list: list, data_list: list):
+        _fields_list = []
+        for field_idx, field in enumerate(column_list):
+            _fields_list.append(field.name)
+
+        md_data = []
+        for inner_data in data_list:
+            _row = []
+            for field_idx, field in enumerate(column_list):
+                value = inner_data.get(field.value)
+                _row.append(value)
+            md_data.append(_row)
+        return md_data, _fields_list
 
     @staticmethod
     def format_pd_data(column_list: list, data_list: list, col_formats: dict = None):
