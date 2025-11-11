@@ -9,8 +9,9 @@ from sqlalchemy import and_, select, func, delete, update, or_
 from sqlalchemy import text
 
 from apps.ai_model.embedding import EmbeddingModelCache
-from apps.data_training.models.data_training_model import DataTrainingInfo, DataTraining
+from apps.data_training.models.data_training_model import DataTrainingInfo, DataTraining, DataTrainingInfoResult
 from apps.datasource.models.datasource import CoreDatasource
+from apps.system.models.system_model import AssistantModel
 from apps.template.generate_chart.generator import get_base_data_training_template
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
@@ -19,7 +20,7 @@ from common.utils.embedding_threads import run_save_data_training_embeddings
 
 def page_data_training(session: SessionDep, current_page: int = 1, page_size: int = 10, name: Optional[str] = None,
                        oid: Optional[int] = 1):
-    _list: List[DataTrainingInfo] = []
+    _list: List[DataTrainingInfoResult] = []
 
     current_page = max(1, current_page)
     page_size = max(10, page_size)
@@ -63,8 +64,12 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
             DataTraining.create_time,
             DataTraining.description,
             DataTraining.enabled,
+            DataTraining.advanced_application,
+            AssistantModel.name.label('advanced_application_name'),
         )
         .outerjoin(CoreDatasource, and_(DataTraining.datasource == CoreDatasource.id))
+        .outerjoin(AssistantModel,
+                   and_(DataTraining.advanced_application == AssistantModel.id, AssistantModel.type == 1))
         .where(and_(DataTraining.id.in_(paginated_parent_ids)))
         .order_by(DataTraining.create_time.desc())
     )
@@ -72,15 +77,17 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
     result = session.execute(stmt)
 
     for row in result:
-        _list.append(DataTrainingInfo(
-            id=row.id,
-            oid=row.oid,
+        _list.append(DataTrainingInfoResult(
+            id=str(row.id),
+            oid=str(row.oid),
             datasource=row.datasource,
             datasource_name=row.name,
             question=row.question,
             create_time=row.create_time,
             description=row.description,
             enabled=row.enabled,
+            advanced_application=str(row.advanced_application) if row.advanced_application else None,
+            advanced_application_name=row.advanced_application_name,
         ))
 
     return current_page, page_size, total_count, total_pages, _list
@@ -88,15 +95,29 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
 
 def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans):
     create_time = datetime.datetime.now()
-    if info.datasource is None:
-        raise Exception(trans("i18n_data_training.datasource_cannot_be_none"))
-    parent = DataTraining(question=info.question, create_time=create_time, description=info.description, oid=oid,
-                          datasource=info.datasource, enabled=info.enabled)
+    if info.datasource is None and info.advanced_application is None:
+        if oid == 1:
+            raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
+        else:
+            raise Exception(trans("i18n_data_training.datasource_cannot_be_none"))
 
-    exists = session.query(
-        session.query(DataTraining).filter(
-            and_(DataTraining.question == info.question, DataTraining.oid == oid,
-                 DataTraining.datasource == info.datasource)).exists()).scalar()
+    parent = DataTraining(question=info.question, create_time=create_time, description=info.description, oid=oid,
+                          datasource=info.datasource, enabled=info.enabled,
+                          advanced_application=info.advanced_application)
+
+    stmt = select(DataTraining.id).where(and_(DataTraining.question == info.question, DataTraining.oid == oid))
+
+    if info.datasource is not None and info.advanced_application is not None:
+        stmt = stmt.where(
+            or_(DataTraining.datasource == info.datasource,
+                DataTraining.advanced_application == info.advanced_application))
+    elif info.datasource is not None and info.advanced_application is None:
+        stmt = stmt.where(and_(DataTraining.datasource == info.datasource))
+    elif info.datasource is None and info.advanced_application is not None:
+        stmt = stmt.where(and_(DataTraining.advanced_application == info.advanced_application))
+
+    exists = session.query(stmt.exists()).scalar()
+
     if exists:
         raise Exception(trans("i18n_data_training.exists_in_db"))
 
@@ -116,8 +137,11 @@ def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
 
 
 def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans):
-    if info.datasource is None:
-        raise Exception(trans("i18n_data_training.datasource_cannot_be_none"))
+    if info.datasource is None and info.advanced_application is None:
+        if oid == 1:
+            raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
+        else:
+            raise Exception(trans("i18n_data_training.datasource_cannot_be_none"))
 
     count = session.query(DataTraining).filter(
         DataTraining.id == info.id
@@ -125,11 +149,20 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
     if count == 0:
         raise Exception(trans('i18n_data_training.data_training_not_exists'))
 
-    exists = session.query(
-        session.query(DataTraining).filter(
-            and_(DataTraining.question == info.question, DataTraining.oid == oid,
-                 DataTraining.datasource == info.datasource,
-                 DataTraining.id != info.id)).exists()).scalar()
+    stmt = select(DataTraining.id).where(
+        and_(DataTraining.question == info.question, DataTraining.oid == oid, DataTraining.id != info.id))
+
+    if info.datasource is not None and info.advanced_application is not None:
+        stmt = stmt.where(
+            or_(DataTraining.datasource == info.datasource,
+                DataTraining.advanced_application == info.advanced_application))
+    elif info.datasource is not None and info.advanced_application is None:
+        stmt = stmt.where(and_(DataTraining.datasource == info.datasource))
+    elif info.datasource is None and info.advanced_application is not None:
+        stmt = stmt.where(and_(DataTraining.advanced_application == info.advanced_application))
+
+    exists = session.query(stmt.exists()).scalar()
+
     if exists:
         raise Exception(trans("i18n_data_training.exists_in_db"))
 
@@ -138,6 +171,7 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         description=info.description,
         datasource=info.datasource,
         enabled=info.enabled,
+        advanced_application=info.advanced_application,
     )
     session.execute(stmt)
     session.commit()
@@ -231,9 +265,21 @@ WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid 
 ORDER BY similarity DESC
 LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
 """
+embedding_sql_in_advanced_application = f"""
+SELECT id, datasource, question, similarity
+FROM
+(SELECT id, datasource, question, oid, enabled,
+( 1 - (embedding <=> :embedding_array) ) AS similarity
+FROM data_training AS child
+) TEMP
+WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and advanced_application = :advanced_application and enabled = true
+ORDER BY similarity DESC
+LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
+"""
 
 
-def select_training_by_question(session: SessionDep, question: str, oid: int, datasource: int):
+def select_training_by_question(session: SessionDep, question: str, oid: int, datasource: Optional[int] = None,
+                                advanced_application_id: Optional[int] = None):
     if question.strip() == "":
         return []
 
@@ -248,10 +294,13 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
         .where(
             and_(or_(text(":sentence ILIKE '%' || question || '%'"), text("question ILIKE '%' || :sentence || '%'")),
                  DataTraining.oid == oid,
-                 DataTraining.datasource == datasource,
-                 DataTraining.enabled == True,)
+                 DataTraining.enabled == True)
         )
     )
+    if advanced_application_id is not None:
+        stmt = stmt.where(and_(DataTraining.advanced_application == advanced_application_id))
+    else:
+        stmt = stmt.where(and_(DataTraining.datasource == datasource))
 
     results = session.execute(stmt, {'sentence': question}).fetchall()
 
@@ -264,8 +313,13 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
 
             embedding = model.embed_query(question)
 
-            results = session.execute(text(embedding_sql),
-                                      {'embedding_array': str(embedding), 'oid': oid, 'datasource': datasource})
+            if advanced_application_id is not None:
+                results = session.execute(text(embedding_sql_in_advanced_application),
+                                          {'embedding_array': str(embedding), 'oid': oid,
+                                           'advanced_application': advanced_application_id})
+            else:
+                results = session.execute(text(embedding_sql),
+                                          {'embedding_array': str(embedding), 'oid': oid, 'datasource': datasource})
 
             for row in results:
                 _list.append(DataTraining(id=row.id, question=row.question))
@@ -328,12 +382,13 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'sql-examples') -> str:
     return pretty_xml
 
 
-def get_training_template(session: SessionDep, question: str, datasource: int, oid: Optional[int] = 1) -> str:
+def get_training_template(session: SessionDep, question: str, oid: Optional[int] = 1, datasource: Optional[int] = None,
+                          advanced_application_id: Optional[int] = None) -> str:
     if not oid:
         oid = 1
-    if not datasource:
+    if not datasource and not advanced_application_id:
         return ''
-    _results = select_training_by_question(session, question, oid, datasource)
+    _results = select_training_by_question(session, question, oid, datasource, advanced_application_id)
     if _results and len(_results) > 0:
         data_training = to_xml_string(_results)
         template = get_base_data_training_template().format(data_training=data_training)

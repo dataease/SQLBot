@@ -505,8 +505,12 @@ class LLMService:
 
             self.chat_question.terminologies = get_terminology_template(_session, self.chat_question.question, oid,
                                                                         ds_id)
-            self.chat_question.data_training = get_training_template(_session, self.chat_question.question, ds_id,
-                                                                     oid)
+            if self.current_assistant and self.current_assistant.type == 1:
+                self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
+                                                                         oid, None, self.current_assistant.id)
+            else:
+                self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
+                                                                         oid, ds_id)
             if SQLBotLicenseUtil.valid():
                 self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.GENERATE_SQL,
                                                                        oid, ds_id)
@@ -902,8 +906,12 @@ class LLMService:
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
                 self.chat_question.terminologies = get_terminology_template(_session, self.chat_question.question,
                                                                             oid, ds_id)
-                self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
-                                                                         ds_id, oid)
+                if self.current_assistant and self.current_assistant.type == 1:
+                    self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
+                                                                             oid, None, self.current_assistant.id)
+                else:
+                    self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
+                                                                             oid, ds_id)
                 if SQLBotLicenseUtil.valid():
                     self.chat_question.custom_prompt = find_custom_prompts(_session,
                                                                            CustomPromptTypeEnum.GENERATE_SQL,

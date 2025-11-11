@@ -46,6 +46,7 @@
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "数据源不能为空",
+    "datasource_assistant_cannot_be_none": "数据源或高级应用不能都为空",
     "data_training_not_exists": "该示例不存在",
     "exists_in_db": "该问题已存在"
   },

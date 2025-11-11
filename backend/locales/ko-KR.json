@@ -46,6 +46,7 @@
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "데이터 소스를 선택해 주세요",
+    "datasource_assistant_cannot_be_none": "데이터 소스와 고급 애플리케이션이 모두 비어 있을 수는 없습니다.",
     "data_training_not_exists": "예제가 존재하지 않습니다",
     "exists_in_db": "질문이 이미 존재합니다"
   },

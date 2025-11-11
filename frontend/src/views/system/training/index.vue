@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, reactive, ref, unref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, unref } from 'vue'
 import icon_export_outlined from '@/assets/svg/icon_export_outlined.svg'
 import { trainingApi } from '@/api/training'
 import { formatTimestamp } from '@/utils/date'
@@ -12,17 +12,21 @@ import IconOpeDelete from '@/assets/svg/icon_delete.svg'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useClipboard } from '@vueuse/core'
+import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, forEach } from 'lodash-es'
+import { getAdvancedApplicationList } from '@/api/embedded.ts'
 
 interface Form {
   id?: string | null
   question: string | null
   datasource: string | null
   datasource_name: string | null
+  advanced_application: string | null
+  advanced_application_name: string | null
   description: string | null
 }
-
+const userStore = useUserStore()
 const { t } = useI18n()
 const multipleSelectionAll = ref<any[]>([])
 const keywords = ref('')
@@ -31,11 +35,16 @@ const searchLoading = ref(false)
 const { copy } = useClipboard({ legacy: true })
 
 const options = ref<any[]>([])
+const adv_options = ref<any[]>([])
 const selectable = () => {
   return true
 }
 onMounted(() => {
   search()
+})
+
+const isDefaultOrg = computed(() => {
+  return userStore.oid === '1'
 })
 
 const dialogFormVisible = ref<boolean>(false)
@@ -57,6 +66,8 @@ const defaultForm = {
   description: null,
   datasource: null,
   datasource_name: null,
+  advanced_application: null,
+  advanced_application_name: null,
 }
 const pageForm = ref<Form>(cloneDeep(defaultForm))
 const copyCode = () => {
@@ -217,31 +228,43 @@ const search = () => {
 
 const termFormRef = ref()
 
-const rules = {
-  question: [
-    {
-      required: true,
-      message: t('datasource.please_enter') + t('common.empty') + t('training.problem_description'),
-    },
-  ],
-  datasource: [
-    {
-      required: true,
-      message: t('datasource.Please_select') + t('common.empty') + t('ds.title'),
-    },
-  ],
-  description: [
-    {
-      required: true,
-      message: t('datasource.please_enter') + t('common.empty') + t('training.sample_sql'),
-    },
-  ],
-}
+const rules = computed(() => {
+  let _list = {
+    question: [
+      {
+        required: true,
+        message:
+          t('datasource.please_enter') + t('common.empty') + t('training.problem_description'),
+      },
+    ],
+    datasource: [] as any,
+    description: [
+      {
+        required: true,
+        message: t('datasource.please_enter') + t('common.empty') + t('training.sample_sql'),
+      },
+    ],
+  }
+  if (!isDefaultOrg.value) {
+    _list.datasource = [
+      {
+        required: true,
+        message: t('datasource.Please_select') + t('common.empty') + t('ds.title'),
+      },
+    ]
+  }
+  return _list
+})
 
 const list = () => {
   datasourceApi.list().then((res: any) => {
     options.value = res || []
   })
+  if (isDefaultOrg.value) {
+    getAdvancedApplicationList().then((res: any) => {
+      adv_options.value = res || []
+    })
+  }
 }
 
 const saveHandler = () => {
@@ -387,11 +410,16 @@ const onRowFormClose = () => {
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="datasource_name" :label="$t('ds.title')" min-width="240">
-          </el-table-column>
-          <el-table-column :label="t('ds.status')" width="180">
+          <el-table-column prop="datasource_name" :label="$t('ds.title')" min-width="180" />
+          <el-table-column
+            v-if="isDefaultOrg"
+            prop="advanced_application_name"
+            :label="$t('embedded.advanced_application')"
+            min-width="180"
+          />
+          <el-table-column :label="t('ds.status')" width="100">
             <template #default="scope">
-              <div @click.stop style="display: flex; align-items: center">
+              <div style="display: flex; align-items: center" @click.stop>
                 <el-switch
                   v-model="scope.row.enabled"
                   size="small"
@@ -530,10 +558,36 @@ const onRowFormClose = () => {
         <el-select
           v-model="pageForm.datasource"
           filterable
+          clearable
           :placeholder="$t('datasource.Please_select') + $t('common.empty') + $t('ds.title')"
           style="width: 100%"
         >
           <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item
+        v-if="isDefaultOrg"
+        prop="advanced_application"
+        :label="t('embedded.advanced_application')"
+      >
+        <el-select
+          v-model="pageForm.advanced_application"
+          filterable
+          clearable
+          :placeholder="
+            $t('datasource.Please_select') +
+            $t('common.empty') +
+            $t('embedded.advanced_application')
+          "
+          style="width: 100%"
+        >
+          <el-option
+            v-for="item in adv_options"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
         </el-select>
       </el-form-item>
     </el-form>
@@ -575,6 +629,11 @@ const onRowFormClose = () => {
       <el-form-item :label="t('ds.title')">
         <div class="content">
           {{ pageForm.datasource_name }}
+        </div>
+      </el-form-item>
+      <el-form-item v-if="isDefaultOrg" :label="t('embedded.advanced_application')">
+        <div class="content">
+          {{ pageForm.advanced_application_name }}
         </div>
       </el-form-item>
     </el-form>

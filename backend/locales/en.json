@@ -46,10 +46,11 @@
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "Datasource cannot be none or empty",
+    "datasource_assistant_cannot_be_none": "Datasource or Advanced application cannot be all none",
     "data_training_not_exists": "Example does not exists",
     "exists_in_db": "Question exists"
   },
-    "i18n_custom_prompt": {
+  "i18n_custom_prompt": {
     "exists_in_db": "Prompt name exists",
     "not_exists": "Prompt does not exists"
   },
