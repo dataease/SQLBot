@@ -269,6 +269,10 @@ const delWorkspace = (row: any) => {
         message: t('dashboard.delete_success'),
       })
       init()
+      if (currentTable.value.id === row.id) {
+        currentTable.value = {}
+        fieldList.value = []
+      }
       if (row.id === userStore.getOid) {
         userStore.setOid('1')
         await userStore.info()
