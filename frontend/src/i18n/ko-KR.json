@@ -635,6 +635,7 @@
     "error": "오류",
     "exec-sql-err": "SQL 실행 실패",
     "no_data": "데이터가 없습니다",
+    "loading_data": "로딩 중 ...",
     "show_error_detail": "구체적인 정보 보기"
   },
   "about": {

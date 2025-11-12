@@ -635,6 +635,7 @@
     "error": "Error",
     "exec-sql-err": "Execute SQL failed",
     "no_data": "No Data",
+    "loading_data": "Loading ...",
     "show_error_detail": "Show error info"
   },
   "about": {

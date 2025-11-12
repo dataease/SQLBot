@@ -33,12 +33,14 @@ const props = withDefaults(
     isPredict?: boolean
     chatType?: ChartTypes
     enlarge?: boolean
+    loadingData?: boolean
   }>(),
   {
     recordId: undefined,
     isPredict: false,
     chatType: undefined,
     enlarge: false,
+    loadingData: false,
   }
 )
 
@@ -473,6 +475,7 @@ watch(
           :chart-type="chartType"
           :message="message"
           :data="data"
+          :loading-data="loadingData"
         />
       </div>
       <div v-if="dataObject.limit" class="over-limit-hint">
@@ -493,8 +496,10 @@ watch(
       <ChartBlock
         v-if="dialogVisible"
         :message="message"
+        :record-id="recordId"
         :is-predict="isPredict"
         :chat-type="chartType"
+        :loading-data="loadingData"
         enlarge
         @exit-full-screen="onExitFullScreen"
       />

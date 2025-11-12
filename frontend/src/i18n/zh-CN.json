@@ -635,6 +635,7 @@
     "error": "错误",
     "exec-sql-err": "执行SQL失败",
     "no_data": "暂无数据",
+    "loading_data": "加载中...",
     "show_error_detail": "查看具体信息"
   },
   "about": {
