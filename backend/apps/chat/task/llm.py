@@ -926,7 +926,7 @@ class LLMService:
 
             # return title
             if self.change_title:
-                if self.chat_question.question or self.chat_question.question.strip() != '':
+                if self.chat_question.question and self.chat_question.question.strip() != '':
                     brief = rename_chat(session=_session,
                                         rename_object=RenameChat(id=self.get_record().chat_id,
                                                                  brief=self.chat_question.question.strip()[:20]))
