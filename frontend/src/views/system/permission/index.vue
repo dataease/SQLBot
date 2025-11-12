@@ -914,7 +914,7 @@ const columnRules = {
   padding: 16px 0 16px 0;
 
   .ed-empty_200 {
-    padding-top: 200px;
+    padding-top: 292px;
     padding-bottom: 0;
     height: auto;
   }

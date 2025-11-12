@@ -645,6 +645,10 @@ const onRowFormClose = () => {
   height: 100%;
   position: relative;
 
+  :deep(.ed-table__empty-text) {
+     padding-top: 160px;
+  }
+
   .datasource-yet {
     padding-bottom: 0;
     height: auto;
