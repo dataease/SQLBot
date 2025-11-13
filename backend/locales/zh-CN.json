@@ -42,7 +42,12 @@
     "terminology_not_exists": "该术语不存在",
     "datasource_cannot_be_none": "数据源不能为空",
     "cannot_be_repeated": "术语名称，同义词不能重复",
-    "exists_in_db": "术语名称，同义词已存在"
+    "exists_in_db": "术语名称，同义词已存在",
+    "term_name": "术语名称",
+    "term_description": "术语描述",
+    "effective_data_sources": "生效数据源",
+    "all_data_sources": "所有数据源",
+    "synonyms": "同义词"
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "数据源不能为空",

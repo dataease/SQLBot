@@ -59,16 +59,16 @@ const showSysmenu = computed(() => {
   <div class="system-layout">
     <div class="left-side" :class="collapse && 'left-side-collapse'">
       <template v-if="showSysmenu">
-        <div @click="toUserIndex" class="sys-management">
+        <div class="sys-management" @click="toUserIndex">
           <img
+            v-if="loginBg"
             :style="{ marginLeft: collapse ? '5px' : 0 }"
-            @click="toChatIndex"
             height="30"
             width="30"
-            v-if="loginBg"
             :src="loginBg"
             :class="!collapse && 'collapse-icon'"
             alt=""
+            @click="toChatIndex"
           />
           <custom_small
             v-else-if="appearanceStore.themeColor !== 'default'"
@@ -80,28 +80,28 @@ const showSysmenu = computed(() => {
             :style="{ marginLeft: collapse ? '5px' : 0 }"
             :class="!collapse && 'collapse-icon'"
           ></LOGO_fold>
-          <span v-if="!collapse">{{ $t('training.system_anagement') }}</span>
+          <span v-if="!collapse">{{ $t('training.system_management') }}</span>
         </div>
       </template>
       <template v-else>
         <template v-if="appearanceStore.isBlue">
           <img
+            v-if="loginBg && collapse"
             style="margin: 0 0 6px 5px; cursor: pointer"
-            @click="toChatIndex"
             height="30"
             width="30"
-            v-if="loginBg && collapse"
             :src="loginBg"
             alt=""
+            @click="toChatIndex"
           />
           <div v-else-if="loginBg && !collapse" class="default-sqlbot">
             <img
-              @click="toChatIndex"
               height="30"
               width="30"
               :src="loginBg"
               alt=""
               class="collapse-icon"
+              @click="toChatIndex"
             />
             <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
               appearanceStore.name
@@ -122,22 +122,22 @@ const showSysmenu = computed(() => {
         </template>
         <template v-else-if="appearanceStore.themeColor === 'custom'">
           <img
+            v-if="loginBg && collapse"
             style="margin: 0 0 6px 5px; cursor: pointer"
-            @click="toChatIndex"
             height="30"
             width="30"
-            v-if="loginBg && collapse"
             :src="loginBg"
             alt=""
+            @click="toChatIndex"
           />
           <div v-else-if="loginBg && !collapse" class="default-sqlbot">
             <img
-              @click="toChatIndex"
               height="30"
               width="30"
               :src="loginBg"
               alt=""
               class="collapse-icon"
+              @click="toChatIndex"
             />
             <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
               appearanceStore.name
@@ -157,22 +157,22 @@ const showSysmenu = computed(() => {
         </template>
         <template v-else>
           <img
+            v-if="loginBg && collapse"
             style="margin: 0 0 6px 5px; cursor: pointer"
-            @click="toChatIndex"
             height="30"
             width="30"
-            v-if="loginBg && collapse"
             :src="loginBg"
             alt=""
+            @click="toChatIndex"
           />
           <div v-else-if="loginBg && !collapse" class="default-sqlbot">
             <img
-              @click="toChatIndex"
               height="30"
               width="30"
               :src="loginBg"
               alt=""
               class="collapse-icon"
+              @click="toChatIndex"
             />
             <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
               appearanceStore.name

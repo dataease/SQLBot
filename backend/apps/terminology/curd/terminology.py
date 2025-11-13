@@ -17,24 +17,18 @@ from common.core.deps import SessionDep, Trans
 from common.utils.embedding_threads import run_save_terminology_embeddings
 
 
-def page_terminology(session: SessionDep, current_page: int = 1, page_size: int = 10, name: Optional[str] = None,
-                     oid: Optional[int] = 1):
-    _list: List[TerminologyInfo] = []
-
+def get_terminology_base_query(oid: int, name: Optional[str] = None):
+    """
+    获取术语查询的基础查询结构
+    """
     child = aliased(Terminology)
-
-    current_page = max(1, current_page)
-    page_size = max(10, page_size)
-
-    total_count = 0
-    total_pages = 0
 
     if name and name.strip() != "":
         keyword_pattern = f"%{name.strip()}%"
         # 步骤1：先找到所有匹配的节点ID（无论是父节点还是子节点）
         matched_ids_subquery = (
             select(Terminology.id)
-            .where(and_(Terminology.word.ilike(keyword_pattern), Terminology.oid == oid))  # LIKE查询条件
+            .where(and_(Terminology.word.ilike(keyword_pattern), Terminology.oid == oid))
             .subquery()
         )
 
@@ -51,94 +45,31 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
             )
             .where(Terminology.pid.is_(None))  # 只取父节点
         )
-
-        count_stmt = select(func.count()).select_from(parent_ids_subquery.subquery())
-        total_count = session.execute(count_stmt).scalar()
-        total_pages = (total_count + page_size - 1) // page_size
-
-        if current_page > total_pages:
-            current_page = 1
-
-        # 步骤3：获取分页后的父节点ID
-        paginated_parent_ids = (
-            parent_ids_subquery
-            .order_by(Terminology.create_time.desc())
-            .offset((current_page - 1) * page_size)
-            .limit(page_size)
-            .subquery()
-        )
-
-        # 步骤4：获取这些父节点的childrenNames
-        children_subquery = (
-            select(
-                child.pid,
-                func.jsonb_agg(child.word).filter(child.word.isnot(None)).label('other_words')
-            )
-            .where(child.pid.isnot(None))
-            .group_by(child.pid)
-            .subquery()
-        )
-
-        # 创建子查询来获取数据源名称，添加类型转换
-        datasource_names_subquery = (
-            select(
-                func.jsonb_array_elements(Terminology.datasource_ids).cast(BigInteger).label('ds_id'),
-                Terminology.id.label('term_id')
-            )
-            .where(Terminology.id.in_(paginated_parent_ids))
-            .subquery()
-        )
-
-        # 主查询
-        stmt = (
-            select(
-                Terminology.id,
-                Terminology.word,
-                Terminology.create_time,
-                Terminology.description,
-                Terminology.specific_ds,
-                Terminology.datasource_ids,
-                children_subquery.c.other_words,
-                func.jsonb_agg(CoreDatasource.name).filter(CoreDatasource.id.isnot(None)).label('datasource_names'),
-                Terminology.enabled
-            )
-            .outerjoin(
-                children_subquery,
-                Terminology.id == children_subquery.c.pid
-            )
-            # 关联数据源名称子查询和 CoreDatasource 表
-            .outerjoin(
-                datasource_names_subquery,
-                datasource_names_subquery.c.term_id == Terminology.id
-            )
-            .outerjoin(
-                CoreDatasource,
-                CoreDatasource.id == datasource_names_subquery.c.ds_id
-            )
-            .where(and_(Terminology.id.in_(paginated_parent_ids), Terminology.oid == oid))
-            .group_by(
-                Terminology.id,
-                Terminology.word,
-                Terminology.create_time,
-                Terminology.description,
-                Terminology.specific_ds,
-                Terminology.datasource_ids,
-                children_subquery.c.other_words,
-                Terminology.enabled
-            )
-            .order_by(Terminology.create_time.desc())
-        )
     else:
         parent_ids_subquery = (
             select(Terminology.id)
-            .where(and_(Terminology.pid.is_(None), Terminology.oid == oid))  # 只取父节点
+            .where(and_(Terminology.pid.is_(None), Terminology.oid == oid))
         )
-        count_stmt = select(func.count()).select_from(parent_ids_subquery.subquery())
-        total_count = session.execute(count_stmt).scalar()
-        total_pages = (total_count + page_size - 1) // page_size
 
-        if current_page > total_pages:
-            current_page = 1
+    return parent_ids_subquery, child
+
+
+def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] = None,
+                            paginate: bool = True, current_page: int = 1, page_size: int = 10):
+    """
+    构建术语查询的通用方法
+    """
+    parent_ids_subquery, child = get_terminology_base_query(oid, name)
+
+    # 计算总数
+    count_stmt = select(func.count()).select_from(parent_ids_subquery.subquery())
+    total_count = session.execute(count_stmt).scalar()
+
+    if paginate:
+        # 分页处理
+        page_size = max(10, page_size)
+        total_pages = (total_count + page_size - 1) // page_size
+        current_page = max(1, min(current_page, total_pages)) if total_pages > 0 else 1
 
         paginated_parent_ids = (
             parent_ids_subquery
@@ -147,65 +78,85 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
             .limit(page_size)
             .subquery()
         )
+    else:
+        # 不分页，获取所有数据
+        total_pages = 1
+        current_page = 1
+        page_size = total_count if total_count > 0 else 1
 
-        children_subquery = (
-            select(
-                child.pid,
-                func.jsonb_agg(child.word).filter(child.word.isnot(None)).label('other_words')
-            )
-            .where(child.pid.isnot(None))
-            .group_by(child.pid)
-            .subquery()
-        )
-
-        # 创建子查询来获取数据源名称
-        datasource_names_subquery = (
-            select(
-                func.jsonb_array_elements(Terminology.datasource_ids).cast(BigInteger).label('ds_id'),
-                Terminology.id.label('term_id')
-            )
-            .where(Terminology.id.in_(paginated_parent_ids))
-            .subquery()
-        )
-
-        stmt = (
-            select(
-                Terminology.id,
-                Terminology.word,
-                Terminology.create_time,
-                Terminology.description,
-                Terminology.specific_ds,
-                Terminology.datasource_ids,
-                children_subquery.c.other_words,
-                func.jsonb_agg(CoreDatasource.name).filter(CoreDatasource.id.isnot(None)).label('datasource_names'),
-                Terminology.enabled
-            )
-            .outerjoin(
-                children_subquery,
-                Terminology.id == children_subquery.c.pid
-            )
-            # 关联数据源名称子查询和 CoreDatasource 表
-            .outerjoin(
-                datasource_names_subquery,
-                datasource_names_subquery.c.term_id == Terminology.id
-            )
-            .outerjoin(
-                CoreDatasource,
-                CoreDatasource.id == datasource_names_subquery.c.ds_id
-            )
-            .where(and_(Terminology.id.in_(paginated_parent_ids), Terminology.oid == oid))
-            .group_by(Terminology.id,
-                      Terminology.word,
-                      Terminology.create_time,
-                      Terminology.description,
-                      Terminology.specific_ds,
-                      Terminology.datasource_ids,
-                      children_subquery.c.other_words,
-                      Terminology.enabled
-                      )
+        paginated_parent_ids = (
+            parent_ids_subquery
             .order_by(Terminology.create_time.desc())
+            .subquery()
         )
 
+    # 构建公共查询部分
+    children_subquery = (
+        select(
+            child.pid,
+            func.jsonb_agg(child.word).filter(child.word.isnot(None)).label('other_words')
+        )
+        .where(child.pid.isnot(None))
+        .group_by(child.pid)
+        .subquery()
+    )
+
+    # 创建子查询来获取数据源名称
+    datasource_names_subquery = (
+        select(
+            func.jsonb_array_elements(Terminology.datasource_ids).cast(BigInteger).label('ds_id'),
+            Terminology.id.label('term_id')
+        )
+        .where(Terminology.id.in_(paginated_parent_ids))
+        .subquery()
+    )
+
+    stmt = (
+        select(
+            Terminology.id,
+            Terminology.word,
+            Terminology.create_time,
+            Terminology.description,
+            Terminology.specific_ds,
+            Terminology.datasource_ids,
+            children_subquery.c.other_words,
+            func.jsonb_agg(CoreDatasource.name).filter(CoreDatasource.id.isnot(None)).label('datasource_names'),
+            Terminology.enabled
+        )
+        .outerjoin(
+            children_subquery,
+            Terminology.id == children_subquery.c.pid
+        )
+        .outerjoin(
+            datasource_names_subquery,
+            datasource_names_subquery.c.term_id == Terminology.id
+        )
+        .outerjoin(
+            CoreDatasource,
+            CoreDatasource.id == datasource_names_subquery.c.ds_id
+        )
+        .where(and_(Terminology.id.in_(paginated_parent_ids), Terminology.oid == oid))
+        .group_by(
+            Terminology.id,
+            Terminology.word,
+            Terminology.create_time,
+            Terminology.description,
+            Terminology.specific_ds,
+            Terminology.datasource_ids,
+            children_subquery.c.other_words,
+            Terminology.enabled
+        )
+        .order_by(Terminology.create_time.desc())
+    )
+
+    return stmt, total_count, total_pages, current_page, page_size
+
+
+def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfo]:
+    """
+    执行查询并返回术语信息列表
+    """
+    _list = []
     result = session.execute(stmt)
 
     for row in result:
@@ -221,7 +172,32 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
             enabled=row.enabled if row.enabled is not None else False,
         ))
 
+    return _list
+
+
+def page_terminology(session: SessionDep, current_page: int = 1, page_size: int = 10,
+                     name: Optional[str] = None, oid: Optional[int] = 1):
+    """
+    分页查询术语（原方法保持不变）
+    """
+    stmt, total_count, total_pages, current_page, page_size = build_terminology_query(
+        session, oid, name, True, current_page, page_size
+    )
+    _list = execute_terminology_query(session, stmt)
+
     return current_page, page_size, total_count, total_pages, _list
+
+
+def get_all_terminology(session: SessionDep, name: Optional[str] = None, oid: Optional[int] = 1):
+    """
+    获取所有术语（不分页）
+    """
+    stmt, total_count, total_pages, current_page, page_size = build_terminology_query(
+        session, oid, name, False
+    )
+    _list = execute_terminology_query(session, stmt)
+
+    return _list
 
 
 def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, trans: Trans):

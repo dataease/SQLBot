@@ -66,29 +66,10 @@ const cancelDelete = () => {
   checkAll.value = false
   isIndeterminate.value = false
 }
-const exportBatchUser = () => {
-  ElMessageBox.confirm(
-    t('professional.selected_2_terms_de', { msg: multipleSelectionAll.value.length }),
-    {
-      confirmButtonType: 'primary',
-      confirmButtonText: t('professional.export'),
-      cancelButtonText: t('common.cancel'),
-      customClass: 'confirm-no_icon',
-      autofocus: false,
-    }
-  ).then(() => {
-    professionalApi.deleteEmbedded(multipleSelectionAll.value.map((ele) => ele.id)).then(() => {
-      ElMessage({
-        type: 'success',
-        message: t('dashboard.delete_success'),
-      })
-      multipleSelectionAll.value = []
-      search()
-    })
-  })
-}
 
-const exportAllUser = () => {
+const uploadExcel = () => {}
+
+const exportExcel = () => {
   ElMessageBox.confirm(t('professional.all_236_terms', { msg: pageInfo.total }), {
     confirmButtonType: 'primary',
     confirmButtonText: t('professional.export'),
@@ -96,17 +77,52 @@ const exportAllUser = () => {
     customClass: 'confirm-no_icon',
     autofocus: false,
   }).then(() => {
-    professionalApi.deleteEmbedded(multipleSelectionAll.value.map((ele) => ele.id)).then(() => {
-      ElMessage({
-        type: 'success',
-        message: t('dashboard.delete_success'),
+    searchLoading.value = true
+    professionalApi
+      .export2Excel(keywords.value ? { word: keywords.value } : {})
+      .then((res) => {
+        const blob = new Blob([res], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${t('professional.professional_terminology')}.xlsx`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       })
-      multipleSelectionAll.value = []
-      search()
-    })
+      .catch(async (error) => {
+        if (error.response) {
+          try {
+            let text = await error.response.data.text()
+            try {
+              text = JSON.parse(text)
+            } finally {
+              ElMessage({
+                message: text,
+                type: 'error',
+                showClose: true,
+              })
+            }
+          } catch (e) {
+            console.error('Error processing error response:', e)
+          }
+        } else {
+          console.error('Other error:', error)
+          ElMessage({
+            message: error,
+            type: 'error',
+            showClose: true,
+          })
+        }
+      })
+      .finally(() => {
+        searchLoading.value = false
+      })
   })
 }
-const deleteBatchUser = () => {
+
+const deleteBatch = () => {
   ElMessageBox.confirm(
     t('professional.selected_2_terms', { msg: multipleSelectionAll.value.length }),
     {
@@ -355,20 +371,18 @@ const changeStatus = (id: any, val: any) => {
             </el-icon>
           </template>
         </el-input>
-        <template v-if="false">
-          <el-button secondary @click="exportAllUser">
-            <template #icon>
-              <icon_export_outlined />
-            </template>
-            {{ $t('professional.export_all') }}
-          </el-button>
-          <el-button secondary @click="editHandler(null)">
-            <template #icon>
-              <ccmUpload></ccmUpload>
-            </template>
-            {{ $t('user.batch_import') }}
-          </el-button>
-        </template>
+        <el-button secondary @click="exportExcel">
+          <template #icon>
+            <icon_export_outlined />
+          </template>
+          {{ $t('professional.export_all') }}
+        </el-button>
+        <el-button v-if="false" secondary @click="uploadExcel()">
+          <template #icon>
+            <ccmUpload></ccmUpload>
+          </template>
+          {{ $t('user.batch_import') }}
+        </el-button>
         <el-button type="primary" @click="editHandler(null)">
           <template #icon>
             <icon_add_outlined></icon_add_outlined>
@@ -423,7 +437,7 @@ const changeStatus = (id: any, val: any) => {
           </el-table-column>
           <el-table-column :label="t('ds.status')" width="180">
             <template #default="scope">
-              <div @click.stop style="display: flex; align-items: center">
+              <div style="display: flex; align-items: center" @click.stop>
                 <el-switch
                   v-model="scope.row.enabled"
                   size="small"
@@ -505,11 +519,8 @@ const changeStatus = (id: any, val: any) => {
       >
         {{ $t('datasource.select_all') }}
       </el-checkbox>
-      <button v-if="false" class="primary-button" @click="exportBatchUser">
-        {{ $t('professional.export') }}
-      </button>
 
-      <button class="danger-button" @click="deleteBatchUser">{{ $t('dashboard.delete') }}</button>
+      <button class="danger-button" @click="deleteBatch">{{ $t('dashboard.delete') }}</button>
 
       <span class="selected">{{
         $t('user.selected_2_items', { msg: multipleSelectionAll.length })
@@ -568,13 +579,13 @@ const changeStatus = (id: any, val: any) => {
           <el-radio :value="true">{{ $t('training.partial_data_sources') }}</el-radio>
         </el-radio-group>
         <el-select
+          v-if="pageForm.specific_ds"
           v-model="pageForm.datasource_ids"
           multiple
-          v-if="pageForm.specific_ds"
           filterable
-          @change="handleChange"
           :placeholder="$t('datasource.Please_select') + $t('common.empty') + $t('ds.title')"
           style="width: 100%; margin-top: 8px"
+          @change="handleChange"
         >
           <el-option v-for="item in allDsList" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
