@@ -1131,14 +1131,19 @@ class LLMService:
                 yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
             else:
                 # todo generate picture
-                if chart['type'] != 'table':
-                    yield '### generated chart picture\n\n'
-                    image_url = request_picture(self.record.chat_id, self.record.id, chart, format_json_data(result))
-                    SQLBotLogUtil.info(image_url)
+                try:
+                    if chart['type'] != 'table':
+                        yield '### generated chart picture\n\n'
+                        image_url = request_picture(self.record.chat_id, self.record.id, chart,
+                                                    format_json_data(result))
+                        SQLBotLogUtil.info(image_url)
+                        if stream:
+                            yield f'![{chart["type"]}]({image_url})'
+                        else:
+                            json_result['image_url'] = image_url
+                except Exception as e:
                     if stream:
-                        yield f'![{chart["type"]}]({image_url})'
-                    else:
-                        json_result['image_url'] = image_url
+                        raise e
 
             if not stream:
                 yield json_result
@@ -1173,20 +1178,16 @@ class LLMService:
 
     @staticmethod
     def safe_convert_to_string(df):
-        """
-        安全地将数值列转换为字符串，避免科学记数法
-        """
         df_copy = df.copy()
 
+        def format_value(x):
+            if pd.isna(x):
+                return ""
+
+            return "\u200b" + str(x)
+
         for col in df_copy.columns:
-            # 只处理数值类型的列
-            if pd.api.types.is_numeric_dtype(df_copy[col]):
-                try:
-                    df_copy[col] = df_copy[col].astype(str)
-                except Exception as e:
-                    print(f"列 {col} 转换失败: {e}")
-                    # 如果转换失败，保持原样
-                    continue
+            df_copy[col] = df_copy[col].apply(format_value)
 
         return df_copy
 
