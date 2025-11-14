@@ -53,7 +53,12 @@
     "datasource_cannot_be_none": "Datasource cannot be empty",
     "datasource_assistant_cannot_be_none": "Datasource or advanced application cannot both be empty",
     "data_training_not_exists": "This example does not exist",
-    "exists_in_db": "This question already exists"
+    "exists_in_db": "This question already exists",
+    "data_training": "SQL Example Library",
+    "problem_description": "Problem Description",
+    "sample_sql": "Sample SQL",
+    "effective_data_sources": "Effective Data Sources",
+    "advanced_application": "Advanced Application"
   },
   "i18n_custom_prompt": {
     "exists_in_db": "Template name already exists",

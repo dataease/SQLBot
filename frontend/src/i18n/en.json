@@ -40,6 +40,7 @@
     "training_data_items": "Do you want to delete the {msg} selected SQL Sample items?",
     "sql_statement": "SQL Statement",
     "edit_training_data": "Edit SQL Sample",
+    "all_236_terms": "Export all {msg} sample SQL records?",
     "sales_this_year": "Do you want to delete the SQL Sample: {msg}?"
   },
   "professional": {

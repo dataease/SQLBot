@@ -18,42 +18,61 @@ from common.core.deps import SessionDep, Trans
 from common.utils.embedding_threads import run_save_data_training_embeddings
 
 
-def page_data_training(session: SessionDep, current_page: int = 1, page_size: int = 10, name: Optional[str] = None,
-                       oid: Optional[int] = 1):
-    _list: List[DataTrainingInfoResult] = []
-
-    current_page = max(1, current_page)
-    page_size = max(10, page_size)
-
-    total_count = 0
-    total_pages = 0
-
+def get_data_training_base_query(oid: int, name: Optional[str] = None):
+    """
+    获取数据训练查询的基础查询结构
+    """
     if name and name.strip() != "":
         keyword_pattern = f"%{name.strip()}%"
         parent_ids_subquery = (
             select(DataTraining.id)
-            .where(and_(DataTraining.question.ilike(keyword_pattern), DataTraining.oid == oid))  # LIKE查询条件
+            .where(and_(DataTraining.question.ilike(keyword_pattern), DataTraining.oid == oid))
         )
     else:
         parent_ids_subquery = (
             select(DataTraining.id).where(and_(DataTraining.oid == oid))
         )
 
+    return parent_ids_subquery
+
+
+def build_data_training_query(session: SessionDep, oid: int, name: Optional[str] = None,
+                              paginate: bool = True, current_page: int = 1, page_size: int = 10):
+    """
+    构建数据训练查询的通用方法
+    """
+    parent_ids_subquery = get_data_training_base_query(oid, name)
+
+    # 计算总数
     count_stmt = select(func.count()).select_from(parent_ids_subquery.subquery())
     total_count = session.execute(count_stmt).scalar()
-    total_pages = (total_count + page_size - 1) // page_size
 
-    if current_page > total_pages:
+    if paginate:
+        # 分页处理
+        page_size = max(10, page_size)
+        total_pages = (total_count + page_size - 1) // page_size
+        current_page = max(1, min(current_page, total_pages)) if total_pages > 0 else 1
+
+        paginated_parent_ids = (
+            parent_ids_subquery
+            .order_by(DataTraining.create_time.desc())
+            .offset((current_page - 1) * page_size)
+            .limit(page_size)
+            .subquery()
+        )
+    else:
+        # 不分页，获取所有数据
+        total_pages = 1
         current_page = 1
+        page_size = total_count if total_count > 0 else 1
 
-    paginated_parent_ids = (
-        parent_ids_subquery
-        .order_by(DataTraining.create_time.desc())
-        .offset((current_page - 1) * page_size)
-        .limit(page_size)
-        .subquery()
-    )
+        paginated_parent_ids = (
+            parent_ids_subquery
+            .order_by(DataTraining.create_time.desc())
+            .subquery()
+        )
 
+    # 构建主查询
     stmt = (
         select(
             DataTraining.id,
@@ -74,6 +93,14 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
         .order_by(DataTraining.create_time.desc())
     )
 
+    return stmt, total_count, total_pages, current_page, page_size
+
+
+def execute_data_training_query(session: SessionDep, stmt) -> List[DataTrainingInfoResult]:
+    """
+    执行查询并返回数据训练信息列表
+    """
+    _list = []
     result = session.execute(stmt)
 
     for row in result:
@@ -90,7 +117,32 @@ def page_data_training(session: SessionDep, current_page: int = 1, page_size: in
             advanced_application_name=row.advanced_application_name,
         ))
 
+    return _list
+
+
+def page_data_training(session: SessionDep, current_page: int = 1, page_size: int = 10,
+                       name: Optional[str] = None, oid: Optional[int] = 1):
+    """
+    分页查询数据训练（原方法保持不变）
+    """
+    stmt, total_count, total_pages, current_page, page_size = build_data_training_query(
+        session, oid, name, True, current_page, page_size
+    )
+    _list = execute_data_training_query(session, stmt)
+
     return current_page, page_size, total_count, total_pages, _list
+
+
+def get_all_data_training(session: SessionDep, name: Optional[str] = None, oid: Optional[int] = 1):
+    """
+    获取所有数据训练（不分页）
+    """
+    stmt, total_count, total_pages, current_page, page_size = build_data_training_query(
+        session, oid, name, False
+    )
+    _list = execute_data_training_query(session, stmt)
+
+    return _list
 
 
 def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans):

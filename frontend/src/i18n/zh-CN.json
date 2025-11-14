@@ -40,6 +40,7 @@
     "training_data_items": "是否删除选中的 {msg} 条示例 SQL？",
     "sql_statement": "SQL 语句",
     "edit_training_data": "编辑示例 SQL",
+    "all_236_terms": "是否导出全部 {msg} 条示例 SQL？",
     "sales_this_year": "是否删除示例 SQL：{msg}？"
   },
   "professional": {

@@ -85,46 +85,60 @@ const cancelDelete = () => {
   checkAll.value = false
   isIndeterminate.value = false
 }
-const exportBatchUser = () => {
-  ElMessageBox.confirm(
-    t('professional.selected_2_terms_de', { msg: multipleSelectionAll.value.length }),
-    {
-      confirmButtonType: 'primary',
-      confirmButtonText: t('professional.export'),
-      cancelButtonText: t('common.cancel'),
-      customClass: 'confirm-no_icon',
-      autofocus: false,
-    }
-  ).then(() => {
-    trainingApi.deleteEmbedded(multipleSelectionAll.value.map((ele) => ele.id)).then(() => {
-      ElMessage({
-        type: 'success',
-        message: t('dashboard.delete_success'),
-      })
-      multipleSelectionAll.value = []
-      search()
-    })
-  })
-}
 
-const exportAllUser = () => {
-  ElMessageBox.confirm(t('professional.all_236_terms', { msg: pageInfo.total }), {
+const exportExcel = () => {
+  ElMessageBox.confirm(t('training.all_236_terms', { msg: pageInfo.total }), {
     confirmButtonType: 'primary',
     confirmButtonText: t('professional.export'),
     cancelButtonText: t('common.cancel'),
     customClass: 'confirm-no_icon',
     autofocus: false,
   }).then(() => {
-    trainingApi.deleteEmbedded(multipleSelectionAll.value.map((ele) => ele.id)).then(() => {
-      ElMessage({
-        type: 'success',
-        message: t('dashboard.delete_success'),
+    searchLoading.value = true
+    trainingApi
+      .export2Excel(keywords.value ? { question: keywords.value } : {})
+      .then((res) => {
+        const blob = new Blob([res], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${t('training.data_training')}.xlsx`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       })
-      multipleSelectionAll.value = []
-      search()
-    })
+      .catch(async (error) => {
+        if (error.response) {
+          try {
+            let text = await error.response.data.text()
+            try {
+              text = JSON.parse(text)
+            } finally {
+              ElMessage({
+                message: text,
+                type: 'error',
+                showClose: true,
+              })
+            }
+          } catch (e) {
+            console.error('Error processing error response:', e)
+          }
+        } else {
+          console.error('Other error:', error)
+          ElMessage({
+            message: error,
+            type: 'error',
+            showClose: true,
+          })
+        }
+      })
+      .finally(() => {
+        searchLoading.value = false
+      })
   })
 }
+
 const deleteBatchUser = () => {
   ElMessageBox.confirm(
     t('training.training_data_items', { msg: multipleSelectionAll.value.length }),
@@ -363,20 +377,18 @@ const onRowFormClose = () => {
             </el-icon>
           </template>
         </el-input>
-        <template v-if="false">
-          <el-button secondary @click="exportAllUser">
-            <template #icon>
-              <icon_export_outlined />
-            </template>
-            {{ $t('professional.export_all') }}
-          </el-button>
-          <el-button secondary @click="editHandler(null)">
-            <template #icon>
-              <ccmUpload></ccmUpload>
-            </template>
-            {{ $t('user.batch_import') }}
-          </el-button>
-        </template>
+        <el-button secondary @click="exportExcel">
+          <template #icon>
+            <icon_export_outlined />
+          </template>
+          {{ $t('professional.export_all') }}
+        </el-button>
+        <el-button v-if="false" secondary @click="editHandler(null)">
+          <template #icon>
+            <ccmUpload></ccmUpload>
+          </template>
+          {{ $t('user.batch_import') }}
+        </el-button>
         <el-button type="primary" @click="editHandler(null)">
           <template #icon>
             <icon_add_outlined></icon_add_outlined>
@@ -501,9 +513,6 @@ const onRowFormClose = () => {
       >
         {{ $t('datasource.select_all') }}
       </el-checkbox>
-      <button v-if="false" class="primary-button" @click="exportBatchUser">
-        {{ $t('professional.export') }}
-      </button>
 
       <button class="danger-button" @click="deleteBatchUser">{{ $t('dashboard.delete') }}</button>
 
@@ -646,7 +655,7 @@ const onRowFormClose = () => {
   position: relative;
 
   :deep(.ed-table__empty-text) {
-     padding-top: 160px;
+    padding-top: 160px;
   }
 
   .datasource-yet {
