@@ -7,11 +7,11 @@ from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
 from apps.chat.models.chat_model import AxisObj
-from apps.chat.task.llm import LLMService
 from apps.terminology.curd.terminology import page_terminology, create_terminology, update_terminology, \
     delete_terminology, enable_terminology, get_all_terminology
 from apps.terminology.models.terminology_model import TerminologyInfo
 from common.core.deps import SessionDep, CurrentUser, Trans
+from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["Terminology"], prefix="/system/terminology")
 
@@ -62,8 +62,8 @@ async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentU
                 "word": obj.word,
                 "other_words": ', '.join(obj.other_words) if obj.other_words else '',
                 "description": obj.description,
-                "all_data_sources": 'Y' if obj.specific_ds else 'N',
-                "datasource": ', '.join(obj.datasource_names) if obj.datasource_names else '',
+                "all_data_sources": 'N' if obj.specific_ds else 'Y',
+                "datasource": ', '.join(obj.datasource_names) if obj.datasource_names and obj.specific_ds else '',
             }
             data_list.append(_data)
 
@@ -74,7 +74,7 @@ async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentU
         fields.append(AxisObj(name=trans('i18n_terminology.effective_data_sources'), value='datasource'))
         fields.append(AxisObj(name=trans('i18n_terminology.all_data_sources'), value='all_data_sources'))
 
-        md_data, _fields_list = LLMService.convert_object_array_for_pandas(fields, data_list)
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
         df = pd.DataFrame(md_data, columns=_fields_list)
 

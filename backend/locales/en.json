@@ -62,7 +62,11 @@
   },
   "i18n_custom_prompt": {
     "exists_in_db": "Template name already exists",
-    "not_exists": "This template does not exist"
+    "not_exists": "This template does not exist",
+    "prompt_word_name": "Prompt word name",
+    "prompt_word_content": "Prompt word content",
+    "effective_data_sources": "Effective Data Sources",
+    "all_data_sources": "All Data Sources"
   },
   "i18n_excel_export": {
     "data_is_empty": "Form data is empty, unable to export data"

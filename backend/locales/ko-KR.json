@@ -62,7 +62,11 @@
   },
   "i18n_custom_prompt": {
     "exists_in_db": "템플릿 이름이 이미 존재합니다",
-    "not_exists": "이 템플릿이 존재하지 않습니다"
+    "not_exists": "이 템플릿이 존재하지 않습니다",
+    "prompt_word_name": "프롬프트 이름",
+    "prompt_word_content": "프롬프트 내용",
+    "effective_data_sources": "유효 데이터 소스",
+    "all_data_sources": "모든 데이터 소스"
   },
   "i18n_excel_export": {
     "data_is_empty": "폼 데이터가 비어 있어 데이터를 내보낼 수 없습니다"

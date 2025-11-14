@@ -14,6 +14,7 @@ from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, 
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
+from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
@@ -245,9 +246,9 @@ async def export_excel(session: SessionDep, chat_record_id: int, trans: Trans):
 
     def inner():
 
-        data_list = LLMService.convert_large_numbers_in_object_array(_data + _predict_data)
+        data_list = DataFormat.convert_large_numbers_in_object_array(_data + _predict_data)
 
-        md_data, _fields_list = LLMService.convert_object_array_for_pandas(fields, data_list)
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
         # data, _fields_list, col_formats = LLMService.format_pd_data(fields, _data + _predict_data)
 

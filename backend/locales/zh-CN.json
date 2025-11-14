@@ -62,7 +62,11 @@
   },
   "i18n_custom_prompt": {
     "exists_in_db": "模版名称已存在",
-    "not_exists": "该模版不存在"
+    "not_exists": "该模版不存在",
+    "prompt_word_name": "提示词名称",
+    "prompt_word_content": "提示词内容",
+    "effective_data_sources": "生效数据源",
+    "all_data_sources": "所有数据源"
   },
   "i18n_excel_export": {
     "data_is_empty": "表单数据为空，无法导出数据"

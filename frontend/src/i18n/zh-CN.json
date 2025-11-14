@@ -22,6 +22,7 @@
     "replaced_with": "请输入提示词，示例：返回姓名时，只显示姓氏，名字用*代替",
     "loss_exercise_caution": "若输入删除数据库、数据表或修改表结构等高风险的操作指令，可能导致数据永久丢失，请务必谨慎！",
     "edit_prompt_word": "编辑提示词",
+    "all_236_terms": "是否导出全部 {msg} 条{type}提示词？",
     "prompt_word_name_de": "是否删除提示词：{msg}？"
   },
   "training": {

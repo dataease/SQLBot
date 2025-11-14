@@ -7,11 +7,11 @@ from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
 from apps.chat.models.chat_model import AxisObj
-from apps.chat.task.llm import LLMService
 from apps.data_training.curd.data_training import page_data_training, create_training, update_training, delete_training, \
     enable_training, get_all_data_training
 from apps.data_training.models.data_training_model import DataTrainingInfo
 from common.core.deps import SessionDep, CurrentUser, Trans
+from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["DataTraining"], prefix="/system/data-training")
 
@@ -53,9 +53,9 @@ async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
 
 @router.get("/export")
 async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentUser,
-                       word: Optional[str] = Query(None, description="搜索术语(可选)")):
+                       question: Optional[str] = Query(None, description="搜索术语(可选)")):
     def inner():
-        _list = get_all_data_training(session, word, oid=current_user.oid)
+        _list = get_all_data_training(session, question, oid=current_user.oid)
 
         data_list = []
         for obj in _list:
@@ -75,7 +75,7 @@ async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentU
             fields.append(
                 AxisObj(name=trans('i18n_data_training.advanced_application'), value='advanced_application_name'))
 
-        md_data, _fields_list = LLMService.convert_object_array_for_pandas(fields, data_list)
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
         df = pd.DataFrame(md_data, columns=_fields_list)
 
