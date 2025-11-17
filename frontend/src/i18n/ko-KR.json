@@ -9,6 +9,8 @@
   },
   "prompt": {
     "default_password:": "기본 비밀번호:{msg}",
+    "no_sql_sample": "현재 사용 가능한 SQL 샘플 라이브러리가 없습니다",
+    "add_sql_sample": "SQL 샘플 라이브러리를 추가하세요",
     "no_prompt_words": "프롬프트가 없습니다",
     "customize_prompt_words": "사용자 정의 프롬프트",
     "ask_sql": "데이터 조회 SQL",

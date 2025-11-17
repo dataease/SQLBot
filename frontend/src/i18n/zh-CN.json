@@ -9,6 +9,8 @@
   },
   "prompt": {
     "default_password": "默认密码：{msg}",
+    "no_sql_sample": "暂无 SQL 示例",
+    "add_sql_sample": "添加 SQL 示例",
     "no_prompt_words": "暂无提示词",
     "customize_prompt_words": "自定义提示词",
     "ask_sql": "问数 SQL",

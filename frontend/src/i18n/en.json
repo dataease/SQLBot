@@ -9,6 +9,8 @@
   },
   "prompt": {
     "default_password": "Default password:{msg}",
+    "no_sql_sample": "No SQL sample currently available",
+    "add_sql_sample": "Add SQL sample",
     "no_prompt_words": "No prompt words",
     "customize_prompt_words": "Customize prompt words",
     "ask_sql": "Ask SQL",

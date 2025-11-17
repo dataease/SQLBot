@@ -477,11 +477,22 @@ const onRowFormClose = () => {
             </template>
           </el-table-column>
           <template #empty>
-            <EmptyBackground
-              v-if="!oldKeywords && !fieldList.length"
-              :description="$t('chat.no_data')"
-              img-type="noneWhite"
-            />
+            <template v-if="!oldKeywords && !fieldList.length">
+              <EmptyBackground
+                class="datasource-yet"
+                :description="$t('qa.no_data')"
+                img-type="noneWhite"
+              />
+
+              <div style="text-align: center; margin-top: -23px">
+                <el-button type="primary" @click="editHandler(null)">
+                  <template #icon>
+                    <icon_add_outlined></icon_add_outlined>
+                  </template>
+                  {{ $t('prompt.add_sql_sample') }}
+                </el-button>
+              </div>
+            </template>
 
             <EmptyBackground
               v-if="!!oldKeywords && !fieldList.length"
@@ -654,14 +665,10 @@ const onRowFormClose = () => {
   height: 100%;
   position: relative;
 
-  :deep(.ed-table__empty-text) {
-    padding-top: 160px;
-  }
-
   .datasource-yet {
     padding-bottom: 0;
     height: auto;
-    padding-top: 200px;
+    padding-top: 80px;
   }
 
   :deep(.ed-table__cell) {
