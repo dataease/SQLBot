@@ -416,14 +416,14 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
 
         try:
             # 批量插入
-            session.bulk_save_objects(data_training_objects)
+            session.bulk_save_objects(data_training_objects, return_defaults=True)
             session.commit()
 
-            # 获取插入的ID（需要刷新对象）
+            # 获取插入的ID
             for obj in data_training_objects:
-                session.refresh(obj)
-                inserted_ids.append(obj.id)
-                success_count += 1
+                if obj.id is not None:  # 确保ID已经被赋值
+                    inserted_ids.append(obj.id)
+                    success_count += 1
 
         except Exception as e:
             session.rollback()
