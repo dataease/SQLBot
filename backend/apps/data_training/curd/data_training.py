@@ -425,10 +425,6 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
                 inserted_ids.append(obj.id)
                 success_count += 1
 
-            # 批量处理embedding
-            if inserted_ids:
-                run_save_data_training_embeddings(inserted_ids)
-
         except Exception as e:
             session.rollback()
             # 将所有的有效记录标记为失败
@@ -439,6 +435,10 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
                     'errors': [str(e)]
                 })
             success_count = 0
+
+        # 批量处理embedding
+        if success_count > 0 and inserted_ids:
+            run_save_data_training_embeddings(inserted_ids)
 
     # 返回结果，包含去重统计信息
     return {
