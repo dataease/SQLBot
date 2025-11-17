@@ -44,7 +44,9 @@
     "sql_statement": "SQL 语句",
     "edit_training_data": "编辑示例 SQL",
     "all_236_terms": "是否导出全部 {msg} 条示例 SQL？",
-    "sales_this_year": "是否删除示例 SQL：{msg}？"
+    "sales_this_year": "是否删除示例 SQL：{msg}？",
+    "upload_success": "导入成功",
+    "upload_failed": "导入成功 {success} 条，失败 {fail} 条，失败信息详见：{fail_info}"
   },
   "professional": {
     "cannot_be_repeated": "术语名称，同义词不能重复",

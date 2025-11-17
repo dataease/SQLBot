@@ -146,6 +146,13 @@ def get_all_data_training(session: SessionDep, name: Optional[str] = None, oid: 
 
 
 def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans):
+    # 基本验证
+    if not info.question or not info.question.strip():
+        raise Exception(trans("i18n_data_training.question_cannot_be_empty"))
+
+    if not info.description or not info.description.strip():
+        raise Exception(trans("i18n_data_training.description_cannot_be_empty"))
+
     create_time = datetime.datetime.now()
     if info.datasource is None and info.advanced_application is None:
         if oid == 1:
@@ -189,6 +196,13 @@ def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
 
 
 def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans):
+    # 基本验证
+    if not info.question or not info.question.strip():
+        raise Exception(trans("i18n_data_training.question_cannot_be_empty"))
+
+    if not info.description or not info.description.strip():
+        raise Exception(trans("i18n_data_training.description_cannot_be_empty"))
+
     if info.datasource is None and info.advanced_application is None:
         if oid == 1:
             raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
@@ -232,6 +246,208 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
     run_save_data_training_embeddings([info.id])
 
     return info.id
+
+
+def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo], oid: int, trans: Trans):
+    """
+    批量创建数据训练记录
+    Args:
+        session: 数据库会话
+        info_list: DataTrainingInfo对象列表
+        oid: 组织ID
+        trans: 翻译对象
+    Returns:
+        dict: 包含成功数量、失败记录和统计信息的结果字典
+    """
+    if not info_list:
+        return {
+            'success_count': 0,
+            'failed_records': [],
+            'duplicate_count': 0,
+            'original_count': 0,
+            'deduplicated_count': 0
+        }
+
+    create_time = datetime.datetime.now()
+    failed_records = []  # 存储失败的数据和原因
+    success_count = 0
+    inserted_ids = []  # 存储成功插入的ID
+
+    # 第一步：数据去重
+    unique_records = {}
+    duplicate_records = []  # 存储重复的数据
+
+    for info in info_list:
+        # 创建唯一标识：问题 + 数据源名称 + 高级应用名称
+        unique_key = (
+            info.question.strip().lower() if info.question else "",
+            info.datasource_name.strip().lower() if info.datasource_name else "",
+            info.advanced_application_name.strip().lower() if info.advanced_application_name else ""
+        )
+
+        if unique_key in unique_records:
+            # 如果是重复数据，记录到重复列表中
+            duplicate_records.append(info)
+        else:
+            unique_records[unique_key] = info
+
+    # 将去重后的数据转换为列表
+    deduplicated_list = list(unique_records.values())
+
+    # 预加载数据源名称到ID的映射（CoreDatasource需要判断oid）
+    datasource_name_to_id = {}
+    datasource_stmt = select(CoreDatasource.id, CoreDatasource.name).where(CoreDatasource.oid == oid)
+    datasource_result = session.execute(datasource_stmt).all()
+    for ds in datasource_result:
+        datasource_name_to_id[ds.name.strip()] = ds.id
+
+    # 只有在oid=1时才预加载高级应用名称到ID的映射
+    assistant_name_to_id = {}
+    if oid == 1:
+        assistant_stmt = select(AssistantModel.id, AssistantModel.name).where(AssistantModel.type == 1)
+        assistant_result = session.execute(assistant_stmt).all()
+        for assistant in assistant_result:
+            assistant_name_to_id[assistant.name.strip()] = assistant.id
+
+    # 验证和准备数据
+    valid_records = []
+    for info in deduplicated_list:
+        error_messages = []
+
+        # 基本验证
+        if not info.question or not info.question.strip():
+            error_messages.append(trans("i18n_data_training.question_cannot_be_empty"))
+
+        if not info.description or not info.description.strip():
+            error_messages.append(trans("i18n_data_training.description_cannot_be_empty"))
+
+        # 数据源验证
+        datasource_id = None
+        if info.datasource_name and info.datasource_name.strip():
+            if info.datasource_name.strip() in datasource_name_to_id:
+                datasource_id = datasource_name_to_id[info.datasource_name.strip()]
+            else:
+                error_messages.append(trans("i18n_data_training.datasource_not_found").format(info.datasource_name))
+
+        # 高级应用验证（只有在oid=1时才需要）
+        advanced_application_id = None
+        if oid == 1 and info.advanced_application_name and info.advanced_application_name.strip():
+            if info.advanced_application_name.strip() in assistant_name_to_id:
+                advanced_application_id = assistant_name_to_id[info.advanced_application_name.strip()]
+            else:
+                error_messages.append(
+                    trans("i18n_data_training.advanced_application_not_found").format(info.advanced_application_name))
+
+        # 检查数据源和高级应用不能同时为空
+        if oid == 1:
+            if not datasource_id and not advanced_application_id:
+                error_messages.append(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
+        else:
+            if not datasource_id:
+                error_messages.append(trans("i18n_data_training.datasource_cannot_be_none"))
+
+        # 如果有错误，添加到失败列表
+        if error_messages:
+            # 返回原始的info对象，不包含转换后的ID
+            failed_records.append({
+                'data': info,  # 直接返回原始传入的数据
+                'errors': error_messages
+            })
+            continue
+
+        # 检查数据库中是否已存在重复记录
+        stmt = select(DataTraining.id).where(
+            and_(
+                DataTraining.question == info.question.strip(),
+                DataTraining.oid == oid
+            )
+        )
+
+        # 根据oid决定重复检查条件
+        if oid == 1:
+            if datasource_id is not None and advanced_application_id is not None:
+                stmt = stmt.where(
+                    or_(
+                        DataTraining.datasource == datasource_id,
+                        DataTraining.advanced_application == advanced_application_id
+                    )
+                )
+            elif datasource_id is not None:
+                stmt = stmt.where(DataTraining.datasource == datasource_id)
+            elif advanced_application_id is not None:
+                stmt = stmt.where(DataTraining.advanced_application == advanced_application_id)
+        else:
+            # oid != 1时，只检查数据源
+            if datasource_id is not None:
+                stmt = stmt.where(DataTraining.datasource == datasource_id)
+
+        exists = session.query(stmt.exists()).scalar()
+
+        if exists:
+            # 返回原始的info对象
+            failed_records.append({
+                'data': info,  # 直接返回原始传入的数据
+                'errors': [trans("i18n_data_training.exists_in_db")]
+            })
+            continue
+
+        # 验证通过，添加到有效记录
+        valid_records.append({
+            'info': info,
+            'datasource_id': datasource_id,
+            'advanced_application_id': advanced_application_id
+        })
+
+    # 批量插入有效记录
+    if valid_records:
+        data_training_objects = []
+        for record in valid_records:
+            info = record['info']
+            data_training = DataTraining(
+                question=info.question.strip(),
+                description=info.description.strip(),
+                oid=oid,
+                datasource=record['datasource_id'],
+                advanced_application=record['advanced_application_id'] if oid == 1 else None,  # 只有oid=1才设置高级应用
+                create_time=create_time,
+                enabled=info.enabled if info.enabled is not None else True
+            )
+            data_training_objects.append(data_training)
+
+        try:
+            # 批量插入
+            session.bulk_save_objects(data_training_objects)
+            session.commit()
+
+            # 获取插入的ID（需要刷新对象）
+            for obj in data_training_objects:
+                session.refresh(obj)
+                inserted_ids.append(obj.id)
+                success_count += 1
+
+            # 批量处理embedding
+            if inserted_ids:
+                run_save_data_training_embeddings(inserted_ids)
+
+        except Exception as e:
+            session.rollback()
+            # 将所有的有效记录标记为失败
+            for record in valid_records:
+                # 返回原始的info对象
+                failed_records.append({
+                    'data': record['info'],  # 直接返回原始传入的数据
+                    'errors': [str(e)]
+                })
+            success_count = 0
+
+    # 返回结果，包含去重统计信息
+    return {
+        'success_count': success_count,
+        'failed_records': failed_records,
+        'duplicate_count': len(duplicate_records),
+        'original_count': len(info_list),
+        'deduplicated_count': len(deduplicated_list)
+    }
 
 
 def delete_training(session: SessionDep, ids: list[int]):

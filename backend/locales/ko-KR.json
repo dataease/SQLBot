@@ -58,7 +58,12 @@
     "problem_description": "문제 설명",
     "sample_sql": "예시 SQL",
     "effective_data_sources": "유효 데이터 소스",
-    "advanced_application": "고급 애플리케이션"
+    "advanced_application": "고급 애플리케이션",
+    "error_info": "오류 정보",
+    "question_cannot_be_empty": "질문은 비울 수 없습니다",
+    "description_cannot_be_empty": "예시 SQL은 비울 수 없습니다",
+    "datasource_not_found": "데이터 소스를 찾을 수 없음",
+    "advanced_application_not_found": "고급 애플리케이션을 찾을 수 없음"
   },
   "i18n_custom_prompt": {
     "exists_in_db": "템플릿 이름이 이미 존재합니다",

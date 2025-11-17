@@ -58,7 +58,12 @@
     "problem_description": "问题描述",
     "sample_sql": "示例 SQL",
     "effective_data_sources": "生效数据源",
-    "advanced_application": "高级应用"
+    "advanced_application": "高级应用",
+    "error_info": "错误信息",
+    "question_cannot_be_empty": "问题不能为空",
+    "description_cannot_be_empty": "示例 SQL 不能为空",
+    "datasource_not_found": "找不到数据源",
+    "advanced_application_not_found": "找不到高级应用"
   },
   "i18n_custom_prompt": {
     "exists_in_db": "模版名称已存在",

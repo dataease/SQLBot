@@ -44,7 +44,9 @@
     "sql_statement": "SQL 문",
     "edit_training_data": "예제 SQL 편집",
     "all_236_terms": "모든 {msg}개의 예시 SQL 기록을 내보내시겠습니까?",
-    "sales_this_year": "예제 SQL을 삭제하시겠습니까: {msg}?"
+    "sales_this_year": "예제 SQL을 삭제하시겠습니까: {msg}?",
+    "upload_success": "가져오기 성공",
+    "upload_failed": "성공: {success}건, 실패: {fail}건. 자세한 내용은 다음을 참조하세요: {fail_info}"
   },
   "professional": {
     "cannot_be_repeated": "용어 이름과 동의어는 중복될 수 없습니다",

@@ -58,7 +58,12 @@
     "problem_description": "Problem Description",
     "sample_sql": "Sample SQL",
     "effective_data_sources": "Effective Data Sources",
-    "advanced_application": "Advanced Application"
+    "advanced_application": "Advanced Application",
+    "error_info": "Error Information",
+    "question_cannot_be_empty": "Question cannot be empty",
+    "description_cannot_be_empty": "Sample SQL cannot be empty",
+    "datasource_not_found": "Datasource not found",
+    "advanced_application_not_found": "Advanced application not found"
   },
   "i18n_custom_prompt": {
     "exists_in_db": "Template name already exists",
