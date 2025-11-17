@@ -134,7 +134,7 @@ const onSuccess = (response: any) => {
         })
         const link = document.createElement('a')
         link.href = URL.createObjectURL(blob)
-        link.download = `${t('training.data_training')}_error.xlsx`
+        link.download = response.data.error_excel_filename
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)

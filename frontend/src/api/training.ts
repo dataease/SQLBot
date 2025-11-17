@@ -16,8 +16,12 @@ export const trainingApi = {
       requestOptions: { customError: true },
     }),
   downloadError: (path: any) =>
-    request.get(`/system/data-training/download-fail-info/${path}`, {
-      responseType: 'blob',
-      requestOptions: { customError: true },
-    }),
+    request.post(
+      `/system/data-training/download-fail-info`,
+      { file: path },
+      {
+        responseType: 'blob',
+        requestOptions: { customError: true },
+      }
+    ),
 }

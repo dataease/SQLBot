@@ -16,6 +16,7 @@ from apps.data_training.curd.data_training import page_data_training, create_tra
 from apps.data_training.models.data_training_model import DataTrainingInfo
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
+from common.core.file import FileRequest
 from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["DataTraining"], prefix="/system/data-training")
@@ -214,11 +215,12 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
     return await asyncio.to_thread(inner)
 
 
-@router.get("/download-fail-info/{filename}")
-async def download_excel(filename: str, trans: Trans):
+@router.post("/download-fail-info")
+async def download_excel(req: FileRequest):
     """
     根据文件路径下载 Excel 文件
     """
+    filename = req.file
     file_path = os.path.join(path, filename)
 
     # 检查文件是否存在
