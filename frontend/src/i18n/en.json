@@ -704,7 +704,17 @@
     "field_mapping": "User Attribute Mapping",
     "field_mapping_placeholder": "Example: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "Incorrect format, please re-enter",
-    "in_json_format": "Please enter JSON format"
+    "in_json_format": "Please enter JSON format",
+    "authorize_url": "Authorization URL",
+    "client_id": "Client ID",
+    "client_secret": "Client Secret",
+    "redirect_url": "Redirect URL",
+    "oauth2_settings": "OAuth2 Settings",
+    "scope": "Scope",
+    "userinfo_url": "User Info URL",
+    "token_url": "Token URL",
+    "revoke_url": "Revocation URL",
+    "oauth2_field_mapping_placeholder": "Example: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}"
   },
   "login": {
     "default_login": "Default",

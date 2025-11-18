@@ -704,7 +704,17 @@
     "field_mapping": "用户属性映射",
     "field_mapping_placeholder": "例如：{'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "格式错误，请重新填写",
-    "in_json_format": "请输入json格式"
+    "in_json_format": "请输入json格式",
+    "authorize_url": "授权地址",
+    "client_id": "客户端 ID",
+    "client_secret": "客户端密钥",
+    "redirect_url": "回调地址",
+    "oauth2_settings": "OAuth2 设置",
+    "scope": "授权范围",
+    "userinfo_url": "用户信息地址",
+    "token_url": "令牌地址",
+    "revoke_url": "撤销地址",
+    "oauth2_field_mapping_placeholder": "例如：{'{'}\"account\": \"oauth2Account\", \"name\": \"oauth2Name\", \"email\": \"email\"{'}'}"
   },
   "login": {
     "default_login": "默认",

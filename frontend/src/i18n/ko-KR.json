@@ -704,7 +704,17 @@
     "field_mapping": "사용자 속성 매핑",
     "field_mapping_placeholder": "예: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "형식이 잘못되었습니다. 다시 입력해 주세요",
-    "in_json_format": "JSON 형식으로 입력해 주세요"
+    "in_json_format": "JSON 형식으로 입력해 주세요",
+    "authorize_url": "인증 URL",
+    "client_id": "클라이언트 ID",
+    "client_secret": "클라이언트 시크릿",
+    "redirect_url": "리디렉션 URL",
+    "oauth2_settings": "OAuth2 설정",
+    "scope": "권한 범위",
+    "userinfo_url": "사용자 정보 URL",
+    "token_url": "토큰 URL",
+    "revoke_url": "취소 URL",
+    "oauth2_field_mapping_placeholder": "예: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}"
   },
   "login": {
     "default_login": "기본값",

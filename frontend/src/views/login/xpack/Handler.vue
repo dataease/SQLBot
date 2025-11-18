@@ -20,8 +20,8 @@
         :ldap="loginCategory.ldap"
         @status-change="qrStatusChange"
       />
-      <Oidc v-if="loginCategory.oidc" @switch-category="switcherCategory" />
-      <Oauth2 v-if="loginCategory.oauth2" ref="oauth2Handler" @switch-category="switcherCategory" /> -->
+      <Oidc v-if="loginCategory.oidc" @switch-category="switcherCategory" /> -->
+      <Oauth2 v-if="loginCategory.oauth2" ref="oauth2Handler" @switch-category="switcherCategory" />
       <Cas v-if="loginCategory.cas" @switch-category="switcherCategory" />
       <!-- <Saml2 v-if="loginCategory.saml2" ref="saml2Handler" @switch-category="switcherCategory" /> -->
     </div>
@@ -38,13 +38,14 @@ import Oidc from './Oidc.vue'
 import Oauth2 from './Oauth2.vue'
 import Saml2 from './Saml2.vue' */
 import Cas from './Cas.vue'
+import Oauth2 from './Oauth2.vue'
 // import QrTab from './QrTab.vue'
 import { request } from '@/utils/request'
 import { useCache } from '@/utils/useCache'
 
 import router from '@/router'
 import { useUserStore } from '@/stores/user.ts'
-import { getQueryString, isPlatformClient } from '@/utils/utils'
+import { getQueryString, getUrlParams, isPlatformClient } from '@/utils/utils'
 import { loadClient, type LoginCategory } from './PlatformClient'
 // import MfaStep from './MfaStep.vue'
 // import { logoutHandler } from '@/utils/logout'
@@ -150,7 +151,10 @@ const switcherCategory = (param: Categoryparam) => {
   }
   const nextPage = curOrigin + pathname + proxy + curLocation
   if (category === 'oauth2') {
-    oauth2Handler?.value?.toLoginPage()
+    request.get('/system/authentication/login/4').then((res: any) => {
+      window.location.href = res
+      window.open(res, '_self')
+    })
     return
   }
   if (category === 'saml2') {
@@ -176,9 +180,12 @@ const getCurLocation = () => {
 }
 
 const casLogin = () => {
+  const urlParams = getUrlParams()
   const ticket = getQueryString('ticket')
+  /* request
+    .get('/system/authentication/sso/cas?ticket=' + ticket) */
   request
-    .get('/system/authentication/sso/cas?ticket=' + ticket)
+    .post('/system/authentication/sso/1', urlParams)
     .then((res: any) => {
       const token = res.access_token
       if (token && isPlatformClient()) {
@@ -191,6 +198,39 @@ const casLogin = () => {
         flag: 'cas',
         data: ticket,
         origin: 1,
+      })
+      const queryRedirectPath = getCurLocation()
+      router.push({ path: queryRedirectPath })
+    })
+    .catch((e: any) => {
+      userStore.setToken('')
+      setTimeout(() => {
+        // logoutHandler(true, true)
+        platformLoginMsg.value = e?.message || e
+        setTimeout(() => {
+          window.location.href =
+            window.location.origin + window.location.pathname + window.location.hash
+        }, 2000)
+      }, 1500)
+    })
+}
+const oauth2Login = () => {
+  const urlParams = getUrlParams()
+  request
+    .post('/system/authentication/sso/4', urlParams)
+    .then((res: any) => {
+      const token = res.access_token
+      const id_token = res.id_token
+      if (token && isPlatformClient()) {
+        wsCache.set('de-platform-client', true)
+      }
+      userStore.setToken(token)
+      userStore.setExp(res.exp)
+      userStore.setTime(Date.now())
+      userStore.setPlatformInfo({
+        flag: 'oauth2',
+        data: id_token,
+        origin: 4,
       })
       const queryRedirectPath = getCurLocation()
       router.push({ path: queryRedirectPath })
@@ -384,6 +424,8 @@ onMounted(() => {
     if (state?.includes('cas') && getQueryString('ticket')) {
       // platformLogin(1)
       casLogin()
+    } else if (state?.includes('oauth2')) {
+      oauth2Login()
     } else {
       updateLoading(false)
     }
