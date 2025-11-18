@@ -16,13 +16,4 @@ export const professionalApi = {
       responseType: 'blob',
       requestOptions: { customError: true },
     }),
-  downloadError: (path: any) =>
-    request.post(
-      `/system/terminology/download-fail-info`,
-      { file: path },
-      {
-        responseType: 'blob',
-        requestOptions: { customError: true },
-      }
-    ),
 }

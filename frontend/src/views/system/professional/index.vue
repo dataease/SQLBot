@@ -13,8 +13,8 @@ import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useI18n } from 'vue-i18n'
 import { cloneDeep } from 'lodash-es'
 import { genFileId, type UploadInstance, type UploadProps, type UploadRawFile } from 'element-plus'
-import { trainingApi } from '@/api/training.ts'
 import { useCache } from '@/utils/useCache.ts'
+import { settingsApi } from '@/api/setting.ts'
 
 interface Form {
   id?: string | null
@@ -105,7 +105,7 @@ const onSuccess = (response: any) => {
         fail_info: response.data.error_excel_filename,
       })
     )
-    trainingApi
+    settingsApi
       .downloadError(response.data.error_excel_filename)
       .then((res) => {
         const blob = new Blob([res], {

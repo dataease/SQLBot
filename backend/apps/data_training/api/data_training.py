@@ -8,7 +8,7 @@ from typing import Optional
 
 import pandas as pd
 from fastapi import APIRouter, File, UploadFile, Query
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import StreamingResponse
 
 from apps.chat.models.chat_model import AxisObj
 from apps.data_training.curd.data_training import page_data_training, create_training, update_training, delete_training, \
@@ -16,7 +16,6 @@ from apps.data_training.curd.data_training import page_data_training, create_tra
 from apps.data_training.models.data_training_model import DataTrainingInfo
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
-from common.core.file import FileRequest
 from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["DataTraining"], prefix="/system/data-training")
@@ -213,30 +212,3 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
         }
 
     return await asyncio.to_thread(inner)
-
-
-@router.post("/download-fail-info")
-async def download_excel(req: FileRequest):
-    """
-    根据文件路径下载 Excel 文件
-    """
-    filename = req.file
-    file_path = os.path.join(path, filename)
-
-    # 检查文件是否存在
-    if not os.path.exists(file_path):
-        raise HTTPException(404, "File Not Exists")
-
-    # 检查文件是否是 Excel 文件
-    if not filename.endswith('_error.xlsx'):
-        raise HTTPException(400, "Only support _error.xlsx")
-
-    # 获取文件名
-    filename = os.path.basename(file_path)
-
-    # 返回文件
-    return FileResponse(
-        path=file_path,
-        filename=filename,
-        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )

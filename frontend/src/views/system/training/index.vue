@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, reactive, ref, unref } from 'vue'
 import icon_export_outlined from '@/assets/svg/icon_export_outlined.svg'
 import { trainingApi } from '@/api/training'
+import { settingsApi } from '@/api/setting.ts'
 import { formatTimestamp } from '@/utils/date'
 import { datasourceApi } from '@/api/datasource'
 import ccmUpload from '@/assets/svg/icon_ccm-upload_outlined.svg'
@@ -124,7 +125,7 @@ const onSuccess = (response: any) => {
         fail_info: response.data.error_excel_filename,
       })
     )
-    trainingApi
+    settingsApi
       .downloadError(response.data.error_excel_filename)
       .then((res) => {
         const blob = new Blob([res], {

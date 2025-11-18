@@ -15,13 +15,4 @@ export const trainingApi = {
       responseType: 'blob',
       requestOptions: { customError: true },
     }),
-  downloadError: (path: any) =>
-    request.post(
-      `/system/data-training/download-fail-info`,
-      { file: path },
-      {
-        responseType: 'blob',
-        requestOptions: { customError: true },
-      }
-    ),
 }

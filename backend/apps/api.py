@@ -7,6 +7,7 @@ from apps.datasource.api import datasource, table_relation
 from apps.mcp import mcp
 from apps.system.api import login, user, aimodel, workspace, assistant
 from apps.terminology.api import terminology
+from apps.settings.api import base
 
 api_router = APIRouter()
 api_router.include_router(login.router)
@@ -14,6 +15,7 @@ api_router.include_router(user.router)
 api_router.include_router(workspace.router)
 api_router.include_router(assistant.router)
 api_router.include_router(aimodel.router)
+api_router.include_router(base.router)
 api_router.include_router(terminology.router)
 api_router.include_router(data_training.router)
 api_router.include_router(datasource.router)
