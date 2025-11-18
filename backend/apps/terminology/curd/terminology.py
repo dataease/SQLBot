@@ -201,6 +201,16 @@ def get_all_terminology(session: SessionDep, name: Optional[str] = None, oid: Op
 
 
 def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, trans: Trans):
+    """
+    创建单个术语记录
+    """
+    # 基本验证
+    if not info.word or not info.word.strip():
+        raise Exception(trans("i18n_terminology.word_cannot_be_empty"))
+
+    if not info.description or not info.description.strip():
+        raise Exception(trans("i18n_terminology.description_cannot_be_empty"))
+
     create_time = datetime.datetime.now()
 
     specific_ds = info.specific_ds if info.specific_ds is not None else False
@@ -210,16 +220,26 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         if not datasource_ids:
             raise Exception(trans("i18n_terminology.datasource_cannot_be_none"))
 
-    parent = Terminology(word=info.word, create_time=create_time, description=info.description, oid=oid,
-                         specific_ds=specific_ds, enabled=info.enabled,
-                         datasource_ids=datasource_ids)
+    parent = Terminology(
+        word=info.word,
+        create_time=create_time,
+        description=info.description,
+        oid=oid,
+        specific_ds=specific_ds,
+        enabled=info.enabled,
+        datasource_ids=datasource_ids
+    )
 
     words = [info.word]
-    for child in info.other_words:
-        if child in words:
+    for child_word in info.other_words:
+        # 先检查是否为空字符串
+        if not child_word or child_word.strip() == "":
+            continue
+
+        if child_word in words:
             raise Exception(trans("i18n_terminology.cannot_be_repeated"))
         else:
-            words.append(child)
+            words.append(child_word)
 
     # 基础查询条件（word 和 oid 必须满足）
     base_query = and_(
@@ -243,7 +263,7 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                             SELECT 1 FROM jsonb_array_elements(datasource_ids) AS elem
                             WHERE elem::text::int = ANY(:datasource_ids)
                         )
-                    """)  # 检查是否包含任意目标值
+                    """)
                 )
             )
         )
@@ -255,31 +275,206 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     if exists:
         raise Exception(trans("i18n_terminology.exists_in_db"))
 
-    result = Terminology(**parent.model_dump())
-
     session.add(parent)
     session.flush()
     session.refresh(parent)
 
-    result.id = parent.id
-    session.commit()
-
-    _list: List[Terminology] = []
+    # 插入子记录（其他词）
+    child_list = []
     if info.other_words:
         for other_word in info.other_words:
             if other_word.strip() == "":
                 continue
-            _list.append(
-                Terminology(pid=result.id, word=other_word, create_time=create_time, oid=oid, enabled=result.enabled,
-                            specific_ds=specific_ds, datasource_ids=datasource_ids))
-    session.bulk_save_objects(_list)
-    session.flush()
+            child_list.append(
+                Terminology(
+                    pid=parent.id,
+                    word=other_word,
+                    create_time=create_time,
+                    oid=oid,
+                    enabled=info.enabled,
+                    specific_ds=specific_ds,
+                    datasource_ids=datasource_ids
+                )
+            )
+
+    if child_list:
+        session.bulk_save_objects(child_list)
+        session.flush()
+
     session.commit()
 
-    # embedding
-    run_save_terminology_embeddings([result.id])
+    # 处理embedding
+    run_save_terminology_embeddings([parent.id])
 
-    return result.id
+    return parent.id
+
+
+def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInfo], oid: int, trans: Trans):
+    """
+    批量创建术语记录（复用单条插入逻辑）
+    """
+    if not info_list:
+        return {
+            'success_count': 0,
+            'failed_records': [],
+            'duplicate_count': 0,
+            'original_count': 0,
+            'deduplicated_count': 0
+        }
+
+    failed_records = []
+    success_count = 0
+    inserted_ids = []
+
+    # 第一步：数据去重（根据新的唯一性规则）
+    unique_records = {}
+    duplicate_records = []
+
+    for info in info_list:
+        # 过滤掉空的其他词
+        filtered_other_words = [w.strip().lower() for w in info.other_words if w and w.strip()]
+
+        # 根据specific_ds决定是否处理datasource_names
+        specific_ds = info.specific_ds if info.specific_ds is not None else False
+        filtered_datasource_names = []
+
+        if specific_ds and info.datasource_names:
+            # 只有当specific_ds为True时才考虑数据源名称
+            filtered_datasource_names = [d.strip().lower() for d in info.datasource_names if d and d.strip()]
+
+        # 创建唯一标识（根据新的规则）
+        # 1. word和other_words合并并排序（考虑顺序不同）
+        all_words = [info.word.strip().lower()] if info.word else []
+        all_words.extend(filtered_other_words)
+        all_words_sorted = sorted(all_words)
+
+        # 2. datasource_names排序（考虑顺序不同）
+        datasource_names_sorted = sorted(filtered_datasource_names)
+
+        unique_key = (
+            ','.join(all_words_sorted),  # 合并后的所有词（排序）
+            ','.join(datasource_names_sorted),  # 数据源名称（排序）
+            str(specific_ds)  # specific_ds状态
+        )
+
+        if unique_key in unique_records:
+            duplicate_records.append(info)
+        else:
+            unique_records[unique_key] = info
+
+    # 将去重后的数据转换为列表
+    deduplicated_list = list(unique_records.values())
+
+    # 预加载数据源名称到ID的映射
+    datasource_name_to_id = {}
+    datasource_stmt = select(CoreDatasource.id, CoreDatasource.name).where(CoreDatasource.oid == oid)
+    datasource_result = session.execute(datasource_stmt).all()
+    for ds in datasource_result:
+        datasource_name_to_id[ds.name.strip()] = ds.id
+
+    # 验证和转换数据源名称
+    valid_records = []
+    for info in deduplicated_list:
+        error_messages = []
+
+        # 基本验证
+        if not info.word or not info.word.strip():
+            error_messages.append(trans("i18n_terminology.word_cannot_be_empty"))
+            failed_records.append({
+                'data': info,
+                'errors': error_messages
+            })
+            continue
+
+        if not info.description or not info.description.strip():
+            error_messages.append(trans("i18n_terminology.description_cannot_be_empty"))
+            failed_records.append({
+                'data': info,
+                'errors': error_messages
+            })
+            continue
+
+        # 根据specific_ds决定是否验证数据源
+        specific_ds = info.specific_ds if info.specific_ds is not None else False
+        datasource_ids = []
+
+        if specific_ds:
+            # specific_ds为True时需要验证数据源
+            if info.datasource_names:
+                for ds_name in info.datasource_names:
+                    if not ds_name or not ds_name.strip():
+                        continue  # 跳过空的数据源名称
+
+                    if ds_name.strip() in datasource_name_to_id:
+                        datasource_ids.append(datasource_name_to_id[ds_name.strip()])
+                    else:
+                        error_messages.append(trans("i18n_terminology.datasource_not_found").format(ds_name))
+
+            # 检查specific_ds为True时必须有数据源
+            if not datasource_ids:
+                error_messages.append(trans("i18n_terminology.datasource_cannot_be_none"))
+        else:
+            # specific_ds为False时忽略数据源名称
+            datasource_ids = []
+
+        # 检查主词和其他词是否重复（过滤空字符串）
+        words = [info.word.strip().lower()]
+        if info.other_words:
+            for other_word in info.other_words:
+                # 先检查是否为空字符串
+                if not other_word or other_word.strip() == "":
+                    continue
+
+                word_lower = other_word.strip().lower()
+                if word_lower in words:
+                    error_messages.append(trans("i18n_terminology.cannot_be_repeated"))
+                else:
+                    words.append(word_lower)
+
+        if error_messages:
+            failed_records.append({
+                'data': info,
+                'errors': error_messages
+            })
+            continue
+
+        # 创建新的TerminologyInfo对象
+        processed_info = TerminologyInfo(
+            word=info.word.strip(),
+            description=info.description.strip(),
+            other_words=[w for w in info.other_words if w and w.strip()],  # 过滤空字符串
+            datasource_ids=datasource_ids,
+            datasource_names=info.datasource_names,
+            specific_ds=specific_ds,
+            enabled=info.enabled if info.enabled is not None else True
+        )
+
+        valid_records.append(processed_info)
+
+    # 使用事务批量处理有效记录
+    if valid_records:
+        for info in valid_records:
+            try:
+                # 直接复用create_terminology方法
+                terminology_id = create_terminology(session, info, oid, trans)
+                inserted_ids.append(terminology_id)
+                success_count += 1
+
+            except Exception as e:
+                # 如果单条插入失败，回滚当前记录
+                session.rollback()
+                failed_records.append({
+                    'data': info,
+                    'errors': [str(e)]
+                })
+
+    return {
+        'success_count': success_count,
+        'failed_records': failed_records,
+        'duplicate_count': len(duplicate_records),
+        'original_count': len(info_list),
+        'deduplicated_count': len(deduplicated_list)
+    }
 
 
 def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, trans: Trans):

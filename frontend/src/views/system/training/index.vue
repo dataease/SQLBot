@@ -90,8 +90,6 @@ const cancelDelete = () => {
   isIndeterminate.value = false
 }
 
-const upload = () => {}
-
 const uploadRef = ref<UploadInstance>()
 const uploadLoading = ref(false)
 
@@ -488,7 +486,7 @@ const onRowFormClose = () => {
           :limit="1"
           :on-exceed="handleExceed"
         >
-          <el-button secondary @click="upload()">
+          <el-button secondary>
             <template #icon>
               <ccmUpload></ccmUpload>
             </template>

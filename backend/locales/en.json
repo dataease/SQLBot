@@ -47,7 +47,10 @@
     "term_description": "Terminology Description",
     "effective_data_sources": "Effective Data Sources",
     "all_data_sources": "All Data Sources",
-    "synonyms": "Synonyms"
+    "synonyms": "Synonyms",
+    "word_cannot_be_empty": "Term cannot be empty",
+    "description_cannot_be_empty": "Term description cannot be empty",
+    "datasource_not_found": "Datasource not found"
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "Datasource cannot be empty",

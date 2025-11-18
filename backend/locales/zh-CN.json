@@ -47,7 +47,10 @@
     "term_description": "术语描述",
     "effective_data_sources": "生效数据源",
     "all_data_sources": "所有数据源",
-    "synonyms": "同义词"
+    "synonyms": "同义词",
+    "word_cannot_be_empty": "术语不能为空",
+    "description_cannot_be_empty": "术语描述不能为空",
+    "datasource_not_found": "找不到数据源"
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "数据源不能为空",
