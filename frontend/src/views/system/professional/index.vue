@@ -158,7 +158,7 @@ const onError = () => {
 }
 
 const exportExcel = () => {
-  ElMessageBox.confirm(t('professional.all_236_terms', { msg: pageInfo.total }), {
+  ElMessageBox.confirm(t('professional.export_hint', { msg: pageInfo.total }), {
     confirmButtonType: 'primary',
     confirmButtonText: t('professional.export'),
     cancelButtonText: t('common.cancel'),

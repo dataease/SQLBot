@@ -25,6 +25,7 @@
     "loss_exercise_caution": "Entering high-risk operations such as deleting a database or table or modifying the table structure may result in permanent data loss. Exercise caution!",
     "edit_prompt_word": "Edit prompt word",
     "all_236_terms": "Export all {msg} {type} prompt records?",
+    "export_hint": "Export all {type} prompts?",
     "prompt_word_name_de": "Do you want to delete the prompt word: {msg}?"
   },
   "training": {
@@ -44,6 +45,7 @@
     "sql_statement": "SQL Statement",
     "edit_training_data": "Edit SQL Sample",
     "all_236_terms": "Export all {msg} sample SQL records?",
+    "export_hint": "Export all sample SQL?",
     "sales_this_year": "Do you want to delete the SQL Sample: {msg}?",
     "upload_success": "Import Successful",
     "upload_failed": "Import successful: {success} records. Failed: {fail} records. For details, see: {fail_info}"
@@ -64,6 +66,7 @@
     "business_term": "Business Term",
     "synonyms": "Synonyms",
     "all_236_terms": "Export all {msg} terms?",
+    "export_hint": "Export all terms?",
     "export": "Export",
     "selected_2_terms": "Delete the selected {msg} terms?",
     "selected_2_terms_de": "Export the selected {msg} terms?",

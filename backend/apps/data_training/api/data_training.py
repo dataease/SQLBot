@@ -150,13 +150,13 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
                 if row.isnull().all():
                     continue
 
-                question = row[0].strip() if pd.notna(row[0]) and row[0].strip() else None
-                description = row[1].strip() if pd.notna(row[1]) and row[1].strip() else None
-                datasource_name = row[2].strip() if pd.notna(row[2]) and row[2].strip() else None
+                question = row[0].strip() if pd.notna(row[0]) and row[0].strip() else ''
+                description = row[1].strip() if pd.notna(row[1]) and row[1].strip() else ''
+                datasource_name = row[2].strip() if pd.notna(row[2]) and row[2].strip() else ''
 
-                advanced_application_name = None
+                advanced_application_name = ''
                 if oid == 1 and len(row) > 3:
-                    advanced_application_name = row[3].strip() if pd.notna(row[3]) and row[3].strip() else None
+                    advanced_application_name = row[3].strip() if pd.notna(row[3]) and row[3].strip() else ''
 
                 if oid == 1:
                     import_data.append(

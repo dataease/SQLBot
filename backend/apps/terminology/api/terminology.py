@@ -146,10 +146,10 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
                 if row.isnull().all():
                     continue
 
-                word = row[0].strip() if pd.notna(row[0]) and row[0].strip() else None
+                word = row[0].strip() if pd.notna(row[0]) and row[0].strip() else ''
                 other_words = [w.strip() for w in row[1].strip().split(',')] if pd.notna(row[1]) and row[
                     1].strip() else []
-                description = row[2].strip() if pd.notna(row[2]) and row[2].strip() else None
+                description = row[2].strip() if pd.notna(row[2]) and row[2].strip() else ''
                 datasource_names = [d.strip() for d in row[3].strip().split(',')] if pd.notna(row[3]) and row[
                     3].strip() else []
                 all_datasource = True if pd.notna(row[4]) and row[4].lower().strip() in ['y', 'yes', 'true'] else False

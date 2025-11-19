@@ -25,6 +25,7 @@
     "loss_exercise_caution": "若输入删除数据库、数据表或修改表结构等高风险的操作指令，可能导致数据永久丢失，请务必谨慎！",
     "edit_prompt_word": "编辑提示词",
     "all_236_terms": "是否导出全部 {msg} 条{type}提示词？",
+    "export_hint": "是否导出全部{type}提示词？",
     "prompt_word_name_de": "是否删除提示词：{msg}？"
   },
   "training": {
@@ -44,6 +45,7 @@
     "sql_statement": "SQL 语句",
     "edit_training_data": "编辑示例 SQL",
     "all_236_terms": "是否导出全部 {msg} 条示例 SQL？",
+    "export_hint": "是否导出全部示例 SQL？",
     "sales_this_year": "是否删除示例 SQL：{msg}？",
     "upload_success": "导入成功",
     "upload_failed": "导入成功 {success} 条，失败 {fail} 条，失败信息详见：{fail_info}"
@@ -64,6 +66,7 @@
     "business_term": "业务术语",
     "synonyms": "同义词",
     "all_236_terms": "是否导出全部 {msg} 条术语？",
+    "export_hint": "是否导出全部术语？",
     "export": "导出",
     "selected_2_terms": "是否删除选中的 {msg} 条术语？",
     "selected_2_terms_de": "是否导出选中的 {msg} 条术语？",

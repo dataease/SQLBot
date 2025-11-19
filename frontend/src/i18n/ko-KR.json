@@ -25,6 +25,7 @@
     "loss_exercise_caution": "데이터베이스 삭제, 데이터 테이블 삭제 또는 테이블 구조 수정과 같은 고위험 작업 명령을 입력하면 데이터가 영구적으로 손실될 수 있으니 신중하게 작업하십시오!",
     "edit_prompt_word": "프롬프트 편집",
     "all_236_terms": "모든 {msg}개의 {type} 프롬프트 기록을 내보내시겠습니까?",
+    "export_hint": "모든 {type} 프롬프트를 내보내시겠습니까?",
     "prompt_word_name_de": "프롬프트를 삭제하시겠습니까: {msg}?"
   },
   "training": {
@@ -44,6 +45,7 @@
     "sql_statement": "SQL 문",
     "edit_training_data": "예제 SQL 편집",
     "all_236_terms": "모든 {msg}개의 예시 SQL 기록을 내보내시겠습니까?",
+    "export_hint": "모든 예시 SQL을 내보내시겠습니까?",
     "sales_this_year": "예제 SQL을 삭제하시겠습니까: {msg}?",
     "upload_success": "가져오기 성공",
     "upload_failed": "성공: {success}건, 실패: {fail}건. 자세한 내용은 다음을 참조하세요: {fail_info}"
@@ -64,6 +66,7 @@
     "business_term": "비즈니스 용어",
     "synonyms": "동의어",
     "all_236_terms": "전체 {msg}개 용어를 내보내시겠습니까?",
+    "export_hint": "모든 용어를 내보내시겠습니까?",
     "export": "내보내기",
     "selected_2_terms": "선택된 {msg}개 용어를 삭제하시겠습니까?",
     "selected_2_terms_de": "선택된 {msg}개 용어를 내보내시겠습니까?",

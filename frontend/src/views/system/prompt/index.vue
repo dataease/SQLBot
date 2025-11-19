@@ -183,7 +183,7 @@ const exportExcel = () => {
   if (currentType.value === 'PREDICT_DATA') {
     title = t('prompt.data_prediction')
   }
-  ElMessageBox.confirm(t('prompt.all_236_terms', { msg: pageInfo.total, type: title }), {
+  ElMessageBox.confirm(t('prompt.export_hint', { msg: pageInfo.total, type: title }), {
     confirmButtonType: 'primary',
     confirmButtonText: t('professional.export'),
     cancelButtonText: t('common.cancel'),
