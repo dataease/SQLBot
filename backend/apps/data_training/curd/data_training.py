@@ -145,9 +145,11 @@ def get_all_data_training(session: SessionDep, name: Optional[str] = None, oid: 
     return _list
 
 
-def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans):
+def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans: Trans, skip_embedding: bool = False):
     """
     创建单个数据训练记录
+    Args:
+        skip_embedding: 是否跳过embedding处理（用于批量插入）
     """
     # 基本验证
     if not info.question or not info.question.strip():
@@ -203,8 +205,9 @@ def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
     session.refresh(data_training)
     session.commit()
 
-    # 处理embedding
-    run_save_data_training_embeddings([data_training.id])
+    # 处理embedding（批量插入时跳过）
+    if not skip_embedding:
+        run_save_data_training_embeddings([data_training.id])
 
     return data_training.id
 
@@ -247,11 +250,11 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         raise Exception(trans("i18n_data_training.exists_in_db"))
 
     stmt = update(DataTraining).where(and_(DataTraining.id == info.id)).values(
-        question=info.question,
-        description=info.description,
+        question=info.question.strip(),
+        description=info.description.strip(),
         datasource=info.datasource,
-        enabled=info.enabled,
         advanced_application=info.advanced_application,
+        enabled=info.enabled if info.enabled is not None else True
     )
     session.execute(stmt)
     session.commit()
@@ -374,8 +377,8 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
     if valid_records:
         for info in valid_records:
             try:
-                # 直接复用create_training方法
-                training_id = create_training(session, info, oid, trans)
+                # 直接复用create_training方法，跳过embedding处理
+                training_id = create_training(session, info, oid, trans, skip_embedding=True)
                 inserted_ids.append(training_id)
                 success_count += 1
 
@@ -386,6 +389,15 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
                     'data': info,
                     'errors': [str(e)]
                 })
+
+        # 批量处理embedding（只在最后执行一次）
+        if success_count > 0 and inserted_ids:
+            try:
+                run_save_data_training_embeddings(inserted_ids)
+            except Exception as e:
+                # 如果embedding处理失败，记录错误但不回滚数据
+                print(f"Embedding processing failed: {str(e)}")
+                # 可以选择将embedding失败的信息记录到日志或返回给调用方
 
     return {
         'success_count': success_count,

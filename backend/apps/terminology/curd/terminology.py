@@ -200,9 +200,12 @@ def get_all_terminology(session: SessionDep, name: Optional[str] = None, oid: Op
     return _list
 
 
-def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, trans: Trans):
+def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, trans: Trans,
+                       skip_embedding: bool = False):
     """
     创建单个术语记录
+    Args:
+        skip_embedding: 是否跳过embedding处理（用于批量插入）
     """
     # 基本验证
     if not info.word or not info.word.strip():
@@ -221,16 +224,16 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
             raise Exception(trans("i18n_terminology.datasource_cannot_be_none"))
 
     parent = Terminology(
-        word=info.word,
+        word=info.word.strip(),
         create_time=create_time,
-        description=info.description,
+        description=info.description.strip(),
         oid=oid,
         specific_ds=specific_ds,
         enabled=info.enabled,
         datasource_ids=datasource_ids
     )
 
-    words = [info.word]
+    words = [info.word.strip()]
     for child_word in info.other_words:
         # 先检查是否为空字符串
         if not child_word or child_word.strip() == "":
@@ -239,7 +242,7 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         if child_word in words:
             raise Exception(trans("i18n_terminology.cannot_be_repeated"))
         else:
-            words.append(child_word)
+            words.append(child_word.strip())
 
     # 基础查询条件（word 和 oid 必须满足）
     base_query = and_(
@@ -288,7 +291,7 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
             child_list.append(
                 Terminology(
                     pid=parent.id,
-                    word=other_word,
+                    word=other_word.strip(),
                     create_time=create_time,
                     oid=oid,
                     enabled=info.enabled,
@@ -303,8 +306,9 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
 
     session.commit()
 
-    # 处理embedding
-    run_save_terminology_embeddings([parent.id])
+    # 处理embedding（批量插入时跳过）
+    if not skip_embedding:
+        run_save_terminology_embeddings([parent.id])
 
     return parent.id
 
@@ -380,19 +384,9 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
         # 基本验证
         if not info.word or not info.word.strip():
             error_messages.append(trans("i18n_terminology.word_cannot_be_empty"))
-            failed_records.append({
-                'data': info,
-                'errors': error_messages
-            })
-            continue
 
         if not info.description or not info.description.strip():
             error_messages.append(trans("i18n_terminology.description_cannot_be_empty"))
-            failed_records.append({
-                'data': info,
-                'errors': error_messages
-            })
-            continue
 
         # 根据specific_ds决定是否验证数据源
         specific_ds = info.specific_ds if info.specific_ds is not None else False
@@ -455,8 +449,8 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
     if valid_records:
         for info in valid_records:
             try:
-                # 直接复用create_terminology方法
-                terminology_id = create_terminology(session, info, oid, trans)
+                # 直接复用create_terminology方法，跳过embedding处理
+                terminology_id = create_terminology(session, info, oid, trans, skip_embedding=True)
                 inserted_ids.append(terminology_id)
                 success_count += 1
 
@@ -467,6 +461,15 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
                     'data': info,
                     'errors': [str(e)]
                 })
+
+        # 批量处理embedding（只在最后执行一次）
+        if success_count > 0 and inserted_ids:
+            try:
+                run_save_terminology_embeddings(inserted_ids)
+            except Exception as e:
+                # 如果embedding处理失败，记录错误但不回滚数据
+                print(f"Terminology embedding processing failed: {str(e)}")
+                # 可以选择将embedding失败的信息记录到日志或返回给调用方
 
     return {
         'success_count': success_count,
@@ -492,12 +495,12 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         if not datasource_ids:
             raise Exception(trans("i18n_terminology.datasource_cannot_be_none"))
 
-    words = [info.word]
+    words = [info.word.strip()]
     for child in info.other_words:
         if child in words:
             raise Exception(trans("i18n_terminology.cannot_be_repeated"))
         else:
-            words.append(child)
+            words.append(child.strip())
 
     # 基础查询条件（word 和 oid 必须满足）
     base_query = and_(
@@ -539,8 +542,8 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         raise Exception(trans("i18n_terminology.exists_in_db"))
 
     stmt = update(Terminology).where(and_(Terminology.id == info.id)).values(
-        word=info.word,
-        description=info.description,
+        word=info.word.strip(),
+        description=info.description.strip(),
         specific_ds=specific_ds,
         datasource_ids=datasource_ids,
         enabled=info.enabled,
@@ -553,16 +556,27 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     session.commit()
 
     create_time = datetime.datetime.now()
-    _list: List[Terminology] = []
+    # 插入子记录（其他词）
+    child_list = []
     if info.other_words:
         for other_word in info.other_words:
             if other_word.strip() == "":
                 continue
-            _list.append(
-                Terminology(pid=info.id, word=other_word, create_time=create_time, oid=oid,
-                            specific_ds=specific_ds, datasource_ids=datasource_ids, enabled=info.enabled))
-    session.bulk_save_objects(_list)
-    session.flush()
+            child_list.append(
+                Terminology(
+                    pid=info.id,
+                    word=other_word.strip(),
+                    create_time=create_time,
+                    oid=oid,
+                    enabled=info.enabled,
+                    specific_ds=specific_ds,
+                    datasource_ids=datasource_ids
+                )
+            )
+
+    if child_list:
+        session.bulk_save_objects(child_list)
+        session.flush()
     session.commit()
 
     # embedding
