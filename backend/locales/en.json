@@ -74,7 +74,12 @@
     "prompt_word_name": "Prompt word name",
     "prompt_word_content": "Prompt word content",
     "effective_data_sources": "Effective Data Sources",
-    "all_data_sources": "All Data Sources"
+    "all_data_sources": "All Data Sources",
+    "name_cannot_be_empty": "Name cannot be empty",
+    "prompt_cannot_be_empty": "Prompt content cannot be empty",
+    "type_cannot_be_empty": "Type cannot be empty",
+    "datasource_not_found": "Datasource not found",
+    "datasource_cannot_be_none": "Datasource cannot be empty"
   },
   "i18n_excel_export": {
     "data_is_empty": "Form data is empty, unable to export data"

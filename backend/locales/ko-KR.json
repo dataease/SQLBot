@@ -74,7 +74,12 @@
     "prompt_word_name": "프롬프트 이름",
     "prompt_word_content": "프롬프트 내용",
     "effective_data_sources": "유효 데이터 소스",
-    "all_data_sources": "모든 데이터 소스"
+    "all_data_sources": "모든 데이터 소스",
+    "name_cannot_be_empty": "이름은 비울 수 없습니다",
+    "prompt_cannot_be_empty": "프롬프트 내용은 비울 수 없습니다",
+    "type_cannot_be_empty": "유형은 비울 수 없습니다",
+    "datasource_not_found": "데이터 소스를 찾을 수 없음",
+    "datasource_cannot_be_none": "데이터 소스는 비울 수 없습니다"
   },
   "i18n_excel_export": {
     "data_is_empty": "폼 데이터가 비어 있어 데이터를 내보낼 수 없습니다"
