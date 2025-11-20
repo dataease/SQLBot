@@ -48,7 +48,7 @@ dependencies = [
     "xlrd>=2.0.2",
     "clickhouse-sqlalchemy>=0.3.2",
     "dicttoxml>=1.7.16",
-    "dmpython>=2.5.22; platform_system != 'Darwin'",
+    "dmpython==2.5.22; platform_system != 'Darwin'",
     "redshift-connector>=2.1.8",
     "elasticsearch[requests] (>=7.10,<8.0)",
 ]
@@ -73,7 +73,7 @@ explicit = true
 
 [[tool.uv.index]]
 name = "default"
-url = "https://mirrors.aliyun.com/pypi/simple"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 default = true
 
 [[tool.uv.index]]
