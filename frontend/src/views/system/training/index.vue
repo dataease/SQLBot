@@ -727,7 +727,7 @@ const onRowFormClose = () => {
   </el-drawer>
   <el-drawer
     v-model="rowInfoDialog"
-    :title="$t('professional.professional_term_details')"
+    :title="$t('training.training_data_details')"
     destroy-on-close
     size="600px"
     :before-close="onRowFormClose"

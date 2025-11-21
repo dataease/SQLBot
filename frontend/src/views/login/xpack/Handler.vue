@@ -220,7 +220,7 @@ const oauth2Login = () => {
     .post('/system/authentication/sso/4', urlParams)
     .then((res: any) => {
       const token = res.access_token
-      const id_token = res.id_token
+      const platform_info = res.platform_info
       if (token && isPlatformClient()) {
         wsCache.set('de-platform-client', true)
       }
@@ -229,7 +229,7 @@ const oauth2Login = () => {
       userStore.setTime(Date.now())
       userStore.setPlatformInfo({
         flag: 'oauth2',
-        data: id_token,
+        data: platform_info ? JSON.stringify(platform_info) : '',
         origin: 4,
       })
       const queryRedirectPath = getCurLocation()
