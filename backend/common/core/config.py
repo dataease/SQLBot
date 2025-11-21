@@ -64,7 +64,8 @@ class Settings(BaseSettings):
     LOG_DIR: str = "logs"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s:%(lineno)d - %(message)s"
     SQL_DEBUG: bool = False
-
+    BASE_DIR: str = "/opt/sqlbot"
+    SCRIPT_DIR: str = f"{BASE_DIR}/scripts"
     UPLOAD_DIR: str = "/opt/sqlbot/data/file"
     SQLBOT_KEY_EXPIRED: int = 100  # License key expiration timestamp, 0 means no expiration
 

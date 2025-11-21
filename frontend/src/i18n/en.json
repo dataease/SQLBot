@@ -723,7 +723,9 @@
     "userinfo_url": "User Info URL",
     "token_url": "Token URL",
     "revoke_url": "Revocation URL",
-    "oauth2_field_mapping_placeholder": "Example: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}"
+    "oauth2_field_mapping_placeholder": "Example: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}",
+    "token_auth_method": "Token auth method",
+    "userinfo_auth_method": "Userinfo auth method"
   },
   "login": {
     "default_login": "Default",

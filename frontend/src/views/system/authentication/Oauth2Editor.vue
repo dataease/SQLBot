@@ -27,6 +27,8 @@ const state = reactive({
     client_id: '',
     client_secret: '',
     redirect_url: '',
+    token_auth_method: 'basic',
+    userinfo_auth_method: 'header',
     mapping: '',
   }),
 })
@@ -358,6 +360,20 @@ onBeforeMount(() => {
           <el-radio label="1">Client Secret Jwt</el-radio>
         </el-radio-group>
       </el-form-item> -->
+
+      <el-form-item :label="t('authentication.token_auth_method')" prop="token_auth_method">
+        <el-radio-group v-model="state.form.token_auth_method">
+          <el-radio value="basic">Basic</el-radio>
+          <el-radio value="body">Body</el-radio>
+        </el-radio-group>
+      </el-form-item>
+
+      <el-form-item :label="t('authentication.userinfo_auth_method')" prop="userinfo_auth_method">
+        <el-radio-group v-model="state.form.userinfo_auth_method">
+          <el-radio value="header">Header</el-radio>
+          <el-radio value="query">Query</el-radio>
+        </el-radio-group>
+      </el-form-item>
 
       <el-form-item
         v-for="form_item in form_config_list"

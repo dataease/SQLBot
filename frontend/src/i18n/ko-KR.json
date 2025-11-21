@@ -723,7 +723,9 @@
     "userinfo_url": "사용자 정보 URL",
     "token_url": "토큰 URL",
     "revoke_url": "취소 URL",
-    "oauth2_field_mapping_placeholder": "예: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}"
+    "oauth2_field_mapping_placeholder": "예: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}",
+    "token_auth_method": "토큰 인증 방식",
+    "userinfo_auth_method": "사용자 정보 인증 방식"
   },
   "login": {
     "default_login": "기본값",
