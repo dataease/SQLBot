@@ -718,6 +718,8 @@
     "client_id": "客户端 ID",
     "client_secret": "客户端密钥",
     "redirect_url": "回调地址",
+    "logout_redirect_url": "注销回调地址",
+    "logout_redirect_url_placeholder": "注销后默认跳转至 SQLBot 登录页面，可自定义设置注销后跳转地址",
     "oauth2_settings": "OAuth2 设置",
     "scope": "授权范围",
     "userinfo_url": "用户信息地址",

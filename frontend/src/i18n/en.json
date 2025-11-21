@@ -718,6 +718,8 @@
     "client_id": "Client ID",
     "client_secret": "Client Secret",
     "redirect_url": "Redirect URL",
+    "logout_redirect_url": "Logout Redirect URL",
+    "logout_redirect_url_placeholder": "By default, users will be redirected to the SQLBot login page after logout. You can customize the redirect address here.",
     "oauth2_settings": "OAuth2 Settings",
     "scope": "Scope",
     "userinfo_url": "User Info URL",

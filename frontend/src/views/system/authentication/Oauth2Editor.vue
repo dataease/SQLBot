@@ -27,6 +27,7 @@ const state = reactive({
     client_id: '',
     client_secret: '',
     redirect_url: '',
+    logout_redirect_url: '',
     mapping: '',
   }),
 })
@@ -343,6 +344,13 @@ onBeforeMount(() => {
 
       <el-form-item :label="t('authentication.redirect_url')" prop="redirect_url">
         <el-input v-model="state.form.redirect_url" :placeholder="t('common.please_input')" />
+      </el-form-item>
+
+      <el-form-item :label="t('authentication.logout_redirect_url')" prop="logout_redirect_url">
+        <el-input
+          v-model="state.form.logout_redirect_url"
+          :placeholder="t('authentication.logout_redirect_url_placeholder')"
+        />
       </el-form-item>
 
       <el-form-item :label="t('authentication.field_mapping')" prop="mapping">

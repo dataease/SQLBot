@@ -4,6 +4,7 @@ import { AuthApi } from '@/api/login'
 import { useCache } from '@/utils/useCache'
 import { i18n } from '@/i18n'
 import { store } from './index'
+import { getQueryString } from '@/utils/utils'
 
 const { wsCache } = useCache()
 
@@ -90,6 +91,11 @@ export const UserStore = defineStore('user', {
       if (res) {
         window.location.href = res
         window.open(res, '_self')
+      }
+      if (getQueryString('code') && getQueryString('state')?.includes('oauth2_state')) {
+        const logout_url = location.origin + location.pathname + '#/login'
+        window.location.href = logout_url
+        window.open(res, logout_url)
       }
     },
 
