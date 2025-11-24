@@ -185,8 +185,8 @@ class AiModelQuestion(BaseModel):
 
     def sql_sys_question(self, db_type: Union[str, DB], enable_query_limit: bool = True):
         _sql_template = get_sql_example_template(db_type)
-        _base_sql_rules = _sql_template['quot_rule'] + _sql_template['limit_rule'] + _sql_template['other_rule']
         _query_limit = get_sql_template()['query_limit'] if enable_query_limit else get_sql_template()['no_query_limit']
+        _base_sql_rules = _sql_template['quot_rule'] + _query_limit + _sql_template['limit_rule'] + _sql_template['other_rule']
         _sql_examples = _sql_template['basic_example']
         _example_engine = _sql_template['example_engine']
         _example_answer_1 = _sql_template['example_answer_1_with_limit'] if enable_query_limit else _sql_template[
@@ -198,7 +198,7 @@ class AiModelQuestion(BaseModel):
         return get_sql_template()['system'].format(engine=self.engine, schema=self.db_schema, question=self.question,
                                                    lang=self.lang, terminologies=self.terminologies,
                                                    data_training=self.data_training, custom_prompt=self.custom_prompt,
-                                                   base_sql_rules=_base_sql_rules, query_limit=_query_limit,
+                                                   base_sql_rules=_base_sql_rules,
                                                    basic_sql_examples=_sql_examples,
                                                    example_engine=_example_engine,
                                                    example_answer_1=_example_answer_1,

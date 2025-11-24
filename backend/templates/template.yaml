@@ -7,11 +7,12 @@ template:
     {data_training}
   sql:
     query_limit: |
-      <rule>
-        如果用户没有指定数据条数的限制，输出的查询SQL必须加上1000条的数据条数限制。
+      <rule priority="high">
+        1. <strong>必须遵守</strong>：所有生成的SQL必须包含数据量限制
+        2. <strong>默认限制</strong>：1000条（除非用户明确指定其他数量）
       </rule>
     no_query_limit: |
-      <rule>
+      <rule priority="high">
         如果没有指定数据条数的限制，则查询的SQL默认返回全部数据
       </rule>
     system: |
@@ -68,7 +69,6 @@ template:
           提问中如果有涉及数据源名称或数据源描述的内容，则忽略数据源的信息，直接根据剩余内容生成SQL
         </rule>
         {base_sql_rules}
-        {query_limit}
         <rule>
           如果生成SQL的字段内有时间格式的字段:
           - 若提问中没有指定查询顺序，则默认按时间升序排序

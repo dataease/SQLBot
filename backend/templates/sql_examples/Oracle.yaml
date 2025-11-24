@@ -10,16 +10,41 @@ template:
     </rule>
 
   limit_rule: |
-    <rule>
+    <rule priority="high">
       当需要限制行数时：
       1. 12c以下版本必须使用ROWNUM语法
       2. 12c+版本推荐使用FETCH FIRST语法
       <note>
-        1. 传统写法：WHERE ROWNUM <= 100
-        2. 现代写法：FETCH FIRST 100 ROWS ONLY
+        版本适配：
+          - Oracle 12c以下：必须使用 WHERE ROWNUM <= N
+          - Oracle 12c+：推荐使用 FETCH FIRST N ROWS ONLY
       </note>
       <note>
-        使用传统 ROWNUM 写法时，若遇到需要分组 GROUP BY 的情况，需要将限制条数的 ROWNUM 写在最外层，不然会影响最后查询出数据的总条数
+        <strong>重要：ROWNUM必须放在正确的位置，避免语法错误</strong>
+          1. <strong>单层查询</strong>：ROWNUM直接跟在WHERE子句后
+             <template>SELECT ... FROM table WHERE conditions AND ROWNUM <= N</template>
+          2. <strong>多层查询</strong>：ROWNUM只能放在最外层
+             <template>
+             SELECT ... FROM (
+               SELECT ... FROM table WHERE conditions GROUP BY ...
+             ) WHERE ROWNUM <= N  -- 正确：在最外层
+             </template>
+          3. <strong>禁止的错误写法</strong>：
+             <error-example>
+             SELECT ... FROM table 
+             WHERE conditions 
+             GROUP BY ...
+             ORDER BY ...
+             WHERE ROWNUM <= N  -- 错误：不能有多个WHERE
+             </error-example>
+          4. <strong>正确顺序</strong>：WHERE → GROUP BY → HAVING → ORDER BY → ROWNUM
+          5. <strong>括号位置</strong>：从内层SELECT开始到内层结束都要括起来
+             <correct>
+             SELECT ... FROM (
+               -- 内层完整查询（包含自己的SELECT、FROM、WHERE、GROUP BY、ORDER BY）
+               SELECT columns FROM table WHERE conditions GROUP BY ... ORDER BY ...
+             ) alias WHERE ROWNUM <= N
+             </correct>
       </note>
     </rule>
 
@@ -87,6 +112,17 @@ template:
           GROUP BY "u"."DEPARTMENT"
           ORDER BY "department_name"    -- 错误：ROWNUM 应当写在最外层，这样会导致查询结果条数比实际数据的数量少
         </output-bad>
+        <output-bad>
+          SELECT "department_name", "user_count" FROM
+          SELECT 
+            "u"."DEPARTMENT" AS "department_name",
+            count(*) AS "user_count"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          GROUP BY "u"."DEPARTMENT"
+          ORDER BY "department_name"
+          WHERE ROWNUM <= 100     -- 错误：语法错误，同级内只能有一个WHERE
+        </output-bad>
         <output-good>
           SELECT "department_name", "user_count" FROM (
             SELECT 
@@ -97,7 +133,7 @@ template:
             GROUP BY "u"."DEPARTMENT"
             ORDER BY "department_name"
           ) 
-          WHERE ROWNUM <= 100
+          WHERE ROWNUM <= 100     -- 外层限制（确保最终结果可控）
         </output-good>
       </example>
     </basic-examples>
