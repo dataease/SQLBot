@@ -28,6 +28,8 @@ interface AppearanceState {
   name?: string
   foot?: string
   showSlogan?: string
+  pc_welcome?: string
+  pc_welcome_desc?: string
   footContent?: string
   loaded: boolean
   showDemoTips?: boolean
@@ -66,6 +68,8 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       showDemoTips: false,
       demoTipsContent: '',
       fontList: [],
+      pc_welcome: '',
+      pc_welcome_desc: '',
     }
   },
   getters: {
@@ -272,7 +276,6 @@ export const useAppearanceStore = defineStore('appearanceStore', {
           }
         )[item.pkey] = item.pval
       })
-
       this.navigate = data.navigate
       this.help = data.help
       this.showDoc = data.showDoc
@@ -280,6 +283,8 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       this.navigateBg = data.navigateBg
       this.themeColor = data.themeColor
       this.customColor = data.customColor
+      this.pc_welcome = data.pc_welcome
+      this.pc_welcome_desc = data.pc_welcome_desc
       const currentColor =
         this.themeColor === 'custom' && this.customColor
           ? this.customColor
