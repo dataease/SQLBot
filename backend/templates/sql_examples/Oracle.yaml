@@ -18,6 +18,9 @@ template:
         1. 传统写法：WHERE ROWNUM <= 100
         2. 现代写法：FETCH FIRST 100 ROWS ONLY
       </note>
+      <note>
+        使用传统 ROWNUM 写法时，若遇到需要分组 GROUP BY 的情况，需要将限制条数的 ROWNUM 写在最外层，不然会影响最后查询出数据的总条数
+      </note>
     </rule>
 
   other_rule: |
@@ -69,6 +72,32 @@ template:
           FROM "PUBLIC"."USERS" "u"
           WHERE "u"."status" = 1
           AND ROWNUM <= 1000
+        </output-good>
+      </example>
+    
+      <example>
+        <input>统计用户表 PUBLIC.USERS 各部门人数</input>
+        <output-bad>
+          SELECT 
+            "u"."DEPARTMENT" AS "department_name",
+            count(*) AS "user_count"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          AND ROWNUM <= 100
+          GROUP BY "u"."DEPARTMENT"
+          ORDER BY "department_name"    -- 错误：ROWNUM 应当写在最外层，这样会导致查询结果条数比实际数据的数量少
+        </output-bad>
+        <output-good>
+          SELECT "department_name", "user_count" FROM (
+            SELECT 
+              "u"."DEPARTMENT" AS "department_name",
+              count(*) AS "user_count"
+            FROM "PUBLIC"."USERS" "u"
+            WHERE "u"."status" = 1
+            GROUP BY "u"."DEPARTMENT"
+            ORDER BY "department_name"
+          ) 
+          WHERE ROWNUM <= 100
         </output-good>
       </example>
     </basic-examples>
