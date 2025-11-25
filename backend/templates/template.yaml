@@ -6,14 +6,37 @@ template:
     
     {data_training}
   sql:
+    process_check: |
+      <SQL-Generation-Process>
+        <step>1. 分析用户问题，确定查询需求</step>
+        <step>2. 根据表结构生成基础SQL</step>
+        <step>3. <strong>强制检查：应用数据量限制规则</strong></step>
+        <step>4. 应用其他规则（引号、别名等）</step>
+        <step>5. <strong>强制检查：检查语法是否正确？</strong></step>
+        <step>6. 确定图表类型</step>
+        <step>7. 返回JSON结果</step>
+      </SQL-Generation-Process>
     query_limit: |
-      <rule priority="high">
-        1. <strong>必须遵守</strong>：所有生成的SQL必须包含数据量限制
-        2. <strong>默认限制</strong>：1000条（除非用户明确指定其他数量）
+      <rule priority="critical" id="data-limit-policy">
+        <title>数据量限制策略（必须严格遵守 - 零容忍）</title>
+        <requirements>
+          <requirement level="must-zero-tolerance">所有生成的SQL必须包含数据量限制，这是强制要求</requirement>
+          <requirement level="must">默认限制：1000条（除非用户明确指定其他数量）</requirement>
+          <requirement level="must">忘记添加数据量限制是不可接受的错误</requirement>
+        </requirements>
+        
+        <enforcement>
+          <action>如果生成的SQL没有数据量限制，必须重新生成</action>
+          <action>在最终返回前必须验证限制是否存在</action>
+        </enforcement>
       </rule>
     no_query_limit: |
-      <rule priority="high">
-        如果没有指定数据条数的限制，则查询的SQL默认返回全部数据
+      <rule priority="critical" id="data-limit-policy">
+        <title>数据量限制策略（必须严格遵守）</title>
+        <requirements>
+          <requirement>默认不限制数据量，返回全部数据（除非用户明确指定其他数量）</requirement>
+          <requirement>不要臆测场景可能需要的数据量限制，以用户明确指定的数量为准</requirement>
+        </requirements>
       </rule>
     system: |
       <Instruction>
@@ -27,9 +50,10 @@ template:
           <sql-examples>：提供一组SQL示例，你可以参考这些示例来生成你的回答，其中<question>内是提问，<suggestion-answer>内是对于该<question>提问的解释或者对应应该回答的SQL示例。
         若有<Other-Infos>块，它会提供一组<content>，可能会是额外添加的背景信息，或者是额外的生成SQL的要求，请结合额外信息或要求后生成你的回答。
         用户的提问在<user-question>内，<error-msg>内则会提供上次执行你提供的SQL时会出现的错误信息，<background-infos>内的<current-time>会告诉你用户当前提问的时间
+        你必须遵守<Rules>内规定的生成SQL规则
+        你必须遵守<SQL-Generation-Process>内规定的检查步骤生成你的回答
       </Instruction>
       
-      你必须遵守以下规则:
       <Rules>
         <rule>
           请使用语言：{lang} 回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
@@ -89,6 +113,8 @@ template:
           我们目前的情况适用于单指标、多分类的场景（展示table除外）
         </rule>
       </Rules>
+      
+      {process_check}
       
       {basic_sql_examples}
       
@@ -369,6 +395,8 @@ template:
       
       ### 以往提问:
       {old_questions}
+      
+      /no_think
   analysis:
     system: |
       <Instruction>
