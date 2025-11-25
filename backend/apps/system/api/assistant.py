@@ -17,7 +17,7 @@ from common.core.config import settings
 from common.core.deps import SessionDep, Trans
 from common.core.security import create_access_token
 from common.core.sqlbot_cache import clear_cache
-from common.utils.utils import get_origin_from_referer
+from common.utils.utils import get_origin_from_referer, origin_match_domain
 
 router = APIRouter(tags=["system/assistant"], prefix="/system/assistant")
 
@@ -30,13 +30,15 @@ async def info(request: Request, response: Response, session: SessionDep, trans:
     if not db_model:
         raise RuntimeError(f"assistant application not exist")
     db_model = AssistantModel.model_validate(db_model)
-    response.headers["Access-Control-Allow-Origin"] = db_model.domain
+    
     origin = request.headers.get("origin") or get_origin_from_referer(request)
     if not origin:
         raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
     origin = origin.rstrip('/')
-    if origin != db_model.domain:
+    if not origin_match_domain(origin, db_model.domain):
         raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
+    
+    response.headers["Access-Control-Allow-Origin"] = origin
     return db_model
 
 
@@ -48,13 +50,14 @@ async def getApp(request: Request, response: Response, session: SessionDep, tran
     if not db_model:
         raise RuntimeError(f"assistant application not exist")
     db_model = AssistantModel.model_validate(db_model)
-    response.headers["Access-Control-Allow-Origin"] = db_model.domain
     origin = request.headers.get("origin") or get_origin_from_referer(request)
     if not origin:
         raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
     origin = origin.rstrip('/')
-    if origin != db_model.domain:
+    if not origin_match_domain(origin, db_model.domain):
         raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
+    
+    response.headers["Access-Control-Allow-Origin"] = origin
     return db_model
 
 

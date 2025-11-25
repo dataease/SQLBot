@@ -99,17 +99,22 @@ class AssistantOutDs:
     assistant: AssistantHeader
     ds_list: Optional[list[AssistantOutDsSchema]] = None
     certificate: Optional[str] = None
+    request_origin: Optional[str] = None
 
     def __init__(self, assistant: AssistantHeader):
         self.assistant = assistant
         self.ds_list = None
         self.certificate = assistant.certificate
+        self.request_origin = assistant.request_origin
         self.get_ds_from_api()
 
     # @cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_DS, keyExpression="current_user.id")
     def get_ds_from_api(self):
         config: dict[any] = json.loads(self.assistant.configuration)
         endpoint: str = config['endpoint']
+        endpoint = self.get_complete_endpoint(endpoint=endpoint)
+        if not endpoint:
+            raise Exception(f"Failed to get datasource list from {config['endpoint']}, error: [Assistant domain or endpoint miss]")
         certificateList: list[any] = json.loads(self.certificate)
         header = {}
         cookies = {}
@@ -137,6 +142,17 @@ class AssistantOutDs:
         else:
             raise Exception(f"Failed to get datasource list from {endpoint}, status code: {res.status_code}")
 
+    def get_complete_endpoint(self, endpoint: str) -> str | None:
+        if endpoint.startswith("http://") or endpoint.startswith("https://"):
+            return endpoint
+        domain_text = self.assistant.domain
+        if not domain_text:
+            return None
+        if ',' in domain_text:
+            return self.request_origin.strip('/') if self.request_origin else domain_text.split(',')[0].strip('/') + endpoint
+        else:
+            return f"{domain_text}{endpoint}"  
+    
     def get_simple_ds_list(self):
         if self.ds_list:
             return [{'id': ds.id, 'name': ds.name, 'description': ds.comment} for ds in self.ds_list]
