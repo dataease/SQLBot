@@ -308,6 +308,12 @@
     }
   },
   "datasource": {
+    "recommended_problem_configuration": "Recommended Problem Configuration",
+    "problem_generation_method": "Problem Generation Method",
+    "ai_automatic_generation": "AI Automatic Generation",
+    "user_defined": "User Defined",
+    "question_tips": "Please enter recommended questions",
+    "add_question": "Add Question",
     "data_source_yet": "No data source yet",
     "search_by_name": "Search by Name",
     "search": "Search",

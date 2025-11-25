@@ -308,6 +308,12 @@
     }
   },
   "datasource": {
+    "recommended_problem_configuration": "推荐问题配置",
+    "problem_generation_method": "问题生成方式",
+    "ai_automatic_generation": "AI 自动生成",
+    "user_defined": "用户自定义",
+    "question_tips": "请输入推荐问题",
+    "add_question": "添加问题",
     "data_source_yet": "暂无数据源",
     "search_by_name": "通过名称搜索",
     "search": "搜索",

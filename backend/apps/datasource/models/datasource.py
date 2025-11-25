@@ -22,6 +22,7 @@ class CoreDatasource(SQLModel, table=True):
     oid: int = Field(sa_column=Column(BigInteger()))
     table_relation: List = Field(sa_column=Column(JSONB, nullable=True))
     embedding: str = Field(sa_column=Column(Text, nullable=True))
+    recommended_config: int = Field(sa_column=Column(BigInteger()))
 
 
 class CoreTable(SQLModel, table=True):
@@ -33,6 +34,16 @@ class CoreTable(SQLModel, table=True):
     table_comment: str = Field(sa_column=Column(Text))
     custom_comment: str = Field(sa_column=Column(Text))
     embedding: str = Field(sa_column=Column(Text, nullable=True))
+
+class DsRecommendedProblem(SQLModel, table=True):
+    __tablename__ = "ds_recommended_problem"
+    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
+    datasource_id: int = Field(sa_column=Column(BigInteger()))
+    question: str = Field(sa_column=Column(Text))
+    remark: str = Field(sa_column=Column(Text))
+    sort: int = Field(sa_column=Column(BigInteger()))
+    create_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
+    create_by: int = Field(sa_column=Column(BigInteger()))
 
 
 class CoreField(SQLModel, table=True):
@@ -61,6 +72,7 @@ class CreateDatasource(BaseModel):
     num: str = ''
     oid: int = 1
     tables: List[CoreTable] = []
+    recommended_config: int = 1
 
 
 # edit local saved table and fields

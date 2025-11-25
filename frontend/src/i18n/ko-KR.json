@@ -308,6 +308,12 @@
     }
   },
   "datasource": {
+    "recommended_problem_configuration": "추천 문제 구성",
+    "problem_generation_method": "문제 생성 방식",
+    "ai_automatic_generation": "AI 자동 생성",
+    "user_defined": "사용자 정의",
+    "question_tips": "추천 문제를 입력해 주세요",
+    "add_question": "문제 추가",
     "data_source_yet": "데이터 소스가 없습니다",
     "search_by_name": "이름으로 검색",
     "search": "검색",
