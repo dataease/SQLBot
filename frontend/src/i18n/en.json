@@ -73,6 +73,7 @@
     "the_term_gmv": "Delete the term: {msg}?"
   },
   "common": {
+    "require": "Required",
     "zoom_in": "Zoom in",
     "zoom_out": "Zoom out",
     "the_default_model": "Already the default model",

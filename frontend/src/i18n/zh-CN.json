@@ -73,6 +73,7 @@
     "the_term_gmv": "是否删除术语：{msg}？"
   },
   "common": {
+    "require": "必填",
     "zoom_in": "放大",
     "zoom_out": "缩小",
     "the_default_model": "已是默认模型",

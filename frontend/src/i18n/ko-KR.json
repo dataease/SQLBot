@@ -73,6 +73,7 @@
     "the_term_gmv": "용어를 삭제하시겠습니까: {msg}?"
   },
   "common": {
+    "require": "필수 입력 항목",
     "zoom_in": "확대",
     "zoom_out": "축소",
     "the_default_model": "이미 기본 모델입니다",
