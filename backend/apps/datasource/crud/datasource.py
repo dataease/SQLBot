@@ -109,6 +109,11 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
     run_save_ds_embeddings([ds.id])
     return ds
 
+def update_ds_recommended_config(session: SessionDep,datasource_id: int, recommended_config:int):
+    record = session.exec(select(CoreDatasource).where(CoreDatasource.id == datasource_id)).first()
+    record.recommended_config = recommended_config
+    session.add(record)
+    session.commit()
 
 def delete_ds(session: SessionDep, id: int):
     term = session.exec(select(CoreDatasource).where(CoreDatasource.id == id)).first()
