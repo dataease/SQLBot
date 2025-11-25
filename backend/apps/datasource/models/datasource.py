@@ -74,6 +74,18 @@ class CreateDatasource(BaseModel):
     tables: List[CoreTable] = []
     recommended_config: int = 1
 
+class RecommendedProblemBase(BaseModel):
+    datasource_id: int = None
+    recommended_config: int = None
+    problemInfo: List[DsRecommendedProblem] = []
+
+
+class RecommendedProblemBaseChat:
+    def __init__(self, content):
+        self.content = content
+
+    content: List[str] = []
+
 
 # edit local saved table and fields
 class TableObj(BaseModel):

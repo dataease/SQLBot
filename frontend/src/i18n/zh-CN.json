@@ -309,6 +309,7 @@
     }
   },
   "datasource": {
+    "recommended_problem_tips": "自定义配置至少一个问题，每个问题2-200个字符",
     "recommended_problem_configuration": "推荐问题配置",
     "problem_generation_method": "问题生成方式",
     "ai_automatic_generation": "AI 自动生成",

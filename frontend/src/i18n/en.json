@@ -309,6 +309,7 @@
     }
   },
   "datasource": {
+    "recommended_problem_tips": "Custom configuration requires at least one problem, each problem should be 2-200 characters",
     "recommended_problem_configuration": "Recommended Problem Configuration",
     "problem_generation_method": "Problem Generation Method",
     "ai_automatic_generation": "AI Automatic Generation",

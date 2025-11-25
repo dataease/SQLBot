@@ -328,6 +328,7 @@ useEmitt({
     </template>
     <RecommendedProblemConfigDialog
       ref="recommendedProblemConfigRef"
+      @recommended-problem-change="search"
     ></RecommendedProblemConfigDialog>
     <AddDrawer ref="addDrawerRef" @search="search"></AddDrawer>
   </div>

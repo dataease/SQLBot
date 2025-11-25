@@ -704,7 +704,7 @@ function onChatCreatedQuick(chat: ChatInfo) {
 }
 
 function onChatCreated(chat: ChatInfo) {
-  if (chat.records.length === 1) {
+  if (chat.records.length === 1 && !chat.records[0].recommended_question) {
     getRecommendQuestions(chat.records[0].id)
   }
 }

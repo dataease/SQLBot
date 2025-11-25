@@ -309,6 +309,7 @@
     }
   },
   "datasource": {
+    "recommended_problem_tips": "사용자 정의 구성으로 최소 한 개의 문제를 생성하세요, 각 문제는 2~200자로 작성",
     "recommended_problem_configuration": "추천 문제 구성",
     "problem_generation_method": "문제 생성 방식",
     "ai_automatic_generation": "AI 자동 생성",

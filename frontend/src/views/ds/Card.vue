@@ -136,7 +136,7 @@ const onClickOutside = () => {
               </el-icon>
               {{ $t('datasource.edit') }}
             </div>
-            <div class="item" style="display: none" @click.stop="handleRecommendation">
+            <div class="item" @click.stop="handleRecommendation">
               <el-icon size="16">
                 <icon_recommended_problem></icon_recommended_problem>
               </el-icon>
@@ -287,7 +287,7 @@ const onClickOutside = () => {
     &::after {
       position: absolute;
       content: '';
-      top: 40px;
+      top: 80px !important;
       left: 0;
       width: 100%;
       height: 1px;
