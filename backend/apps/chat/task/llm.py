@@ -1047,7 +1047,7 @@ class LLMService:
             if in_chat:
                 yield 'data:' + orjson.dumps({'content': 'execute-success', 'type': 'sql-data'}).decode() + '\n\n'
             if not stream:
-                json_result['data'] = result.get('data')
+                json_result['data'] = get_chat_chart_data(_session, self.record.id)
 
             if finish_step.value <= ChatFinishStep.QUERY_DATA.value:
                 if stream:
