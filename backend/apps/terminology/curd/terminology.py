@@ -55,11 +55,31 @@ def get_terminology_base_query(oid: int, name: Optional[str] = None):
 
 
 def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] = None,
-                            paginate: bool = True, current_page: int = 1, page_size: int = 10):
+                            paginate: bool = True, current_page: int = 1, page_size: int = 10,
+                            dslist: Optional[list[int]] = None):
     """
     构建术语查询的通用方法
     """
     parent_ids_subquery, child = get_terminology_base_query(oid, name)
+
+    # 添加数据源筛选条件
+    if dslist is not None and len(dslist) > 0:
+        datasource_conditions = []
+        # datasource_ids 与 dslist 中的任一元素有交集
+        for ds_id in dslist:
+            # 使用 JSONB 包含操作符，但需要确保类型正确
+            datasource_conditions.append(
+                Terminology.datasource_ids.contains([ds_id])
+            )
+
+        # datasource_ids 为空数组
+        empty_array_condition = Terminology.datasource_ids == []
+
+        ds_filter_condition = or_(
+            *datasource_conditions,
+            empty_array_condition
+        )
+        parent_ids_subquery = parent_ids_subquery.where(ds_filter_condition)
 
     # 计算总数
     count_stmt = select(func.count()).select_from(parent_ids_subquery.subquery())
@@ -176,12 +196,12 @@ def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfo
 
 
 def page_terminology(session: SessionDep, current_page: int = 1, page_size: int = 10,
-                     name: Optional[str] = None, oid: Optional[int] = 1):
+                     name: Optional[str] = None, oid: Optional[int] = 1, dslist: Optional[list[int]] = None):
     """
     分页查询术语（原方法保持不变）
     """
     stmt, total_count, total_pages, current_page, page_size = build_terminology_query(
-        session, oid, name, True, current_page, page_size
+        session, oid, name, True, current_page, page_size, dslist
     )
     _list = execute_terminology_query(session, stmt)
 
