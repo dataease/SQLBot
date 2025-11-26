@@ -90,7 +90,9 @@ const init = (needLoading: boolean) => {
     .get(url)
     .then((res) => {
       if (res) {
-        infos.value = [...(res as CardInfo[])].filter((item) => item.name === 'cas')
+        infos.value = [...(res as CardInfo[])].filter(
+          (item) => item.name === 'cas' || item.name === 'oauth2'
+        )
         showInfos.value = [...infos.value]
       }
       loading.value = false

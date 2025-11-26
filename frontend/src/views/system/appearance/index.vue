@@ -164,7 +164,7 @@
                     <div class="navigate-head">
                       <div class="header-sql">
                         <img height="30" width="30" v-if="pageLogin" :src="pageLogin" alt="" />
-                        <custom_small v-else-if="themeColor === 'custom'" class="logo" />
+                        <custom_small v-else-if="themeColor !== 'default'" class="logo" />
                         <logo v-else></logo>
                         <span style="margin-left: 8px">{{ loginForm.name }}</span>
                       </div>
@@ -178,6 +178,27 @@
                           <icon_side_fold_outlined></icon_side_fold_outlined>
                         </el-icon>
                       </div>
+                    </div>
+                    <div class="welcome-content">
+                      <div class="greeting">
+                        <img v-if="pageLogin" height="32" width="32" :src="pageLogin" alt="" />
+                        <el-icon v-else size="32"
+                          ><custom_small v-if="themeColor !== 'default'"></custom_small>
+                          <LOGO_fold v-else></LOGO_fold
+                        ></el-icon>
+                        {{ topForm.pc_welcome }}
+                      </div>
+                      <div class="sub">
+                        {{ topForm.pc_welcome_desc }}
+                      </div>
+                      <el-button size="large" type="primary" class="greeting-btn">
+                        <span class="inner-icon">
+                          <el-icon>
+                            <icon_new_chat_outlined />
+                          </el-icon>
+                        </span>
+                        {{ t('qa.start_sqlbot') }}
+                      </el-button>
                     </div>
                   </div>
                   <div class="tips-page">
@@ -212,6 +233,36 @@
                     false-value="1"
                     :label="$t('system.show_about')"
                   />
+                  <div style="margin-top: 8px" class="label">
+                    {{ $t('system.welcome_message') }}
+                  </div>
+                  <div style="margin: 8px 0">
+                    <el-input
+                      v-model="topForm.pc_welcome"
+                      :placeholder="
+                        $t('datasource.please_enter') +
+                        $t('common.empty') +
+                        $t('system.welcome_message')
+                      "
+                      maxlength="50"
+                    />
+                  </div>
+                  <div class="label">
+                    {{ $t('embedded.welcome_description') }}
+                  </div>
+                  <div style="margin: 8px 0">
+                    <el-input
+                      v-model="topForm.pc_welcome_desc"
+                      :placeholder="
+                        $t('datasource.please_enter') +
+                        $t('common.empty') +
+                        $t('embedded.welcome_description')
+                      "
+                      type="textarea"
+                      show-word-limit
+                      maxlength="50"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -230,6 +281,7 @@
 
 <script lang="ts" setup>
 import logo from '@/assets/LOGO-fold.svg'
+import LOGO_fold from '@/assets/LOGO-fold.svg'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import { ref, unref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import {
@@ -241,6 +293,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { request } from '@/utils/request'
 import icon_side_fold_outlined from '@/assets/svg/icon_side-fold_outlined.svg'
+import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import LoginPreview from './LoginPreview.vue'
 import Person from './Person.vue'
@@ -324,12 +377,16 @@ const defaultTopForm = {
   help: 'https://dataease.cn/sqlbot/v1/',
   showDoc: '0',
   showAbout: '0',
+  pc_welcome: '你好，我是 SQLBot ',
+  pc_welcome_desc: `我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～`,
 }
 
 const topForm = reactive<{
   help: string
   showDoc: string
   showAbout: string
+  pc_welcome: string
+  pc_welcome_desc: string
 }>(cloneDeep(defaultTopForm))
 
 const isBlue = computed(() => {
@@ -816,6 +873,7 @@ onUnmounted(() => {
               background-color: #fff;
               border-radius: 6px;
               overflow: hidden;
+              position: relative;
 
               .navigate-head {
                 width: 240px;
@@ -847,6 +905,63 @@ onUnmounted(() => {
                   }
                 }
               }
+
+              .welcome-content {
+                width: calc(100% - 240px);
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                flex-direction: column;
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+
+                .greeting {
+                  display: flex;
+                  align-items: center;
+                  gap: 16px;
+                  line-height: 32px;
+                  font-size: 24px;
+                  font-weight: 600;
+                  color: rgba(31, 35, 41, 1);
+                }
+
+                .sub {
+                  color: grey;
+                  font-size: 16px;
+                  line-height: 24px;
+                }
+
+                .greeting-btn {
+                  width: 80%;
+                  height: 88px;
+                  border-radius: 16px;
+                  border-style: dashed;
+
+                  .inner-icon {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+
+                    margin-right: 6px;
+                  }
+
+                  font-size: 16px;
+                  line-height: 24px;
+                  font-weight: 500;
+
+                  --ed-button-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+                  --ed-button-hover-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+                  --ed-button-active-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+                  --ed-button-bg-color: rgba(248, 249, 250, 1);
+                  --ed-button-hover-bg-color: var(--ed-color-primary-1a, #1cba901a);
+                  --ed-button-border-color: rgba(217, 220, 223, 1);
+                  --ed-button-hover-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+                  --ed-button-active-bg-color: var(--ed-color-primary-33, #1cba9033);
+                  --ed-button-active-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+                }
+              }
             }
           }
 
@@ -856,6 +971,12 @@ onUnmounted(() => {
             .doc-input {
               padding-left: 24px;
               margin: 8px 0;
+            }
+
+            .label {
+              font-weight: 400;
+              font-size: 14px;
+              line-height: 22px;
             }
 
             .config-item {

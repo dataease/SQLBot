@@ -5,6 +5,15 @@ run-name: 构建离线安装包 ${{ github.event.inputs.dockerImageTag }}
 on:
   workflow_dispatch:
     inputs:
+      target_os:
+        description: 'Select OS to run on'
+        required: false
+        default: '["ubuntu-latest","ubuntu-24.04-arm"]'
+        type: choice
+        options:
+          - '["ubuntu-latest"]'
+          - '["ubuntu-24.04-arm"]'
+          - '["ubuntu-latest","ubuntu-24.04-arm"]'
       dockerImageTag:
         description: 'Image Tag'
         default: 'v0.9.5'
@@ -17,7 +26,10 @@ on:
 
 jobs:
   package-and-push-to-aliyun-oss:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ${{ fromJSON(inputs.target_os) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,8 +37,7 @@ jobs:
           ref: ${{ github.ref_name }}
       - name: Install ossutil
         run: |
-          curl -L https://gosspublic.alicdn.com/ossutil/1.7.0/ossutil64 -o /usr/local/bin/ossutil
-          chmod +x /usr/local/bin/ossutil
+          sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
       - name: Prepare package files
         env:
           TAG_NAME: ${{ github.event.inputs.dockerImageTag }}
@@ -38,6 +49,29 @@ jobs:
           ALIYUN_OSS_ACCESS_SECRET: ${{ secrets.ALIYUN_OSS_ACCESS_SECRET }}
           PACKAGE_EE: ${{ github.event.inputs.packageEE }}
         run: |
+          platform=""
+          ARCH="x86_64"
+          OS_type="$(uname -m)"
+          case "$OS_type" in
+            x86_64|amd64)
+              ARCH='x86_64'
+              platform=''
+              ;;
+            aarch64|arm64)
+              ARCH='aarch64'
+              platform='-arm64'
+              ;;
+            *)
+              echo 'OS type not supported'
+              exit 2
+              ;;
+          esac
+
+          if [[ $ARCH == 'aarch64' ]] && [[ ${PACKAGE_EE} != 'true' ]]; then
+              echo 'No need to pack'
+              exit 2
+          fi
+
           DOCKER_IMAGE=${ALIYUN_REGISTRY_HOST}/dataease/sqlbot
           cd installer
           
@@ -50,9 +84,7 @@ jobs:
             docker pull $image_path
             docker save $image_path  | gzip > images/$image_name.tar.gz
           done
-
-          platform=""
-          ARCH="x86_64"
+          
           DOCKER_VERSION="docker-27.2.0"
           DOCKER_COMPOSE_VERSION="v2.29.2"
 
@@ -65,24 +97,26 @@ jobs:
           wget https://resource-fit2cloud-com.oss-cn-hangzhou.aliyuncs.com/docker/docker.service
           mkdir docker/service && mv docker.service docker/service/
 
-          #打包离线包
-          package_offline="sqlbot-offline-installer-${TAG_NAME}${platform}-ce.tar.gz"
-          touch $package_offline
-          tar --transform "s/^\./sqlbot-offline-installer-${TAG_NAME}${platform}-ce/" \
-          --exclude $package_offline \
-          --exclude .git \
-          -czvf $package_offline . 
-
-          #打包在线包
-          package_online="sqlbot-online-installer-${TAG_NAME}${platform}-ce.tar.gz"
-          touch $package_online
-          tar --transform "s/^\./sqlbot-online-installer-${TAG_NAME}${platform}-ce/" \
-          --exclude $package_online \
-          --exclude $package_offline \
-          --exclude .git \
-          --exclude images \
-          --exclude docker \
-          -czvf $package_online .
+          if [[ $ARCH == 'x86_64' ]]; then
+            #打包离线包
+            package_offline="sqlbot-offline-installer-${TAG_NAME}${platform}-ce.tar.gz"
+            touch $package_offline
+            tar --transform "s/^\./sqlbot-offline-installer-${TAG_NAME}${platform}-ce/" \
+            --exclude $package_offline \
+            --exclude .git \
+            -czvf $package_offline . 
+  
+            #打包在线包
+            package_online="sqlbot-online-installer-${TAG_NAME}${platform}-ce.tar.gz"
+            touch $package_online
+            tar --transform "s/^\./sqlbot-online-installer-${TAG_NAME}${platform}-ce/" \
+            --exclude $package_online \
+            --exclude $package_offline \
+            --exclude .git \
+            --exclude images \
+            --exclude docker \
+            -czvf $package_online .
+          fi
           
           if [[ ${PACKAGE_EE} == 'true' ]]; then 
             package_offline_ee="sqlbot-offline-installer-${TAG_NAME}${platform}-ee.tar.gz"
@@ -96,13 +130,13 @@ jobs:
 
             ossutil cp -rf ${package_offline_ee} oss://$ALIYUN_OSS_BUCKET/sqlbot/${package_offline_ee} --access-key-id=$ALIYUN_OSS_ACCESS_KEY --access-key-secret=$ALIYUN_OSS_ACCESS_SECRET --endpoint=${ALIYUN_OSS_BUCKET_ENDPOINT}
           fi
-          
-          #Sync files to OSS
-          ossutil cp -rf ${package_offline} oss://$ALIYUN_OSS_BUCKET/sqlbot/${package_offline} --access-key-id=$ALIYUN_OSS_ACCESS_KEY --access-key-secret=$ALIYUN_OSS_ACCESS_SECRET --endpoint=${ALIYUN_OSS_BUCKET_ENDPOINT}          
-          ossutil cp -rf ${package_online} oss://$ALIYUN_OSS_BUCKET/sqlbot/${package_online} --access-key-id=$ALIYUN_OSS_ACCESS_KEY --access-key-secret=$ALIYUN_OSS_ACCESS_SECRET --endpoint=${ALIYUN_OSS_BUCKET_ENDPOINT}
 
-  
-  
+          if [[ $ARCH == 'x86_64' ]]; then
+            #Sync files to OSS
+            ossutil cp -rf ${package_offline} oss://$ALIYUN_OSS_BUCKET/sqlbot/${package_offline} --access-key-id=$ALIYUN_OSS_ACCESS_KEY --access-key-secret=$ALIYUN_OSS_ACCESS_SECRET --endpoint=${ALIYUN_OSS_BUCKET_ENDPOINT}          
+            ossutil cp -rf ${package_online} oss://$ALIYUN_OSS_BUCKET/sqlbot/${package_online} --access-key-id=$ALIYUN_OSS_ACCESS_KEY --access-key-secret=$ALIYUN_OSS_ACCESS_SECRET --endpoint=${ALIYUN_OSS_BUCKET_ENDPOINT}
+          fi
+
 
 
 

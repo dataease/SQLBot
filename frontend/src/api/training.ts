@@ -9,4 +9,10 @@ export const trainingApi = {
   deleteEmbedded: (params: any) => request.delete('/system/data-training', { data: params }),
   getOne: (id: any) => request.get(`/system/data-training/${id}`),
   enable: (id: any, enabled: any) => request.get(`/system/data-training/${id}/enable/${enabled}`),
+  export2Excel: (params: any) =>
+    request.get(`/system/data-training/export`, {
+      params,
+      responseType: 'blob',
+      requestOptions: { customError: true },
+    }),
 }

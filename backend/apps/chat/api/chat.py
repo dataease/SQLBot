@@ -14,6 +14,7 @@ from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, 
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
+from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
@@ -245,9 +246,13 @@ async def export_excel(session: SessionDep, chat_record_id: int, trans: Trans):
 
     def inner():
 
-        data, _fields_list, col_formats = LLMService.format_pd_data(fields, _data + _predict_data)
+        data_list = DataFormat.convert_large_numbers_in_object_array(_data + _predict_data)
 
-        df = pd.DataFrame(data, columns=_fields_list)
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
+
+        # data, _fields_list, col_formats = LLMService.format_pd_data(fields, _data + _predict_data)
+
+        df = pd.DataFrame(md_data, columns=_fields_list)
 
         buffer = io.BytesIO()
 
@@ -256,14 +261,14 @@ async def export_excel(session: SessionDep, chat_record_id: int, trans: Trans):
             df.to_excel(writer, sheet_name='Sheet1', index=False)
 
             # 获取 xlsxwriter 的工作簿和工作表对象
-            workbook = writer.book
-            worksheet = writer.sheets['Sheet1']
-
-            for col_idx, fmt_type in col_formats.items():
-                if fmt_type == 'text':
-                    worksheet.set_column(col_idx, col_idx, None, workbook.add_format({'num_format': '@'}))
-                elif fmt_type == 'number':
-                    worksheet.set_column(col_idx, col_idx, None, workbook.add_format({'num_format': '0'}))
+            # workbook = writer.book
+            # worksheet = writer.sheets['Sheet1']
+            #
+            # for col_idx, fmt_type in col_formats.items():
+            #     if fmt_type == 'text':
+            #         worksheet.set_column(col_idx, col_idx, None, workbook.add_format({'num_format': '@'}))
+            #     elif fmt_type == 'number':
+            #         worksheet.set_column(col_idx, col_idx, None, workbook.add_format({'num_format': '0'}))
 
         buffer.seek(0)
         return io.BytesIO(buffer.getvalue())

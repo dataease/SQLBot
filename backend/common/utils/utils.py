@@ -263,6 +263,12 @@ def get_origin_from_referer(request: Request):
         SQLBotLogUtil.error(f"解析 Referer 出错: {e}")
         return referer
 
+def origin_match_domain(origin: str, domain: str) -> bool:
+    if not origin or not domain:
+        return False
+    origin_text = origin.rstrip('/')
+    domain_list = domain.replace(" ", "").split(',')
+    return origin_text in [d.rstrip('/') for d in domain_list]
 
 def equals_ignore_case(str1: str, *args: str) -> bool:
     if str1 is None:

@@ -1,6 +1,16 @@
 import { BaseChart, type ChartAxis, type ChartData } from '@/views/chat/component/BaseChart.ts'
-import { TableSheet, type S2Options, type S2DataConfig, type S2MountContainer } from '@antv/s2'
+import {
+  TableSheet,
+  S2Event,
+  copyToClipboard,
+  type S2Options,
+  type S2DataConfig,
+  type S2MountContainer,
+} from '@antv/s2'
 import { debounce } from 'lodash-es'
+import { i18n } from '@/i18n'
+
+const { t } = i18n.global
 
 export class Table extends BaseChart {
   table?: TableSheet = undefined
@@ -63,6 +73,15 @@ export class Table extends BaseChart {
 
     if (this.container) {
       this.table = new TableSheet(this.container, s2DataConfig, s2Options)
+      // right click
+      this.table.on(S2Event.GLOBAL_COPIED, (data) => {
+        ElMessage.success(t('qa.copied'))
+        console.debug('copied: ', data)
+      })
+      this.table.getCanvasElement().addEventListener('contextmenu', (event) => {
+        event.preventDefault()
+      })
+      this.table.on(S2Event.GLOBAL_CONTEXT_MENU, (event) => copyData(event, this.table))
     }
   }
 
@@ -73,5 +92,53 @@ export class Table extends BaseChart {
   destroy() {
     this.table?.destroy()
     this.resizeObserver?.disconnect()
+  }
+}
+
+function copyData(event: any, s2?: TableSheet) {
+  event.preventDefault()
+  if (!s2) {
+    return
+  }
+  const cells = s2.interaction.getCells()
+
+  if (cells.length == 0) {
+    return
+  } else if (cells.length == 1) {
+    const c = cells[0]
+    const cellMeta = s2.facet.getCellMeta(c.rowIndex, c.colIndex)
+    if (cellMeta) {
+      copyToClipboard(cellMeta.fieldValue as string).finally(() => {
+        ElMessage.success(t('qa.copied'))
+        console.debug('copied:', cellMeta.fieldValue)
+      })
+    }
+    return
+  } else {
+    let currentRowIndex = -1
+    let currentRowData: Array<string> = []
+    const rowData: Array<string> = []
+    for (let i = 0; i < cells.length; i++) {
+      const c = cells[i]
+      const cellMeta = s2.facet.getCellMeta(c.rowIndex, c.colIndex)
+      if (!cellMeta) {
+        continue
+      }
+      if (currentRowIndex == -1) {
+        currentRowIndex = c.rowIndex
+      }
+      if (c.rowIndex !== currentRowIndex) {
+        rowData.push(currentRowData.join('\t'))
+        currentRowData = []
+        currentRowIndex = c.rowIndex
+      }
+      currentRowData.push(cellMeta.fieldValue as string)
+    }
+    rowData.push(currentRowData.join('\t'))
+    const finalValue = rowData.join('\n')
+    copyToClipboard(finalValue).finally(() => {
+      ElMessage.success(t('qa.copied'))
+      console.debug('copied:\n', finalValue)
+    })
   }
 }

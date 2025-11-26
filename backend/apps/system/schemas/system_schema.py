@@ -116,6 +116,7 @@ class AssistantHeader(AssistantDTO):
     unique: Optional[str] = None
     certificate: Optional[str] = None
     online: bool = False
+    request_origin: Optional[str] = None
 
 
 class AssistantValidator(BaseModel):

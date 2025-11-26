@@ -42,16 +42,44 @@
     "terminology_not_exists": "该术语不存在",
     "datasource_cannot_be_none": "数据源不能为空",
     "cannot_be_repeated": "术语名称，同义词不能重复",
-    "exists_in_db": "术语名称，同义词已存在"
+    "exists_in_db": "术语名称，同义词已存在",
+    "term_name": "术语名称",
+    "term_description": "术语描述",
+    "effective_data_sources": "生效数据源",
+    "all_data_sources": "所有数据源",
+    "synonyms": "同义词",
+    "word_cannot_be_empty": "术语不能为空",
+    "description_cannot_be_empty": "术语描述不能为空",
+    "datasource_not_found": "找不到数据源"
   },
   "i18n_data_training": {
     "datasource_cannot_be_none": "数据源不能为空",
+    "datasource_assistant_cannot_be_none": "数据源或高级应用不能都为空",
     "data_training_not_exists": "该示例不存在",
-    "exists_in_db": "该问题已存在"
+    "exists_in_db": "该问题已存在",
+    "data_training": "SQL 示例库",
+    "problem_description": "问题描述",
+    "sample_sql": "示例 SQL",
+    "effective_data_sources": "生效数据源",
+    "advanced_application": "高级应用",
+    "error_info": "错误信息",
+    "question_cannot_be_empty": "问题不能为空",
+    "description_cannot_be_empty": "示例 SQL 不能为空",
+    "datasource_not_found": "找不到数据源",
+    "advanced_application_not_found": "找不到高级应用"
   },
   "i18n_custom_prompt": {
     "exists_in_db": "模版名称已存在",
-    "not_exists": "该模版不存在"
+    "not_exists": "该模版不存在",
+    "prompt_word_name": "提示词名称",
+    "prompt_word_content": "提示词内容",
+    "effective_data_sources": "生效数据源",
+    "all_data_sources": "所有数据源",
+    "name_cannot_be_empty": "名称不能为空",
+    "prompt_cannot_be_empty": "提示词内容不能为空",
+    "type_cannot_be_empty": "类型不能为空",
+    "datasource_not_found": "找不到数据源",
+    "datasource_cannot_be_none": "数据源不能为空"
   },
   "i18n_excel_export": {
     "data_is_empty": "表单数据为空，无法导出数据"

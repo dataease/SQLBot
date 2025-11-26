@@ -7,6 +7,7 @@ import { computed, ref, unref } from 'vue'
 import { ClickOutside as vClickOutside } from 'element-plus-secondary'
 import { dsTypeWithImg } from './js/ds-type'
 import edit from '@/assets/svg/icon_edit_outlined.svg'
+import icon_recommended_problem from '@/assets/svg/icon_recommended_problem.svg'
 import { datasourceApi } from '@/api/datasource.ts'
 
 const props = withDefaults(
@@ -27,12 +28,23 @@ const props = withDefaults(
   }
 )
 
-const emits = defineEmits(['edit', 'del', 'question', 'dataTableDetail', 'showTable'])
+const emits = defineEmits([
+  'edit',
+  'del',
+  'question',
+  'dataTableDetail',
+  'showTable',
+  'recommendation',
+])
 const icon = computed(() => {
   return (dsTypeWithImg.find((ele) => props.type === ele.type) || {}).img
 })
 const handleEdit = () => {
   emits('edit')
+}
+
+const handleRecommendation = () => {
+  emits('recommendation')
 }
 
 const handleDel = () => {
@@ -123,6 +135,12 @@ const onClickOutside = () => {
                 <edit></edit>
               </el-icon>
               {{ $t('datasource.edit') }}
+            </div>
+            <div class="item" @click.stop="handleRecommendation">
+              <el-icon size="16">
+                <icon_recommended_problem></icon_recommended_problem>
+              </el-icon>
+              {{ $t('datasource.recommended_problem_configuration') }}
             </div>
             <div class="item" @click.stop="handleDel">
               <el-icon size="16">
@@ -269,7 +287,7 @@ const onClickOutside = () => {
     &::after {
       position: absolute;
       content: '';
-      top: 40px;
+      top: 80px !important;
       left: 0;
       width: 100%;
       height: 1px;

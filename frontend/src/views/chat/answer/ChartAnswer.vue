@@ -218,7 +218,10 @@ const sendMessage = async () => {
   }
 }
 
+const loadingData = ref(false)
+
 function getChatData(recordId?: number) {
+  loadingData.value = true
   chatApi
     .get_chart_data(recordId)
     .then((response) => {
@@ -229,6 +232,7 @@ function getChatData(recordId?: number) {
       })
     })
     .finally(() => {
+      loadingData.value = false
       emits('scrollBottom')
     })
 }
@@ -254,7 +258,12 @@ defineExpose({ sendMessage, index: () => index.value, stop })
 
 <template>
   <BaseAnswer v-if="message" :message="message" :reasoning-name="reasoningName" :loading="_loading">
-    <ChartBlock style="margin-top: 6px" :message="message" :record-id="recordId" />
+    <ChartBlock
+      style="margin-top: 6px"
+      :message="message"
+      :record-id="recordId"
+      :loading-data="loadingData"
+    />
     <slot></slot>
     <template #tool>
       <slot name="tool"></slot>

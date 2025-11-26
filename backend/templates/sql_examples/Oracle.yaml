@@ -1,4 +1,18 @@
 template:
+  process_check: |
+    <SQL-Generation-Process>
+      <step>1. 分析用户问题，确定查询需求</step>
+      <step>2. 根据表结构生成基础SQL</step>
+      <step>3. <strong>强制检查：SQL是否包含GROUP BY/聚合函数？</strong></step>
+      <step>4. <strong>如果是GROUP BY查询：必须使用外层查询结构包裹</strong></step>
+      <step>5. <strong>强制检查：应用数据量限制规则</strong></step>
+      <step>6. 应用其他规则（引号、别名等）</step>
+      <step>7. <strong>最终验证：GROUP BY查询的ROWNUM位置是否正确？</strong></step>
+      <step>8. <strong>强制检查：检查语法是否正确？</strong></step>
+      <step>9. 确定图表类型</step>
+      <step>10. 返回JSON结果</step>
+    </SQL-Generation-Process>
+
   quot_rule: |
     <rule>
       必须对数据库名、表名、字段名、别名外层加双引号（"）。
@@ -10,14 +24,61 @@ template:
     </rule>
 
   limit_rule: |
-    <rule>
-      当需要限制行数时：
-      1. 12c以下版本必须使用ROWNUM语法
-      2. 12c+版本推荐使用FETCH FIRST语法
-      <note>
-        1. 传统写法：WHERE ROWNUM <= 100
-        2. 现代写法：FETCH FIRST 100 ROWS ONLY
-      </note>
+    <rule priority="critical" id="oracle-version-handling">
+      <title>Oracle版本语法适配</title>
+      <decision-flow>
+        <condition>如果db-engine版本号小于12</condition>
+        <then>必须使用ROWNUM语法</then>
+        <condition>如果db-engine版本号大于等于12</condition>
+        <then>推荐使用FETCH FIRST语法</then>
+      </decision-flow>
+    </rule>
+    <rule priority="critical" id="oracle-FETCH-FIRST-syntax-rule">
+      <title>Oracle数据库 FETCH FIRST 语法规范</title>
+      <description>若使用 FETCH FIRST 语法，则必须遵循该规范</description>
+      <syntax-rule>
+        <template>SELECT ... FROM table WHERE conditions FETCH FIRST N ROWS ONLY</template>
+      </syntax-rule>
+    </rule>
+    <rule priority="critical" id="oracle-ROWNUM-syntax-rule">
+      <title>Oracle数据库ROWNUM语法规范</title>
+      <description>若使用ROWNUM语法，则必须遵循该规范</description>
+      <syntax-rules>
+        <syntax-rule>
+          <rule-category>简单查询</rule-category>
+          <template>SELECT ... FROM table WHERE conditions AND ROWNUM <= N</template>
+        </syntax-rule>
+        <syntax-rule>
+          <rule-category>语法禁区</rule-category>
+          <prohibited>
+            - 禁止多个WHERE子句
+            - 禁止ROWNUM在GROUP BY内层（影响分组结果）
+            - 禁止括号不完整
+          </prohibited>
+        </syntax-rule>
+      </syntax-rules>
+    </rule>
+    <rule priority="critical" id="oracle-groupby-rownum">
+      <title>GROUP BY查询的ROWNUM强制规范（必须严格遵守）</title>
+      <requirement level="must">所有包含GROUP BY或聚合函数的查询必须使用外层查询结构</requirement>
+      <requirement level="must">ROWNUM必须放在最外层查询的WHERE子句中</requirement>
+      
+      <decision-flow>
+        <condition>如果SQL包含GROUP BY、COUNT、SUM等聚合函数</condition>
+        <action>必须使用：SELECT ... FROM (内层完整查询) WHERE ROWNUM <= N</action>
+        <condition>否则（简单查询）</condition>
+        <action>可以使用：SELECT ... FROM table WHERE conditions AND ROWNUM <= N</action>
+      </decision-flow>
+      
+      <error-example>
+        -- 错误：ROWNUM在内层影响分组结果
+        SELECT ... GROUP BY ... WHERE ROWNUM <= N
+      </error-example>
+      
+      <correct-example>
+        -- 正确：ROWNUM在外层
+        SELECT ... FROM (SELECT ... GROUP BY ...) WHERE ROWNUM <= N
+      </correct-example>
     </rule>
 
   other_rule: |
@@ -45,7 +106,7 @@ template:
           SELECT "订单ID", "金额" FROM "TEST"."ORDERS" "t1" WHERE ROWNUM <= 100  -- 错误：缺少英文别名
           SELECT COUNT("订单ID") FROM "TEST"."ORDERS" "t1"  -- 错误：函数未加别名
         </output-bad>
-        <output-good>
+        <output-good version="12c-below">
           SELECT 
             "t1"."订单ID" AS "order_id",
             "t1"."金额" AS "amount",
@@ -62,7 +123,7 @@ template:
           SELECT DATE, status FROM PUBLIC.USERS  -- 错误：未处理关键字和引号
           SELECT "DATE", ROUND(active_ratio) FROM "PUBLIC"."USERS"  -- 错误：百分比格式错误
         </output-bad>
-        <output-good>
+        <output-good version="12c-below">
           SELECT 
             "u"."DATE" AS "create_date",
             TO_CHAR("u"."active_ratio" * 100, '990.99') || '%' AS "active_percent"
@@ -70,10 +131,65 @@ template:
           WHERE "u"."status" = 1
           AND ROWNUM <= 1000
         </output-good>
+        <output-good version="12c+">
+          SELECT 
+            "u"."DATE" AS "create_date",
+            TO_CHAR("u"."active_ratio" * 100, '990.99') || '%' AS "active_percent"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          FETCH FIRST 1000 ROWS ONLY
+        </output-good>
+      </example>
+    
+      <example>
+        <input>统计用户表 PUBLIC.USERS 各部门人数</input>
+        <output-bad>
+          SELECT 
+            "u"."DEPARTMENT" AS "department_name",
+            count(*) AS "user_count"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          AND ROWNUM <= 100             -- 严重错误：影响分组结果！
+          GROUP BY "u"."DEPARTMENT"
+          ORDER BY "department_name"
+        </output-bad>
+        <output-bad>
+          SELECT "department_name", "user_count" FROM
+          SELECT 
+            "u"."DEPARTMENT" AS "department_name",
+            count(*) AS "user_count"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          GROUP BY "u"."DEPARTMENT"
+          ORDER BY "department_name"
+          WHERE ROWNUM <= 100     -- 错误：语法错误，同级内只能有一个WHERE
+        </output-bad>
+        <output-good version="12c-below">
+          SELECT "department_name", "user_count" FROM (
+            SELECT 
+              "u"."DEPARTMENT" AS "department_name",
+              count(*) AS "user_count"
+            FROM "PUBLIC"."USERS" "u"
+            WHERE "u"."status" = 1
+            GROUP BY "u"."DEPARTMENT"
+            ORDER BY "department_name"
+          ) 
+          WHERE ROWNUM <= 100     -- 正确，在外层限制数量（确保最终结果可控）
+        </output-good>
+        <output-good version="12c+">
+          SELECT 
+            "u"."DEPARTMENT" AS "department_name",
+            count(*) AS "user_count"
+          FROM "PUBLIC"."USERS" "u"
+          WHERE "u"."status" = 1
+          GROUP BY "u"."DEPARTMENT"
+          ORDER BY "department_name"
+          FETCH FIRST 100 ROWS ONLY
+        </output-good>
       </example>
     </basic-examples>
 
-  example_engine: Oracle 19c
+  example_engine: Oracle 11g
   example_answer_1: |
     {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
   example_answer_1_with_limit: |

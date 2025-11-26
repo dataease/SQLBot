@@ -204,32 +204,49 @@ const sendMessage = async () => {
 
 const chartBlockRef = ref()
 
-function getChatPredictData(recordId?: number) {
-  chatApi.get_chart_predict_data(recordId).then((response) => {
-    _currentChat.value.records.forEach((record) => {
-      if (record.id === recordId) {
-        record.predict_data = response ?? []
+const loadingData = ref(false)
 
-        if (record.predict_data.length > 1) {
-          getChatData(recordId)
+function getChatPredictData(recordId?: number) {
+  loadingData.value = true
+  chatApi
+    .get_chart_predict_data(recordId)
+    .then((response) => {
+      let has = false
+      _currentChat.value.records.forEach((record) => {
+        if (record.id === recordId) {
+          has = true
+          record.predict_data = response ?? []
+
+          if (record.predict_data.length > 1) {
+            getChatData(recordId)
+          } else {
+            loadingData.value = false
+          }
         }
+      })
+      if (!has) {
+        _loading.value = false
       }
     })
-  })
+    .catch((e) => {
+      loadingData.value = false
+      console.error(e)
+    })
 }
 
 function getChatData(recordId?: number) {
+  loadingData.value = true
   chatApi
     .get_chart_data(recordId)
     .then((response) => {
       _currentChat.value.records.forEach((record) => {
         if (record.id === recordId) {
           record.data = response
-          console.log(record.data)
         }
       })
     })
     .finally(() => {
+      loadingData.value = false
       emits('scrollBottom')
     })
 }
@@ -262,6 +279,7 @@ defineExpose({ sendMessage, index: () => index.value, chatList: () => _chatList,
       style="margin-top: 12px"
       :record-id="recordId"
       :message="message"
+      :loading-data="loadingData"
       is-predict
     />
     <slot></slot>

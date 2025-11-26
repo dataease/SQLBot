@@ -1,59 +1,87 @@
 {
-  "i18n_default_workspace": "Default workspace",
+  "i18n_default_workspace": "Default Workspace",
   "i18n_ds_name_exist": "Name already exists",
-  "i18n_concat_admin": "Please contact administrator!",
+  "i18n_concat_admin": "Please contact the administrator!",
   "i18n_exist": "{msg} already exists!",
   "i18n_name": "Name",
-  "i18n_not_exist": "{msg} not exists",
+  "i18n_not_exist": "{msg} does not exist!",
   "i18n_error": "{key} error!",
   "i18n_miss_args": "Missing {key} parameter!",
   "i18n_format_invalid": "{key} format is incorrect!",
   "i18n_login": {
-    "account_pwd_error": "Account or password error!",
+    "account_pwd_error": "Incorrect account or password!",
     "no_associated_ws": "No associated workspace, {msg}",
-    "user_disable": "Account disabled, {msg}"
+    "user_disable": "Account is disabled, {msg}"
   },
   "i18n_user": {
     "account": "Account",
     "email": "Email",
     "password": "Password",
-    "language_not_support": "System does not support [{key}] language!",
-    "ws_miss": "The current user is not in the workspace [{ws}]!"
+    "language_not_support": "The system does not support [{key}] language!",
+    "ws_miss": "Current user is not in the workspace [{ws}]!"
   },
   "i18n_ws": {
     "title": "Workspace"
   },
   "i18n_permission": {
-    "only_admin": "Only administrators can call this!",
-    "no_permission": "No permission to access {url}{msg}",
-    "authenticate_invalid": "Authenticate invalid [{msg}]",
-    "token_expired": "Token has expired"
+    "only_admin": "Only administrators are allowed to call!",
+    "no_permission": "No permission to call {url}{msg}",
+    "authenticate_invalid": "Authentication invalid【{msg}】",
+    "token_expired": "Token expired"
   },
   "i18n_llm": {
     "validate_error": "Validation failed [{msg}]",
-    "delete_default_error": "Cannot delete default model [{key}]!",
-    "miss_default": "The default large language model has not been configured"
+    "delete_default_error": "Cannot delete the default model [{key}]!",
+    "miss_default": "Default large language model has not been configured"
   },
-  "i18n_ds_invalid": "Datasource Invalid",
+  "i18n_ds_invalid": "Datasource connection is invalid",
   "i18n_embedded": {
-    "invalid_origin": "Domain verification failed [{origin}]"
+    "invalid_origin": "Domain name validation failed【{origin}】"
   },
   "i18n_terminology": {
-    "terminology_not_exists": "Terminology does not exists",
-    "datasource_cannot_be_none": "Datasource cannot be none or empty",
-    "cannot_be_repeated": "Term name, synonyms cannot be repeated",
-    "exists_in_db": "Term name, synonyms exists"
+    "terminology_not_exists": "This terminology does not exist",
+    "datasource_cannot_be_none": "Datasource cannot be empty",
+    "cannot_be_repeated": "Terminology name and synonyms cannot be repeated",
+    "exists_in_db": "Terminology name and synonyms already exist",
+    "term_name": "Terminology Name",
+    "term_description": "Terminology Description",
+    "effective_data_sources": "Effective Data Sources",
+    "all_data_sources": "All Data Sources",
+    "synonyms": "Synonyms",
+    "word_cannot_be_empty": "Term cannot be empty",
+    "description_cannot_be_empty": "Term description cannot be empty",
+    "datasource_not_found": "Datasource not found"
   },
   "i18n_data_training": {
-    "datasource_cannot_be_none": "Datasource cannot be none or empty",
-    "data_training_not_exists": "Example does not exists",
-    "exists_in_db": "Question exists"
+    "datasource_cannot_be_none": "Datasource cannot be empty",
+    "datasource_assistant_cannot_be_none": "Datasource or advanced application cannot both be empty",
+    "data_training_not_exists": "This example does not exist",
+    "exists_in_db": "This question already exists",
+    "data_training": "SQL Example Library",
+    "problem_description": "Problem Description",
+    "sample_sql": "Sample SQL",
+    "effective_data_sources": "Effective Data Sources",
+    "advanced_application": "Advanced Application",
+    "error_info": "Error Information",
+    "question_cannot_be_empty": "Question cannot be empty",
+    "description_cannot_be_empty": "Sample SQL cannot be empty",
+    "datasource_not_found": "Datasource not found",
+    "advanced_application_not_found": "Advanced application not found"
   },
-    "i18n_custom_prompt": {
-    "exists_in_db": "Prompt name exists",
-    "not_exists": "Prompt does not exists"
+  "i18n_custom_prompt": {
+    "exists_in_db": "Template name already exists",
+    "not_exists": "This template does not exist",
+    "prompt_word_name": "Prompt word name",
+    "prompt_word_content": "Prompt word content",
+    "effective_data_sources": "Effective Data Sources",
+    "all_data_sources": "All Data Sources",
+    "name_cannot_be_empty": "Name cannot be empty",
+    "prompt_cannot_be_empty": "Prompt content cannot be empty",
+    "type_cannot_be_empty": "Type cannot be empty",
+    "datasource_not_found": "Datasource not found",
+    "datasource_cannot_be_none": "Datasource cannot be empty"
   },
   "i18n_excel_export": {
-    "data_is_empty": "The form data is empty, cannot export data"
+    "data_is_empty": "Form data is empty, unable to export data"
   }
 }

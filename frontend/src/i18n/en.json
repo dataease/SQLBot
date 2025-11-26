@@ -9,6 +9,8 @@
   },
   "prompt": {
     "default_password": "Default password:{msg}",
+    "no_sql_sample": "No SQL sample currently available",
+    "add_sql_sample": "Add SQL sample",
     "no_prompt_words": "No prompt words",
     "customize_prompt_words": "Customize prompt words",
     "ask_sql": "Ask SQL",
@@ -22,6 +24,8 @@
     "replaced_with": "Please enter a prompt word. Example: When returning names, only the last name will be displayed, and the first name will be replaced with *.",
     "loss_exercise_caution": "Entering high-risk operations such as deleting a database or table or modifying the table structure may result in permanent data loss. Exercise caution!",
     "edit_prompt_word": "Edit prompt word",
+    "all_236_terms": "Export all {msg} {type} prompt records?",
+    "export_hint": "Export all {type} prompts?",
     "prompt_word_name_de": "Do you want to delete the prompt word: {msg}?"
   },
   "training": {
@@ -30,7 +34,7 @@
     "partial_data_sources": "Partial data sources",
     "add_it_here": "Drag the table name on the left to add it here",
     "table_relationship_management": "Table relationship management",
-    "system_anagement": "System Management",
+    "system_management": "System Management",
     "data_training": "SQL Sample Lib",
     "problem_description": "Problem Description",
     "sample_sql": "Sample SQL",
@@ -40,7 +44,11 @@
     "training_data_items": "Do you want to delete the {msg} selected SQL Sample items?",
     "sql_statement": "SQL Statement",
     "edit_training_data": "Edit SQL Sample",
-    "sales_this_year": "Do you want to delete the SQL Sample: {msg}?"
+    "all_236_terms": "Export all {msg} sample SQL records?",
+    "export_hint": "Export all sample SQL?",
+    "sales_this_year": "Do you want to delete the SQL Sample: {msg}?",
+    "upload_success": "Import Successful",
+    "upload_failed": "Import successful: {success} records. Failed: {fail} records. For details, see: {fail_info}"
   },
   "professional": {
     "cannot_be_repeated": "Term name, synonyms cannot be repeated",
@@ -58,12 +66,14 @@
     "business_term": "Business Term",
     "synonyms": "Synonyms",
     "all_236_terms": "Export all {msg} terms?",
+    "export_hint": "Export all terms?",
     "export": "Export",
     "selected_2_terms": "Delete the selected {msg} terms?",
     "selected_2_terms_de": "Export the selected {msg} terms?",
     "the_term_gmv": "Delete the term: {msg}?"
   },
   "common": {
+    "require": "Required",
     "zoom_in": "Zoom in",
     "zoom_out": "Zoom out",
     "the_default_model": "Already the default model",
@@ -299,6 +309,13 @@
     }
   },
   "datasource": {
+    "recommended_problem_tips": "Custom configuration requires at least one problem, each problem should be 2-200 characters",
+    "recommended_problem_configuration": "Recommended Problem Configuration",
+    "problem_generation_method": "Problem Generation Method",
+    "ai_automatic_generation": "AI Automatic Generation",
+    "user_defined": "User Defined",
+    "question_tips": "Please enter recommended questions",
+    "add_question": "Add Question",
     "data_source_yet": "No data source yet",
     "search_by_name": "Search by Name",
     "search": "Search",
@@ -556,7 +573,9 @@
     "creating_advanced_applications": "Creating Advanced Applications",
     "configure_interface": "Configure interface",
     "interface_url": "Interface URL",
-    "format_is_incorrect": "format is incorrect",
+    "format_is_incorrect": "format is incorrect{msg}",
+    "domain_format_incorrect": ",start with http/https, no trailing slash (/), multiple domains separated by half-width commas (,)",
+    "interface_url_incorrect": ",enter a relative path starting with /",
     "aes_enable": "Enable AES encryption",
     "aes_enable_tips": "The fields (host, user, password, dataBase, schema) are all encrypted using the AES-CBC-PKCS5Padding encryption method",
     "bit": "bit",
@@ -635,6 +654,7 @@
     "error": "Error",
     "exec-sql-err": "Execute SQL failed",
     "no_data": "No Data",
+    "loading_data": "Loading ...",
     "show_error_detail": "Show error info"
   },
   "about": {
@@ -703,7 +723,21 @@
     "field_mapping": "User Attribute Mapping",
     "field_mapping_placeholder": "Example: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "Incorrect format, please re-enter",
-    "in_json_format": "Please enter JSON format"
+    "in_json_format": "Please enter JSON format",
+    "authorize_url": "Authorization URL",
+    "client_id": "Client ID",
+    "client_secret": "Client Secret",
+    "redirect_url": "Redirect URL",
+    "logout_redirect_url": "Logout Redirect URL",
+    "logout_redirect_url_placeholder": "By default, users will be redirected to the SQLBot login page after logout. You can customize the redirect address here.",
+    "oauth2_settings": "OAuth2 Settings",
+    "scope": "Scope",
+    "userinfo_url": "User Info URL",
+    "token_url": "Token URL",
+    "revoke_url": "Revocation URL",
+    "oauth2_field_mapping_placeholder": "Example: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}",
+    "token_auth_method": "Token auth method",
+    "userinfo_auth_method": "Userinfo auth method"
   },
   "login": {
     "default_login": "Default",

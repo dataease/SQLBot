@@ -9,6 +9,8 @@
   },
   "prompt": {
     "default_password": "默认密码：{msg}",
+    "no_sql_sample": "暂无 SQL 示例",
+    "add_sql_sample": "添加 SQL 示例",
     "no_prompt_words": "暂无提示词",
     "customize_prompt_words": "自定义提示词",
     "ask_sql": "问数 SQL",
@@ -22,6 +24,8 @@
     "replaced_with": "请输入提示词，示例：返回姓名时，只显示姓氏，名字用*代替",
     "loss_exercise_caution": "若输入删除数据库、数据表或修改表结构等高风险的操作指令，可能导致数据永久丢失，请务必谨慎！",
     "edit_prompt_word": "编辑提示词",
+    "all_236_terms": "是否导出全部 {msg} 条{type}提示词？",
+    "export_hint": "是否导出全部{type}提示词？",
     "prompt_word_name_de": "是否删除提示词：{msg}？"
   },
   "training": {
@@ -30,7 +34,7 @@
     "partial_data_sources": "部分数据源",
     "add_it_here": "拖拽左侧表名，添加到这里",
     "table_relationship_management": "表关系管理",
-    "system_anagement": "系统管理",
+    "system_management": "系统管理",
     "data_training": "SQL 示例库",
     "problem_description": "问题描述",
     "sample_sql": "示例 SQL",
@@ -40,7 +44,11 @@
     "training_data_items": "是否删除选中的 {msg} 条示例 SQL？",
     "sql_statement": "SQL 语句",
     "edit_training_data": "编辑示例 SQL",
-    "sales_this_year": "是否删除示例 SQL：{msg}？"
+    "all_236_terms": "是否导出全部 {msg} 条示例 SQL？",
+    "export_hint": "是否导出全部示例 SQL？",
+    "sales_this_year": "是否删除示例 SQL：{msg}？",
+    "upload_success": "导入成功",
+    "upload_failed": "导入成功 {success} 条，失败 {fail} 条，失败信息详见：{fail_info}"
   },
   "professional": {
     "cannot_be_repeated": "术语名称，同义词不能重复",
@@ -58,12 +66,14 @@
     "business_term": "业务术语",
     "synonyms": "同义词",
     "all_236_terms": "是否导出全部 {msg} 条术语？",
+    "export_hint": "是否导出全部术语？",
     "export": "导出",
     "selected_2_terms": "是否删除选中的 {msg} 条术语？",
     "selected_2_terms_de": "是否导出选中的 {msg} 条术语？",
     "the_term_gmv": "是否删除术语：{msg}？"
   },
   "common": {
+    "require": "必填",
     "zoom_in": "放大",
     "zoom_out": "缩小",
     "the_default_model": "已是默认模型",
@@ -299,6 +309,13 @@
     }
   },
   "datasource": {
+    "recommended_problem_tips": "自定义配置至少一个问题，每个问题2-200个字符",
+    "recommended_problem_configuration": "推荐问题配置",
+    "problem_generation_method": "问题生成方式",
+    "ai_automatic_generation": "AI 自动生成",
+    "user_defined": "用户自定义",
+    "question_tips": "请输入推荐问题",
+    "add_question": "添加问题",
     "data_source_yet": "暂无数据源",
     "search_by_name": "通过名称搜索",
     "search": "搜索",
@@ -555,7 +572,9 @@
     "private": "私有",
     "configure_interface": "配置接口",
     "interface_url": "接口 URL",
-    "format_is_incorrect": "格式不对",
+    "format_is_incorrect": "格式不对{msg}",
+    "domain_format_incorrect": "，http或https开头，不能以 / 结尾，多个域名以逗号(半角)分隔",
+    "interface_url_incorrect": "，请填写相对路径，以/开头",
     "aes_enable": "开启 AES 加密",
     "aes_enable_tips": "加密字段 (host, user, password, dataBase, schema) 均采用 AES-CBC-PKCS5Padding 加密方式",
     "bit": "位",
@@ -635,6 +654,7 @@
     "error": "错误",
     "exec-sql-err": "执行SQL失败",
     "no_data": "暂无数据",
+    "loading_data": "加载中...",
     "show_error_detail": "查看具体信息"
   },
   "about": {
@@ -703,7 +723,21 @@
     "field_mapping": "用户属性映射",
     "field_mapping_placeholder": "例如：{'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "格式错误，请重新填写",
-    "in_json_format": "请输入json格式"
+    "in_json_format": "请输入json格式",
+    "authorize_url": "授权地址",
+    "client_id": "客户端 ID",
+    "client_secret": "客户端密钥",
+    "redirect_url": "回调地址",
+    "logout_redirect_url": "注销回调地址",
+    "logout_redirect_url_placeholder": "注销后默认跳转至 SQLBot 登录页面，可自定义设置注销后跳转地址",
+    "oauth2_settings": "OAuth2 设置",
+    "scope": "授权范围",
+    "userinfo_url": "用户信息地址",
+    "token_url": "令牌地址",
+    "revoke_url": "撤销地址",
+    "oauth2_field_mapping_placeholder": "例如：{'{'}\"account\": \"oauth2Account\", \"name\": \"oauth2Name\", \"email\": \"email\"{'}'}",
+    "token_auth_method": "Token 认证方式",
+    "userinfo_auth_method": "用户信息认证方式"
   },
   "login": {
     "default_login": "默认",

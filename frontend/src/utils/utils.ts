@@ -213,6 +213,11 @@ export const getQueryString = (name: string) => {
   return null
 }
 
+export const getUrlParams = () => {
+  const urlParams = new URLSearchParams(window.location.search) as any
+  return Object.fromEntries(urlParams)
+}
+
 export const isLarkPlatform = () => {
   return !!getQueryString('state') && !!getQueryString('code')
 }

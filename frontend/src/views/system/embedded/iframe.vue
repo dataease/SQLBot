@@ -157,7 +157,16 @@ const handleBaseEmbedded = (row: any) => {
 const handleAdvancedEmbedded = (row: any) => {
   advancedApplication.value = true
   if (row) {
-    Object.assign(urlForm, cloneDeep(JSON.parse(row.configuration)))
+    const tempData = cloneDeep(JSON.parse(row.configuration))
+    if (tempData?.endpoint.startsWith('http')) {
+      row.domain
+        .trim()
+        .split(',')
+        .forEach((domain: string) => {
+          tempData.endpoint = tempData.endpoint.replace(domain, '')
+        })
+    }
+    Object.assign(urlForm, tempData)
   }
   ruleConfigvVisible.value = true
   dialogTitle.value = row?.id
@@ -265,13 +274,20 @@ const validateUrl = (_: any, value: any, callback: any) => {
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
-    var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
-    var objExp = new RegExp(Expression)
-    if (objExp.test(value) && !value.endsWith('/')) {
-      callback()
-    } else {
-      callback(t('embedded.format_is_incorrect'))
-    }
+    value
+      .trim()
+      .split(',')
+      .forEach((tempVal: string) => {
+        var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
+        var objExp = new RegExp(Expression)
+        if (objExp.test(tempVal) && !tempVal.endsWith('/')) {
+          callback()
+        } else {
+          callback(
+            t('embedded.format_is_incorrect', { msg: t('embedded.domain_format_incorrect') })
+          )
+        }
+      })
   }
 }
 const rules = {
@@ -307,12 +323,13 @@ const validatePass = (_: any, value: any, callback: any) => {
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
-    var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
+    // var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
+    var Expression = /^\/([a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+(\?[a-zA-Z0-9_=&-]+)?$/
     var objExp = new RegExp(Expression)
-    if (objExp.test(value) && value.startsWith(currentEmbedded.domain)) {
+    if (objExp.test(value)) {
       callback()
     } else {
-      callback(t('embedded.format_is_incorrect'))
+      callback(t('embedded.format_is_incorrect', { msg: t('embedded.interface_url_incorrect') }))
     }
   }
 }

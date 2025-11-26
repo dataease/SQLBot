@@ -9,6 +9,8 @@
   },
   "prompt": {
     "default_password:": "기본 비밀번호:{msg}",
+    "no_sql_sample": "현재 사용 가능한 SQL 샘플 라이브러리가 없습니다",
+    "add_sql_sample": "SQL 샘플 라이브러리를 추가하세요",
     "no_prompt_words": "프롬프트가 없습니다",
     "customize_prompt_words": "사용자 정의 프롬프트",
     "ask_sql": "데이터 조회 SQL",
@@ -22,6 +24,8 @@
     "replaced_with": "프롬프트를 입력하세요. 예: 성명을 반환할 때 성씨만 표시하고 이름은 *로 대체",
     "loss_exercise_caution": "데이터베이스 삭제, 데이터 테이블 삭제 또는 테이블 구조 수정과 같은 고위험 작업 명령을 입력하면 데이터가 영구적으로 손실될 수 있으니 신중하게 작업하십시오!",
     "edit_prompt_word": "프롬프트 편집",
+    "all_236_terms": "모든 {msg}개의 {type} 프롬프트 기록을 내보내시겠습니까?",
+    "export_hint": "모든 {type} 프롬프트를 내보내시겠습니까?",
     "prompt_word_name_de": "프롬프트를 삭제하시겠습니까: {msg}?"
   },
   "training": {
@@ -30,7 +34,7 @@
     "partial_data_sources": "일부 데이터 소스",
     "add_it_here": "왼쪽 테이블 이름을 드래그하여 여기에 추가",
     "table_relationship_management": "테이블 관계 관리",
-    "system_anagement": "시스템 관리",
+    "system_management": "시스템 관리",
     "data_training": "SQL 예제 라이브러리",
     "problem_description": "문제 설명",
     "sample_sql": "예제 SQL",
@@ -40,7 +44,11 @@
     "training_data_items": "선택된 {msg}개의 예제 SQL을 삭제하시겠습니까?",
     "sql_statement": "SQL 문",
     "edit_training_data": "예제 SQL 편집",
-    "sales_this_year": "예제 SQL을 삭제하시겠습니까: {msg}?"
+    "all_236_terms": "모든 {msg}개의 예시 SQL 기록을 내보내시겠습니까?",
+    "export_hint": "모든 예시 SQL을 내보내시겠습니까?",
+    "sales_this_year": "예제 SQL을 삭제하시겠습니까: {msg}?",
+    "upload_success": "가져오기 성공",
+    "upload_failed": "성공: {success}건, 실패: {fail}건. 자세한 내용은 다음을 참조하세요: {fail_info}"
   },
   "professional": {
     "cannot_be_repeated": "용어 이름과 동의어는 중복될 수 없습니다",
@@ -58,12 +66,14 @@
     "business_term": "비즈니스 용어",
     "synonyms": "동의어",
     "all_236_terms": "전체 {msg}개 용어를 내보내시겠습니까?",
+    "export_hint": "모든 용어를 내보내시겠습니까?",
     "export": "내보내기",
     "selected_2_terms": "선택된 {msg}개 용어를 삭제하시겠습니까?",
     "selected_2_terms_de": "선택된 {msg}개 용어를 내보내시겠습니까?",
     "the_term_gmv": "용어를 삭제하시겠습니까: {msg}?"
   },
   "common": {
+    "require": "필수 입력 항목",
     "zoom_in": "확대",
     "zoom_out": "축소",
     "the_default_model": "이미 기본 모델입니다",
@@ -299,6 +309,13 @@
     }
   },
   "datasource": {
+    "recommended_problem_tips": "사용자 정의 구성으로 최소 한 개의 문제를 생성하세요, 각 문제는 2~200자로 작성",
+    "recommended_problem_configuration": "추천 문제 구성",
+    "problem_generation_method": "문제 생성 방식",
+    "ai_automatic_generation": "AI 자동 생성",
+    "user_defined": "사용자 정의",
+    "question_tips": "추천 문제를 입력해 주세요",
+    "add_question": "문제 추가",
     "data_source_yet": "데이터 소스가 없습니다",
     "search_by_name": "이름으로 검색",
     "search": "검색",
@@ -555,7 +572,9 @@
     "private": "비공개",
     "configure_interface": "인터페이스 설정",
     "interface_url": "인터페이스 URL",
-    "format_is_incorrect": "형식이 올바르지 않습니다",
+    "format_is_incorrect": "형식이 올바르지 않습니다{msg}",
+    "domain_format_incorrect": ", http/https로 시작, 슬래시(/)로 끝나지 않음, 여러 도메인은 반각 쉼표(,)로 구분",
+    "interface_url_incorrect": ", 상대 경로를 입력해주세요. /로 시작합니다",
     "aes_enable": "AES 암호화 활성화",
     "aes_enable_tips": "암호화 필드 (host, user, password, dataBase, schema)는 모두 AES-CBC-PKCS5Padding 암호화 방식을 사용합니다",
     "bit": "비트",
@@ -635,6 +654,7 @@
     "error": "오류",
     "exec-sql-err": "SQL 실행 실패",
     "no_data": "데이터가 없습니다",
+    "loading_data": "로딩 중 ...",
     "show_error_detail": "구체적인 정보 보기"
   },
   "about": {
@@ -703,7 +723,21 @@
     "field_mapping": "사용자 속성 매핑",
     "field_mapping_placeholder": "예: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "형식이 잘못되었습니다. 다시 입력해 주세요",
-    "in_json_format": "JSON 형식으로 입력해 주세요"
+    "in_json_format": "JSON 형식으로 입력해 주세요",
+    "authorize_url": "인증 URL",
+    "client_id": "클라이언트 ID",
+    "client_secret": "클라이언트 시크릿",
+    "redirect_url": "리디렉션 URL",
+    "logout_redirect_url": "로그아웃 후 리디렉션 URL",
+    "logout_redirect_url_placeholder": "기본적으로 로그아웃 후 SQLBot 로그인 페이지로 이동합니다. 여기서 리디렉션 주소를 사용자 지정할 수 있습니다.",
+    "oauth2_settings": "OAuth2 설정",
+    "scope": "권한 범위",
+    "userinfo_url": "사용자 정보 URL",
+    "token_url": "토큰 URL",
+    "revoke_url": "취소 URL",
+    "oauth2_field_mapping_placeholder": "예: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}",
+    "token_auth_method": "토큰 인증 방식",
+    "userinfo_auth_method": "사용자 정보 인증 방식"
   },
   "login": {
     "default_login": "기본값",
