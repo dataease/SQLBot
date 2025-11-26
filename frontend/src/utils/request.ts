@@ -100,6 +100,9 @@ class HttpService {
           if (!assistantStore.getType || assistantStore.getType === 2) {
             config.headers['X-SQLBOT-ASSISTANT-ONLINE'] = assistantStore.getOnline
           }
+          if (assistantStore.getHostOrigin) {
+            config.headers['X-SQLBOT-HOST-ORIGIN'] = assistantStore.getHostOrigin
+          }
         }
         const locale = getLocale()
         if (locale) {
@@ -301,6 +304,9 @@ class HttpService {
         heads['X-SQLBOT-ASSISTANT-CERTIFICATE'] = btoa(
           encodeURIComponent(assistantStore.getCertificate)
         )
+      }
+      if (assistantStore.getHostOrigin) {
+        heads['X-SQLBOT-HOST-ORIGIN'] = assistantStore.getHostOrigin
       }
       if (!assistantStore.getType || assistantStore.getType === 2) {
         heads['X-SQLBOT-ASSISTANT-ONLINE'] = assistantStore.getOnline

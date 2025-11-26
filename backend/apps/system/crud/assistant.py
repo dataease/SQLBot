@@ -149,7 +149,7 @@ class AssistantOutDs:
         if not domain_text:
             return None
         if ',' in domain_text:
-            return self.request_origin.strip('/') if self.request_origin else domain_text.split(',')[0].strip('/') + endpoint
+            return (self.request_origin.strip('/') if self.request_origin else domain_text.split(',')[0].strip('/')) + endpoint
         else:
             return f"{domain_text}{endpoint}"  
     

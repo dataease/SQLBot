@@ -539,12 +539,15 @@
           return
         }
         if (event.data?.busi == 'ready' && event.data?.ready) {
-          const certificate = parsrCertificate(data)
           params = {
-            busi: 'certificate',
-            certificate,
             eventName,
             messageId: id,
+            hostOrigin: window.location.origin,
+          }
+          if (data.type === 1) {
+            const certificate = parsrCertificate(data)
+            params['busi'] = 'certificate'
+            params['certificate'] = certificate
           }
           const contentWindow = iframe.contentWindow
           contentWindow.postMessage(params, url)
@@ -596,10 +599,7 @@
         tempData['userFlag'] = userFlag
         tempData['history'] = history
         initsqlbot_assistant(tempData)
-        if (data.type == 1) {
-          registerMessageEvent(id, tempData)
-          // postMessage the certificate to iframe
-        }
+        registerMessageEvent(id, tempData)
       })
       .catch((e) => {
         showMsg('嵌入失败', e.message)

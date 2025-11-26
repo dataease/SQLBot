@@ -21,6 +21,7 @@ interface AssistantState {
   online: boolean
   pageEmbedded?: boolean
   history: boolean
+  hostOrigin: string
   requestPromiseMap: Map<string, PendingRequest>
 }
 
@@ -36,6 +37,7 @@ export const AssistantStore = defineStore('assistant', {
       online: false,
       pageEmbedded: false,
       history: true,
+      hostOrigin: '',
       requestPromiseMap: new Map<string, PendingRequest>(),
     }
   },
@@ -69,6 +71,9 @@ export const AssistantStore = defineStore('assistant', {
     },
     getEmbedded(): boolean {
       return this.assistant && this.type === 4
+    },
+    getHostOrigin(): string {
+      return this.hostOrigin
     },
   },
   actions: {
@@ -137,6 +142,9 @@ export const AssistantStore = defineStore('assistant', {
     },
     setHistory(history: boolean) {
       this.history = history ?? true
+    },
+    setHostOrigin(origin: string) {
+      this.hostOrigin = origin
     },
     async setChat() {
       if (!this.assistant) {

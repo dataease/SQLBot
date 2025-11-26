@@ -40,7 +40,7 @@ class TokenMiddleware(BaseHTTPMiddleware):
             if validator[0]:
                 request.state.current_user = validator[1]
                 request.state.assistant = validator[2]
-                origin = request.headers.get("origin") or get_origin_from_referer(request)
+                origin = request.headers.get("X-SQLBOT-HOST-ORIGIN") or get_origin_from_referer(request)
                 if origin and validator[2]:
                     request.state.assistant.request_origin = origin
                 return await call_next(request)
