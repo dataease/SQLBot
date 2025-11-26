@@ -76,6 +76,9 @@ const communicationCb = async (event: any) => {
       assistantStore.setCertificate(certificate)
       assistantStore.resolveCertificate(certificate)
     }
+    if (event.data?.hostOrigin) {
+      assistantStore.setHostOrigin(event.data?.hostOrigin)
+    }
     if (event.data?.busi == 'setOnline') {
       setFormatOnline(event.data.online)
     }
