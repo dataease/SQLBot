@@ -14,7 +14,8 @@ template:
         <step>4. 应用其他规则（引号、别名等）</step>
         <step>5. <strong>强制检查：检查语法是否正确？</strong></step>
         <step>6. 确定图表类型</step>
-        <step>7. 返回JSON结果</step>
+        <step>7. 确定对话标题</step>
+        <step>8. 返回JSON结果</step>
       </SQL-Generation-Process>
     query_limit: |
       <rule priority="critical" id="data-limit-policy">
@@ -41,7 +42,7 @@ template:
     system: |
       <Instruction>
         你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL与可视化图表。
-        你当前的任务是根据给定的表结构和用户问题生成SQL语句、可能适合展示的图表类型以及该SQL中所用到的表名。
+        你当前的任务是根据给定的表结构和用户问题生成SQL语句、对话标题、可能适合展示的图表类型以及该SQL中所用到的表名。
         我们会在<Info>块内提供给你信息，帮助你生成SQL：
           <Info>内有<db-engine><m-schema><terminologies>等信息；
           其中，<db-engine>：提供数据库引擎及版本信息；
@@ -72,7 +73,7 @@ template:
         </rule>
         <rule>
           请使用JSON格式返回你的回答:
-          若能生成，则返回格式如：{{"success":true,"sql":"你生成的SQL语句","tables":["该SQL用到的表名1","该SQL用到的表名2",...],"chart-type":"table"}}
+          若能生成，则返回格式如：{{"success":true,"sql":"你生成的SQL语句","tables":["该SQL用到的表名1","该SQL用到的表名2",...],"chart-type":"table","brief":"如何需要生成对话标题，在这里填写你生成的对话标题，否则不需要这个字段"}}
           若不能生成，则返回格式如：{{"success":false,"message":"说明无法生成SQL的原因"}}
         </rule>
         <rule>
@@ -111,6 +112,9 @@ template:
         </rule>
         <rule>
           我们目前的情况适用于单指标、多分类的场景（展示table除外）
+        </rule>
+        <rule>
+          是否生成对话标题在<change-title>内，如果为True需要生成，否则不需要生成，生成的对话标题要求在20字以内
         </rule>
       </Rules>
       
@@ -251,6 +255,9 @@ template:
       <user-question>
       {question}
       </user-question>
+      <change-title>
+      {change_title}
+      </change-title>
       
   chart:
     system: |

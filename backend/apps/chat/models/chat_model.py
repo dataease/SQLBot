@@ -210,9 +210,9 @@ class AiModelQuestion(BaseModel):
                                                example_answer_2=_example_answer_2,
                                                example_answer_3=_example_answer_3)
 
-    def sql_user_question(self, current_time: str):
+    def sql_user_question(self, current_time: str, change_title: bool):
         return get_sql_template()['user'].format(engine=self.engine, schema=self.db_schema, question=self.question,
-                                                 rule=self.rule, current_time=current_time, error_msg=self.error_msg)
+                                                 rule=self.rule, current_time=current_time, error_msg=self.error_msg,change_title = change_title)
 
     def chart_sys_question(self):
         return get_chart_template()['system'].format(sql=self.sql, question=self.question, lang=self.lang)
