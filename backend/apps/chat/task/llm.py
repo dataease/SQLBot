@@ -524,7 +524,7 @@ class LLMService:
     def generate_sql(self, _session: Session):
         # append current question
         self.sql_message.append(HumanMessage(
-            self.chat_question.sql_user_question(current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))))
+            self.chat_question.sql_user_question(current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),change_title = self.change_title)))
 
         self.current_logs[OperationEnum.GENERATE_SQL] = start_log(session=_session,
                                                                   ai_modal_id=self.chat_question.ai_modal_id,
@@ -756,6 +756,26 @@ class LLMService:
 
         return chart_type
 
+    @staticmethod
+    def get_brief_from_sql_answer(res: str) -> Optional[str]:
+        json_str = extract_nested_json(res)
+        if json_str is None:
+            return None
+
+        brief: Optional[str]
+        data: dict
+        try:
+            data = orjson.loads(json_str)
+
+            if data['success']:
+                brief = data['brief']
+            else:
+                return None
+        except Exception:
+            return None
+
+        return brief
+
     def check_save_sql(self, session: Session, res: str) -> str:
         sql, *_ = self.check_sql(res=res)
         save_sql(session=session, sql=sql, record_id=self.record.id)
@@ -925,17 +945,6 @@ class LLMService:
             if not stream:
                 json_result['record_id'] = self.get_record().id
 
-            # return title
-            if self.change_title:
-                if self.chat_question.question and self.chat_question.question.strip() != '':
-                    brief = rename_chat(session=_session,
-                                        rename_object=RenameChat(id=self.get_record().chat_id,
-                                                                 brief=self.chat_question.question.strip()[:20]))
-                    if in_chat:
-                        yield 'data:' + orjson.dumps({'type': 'brief', 'brief': brief}).decode() + '\n\n'
-                    if not stream:
-                        json_result['title'] = brief
-
                 # select datasource if datasource is none
             if not self.ds:
                 ds_res = self.select_datasource(_session)
@@ -980,6 +989,19 @@ class LLMService:
             SQLBotLogUtil.info(full_sql_text)
 
             chart_type = self.get_chart_type_from_sql_answer(full_sql_text)
+
+            # return title
+            if self.change_title:
+                llm_brief = self.get_brief_from_sql_answer(full_sql_text)
+                if (llm_brief and llm_brief != '')  or (self.chat_question.question and self.chat_question.question.strip() != ''):
+                    save_brief = llm_brief if (llm_brief and llm_brief != '') else self.chat_question.question.strip()[:20]
+                    brief = rename_chat(session=_session,
+                                        rename_object=RenameChat(id=self.get_record().chat_id,
+                                                                 brief=save_brief))
+                    if in_chat:
+                        yield 'data:' + orjson.dumps({'type': 'brief', 'brief': brief}).decode() + '\n\n'
+                    if not stream:
+                        json_result['title'] = brief
 
             use_dynamic_ds: bool = self.current_assistant and self.current_assistant.type in dynamic_ds_types
             is_page_embedded: bool = self.current_assistant and self.current_assistant.type == 4
