@@ -31,6 +31,7 @@ const execute = () => {
     font-size: 32px;
     border: 1px solid #dee0e3;
     border-radius: 50%;
+    color: var(--ed-color-primary);
   }
   display: flex;
   align-items: center;
@@ -41,7 +42,7 @@ const execute = () => {
     margin-top: 8px;
     color: #000;
     text-align: center;
-    font-family: var(--de-custom_font, 'PingFang');
+    font-family: var(--ed-color-primary, 'PingFang');
     font-size: 12px;
     font-style: normal;
     font-weight: 400;

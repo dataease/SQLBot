@@ -1,18 +1,18 @@
 <template>
-  <div class="item CAS" @click="execute">
+  <div class="item OIDC" @click="execute">
     <el-icon>
-      <Icon name="logo_cas"><logo_cas class="svg-icon" /></Icon>
+      <Icon name="logo_oidc"><logo_oidc class="svg-icon" /></Icon>
     </el-icon>
-    <span class="name"> CAS </span>
+    <span class="name"> OIDC </span>
   </div>
 </template>
 
 <script lang="ts" setup>
-import logo_cas from '@/assets/svg/logo_cas.svg'
+import logo_oidc from '@/assets/svg/logo_oidc.svg'
 import { Icon } from '@/components/icon-custom'
 const emits = defineEmits(['switch-category'])
 const execute = () => {
-  emits('switch-category', { category: 'cas', proxy: '/#' })
+  emits('switch-category', { category: 'oidc', proxy: '/#' })
 }
 </script>
 <style lang="less" scoped>

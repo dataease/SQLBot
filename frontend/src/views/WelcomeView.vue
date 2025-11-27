@@ -18,8 +18,9 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const logout = async () => {
-  await userStore.logout()
-  router.push('/login')
+  if (!(await userStore.logout())) {
+    router.push('/login')
+  }
 }
 </script>
 

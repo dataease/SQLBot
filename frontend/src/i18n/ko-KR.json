@@ -737,7 +737,11 @@
     "revoke_url": "취소 URL",
     "oauth2_field_mapping_placeholder": "예: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}",
     "token_auth_method": "토큰 인증 방식",
-    "userinfo_auth_method": "사용자 정보 인증 방식"
+    "userinfo_auth_method": "사용자 정보 인증 방식",
+    "oidc_settings": "OIDC 설정",
+    "metadata_url": "메타데이터 URL",
+    "realm": "영역",
+    "oidc_field_mapping_placeholder": "예: {\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"}"
   },
   "login": {
     "default_login": "기본값",
@@ -749,7 +753,8 @@
     "qr_code": "QR 코드",
     "platform_disable": "{0} 설정이 활성화되지 않았습니다!",
     "input_account": "계정을 입력해 주세요",
-    "redirect_2_auth": "{0} 인증으로 리디렉션 중입니다, {1}초..."
+    "redirect_2_auth": "{0} 인증으로 리디렉션 중입니다, {1}초...",
+    "redirect_immediately": "지금 이동"
   },
   "supplier": {
     "alibaba_cloud_bailian": "알리바바 클라우드 바이리엔",

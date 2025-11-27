@@ -91,7 +91,7 @@ const init = (needLoading: boolean) => {
     .then((res) => {
       if (res) {
         infos.value = [...(res as CardInfo[])].filter(
-          (item) => item.name === 'cas' || item.name === 'oauth2'
+          (item) => item.name === 'cas' || item.name === 'oauth2' || item.name === 'oidc'
         )
         showInfos.value = [...infos.value]
       }
