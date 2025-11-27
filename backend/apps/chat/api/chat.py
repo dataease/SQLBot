@@ -10,7 +10,7 @@ from sqlalchemy import and_, select
 
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
-    format_json_data, format_json_list_data, get_chart_config
+    format_json_data, format_json_list_data, get_chart_config, list_recent_questions
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
@@ -131,6 +131,10 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, ch
         return StreamingResponse(_err(e), media_type="text/event-stream")
 
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
+
+@router.get("/recent_questions/{datasource_id}")
+async def recommend_questions(session: SessionDep, current_user: CurrentUser, datasource_id: int):
+    return list_recent_questions(session=session, current_user=current_user, datasource_id=datasource_id)
 
 
 @router.post("/question")

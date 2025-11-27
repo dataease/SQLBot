@@ -184,6 +184,9 @@
     "chart_selected": "Selected {0}"
   },
   "qa": {
+    "recently": "recently",
+    "recommend": "recommend",
+    "quick_question": "quick question",
     "new_chat": "New Chat",
     "start_sqlbot": "New Chat",
     "title": "Data Q&A",

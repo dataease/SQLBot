@@ -184,6 +184,9 @@
     "chart_selected": "已选{0}"
   },
   "qa": {
+    "recently": "最近",
+    "recommend": "推荐",
+    "quick_question": "快捷提问",
     "new_chat": "新建对话",
     "start_sqlbot": "开启问数",
     "title": "智能问数",

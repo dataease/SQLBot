@@ -11,6 +11,7 @@ const props = withDefaults(
     questions?: string
     firstChat?: boolean
     disabled?: boolean
+    position?: string
   }>(),
   {
     recordId: undefined,
@@ -18,6 +19,7 @@ const props = withDefaults(
     questions: '[]',
     firstChat: false,
     disabled: false,
+    position: 'chat',
   }
 )
 
@@ -153,10 +155,23 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
 
 <template>
   <div v-if="computedQuestions.length > 0 || loading" class="recommend-questions">
-    <div v-if="firstChat" style="margin-bottom: 8px">{{ t('qa.guess_u_ask') }}</div>
-    <div v-else class="continue-ask">{{ t('qa.continue_to_ask') }}</div>
+    <template v-if="position === 'chat'">
+      <div v-if="firstChat" style="margin-bottom: 8px">{{ t('qa.guess_u_ask') }}</div>
+      <div v-else class="continue-ask">{{ t('qa.continue_to_ask') }}</div>
+    </template>
     <div v-if="loading">
       <el-button style="min-width: unset" type="primary" link loading />
+    </div>
+    <div v-else-if="position === 'input'" class="question-grid-input">
+      <div
+        v-for="(question, index) in computedQuestions"
+        :key="index"
+        class="question"
+        :class="{ disabled: disabled }"
+        @click="clickQuestion(question)"
+      >
+        {{ question }}
+      </div>
     </div>
     <div v-else class="question-grid">
       <div
@@ -184,6 +199,12 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
   .continue-ask {
     color: rgba(100, 106, 115, 1);
     font-weight: 400;
+  }
+
+  .question-grid-input {
+    display: grid;
+    grid-gap: 12px;
+    grid-template-columns: repeat(1, calc(100% - 6px));
   }
 
   .question-grid {

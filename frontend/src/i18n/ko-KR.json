@@ -184,6 +184,9 @@
     "chart_selected": "{0}개 선택됨"
   },
   "qa": {
+    "recently": "최근",
+    "recommend": "추천",
+    "quick_question": "빠른 질문",
     "new_chat": "새 대화 생성",
     "start_sqlbot": "데이터 조회 시작",
     "title": "스마트 데이터 조회",
