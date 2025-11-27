@@ -221,18 +221,18 @@
                 :msg="message"
                 :hide-avatar="message.first_chat"
               >
-                <RecommendQuestion
-                  v-if="message.role === 'assistant' && message.first_chat"
-                  ref="recommendQuestionRef"
-                  :current-chat="currentChat"
-                  :record-id="message.record?.id"
-                  :questions="message.recommended_question"
-                  :disabled="isTyping"
-                  :first-chat="message.first_chat"
-                  @click-question="quickAsk"
-                  @stop="onChatStop"
-                  @loading-over="loadingOver"
-                />
+                <!--                <RecommendQuestion-->
+                <!--                  v-if="message.role === 'assistant' && message.first_chat"-->
+                <!--                  ref="recommendQuestionRef"-->
+                <!--                  :current-chat="currentChat"-->
+                <!--                  :record-id="message.record?.id"-->
+                <!--                  :questions="message.recommended_question"-->
+                <!--                  :disabled="isTyping"-->
+                <!--                  :first-chat="message.first_chat"-->
+                <!--                  @click-question="quickAsk"-->
+                <!--                  @stop="onChatStop"-->
+                <!--                  @loading-over="loadingOver"-->
+                <!--                />-->
                 <UserChat v-if="message.role === 'user'" :message="message" />
                 <template v-if="message.role === 'assistant' && !message.first_chat">
                   <ChartAnswer
@@ -396,6 +396,20 @@
               </span>
             </template>
           </div>
+          <div v-if="computedMessages.length > 0" class="quick_question">
+            <quick-question
+              ref="quickQuestionRef"
+              :datasource-id="currentChat.datasource"
+              :current-chat="currentChat"
+              :record-id="computedMessages[0].record?.id"
+              :questions="computedMessages[0].recommended_question"
+              :disabled="isTyping"
+              :first-chat="true"
+              @quick-ask="quickAsk"
+              @stop="onChatStop"
+              @loading-over="loadingOver"
+            ></quick-question>
+          </div>
           <el-input
             ref="inputRef"
             v-model="inputMessage"
@@ -462,6 +476,7 @@ import { useUserStore } from '@/stores/user'
 import { debounce } from 'lodash-es'
 import { isMobile } from '@/utils/utils'
 import router from '@/router'
+import QuickQuestion from '@/views/chat/QuickQuestion.vue'
 const userStore = useUserStore()
 const props = defineProps<{
   startChatDsId?: number
@@ -703,13 +718,16 @@ function onChatCreatedQuick(chat: ChatInfo) {
   onChatCreated(chat)
 }
 
+const recommendQuestionRef = ref()
+const quickQuestionRef = ref()
+
 function onChatCreated(chat: ChatInfo) {
   if (chat.records.length === 1 && !chat.records[0].recommended_question) {
-    getRecommendQuestions(chat.records[0].id)
+    nextTick(() => {
+      quickQuestionRef.value.getRecommendQuestions()
+    })
   }
 }
-
-const recommendQuestionRef = ref()
 
 function getRecommendQuestions(id?: number) {
   nextTick(() => {
@@ -1161,6 +1179,31 @@ onMounted(() => {
         left: 0;
         top: 0;
         padding-top: 12px;
+        padding-left: 12px;
+        z-index: 10;
+        background: transparent;
+        line-height: 22px;
+        font-size: 14px;
+        font-weight: 400;
+        border-top-right-radius: 16px;
+        border-top-left-radius: 16px;
+        color: rgba(100, 106, 115, 1);
+        display: flex;
+        align-items: center;
+
+        .name {
+          color: rgba(31, 35, 41, 1);
+        }
+      }
+
+      .quick_question {
+        width: calc(100% - 2px);
+        position: absolute;
+        margin-left: 1px;
+        margin-top: 1px;
+        left: 0;
+        bottom: 0;
+        padding-bottom: 12px;
         padding-left: 12px;
         z-index: 10;
         background: transparent;

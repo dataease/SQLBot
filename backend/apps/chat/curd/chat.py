@@ -1,5 +1,6 @@
 import datetime
 from typing import List
+from sqlalchemy import desc, func
 
 import orjson
 import sqlparse
@@ -33,6 +34,21 @@ def list_chats(session: SessionDep, current_user: CurrentUser) -> List[Chat]:
     chart_list = session.query(Chat).filter(and_(Chat.create_by == current_user.id, Chat.oid == oid)).order_by(
         Chat.create_time.desc()).all()
     return chart_list
+
+
+def list_recent_questions(session: SessionDep, current_user: CurrentUser, datasource_id: int) -> List[str]:
+    chat_records = (
+        session.query(ChatRecord.question)
+        .filter(
+            ChatRecord.datasource == datasource_id,
+            ChatRecord.question.isnot(None)
+        )
+        .group_by(ChatRecord.question)
+        .order_by(desc(func.max(ChatRecord.create_time)))
+        .limit(10)
+        .all()
+    )
+    return [record[0] for record in chat_records] if chat_records else []
 
 
 def rename_chat(session: SessionDep, rename_object: RenameChat) -> str:
