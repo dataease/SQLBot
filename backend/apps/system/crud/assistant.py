@@ -271,15 +271,15 @@ def get_ds_engine(ds: AssistantOutDsSchema) -> Engine:
 
 def get_out_ds_conf(ds: AssistantOutDsSchema, timeout:int=30) -> str:
     conf = {
-        "host":ds.host,
-        "port":ds.port,
-        "username":ds.user,
-        "password":ds.password,
-        "database":ds.dataBase,
+        "host":ds.host or '',
+        "port":ds.port or 0,
+        "username":ds.user or '',
+        "password":ds.password or '',
+        "database":ds.dataBase or '',
         "driver":'',
         "extraJdbc":ds.extraParams or '',
         "dbSchema":ds.db_schema or '',
-        "timeout":timeout
+        "timeout":timeout or 30
     }
     conf["extraJdbc"] = ''
     return aes_encrypt(json.dumps(conf))
