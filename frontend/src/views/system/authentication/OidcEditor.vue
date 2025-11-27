@@ -8,25 +8,16 @@ const { t } = useI18n()
 const dialogVisible = ref(false)
 const loadingInstance = ref<ReturnType<typeof ElLoading.service> | null>(null)
 const oidcForm = ref<FormInstance>()
-interface OidcForm {
-  clientId?: string
-  clientSecret?: string
-  discovery?: string
-  redirectUri?: string
-  realm?: string
-  scope?: string
-  usePkce?: boolean
-  mapping?: string
-}
+
+const id = ref<number | null>(null)
 const state = reactive({
-  form: reactive<OidcForm>({
-    clientId: '',
-    clientSecret: '',
-    discovery: '',
-    redirectUri: '',
+  form: reactive<any>({
+    client_id: '',
+    client_secret: '',
+    metadata_url: '',
+    redirect_uri: '',
     realm: '',
     scope: '',
-    usePkce: false,
     mapping: '',
   }),
 })
@@ -48,13 +39,14 @@ const validateMapping = (rule, value, callback) => {
   }
   try {
     JSON.parse(value)
-  } catch (e) {
+  } catch (e: any) {
+    console.error(e)
     callback(new Error(t('system.in_json_format')))
   }
   callback()
 }
 const rule = reactive<FormRules>({
-  clientId: [
+  client_id: [
     {
       required: true,
       message: t('common.require'),
@@ -67,7 +59,7 @@ const rule = reactive<FormRules>({
       trigger: 'blur',
     },
   ],
-  clientSecret: [
+  client_secret: [
     {
       required: true,
       message: t('common.require'),
@@ -80,7 +72,7 @@ const rule = reactive<FormRules>({
       trigger: 'blur',
     },
   ],
-  redirectUri: [
+  redirect_uri: [
     {
       required: true,
       message: t('common.require'),
@@ -94,7 +86,7 @@ const rule = reactive<FormRules>({
     },
     { required: true, validator: validateUrl, trigger: 'blur' },
   ],
-  discovery: [
+  metadata_url: [
     {
       required: true,
       message: t('common.require'),
@@ -134,28 +126,23 @@ const rule = reactive<FormRules>({
       trigger: 'blur',
     },
   ],
-  usePkce: [
-    {
-      required: true,
-      message: t('common.require'),
-      trigger: 'change',
-    },
-  ],
+
   mapping: [{ required: false, validator: validateMapping, trigger: 'blur' }],
 })
 
 const edit = () => {
   showLoading()
   request
-    .get('/setting/authentication/info/oidc')
+    .get('/system/authentication/2')
     .then((res) => {
-      const resData = res as Partial<OidcForm>
-      ;(Object.keys(resData) as (keyof OidcForm)[]).forEach((key) => {
-        const value = resData[key]
-        if (value !== undefined) {
-          state.form[key] = value as any
-        }
-      })
+      if (!res?.config) {
+        return
+      }
+      id.value = res.id
+      const data = JSON.parse(res.config)
+      for (const key in data) {
+        state.form[key] = data[key] as any
+      }
     })
     .finally(() => {
       closeLoading()
@@ -169,7 +156,15 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid) => {
     if (valid) {
       const param = { ...state.form }
-      const method = request.post('/setting/authentication/save/oidc', param)
+      const data = {
+        id: 2,
+        type: 2,
+        config: JSON.stringify(param),
+        name: 'oidc',
+      }
+      const method = id.value
+        ? request.put('/system/authentication', data)
+        : request.post('/system/authentication', data)
       showLoading()
       method
         .then((res) => {
@@ -190,6 +185,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 const resetForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.resetFields()
+  id.value = null
   dialogVisible.value = false
 }
 
@@ -207,16 +203,21 @@ const closeLoading = () => {
 }
 
 const validate = () => {
-  const url = '/setting/authentication/validate/oidc'
-  const data = state.form
+  const url = '/system/authentication/status'
+  const config_data = state.form
+  const data = {
+    type: 2,
+    name: 'oidc',
+    config: JSON.stringify(config_data),
+  }
   showLoading()
   request
-    .post(url, data)
+    .patch(url, data)
     .then((res) => {
-      if (res === 'true') {
-        ElMessage.success(t('commons.test_connect') + t('report.last_status_success'))
+      if (res) {
+        ElMessage.success(t('ds.connection_success'))
       } else {
-        ElMessage.error(t('commons.test_connect') + t('report.last_status_fail'))
+        ElMessage.error(t('ds.connection_failed'))
       }
     })
     .finally(() => {
@@ -233,7 +234,7 @@ defineExpose({
 <template>
   <el-drawer
     v-model="dialogVisible"
-    :title="t('system.oidc_settings')"
+    :title="t('authentication.oidc_settings')"
     modal-class="platform-info-drawer"
     size="600px"
     direction="rtl"
@@ -246,45 +247,45 @@ defineExpose({
       label-width="80px"
       label-position="top"
     >
-      <el-form-item label="Client ID" prop="clientId">
-        <el-input v-model="state.form.clientId" :placeholder="t('common.please_input')" />
+      <el-form-item :label="t('authentication.client_id')" prop="client_id">
+        <el-input v-model="state.form.client_id" :placeholder="t('common.please_input')" />
       </el-form-item>
 
-      <el-form-item label="Client Secret" prop="clientSecret">
+      <el-form-item :label="t('authentication.client_secret')" prop="client_secret">
         <el-input
-          v-model="state.form.clientSecret"
+          v-model="state.form.client_secret"
           type="password"
           show-password
           :placeholder="t('common.please_input')"
         />
       </el-form-item>
-      <el-form-item label="Discovery" prop="discovery">
-        <el-input v-model="state.form.discovery" :placeholder="t('common.please_input')" />
+      <el-form-item :label="t('authentication.metadata_url')" prop="metadata_url">
+        <el-input v-model="state.form.metadata_url" :placeholder="t('common.please_input')" />
       </el-form-item>
-      <el-form-item label="Realm" prop="realm">
+      <el-form-item :label="t('authentication.realm')" prop="realm">
         <el-input v-model="state.form.realm" :placeholder="t('common.please_input')" />
       </el-form-item>
-      <el-form-item label="Scope" prop="scope">
+      <el-form-item :label="t('authentication.scope')" prop="scope">
         <el-input v-model="state.form.scope" :placeholder="t('common.please_input')" />
       </el-form-item>
-      <el-form-item label="Use Pkce" prop="usePkce">
-        <el-switch v-model="state.form.usePkce" />
+      <el-form-item :label="t('authentication.redirect_url')" prop="redirect_uri">
+        <el-input v-model="state.form.redirect_uri" :placeholder="t('common.please_input')" />
       </el-form-item>
-      <el-form-item label="Redirect Uri" prop="redirectUri">
-        <el-input v-model="state.form.redirectUri" :placeholder="t('common.please_input')" />
-      </el-form-item>
-      <el-form-item :label="t('system.field_mapping')" prop="mapping">
-        <el-input v-model="state.form.mapping" :placeholder="t('system.oauth2name')" />
+      <el-form-item :label="t('authentication.field_mapping')" prop="mapping">
+        <el-input
+          v-model="state.form.mapping"
+          :placeholder="t('authentication.oidc_field_mapping_placeholder')"
+        />
       </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
         <el-button secondary @click="resetForm(oidcForm)">{{ t('common.cancel') }}</el-button>
-        <el-button secondary :disabled="!state.form.clientId" @click="validate">
-          {{ t('commons.test_connect') }}
+        <el-button secondary :disabled="!state.form.client_id" @click="validate">
+          {{ t('ds.test_connection') }}
         </el-button>
         <el-button type="primary" @click="submitForm(oidcForm)">
-          {{ t('commons.save') }}
+          {{ t('common.save') }}
         </el-button>
       </span>
     </template>

@@ -83,8 +83,9 @@ const savePwdHandler = () => {
   pwdFormRef.value?.submit()
 }
 const logout = async () => {
-  await userStore.logout()
-  router.push('/login')
+  if (!(await userStore.logout())) {
+    router.push('/login')
+  }
 }
 </script>
 

@@ -91,12 +91,15 @@ export const UserStore = defineStore('user', {
       if (res) {
         window.location.href = res
         window.open(res, '_self')
+        return res
       }
       if (getQueryString('code') && getQueryString('state')?.includes('oauth2_state')) {
         const logout_url = location.origin + location.pathname + '#/login'
         window.location.href = logout_url
         window.open(res, logout_url)
+        return logout_url
       }
+      return null
     },
 
     async info() {

@@ -737,7 +737,11 @@
     "revoke_url": "撤销地址",
     "oauth2_field_mapping_placeholder": "例如：{'{'}\"account\": \"oauth2Account\", \"name\": \"oauth2Name\", \"email\": \"email\"{'}'}",
     "token_auth_method": "Token 认证方式",
-    "userinfo_auth_method": "用户信息认证方式"
+    "userinfo_auth_method": "用户信息认证方式",
+    "oidc_settings": "OIDC 设置",
+    "metadata_url": "元数据地址",
+    "realm": "领域",
+    "oidc_field_mapping_placeholder": "例如：{'{'}\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"{'}'}"
   },
   "login": {
     "default_login": "默认",
@@ -749,7 +753,8 @@
     "qr_code": "二维码",
     "platform_disable": "{0}设置未开启！",
     "input_account": "请输入账号",
-    "redirect_2_auth": "正在跳转至 {0} 认证，{1} 秒..."
+    "redirect_2_auth": "正在跳转至 {0} 认证，{1} 秒...",
+    "redirect_immediately": "立即跳转"
   },
   "supplier": {
     "alibaba_cloud_bailian": "阿里云百炼",

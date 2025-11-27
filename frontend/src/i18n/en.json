@@ -737,7 +737,11 @@
     "revoke_url": "Revocation URL",
     "oauth2_field_mapping_placeholder": "Example: {'{'}\"account\": \"OAuth2Account\", \"name\": \"OAuth2Name\", \"email\": \"email\"{'}'}",
     "token_auth_method": "Token auth method",
-    "userinfo_auth_method": "Userinfo auth method"
+    "userinfo_auth_method": "Userinfo auth method",
+    "oidc_settings": "OIDC Settings",
+    "metadata_url": "Metadata URL",
+    "realm": "Realm",
+    "oidc_field_mapping_placeholder": "e.g., {\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"}"
   },
   "login": {
     "default_login": "Default",
@@ -749,7 +753,8 @@
     "qr_code": "QR Code",
     "platform_disable": "{0} settings are not enabled!",
     "input_account": "Please enter account",
-    "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds..."
+    "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds...",
+    "redirect_immediately": "Redirecting immediately"
   },
   "supplier": {
     "alibaba_cloud_bailian": "Alibaba Cloud Bailian",
