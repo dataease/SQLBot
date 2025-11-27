@@ -83,5 +83,8 @@
   },
   "i18n_excel_export": {
     "data_is_empty": "Form data is empty, unable to export data"
+  },
+  "i18n_excel_import": {
+    "col_num_not_match": "Number of columns in Excel does not match"
   }
 }

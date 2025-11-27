@@ -83,5 +83,8 @@
   },
   "i18n_excel_export": {
     "data_is_empty": "表单数据为空，无法导出数据"
+  },
+  "i18n_excel_import": {
+    "col_num_not_match": "EXCEL列数量不匹配"
   }
 }

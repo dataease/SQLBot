@@ -13,7 +13,7 @@ import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlin
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useClipboard } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, endsWith, startsWith } from 'lodash-es'
 import { genFileId, type UploadInstance, type UploadProps, type UploadRawFile } from 'element-plus'
 import { settingsApi } from '@/api/setting.ts'
 import { useCache } from '@/utils/useCache.ts'
@@ -167,9 +167,18 @@ const onSuccess = (response: any) => {
   }
 }
 
-const onError = () => {
+const onError = (err: Error) => {
   uploadLoading.value = false
   uploadRef.value!.clearFiles()
+  let msg = err.message
+  if (startsWith(msg, '"') && endsWith(msg, '"')) {
+    msg = msg.slice(1, msg.length - 1)
+  }
+  ElMessage({
+    message: msg,
+    type: 'error',
+    showClose: true,
+  })
 }
 
 const exportExcel = () => {

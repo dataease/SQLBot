@@ -83,5 +83,8 @@
   },
   "i18n_excel_export": {
     "data_is_empty": "폼 데이터가 비어 있어 데이터를 내보낼 수 없습니다"
+  },
+  "i18n_excel_import": {
+    "col_num_not_match": "Excel 열 개수가 일치하지 않습니다"
   }
 }
