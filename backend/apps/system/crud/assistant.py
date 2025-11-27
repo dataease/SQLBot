@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 # from apps.datasource.embedding.table_embedding import get_table_embedding
 from apps.datasource.models.datasource import CoreDatasource, DatasourceConf
+from apps.datasource.utils.utils import aes_encrypt
 from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.system_schema import AssistantHeader, AssistantOutDsSchema, UserInfoDTO
@@ -266,3 +267,19 @@ def get_ds_engine(ds: AssistantOutDsSchema) -> Engine:
     else:
         engine = create_engine(uri, connect_args={"connect_timeout": timeout}, pool_timeout=timeout)
     return engine
+
+
+def get_out_ds_conf(ds: AssistantOutDsSchema, timeout:int=30) -> str:
+    conf = {
+        "host":ds.host,
+        "port":ds.port,
+        "username":ds.user,
+        "password":ds.password,
+        "database":ds.dataBase,
+        "driver":'',
+        "extraJdbc":ds.extraParams or '',
+        "dbSchema":ds.db_schema or '',
+        "timeout":timeout
+    }
+    conf.extraJdbc = ''
+    return aes_encrypt(json.dumps(conf))

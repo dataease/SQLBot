@@ -178,6 +178,7 @@ class AssistantOutDsBase(BaseModel):
     type_name: Optional[str] = None
     comment: Optional[str] = None
     description: Optional[str] = None
+    configuration: Optional[str] = None
 
 
 class AssistantOutDsSchema(AssistantOutDsBase):
