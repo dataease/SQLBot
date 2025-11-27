@@ -15,7 +15,7 @@ import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useClipboard } from '@vueuse/core'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, endsWith, startsWith } from 'lodash-es'
 import { getAdvancedApplicationList } from '@/api/embedded.ts'
 import { genFileId } from 'element-plus'
 
@@ -172,9 +172,18 @@ const onSuccess = (response: any) => {
   }
 }
 
-const onError = () => {
+const onError = (err: Error) => {
   uploadLoading.value = false
   uploadRef.value!.clearFiles()
+  let msg = err.message
+  if (startsWith(msg, '"') && endsWith(msg, '"')) {
+    msg = msg.slice(1, msg.length - 1)
+  }
+  ElMessage({
+    message: msg,
+    type: 'error',
+    showClose: true,
+  })
 }
 
 const exportExcel = () => {

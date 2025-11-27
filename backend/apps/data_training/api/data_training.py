@@ -17,6 +17,7 @@ from apps.data_training.models.data_training_model import DataTrainingInfo
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
+from common.utils.excel import get_excel_column_count
 
 router = APIRouter(tags=["DataTraining"], prefix="/system/data-training")
 
@@ -135,6 +136,9 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
         import_data = []
 
         for sheet_name in sheet_names:
+
+            if get_excel_column_count(save_path, sheet_name) < len(use_cols):
+                raise Exception(trans("i18n_excel_import.col_num_not_match"))
 
             df = pd.read_excel(
                 save_path,
