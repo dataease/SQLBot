@@ -14,6 +14,7 @@ const getRecommendQuestions = () => {
 }
 const quickAsk = (question: string) => {
   emits('quickAsk', question)
+  visible.value = false
 }
 
 const onChatStop = () => {
@@ -22,7 +23,6 @@ const onChatStop = () => {
 
 const loadingOver = () => {
   emits('loadingOver')
-  visible.value = false
 }
 
 const emits = defineEmits(['quickAsk', 'loadingOver', 'stop'])
