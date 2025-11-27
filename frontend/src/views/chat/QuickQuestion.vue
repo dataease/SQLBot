@@ -5,18 +5,20 @@ import { Close } from '@element-plus/icons-vue'
 import RecommendQuestion from '@/views/chat/RecommendQuestion.vue'
 import { ChatInfo } from '@/api/chat.ts'
 import RecentQuestion from '@/views/chat/RecentQuestion.vue'
-const visible = ref(false)
 const activeName = ref('recommend')
 const recommendQuestionRef = ref()
-
+const popoverRef = ref()
 const getRecommendQuestions = () => {
   recommendQuestionRef.value.getRecommendQuestions()
 }
 const quickAsk = (question: string) => {
   emits('quickAsk', question)
-  visible.value = false
+  hiddenProps()
 }
 
+const hiddenProps = () => {
+  popoverRef.value.hide()
+}
 const onChatStop = () => {
   emits('stop')
 }
@@ -50,13 +52,14 @@ const props = withDefaults(
 
 <template>
   <el-popover
+    ref="popoverRef"
     :title="$t('qa.quick_question')"
-    :visible="visible"
     popper-class="quick_question_popover"
     placement="top-start"
+    trigger="click"
     :width="320"
   >
-    <el-icon class="close_icon"><Close @click="visible = false" /></el-icon>
+    <el-icon class="close_icon"><Close @click="hiddenProps" /></el-icon>
     <el-tabs v-model="activeName" class="quick_question_tab">
       <el-tab-pane :label="$t('qa.recommend')" name="recommend">
         <RecommendQuestion
@@ -73,12 +76,11 @@ const props = withDefaults(
         />
       </el-tab-pane>
       <el-tab-pane v-if="datasourceId" :label="$t('qa.recently')" name="recently">
-        <RecentQuestion v-if="visible" :datasource-id="datasourceId" @click-question="quickAsk">
-        </RecentQuestion>
+        <RecentQuestion :datasource-id="datasourceId" @click-question="quickAsk"> </RecentQuestion>
       </el-tab-pane>
     </el-tabs>
     <template #reference>
-      <el-button plain size="small" @click="visible = true">
+      <el-button plain size="small">
         <el-icon size="16" class="el-icon--left">
           <icon_quick_question />
         </el-icon>

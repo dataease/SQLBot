@@ -160,6 +160,7 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
       <div v-else class="continue-ask">{{ t('qa.continue_to_ask') }}</div>
     </template>
     <div v-if="loading">
+      <div v-if="position === 'input'" style="margin-bottom: 8px">{{ t('qa.guess_u_ask') }}</div>
       <el-button style="min-width: unset" type="primary" link loading />
     </div>
     <div v-else-if="position === 'input'" class="question-grid-input">
