@@ -145,10 +145,10 @@
                   ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
                   <LOGO_fold v-else></LOGO_fold
                 ></el-icon>
-                {{ appearanceStore.pc_welcome }}
+                {{ appearanceStore.pc_welcome ?? t('qa.greeting') }}
               </div>
               <div class="sub">
-                {{ appearanceStore.pc_welcome_desc }}
+                {{ appearanceStore.pc_welcome_desc ?? t('qa.hint_description') }}
               </div>
             </template>
 

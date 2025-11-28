@@ -67,8 +67,8 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       showDemoTips: false,
       demoTipsContent: '',
       fontList: [],
-      pc_welcome: '',
-      pc_welcome_desc: '',
+      pc_welcome: undefined,
+      pc_welcome_desc: undefined,
     }
   },
   getters: {
