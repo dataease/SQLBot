@@ -17,7 +17,9 @@ import { cloneDeep, endsWith, startsWith } from 'lodash-es'
 import { genFileId, type UploadInstance, type UploadProps, type UploadRawFile } from 'element-plus'
 import { settingsApi } from '@/api/setting.ts'
 import { useCache } from '@/utils/useCache.ts'
-
+import { convertFilterText, FilterText } from '@/components/filter-text'
+import { DrawerMain } from '@/components/drawer-main'
+import iconFilter from '@/assets/svg/icon-filter_outlined.svg'
 interface Form {
   id?: string | null
   type: string | null
@@ -27,7 +29,7 @@ interface Form {
   datasource_names: string[]
   name: string | null
 }
-
+const drawerMainRef = ref()
 const { t } = useI18n()
 const { copy } = useClipboard({ legacy: true })
 const multipleSelectionAll = ref<any[]>([])
@@ -40,7 +42,16 @@ const options = ref<any[]>([])
 const selectable = () => {
   return true
 }
+
+const state = reactive<any>({
+  conditions: [],
+  filterTexts: [],
+})
+
 onMounted(() => {
+  datasourceApi.list().then((res) => {
+    filterOption.value[0].option = [...res]
+  })
   search()
 })
 
@@ -325,16 +336,7 @@ const search = () => {
   searchLoading.value = true
   oldKeywords.value = keywords.value
   promptApi
-    .getList(
-      pageInfo.currentPage,
-      pageInfo.pageSize,
-      currentType.value,
-      keywords.value
-        ? {
-            name: keywords.value,
-          }
-        : {}
-    )
+    .getList(pageInfo.currentPage, pageInfo.pageSize, currentType.value, configParams())
     .then((res: any) => {
       toggleRowLoading.value = true
       fieldList.value = res.data
@@ -456,6 +458,66 @@ const typeChange = (val: any) => {
   pageInfo.currentPage = 0
   search()
 }
+
+const configParams = () => {
+  let str = ''
+  if (keywords.value) {
+    str += `name=${keywords.value}`
+  }
+
+  state.conditions.forEach((ele: any) => {
+    ele.value.forEach((itx: any) => {
+      str += str ? `&${ele.field}=${itx}` : `${ele.field}=${itx}`
+    })
+  })
+
+  if (str.length) {
+    str = `?${str}`
+  }
+  return str
+}
+const filterOption = ref<any[]>([
+  {
+    type: 'select',
+    option: [],
+    field: 'dslist',
+    title: t('ds.title'),
+    operate: 'in',
+    property: { placeholder: t('common.empty') + t('ds.title') },
+  },
+])
+
+const fillFilterText = () => {
+  const textArray = state.conditions?.length
+    ? convertFilterText(state.conditions, filterOption.value)
+    : []
+  state.filterTexts = [...textArray]
+  Object.assign(state.filterTexts, textArray)
+}
+const searchCondition = (conditions: any) => {
+  state.conditions = conditions
+  fillFilterText()
+  search()
+  drawerMainClose()
+}
+
+const clearFilter = (params?: number) => {
+  let index = params ? params : 0
+  if (isNaN(index)) {
+    state.filterTexts = []
+  } else {
+    state.filterTexts.splice(index, 1)
+  }
+  drawerMainRef.value.clearFilter(index)
+}
+
+const drawerMainOpen = async () => {
+  drawerMainRef.value.init()
+}
+
+const drawerMainClose = () => {
+  drawerMainRef.value.close()
+}
 </script>
 
 <template>
@@ -524,6 +586,12 @@ const typeChange = (val: any) => {
             {{ $t('user.batch_import') }}
           </el-button>
         </el-upload>
+        <el-button secondary @click="drawerMainOpen">
+          <template #icon>
+            <iconFilter></iconFilter>
+          </template>
+          {{ $t('user.filter') }}
+        </el-button>
         <el-button type="primary" @click="editHandler(null)">
           <template #icon>
             <icon_add_outlined></icon_add_outlined>
@@ -537,6 +605,11 @@ const typeChange = (val: any) => {
       class="table-content"
       :class="multipleSelectionAll?.length && 'show-pagination_height'"
     >
+      <filter-text
+        :total="pageInfo.total"
+        :filter-texts="state.filterTexts"
+        @clear-filter="clearFilter"
+      />
       <div class="preview-or-schema">
         <el-table
           ref="multipleTableRef"
@@ -770,6 +843,11 @@ const typeChange = (val: any) => {
       </el-form-item>
     </el-form>
   </el-drawer>
+  <drawer-main
+    ref="drawerMainRef"
+    :filter-options="filterOption"
+    @trigger-filter="searchCondition"
+  />
 </template>
 
 <style lang="less" scoped>
