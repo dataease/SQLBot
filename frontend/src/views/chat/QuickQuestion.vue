@@ -19,6 +19,9 @@ const retrieveQuestions = () => {
   recentQuestionRef.value.getRecentQuestions()
 }
 const quickAsk = (question: string) => {
+  if (props.disabled) {
+    return
+  }
   emits('quickAsk', question)
   hiddenProps()
 }
