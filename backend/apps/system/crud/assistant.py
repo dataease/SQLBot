@@ -170,7 +170,7 @@ class AssistantOutDs:
         for table in ds.tables:
             i += 1
             schema_table = ''
-            schema_table += f"# Table: {db_name}.{table.name}" if ds.type != "mysql" else f"# Table: {table.name}"
+            schema_table += f"# Table: {db_name}.{table.name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {table.name}"
             table_comment = table.comment
             if table_comment == '':
                 schema_table += '\n[\n'
