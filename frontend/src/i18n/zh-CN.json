@@ -184,6 +184,8 @@
     "chart_selected": "已选{0}"
   },
   "qa": {
+    "retrieve_error": "模型推荐问题失败...",
+    "retrieve_again": "重新获取",
     "recently": "最近",
     "recommend": "推荐",
     "quick_question": "快捷提问",

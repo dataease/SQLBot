@@ -186,10 +186,14 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
       </div>
     </div>
   </div>
+  <div v-else-if="position === 'input'" class="recommend-questions-error">
+    {{ $t(qa.retrieve_error) }}
+  </div>
 </template>
 
 <style scoped lang="less">
 .recommend-questions {
+  width: 100%;
   font-size: 14px;
   font-weight: 500;
   line-height: 22px;
@@ -230,5 +234,16 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
       background: rgba(245, 246, 247, 1);
     }
   }
+}
+
+.recommend-questions-error {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(100, 106, 115, 1);
+  margin-top: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 </style>

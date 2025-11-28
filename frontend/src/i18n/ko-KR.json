@@ -184,6 +184,8 @@
     "chart_selected": "{0}개 선택됨"
   },
   "qa": {
+    "retrieve_error": "모델 추천 문제 실패...",
+    "retrieve_again": "다시 가져오기",
     "recently": "최근",
     "recommend": "추천",
     "quick_question": "빠른 질문",
