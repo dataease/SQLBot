@@ -17,4 +17,10 @@ export const settingsApi = {
         requestOptions: { customError: true },
       }
     ),
+
+  downloadTemplate: (url: any) =>
+    request.get(url, {
+      responseType: 'blob',
+      requestOptions: { customError: true },
+    }),
 }

@@ -98,6 +98,51 @@ async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentU
     return StreamingResponse(result, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
+@router.get("/template")
+async def excel_template(trans: Trans):
+    def inner():
+        data_list = []
+        _data1 = {
+            "word": trans('i18n_terminology.term_name_template_example_1'),
+            "other_words": trans('i18n_terminology.synonyms_template_example_1'),
+            "description": trans('i18n_terminology.term_description_template_example_1'),
+            "all_data_sources": 'N',
+            "datasource": trans('i18n_terminology.effective_data_sources_template_example_1'),
+        }
+        data_list.append(_data1)
+        _data2 = {
+            "word": trans('i18n_terminology.term_name_template_example_2'),
+            "other_words": trans('i18n_terminology.synonyms_template_example_2'),
+            "description": trans('i18n_terminology.term_description_template_example_2'),
+            "all_data_sources": 'Y',
+            "datasource": '',
+        }
+        data_list.append(_data2)
+
+        fields = []
+        fields.append(AxisObj(name=trans('i18n_terminology.term_name_template'), value='word'))
+        fields.append(AxisObj(name=trans('i18n_terminology.synonyms_template'), value='other_words'))
+        fields.append(AxisObj(name=trans('i18n_terminology.term_description_template'), value='description'))
+        fields.append(AxisObj(name=trans('i18n_terminology.effective_data_sources_template'), value='datasource'))
+        fields.append(AxisObj(name=trans('i18n_terminology.all_data_sources_template'), value='all_data_sources'))
+
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
+
+        df = pd.DataFrame(md_data, columns=_fields_list)
+
+        buffer = io.BytesIO()
+
+        with pd.ExcelWriter(buffer, engine='xlsxwriter',
+                            engine_kwargs={'options': {'strings_to_numbers': False}}) as writer:
+            df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+        buffer.seek(0)
+        return io.BytesIO(buffer.getvalue())
+
+    result = await asyncio.to_thread(inner)
+    return StreamingResponse(result, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
 path = settings.EXCEL_PATH
 
 from sqlalchemy.orm import sessionmaker, scoped_session
