@@ -74,12 +74,49 @@ async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentU
             data_list.append(_data)
 
         fields = []
-        fields.append(AxisObj(name=trans('i18n_data_training.data_training'), value='question'))
-        fields.append(AxisObj(name=trans('i18n_data_training.problem_description'), value='description'))
+        fields.append(AxisObj(name=trans('i18n_data_training.problem_description'), value='question'))
+        fields.append(AxisObj(name=trans('i18n_data_training.sample_sql'), value='description'))
         fields.append(AxisObj(name=trans('i18n_data_training.effective_data_sources'), value='datasource_name'))
         if current_user.oid == 1:
             fields.append(
                 AxisObj(name=trans('i18n_data_training.advanced_application'), value='advanced_application_name'))
+
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
+
+        df = pd.DataFrame(md_data, columns=_fields_list)
+
+        buffer = io.BytesIO()
+
+        with pd.ExcelWriter(buffer, engine='xlsxwriter',
+                            engine_kwargs={'options': {'strings_to_numbers': False}}) as writer:
+            df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+        buffer.seek(0)
+        return io.BytesIO(buffer.getvalue())
+
+    result = await asyncio.to_thread(inner)
+    return StreamingResponse(result, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+@router.get("/template")
+async def excel_template(trans: Trans, current_user: CurrentUser):
+    def inner():
+        data_list = []
+        _data1 = {
+            "question": '查询TEST表内所有ID',
+            "description": 'SELECT id FROM TEST',
+            "datasource_name": '生效数据源1',
+            "advanced_application_name": '生效高级应用名称',
+        }
+        data_list.append(_data1)
+
+        fields = []
+        fields.append(AxisObj(name=trans('i18n_data_training.problem_description_template'), value='question'))
+        fields.append(AxisObj(name=trans('i18n_data_training.sample_sql_template'), value='description'))
+        fields.append(AxisObj(name=trans('i18n_data_training.effective_data_sources_template'), value='datasource_name'))
+        if current_user.oid == 1:
+            fields.append(
+                AxisObj(name=trans('i18n_data_training.advanced_application_template'), value='advanced_application_name'))
 
         md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
