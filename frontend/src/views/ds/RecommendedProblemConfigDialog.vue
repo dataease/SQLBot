@@ -119,7 +119,7 @@ defineExpose({
           <el-icon class="delete-item"><Delete @click="deleteRecommendedProblem(index)" /></el-icon>
         </el-row>
       </el-form-item>
-      <div v-if="state.recommended.recommendedProblemList.length < 4">
+      <div v-if="state.recommended.recommendedProblemList.length < 10">
         <el-button text @click="addRecommendedProblem">
           {{ $t('datasource.add_question') }}</el-button
         >
