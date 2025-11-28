@@ -77,6 +77,7 @@ const pageInfo = reactive({
 })
 const handleRelationship = () => {
   activeRelationship.value = !activeRelationship.value
+  tableName.value = []
   currentTable.value = {}
 }
 const singleDragStartD = (e: DragEvent, ele: any) => {
