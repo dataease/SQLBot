@@ -5,9 +5,11 @@ import { chatApi } from '@/api/chat.ts'
 const props = withDefaults(
   defineProps<{
     datasourceId?: number
+    disabled?: boolean
   }>(),
   {
     datasourceId: undefined,
+    disabled: false,
   }
 )
 
@@ -29,6 +31,9 @@ async function getRecentQuestions() {
     computedQuestions.value = res
   })
 }
+defineExpose({
+  getRecentQuestions,
+})
 </script>
 
 <template>
@@ -38,6 +43,7 @@ async function getRecentQuestions() {
         v-for="(question, index) in computedQuestions"
         :key="index"
         class="question"
+        :class="{ disabled: disabled }"
         @click="clickQuestion(question)"
       >
         {{ question }}
@@ -49,6 +55,7 @@ async function getRecentQuestions() {
 <style scoped lang="less">
 .recent-questions {
   height: 100%;
+  width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   font-size: 14px;

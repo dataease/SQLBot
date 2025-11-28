@@ -528,7 +528,7 @@ const typeChange = (val: any) => {
           <template #icon>
             <icon_add_outlined></icon_add_outlined>
           </template>
-          {{ $t('prompt.add_prompt_word') }}
+          {{ $t('prompt.add_prompt_word') }}11
         </el-button>
       </div>
     </div>
@@ -619,7 +619,7 @@ const typeChange = (val: any) => {
                   <template #icon>
                     <icon_add_outlined></icon_add_outlined>
                   </template>
-                  {{ $t('prompt.add_prompt_word') }}
+                  {{ $t('prompt.add_prompt_word') }}22
                 </el-button>
               </div>
             </template>

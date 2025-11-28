@@ -184,6 +184,8 @@
     "chart_selected": "Selected {0}"
   },
   "qa": {
+    "retrieve_error": "Model recommendation failed...",
+    "retrieve_again": "Retrieve Again",
     "recently": "recently",
     "recommend": "recommend",
     "quick_question": "quick question",
