@@ -109,7 +109,7 @@ function copyData(event: any, s2?: TableSheet) {
     const cellMeta = s2.facet.getCellMeta(c.rowIndex, c.colIndex)
     console.log(cellMeta)
     if (cellMeta) {
-      let value = cellMeta.value as string
+      let value = cellMeta.fieldValue as string
       if (value === null || value === undefined) {
         value = ''
       }
