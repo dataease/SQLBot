@@ -381,7 +381,7 @@ const configParams = () => {
 
   state.conditions.forEach((ele: any) => {
     ele.value.forEach((itx: any) => {
-      str += str ? `&${ele.field}=${itx}` : `${ele.field}=${itx}`
+      str += str ? `_${itx}` : `${ele.field}=${itx}`
     })
   })
 
