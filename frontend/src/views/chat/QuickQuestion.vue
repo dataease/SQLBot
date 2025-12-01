@@ -11,7 +11,7 @@ const recommendQuestionRef = ref()
 const recentQuestionRef = ref()
 const popoverRef = ref()
 const getRecommendQuestions = () => {
-  recommendQuestionRef.value.getRecommendQuestions()
+  recommendQuestionRef.value.getRecommendQuestions(10)
 }
 
 const retrieveQuestions = () => {

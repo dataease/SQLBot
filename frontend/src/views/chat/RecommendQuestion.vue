@@ -58,12 +58,13 @@ function clickQuestion(question: string): void {
 
 const stopFlag = ref(false)
 
-async function getRecommendQuestions() {
+async function getRecommendQuestions(articles_number: number) {
   stopFlag.value = false
   loading.value = true
   try {
     const controller: AbortController = new AbortController()
-    const response = await chatApi.recommendQuestions(props.recordId, controller)
+    const params = articles_number ? '?articles_number=' + articles_number : ''
+    const response = await chatApi.recommendQuestions(props.recordId, controller, params)
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
 

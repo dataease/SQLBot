@@ -1,6 +1,7 @@
 import asyncio
 import io
 import traceback
+from typing import Optional
 
 import orjson
 import pandas as pd
@@ -107,7 +108,7 @@ async def start_chat(session: SessionDep, current_user: CurrentUser):
 
 @router.post("/recommend_questions/{chat_record_id}")
 async def recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
-                              current_assistant: CurrentAssistant):
+                              current_assistant: CurrentAssistant, articles_number: Optional[int]  = 4):
     def _return_empty():
         yield 'data:' + orjson.dumps({'content': '[]', 'type': 'recommended_question'}).decode() + '\n\n'
 
@@ -121,6 +122,7 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, ch
 
         llm_service = await LLMService.create(session, current_user, request_question, current_assistant, True)
         llm_service.set_record(record)
+        llm_service.set_articles_number(articles_number)
         llm_service.run_recommend_questions_task_async()
     except Exception as e:
         traceback.print_exc()

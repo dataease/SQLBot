@@ -84,6 +84,7 @@ class LLMService:
     future: Future
 
     last_execute_sql_error: str = None
+    articles_number: int = 4
 
     def __init__(self, session: Session, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
@@ -213,6 +214,9 @@ class LLMService:
     def set_record(self, record: ChatRecord):
         self.record = record
 
+    def set_articles_number(self, articles_number: int):
+        self.articles_number = articles_number
+
     def get_fields_from_chart(self, _session: Session):
         chart_info = get_chart_config(_session, self.record.id)
         return format_chart_fields(chart_info)
@@ -330,7 +334,7 @@ class LLMService:
                 embedding=False)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
-        guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question()))
+        guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question(self.articles_number)))
 
         old_questions = list(map(lambda q: q.strip(), get_old_questions(_session, self.record.datasource)))
         guess_msg.append(

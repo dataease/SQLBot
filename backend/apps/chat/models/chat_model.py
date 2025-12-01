@@ -212,7 +212,8 @@ class AiModelQuestion(BaseModel):
 
     def sql_user_question(self, current_time: str, change_title: bool):
         return get_sql_template()['user'].format(engine=self.engine, schema=self.db_schema, question=self.question,
-                                                 rule=self.rule, current_time=current_time, error_msg=self.error_msg,change_title = change_title)
+                                                 rule=self.rule, current_time=current_time, error_msg=self.error_msg,
+                                                 change_title=change_title)
 
     def chart_sys_question(self):
         return get_chart_template()['system'].format(sql=self.sql, question=self.question, lang=self.lang)
@@ -240,8 +241,8 @@ class AiModelQuestion(BaseModel):
     def datasource_user_question(self, datasource_list: str = "[]"):
         return get_datasource_template()['user'].format(question=self.question, data=datasource_list)
 
-    def guess_sys_question(self):
-        return get_guess_question_template()['system'].format(lang=self.lang)
+    def guess_sys_question(self, articles_number: int = 4):
+        return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number)
 
     def guess_user_question(self, old_questions: str = "[]"):
         return get_guess_question_template()['user'].format(question=self.question, schema=self.db_schema,
