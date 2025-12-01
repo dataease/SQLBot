@@ -51,6 +51,7 @@ dependencies = [
     "dmpython==2.5.22; platform_system != 'Darwin'",
     "redshift-connector>=2.1.8",
     "elasticsearch[requests] (>=7.10,<8.0)",
+    "ldap3>=2.9.1",
 ]
 
 [project.optional-dependencies]
