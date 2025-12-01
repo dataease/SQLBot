@@ -331,7 +331,7 @@ export const chatApi = {
   recommendQuestions: (
     record_id: number | undefined,
     controller?: AbortController,
-    params: any
+    params?: any
   ) => {
     return request.fetchStream(`/chat/recommend_questions/${record_id}${params}`, {}, controller)
   },
