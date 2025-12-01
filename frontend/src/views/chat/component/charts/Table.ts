@@ -107,8 +107,13 @@ function copyData(event: any, s2?: TableSheet) {
   } else if (cells.length == 1) {
     const c = cells[0]
     const cellMeta = s2.facet.getCellMeta(c.rowIndex, c.colIndex)
+    console.log(cellMeta)
     if (cellMeta) {
-      copyToClipboard(cellMeta.fieldValue as string).finally(() => {
+      let value = cellMeta.value as string
+      if (value === null || value === undefined) {
+        value = ''
+      }
+      copyToClipboard(value).finally(() => {
         ElMessage.success(t('qa.copied'))
         console.debug('copied:', cellMeta.fieldValue)
       })
