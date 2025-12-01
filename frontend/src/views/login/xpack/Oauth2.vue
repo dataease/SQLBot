@@ -19,7 +19,9 @@ const execute = () => {
 .item {
   width: 32px;
   cursor: pointer;
-
+  &:hover {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+  }
   &.qrcode,
   &.account {
     .ed-icon {
