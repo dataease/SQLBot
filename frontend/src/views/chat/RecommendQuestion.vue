@@ -187,7 +187,7 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
     </div>
   </div>
   <div v-else-if="position === 'input'" class="recommend-questions-error">
-    {{ $t(qa.retrieve_error) }}
+    {{ $t('qa.retrieve_error') }}
   </div>
 </template>
 
