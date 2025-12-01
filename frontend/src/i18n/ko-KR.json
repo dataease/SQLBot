@@ -752,7 +752,18 @@
     "oidc_settings": "OIDC 설정",
     "metadata_url": "메타데이터 URL",
     "realm": "영역",
-    "oidc_field_mapping_placeholder": "예: {\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"}"
+    "oidc_field_mapping_placeholder": "예: {\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"}",
+    "ldap_settings": "LDAP 설정",
+    "server_address": "서버 주소",
+    "server_address_placeholder": "예: ldap://ldap.example.com:389",
+    "bind_dn": "바인드 DN",
+    "bind_dn_placeholder": "예: cn=admin,dc=example,dc=com",
+    "bind_pwd": "바인드 비밀번호",
+    "ou": "사용자 OU",
+    "ou_placeholder": "예: ou=users,dc=example,dc=com",
+    "user_filter": "사용자 필터",
+    "user_filter_placeholder": "예: uid",
+    "ldap_field_mapping_placeholder": "예: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}"
   },
   "login": {
     "default_login": "기본값",

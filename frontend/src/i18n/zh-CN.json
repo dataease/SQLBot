@@ -752,7 +752,18 @@
     "oidc_settings": "OIDC 设置",
     "metadata_url": "元数据地址",
     "realm": "领域",
-    "oidc_field_mapping_placeholder": "例如：{'{'}\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"{'}'}"
+    "oidc_field_mapping_placeholder": "例如：{'{'}\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"{'}'}",
+    "ldap_settings": "LDAP 设置",
+    "server_address": "服务器地址",
+    "server_address_placeholder": "例如：ldap://ldap.example.com:389",
+    "bind_dn": "绑定 DN",
+    "bind_dn_placeholder": "例如：cn=admin,dc=example,dc=com",
+    "bind_pwd": "绑定密码",
+    "ou": "用户 OU",
+    "ou_placeholder": "例如：ou=users,dc=example,dc=com",
+    "user_filter": "用户过滤器",
+    "user_filter_placeholder": "例如：uid",
+    "ldap_field_mapping_placeholder": "例如：{'{'}\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"{'}'}"
   },
   "login": {
     "default_login": "默认",

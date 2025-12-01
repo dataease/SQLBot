@@ -752,7 +752,18 @@
     "oidc_settings": "OIDC Settings",
     "metadata_url": "Metadata URL",
     "realm": "Realm",
-    "oidc_field_mapping_placeholder": "e.g., {\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"}"
+    "oidc_field_mapping_placeholder": "e.g., {\"account\": \"oidcAccount\", \"name\": \"oidcName\", \"email\": \"email\"}",
+    "ldap_settings": "LDAP Settings",
+    "server_address": "Server Address",
+    "server_address_placeholder": "Example: ldap://ldap.example.com:389",
+    "bind_dn": "Bind DN",
+    "bind_dn_placeholder": "Example: cn=admin,dc=example,dc=com",
+    "bind_pwd": "Bind Password",
+    "ou": "User OU",
+    "ou_placeholder": "Example: ou=users,dc=example,dc=com",
+    "user_filter": "User Filter",
+    "user_filter_placeholder": "Example: uid",
+    "ldap_field_mapping_placeholder": "Example: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}"
   },
   "login": {
     "default_login": "Default",

@@ -8,18 +8,19 @@
       :larksuite="loginCategory.larksuite"
     />
   </div> -->
+  <LdapLoginForm v-if="isLdap" />
   <el-divider v-if="anyEnable" class="de-other-login-divider">{{
     t('login.other_login')
   }}</el-divider>
   <el-form-item v-if="anyEnable" class="other-login-item">
     <div class="login-list">
-      <!-- <QrcodeLdap
+      <QrcodeLdap
         v-if="loginCategory.qrcode || loginCategory.ldap"
         ref="qrcodeLdapHandler"
         :qrcode="loginCategory.qrcode"
         :ldap="loginCategory.ldap"
         @status-change="qrStatusChange"
-      /> -->
+      />
       <Oidc v-if="loginCategory.oidc" @switch-category="switcherCategory" />
       <Oauth2 v-if="loginCategory.oauth2" ref="oauth2Handler" @switch-category="switcherCategory" />
       <Cas v-if="loginCategory.cas" @switch-category="switcherCategory" />
@@ -51,8 +52,9 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
-/* import QrcodeLdap from './QrcodeLdap.vue'
-import Oidc from './Oidc.vue'
+import QrcodeLdap from './QrcodeLdap.vue'
+import LdapLoginForm from './LdapLoginForm.vue'
+/* import Oidc from './Oidc.vue'
 import Oauth2 from './Oauth2.vue'
 import Saml2 from './Saml2.vue' */
 import Oidc from './Oidc.vue'
@@ -70,6 +72,7 @@ import { loadClient, type LoginCategory } from './PlatformClient'
 // import { logoutHandler } from '@/utils/logout'
 import { useI18n } from 'vue-i18n'
 // import PlatformError from './PlatformError.vue'
+const isLdap = ref(false)
 defineProps<{
   loading: boolean
 }>()
@@ -211,14 +214,16 @@ const init = (cb?: () => void) => {
     })
 }
 
-/* const qrStatusChange = (activeComponent: string) => {
+const qrStatusChange = (activeComponent: string) => {
   qrStatus.value = activeComponent === 'qrcode'
+  isLdap.value = false
   if (activeComponent === 'account') {
     emits('switchTab', 'simple')
   } else if (activeComponent === 'ldap') {
+    isLdap.value = true
     switcherCategory({ category: 'ldap', proxy: '' })
   }
-} */
+}
 /* const showMfa = ref(false)
 const toMfa = (mfa) => {
   state.mfaData = mfa
