@@ -190,6 +190,7 @@
     "chart_selected": "Selected {0}"
   },
   "qa": {
+    "recommended_repetitive_tips": "Duplicate questions exist",
     "retrieve_error": "Model recommendation failed...",
     "retrieve_again": "Retrieve Again",
     "recently": "recently",
