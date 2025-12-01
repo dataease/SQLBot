@@ -18,6 +18,7 @@ interface UserState {
   exp: number
   time: number
   weight: number
+  origin: number
   platformInfo: any | null
   [key: string]: string | number | any | null
 }
@@ -34,6 +35,7 @@ export const UserStore = defineStore('user', {
       exp: 0,
       time: 0,
       weight: 0,
+      origin: 0,
       platformInfo: null,
     }
   },
@@ -67,6 +69,9 @@ export const UserStore = defineStore('user', {
     },
     getWeight(): number {
       return this.weight
+    },
+    getOrigin(): number {
+      return this.origin
     },
     isSpaceAdmin(): boolean {
       return this.uid === '1' || !!this.weight
@@ -106,12 +111,22 @@ export const UserStore = defineStore('user', {
       const res: any = await AuthApi.info()
       const res_data = res || {}
 
-      const keys = ['uid', 'account', 'name', 'oid', 'language', 'exp', 'time', 'weight'] as const
+      const keys = [
+        'uid',
+        'account',
+        'name',
+        'oid',
+        'language',
+        'exp',
+        'time',
+        'weight',
+        'origin',
+      ] as const
 
       keys.forEach((key) => {
         const dkey = key === 'uid' ? 'id' : key
         const value = res_data[dkey]
-        if (key === 'exp' || key === 'time' || key === 'weight') {
+        if (key === 'exp' || key === 'time' || key === 'weight' || key === 'origin') {
           this[key] = Number(value)
         } else {
           this[key] = String(value)
@@ -168,6 +183,10 @@ export const UserStore = defineStore('user', {
       wsCache.set('user.weight', weight)
       this.weight = weight
     },
+    setOrigin(origin: number) {
+      wsCache.set('user.origin', origin)
+      this.origin = origin
+    },
     setPlatformInfo(info: any | null) {
       wsCache.set('user.platformInfo', info)
       this.platformInfo = info
@@ -183,6 +202,7 @@ export const UserStore = defineStore('user', {
         'exp',
         'time',
         'weight',
+        'origin',
         'platformInfo',
       ]
       keys.forEach((key) => wsCache.delete('user.' + key))

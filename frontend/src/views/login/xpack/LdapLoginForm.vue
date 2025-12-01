@@ -59,6 +59,11 @@ const submitForm = () => {
         userStore.setToken(token)
         userStore.setExp(res.exp)
         userStore.setTime(Date.now())
+        userStore.setPlatformInfo({
+          flag: 'ldap',
+          data: null,
+          origin: 3,
+        })
         router.push('/')
       })
     }
