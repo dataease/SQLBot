@@ -80,9 +80,6 @@ ENV POSTGRES_DB=sqlbot
 ENV POSTGRES_USER=root
 ENV POSTGRES_PASSWORD=Password123@pg
 
-# Add Oracle instant client path to ENV
-ENV LD_LIBRARY_PATH="/opt/sqlbot/db_client/oracle_instant_client:${LD_LIBRARY_PATH}"
-
 # Copy necessary files from builder
 COPY start.sh /opt/sqlbot/app/start.sh
 COPY g2-ssr/*.ttf /usr/share/fonts/truetype/liberation/
