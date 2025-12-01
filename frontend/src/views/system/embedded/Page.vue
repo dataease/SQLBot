@@ -198,7 +198,15 @@ const search = () => {
       searchLoading.value = false
     })
 }
-
+const splitString = (str: string) => {
+  if (typeof str !== 'string') {
+    return []
+  }
+  return str
+    .split(/[,;]/)
+    .map((item) => item.trim())
+    .filter((item) => item !== '')
+}
 const termFormRef = ref()
 const validateUrl = (_: any, value: any, callback: any) => {
   if (value === '') {
@@ -209,20 +217,15 @@ const validateUrl = (_: any, value: any, callback: any) => {
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
-    value
-      .trim()
-      .split(',')
-      .forEach((tempVal: string) => {
-        var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
-        var objExp = new RegExp(Expression)
-        if (objExp.test(tempVal) && !tempVal.endsWith('/')) {
-          callback()
-        } else {
-          callback(
-            t('embedded.format_is_incorrect', { msg: t('embedded.domain_format_incorrect') })
-          )
-        }
-      })
+    splitString(value).forEach((tempVal: string) => {
+      var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
+      var objExp = new RegExp(Expression)
+      if (objExp.test(tempVal) && !tempVal.endsWith('/')) {
+        callback()
+      } else {
+        callback(t('embedded.format_is_incorrect', { msg: t('embedded.domain_format_incorrect') }))
+      }
+    })
   }
 }
 const rules = {
@@ -602,13 +605,10 @@ const copyCode = (row: any, key: any = 'app_secret') => {
       <el-form-item prop="domain" :label="t('embedded.cross_domain_settings')">
         <el-input
           v-model="pageForm.domain"
-          :placeholder="
-            $t('datasource.please_enter') +
-            $t('common.empty') +
-            $t('embedded.cross_domain_settings')
-          "
+          type="textarea"
+          :autosize="{ minRows: 2 }"
+          :placeholder="$t('embedded.third_party_address')"
           autocomplete="off"
-          maxlength="50"
           clearable
         />
       </el-form-item>
