@@ -190,6 +190,7 @@
     "chart_selected": "{0}개 선택됨"
   },
   "qa": {
+    "recommended_repetitive_tips": "중복된 문제가 존재합니다",
     "retrieve_error": "모델 추천 문제 실패...",
     "retrieve_again": "다시 가져오기",
     "recently": "최근",

@@ -51,16 +51,27 @@ const closeDialog = () => {
 const save = () => {
   if (state.recommended.recommended_config == 2) {
     let checkProblem = false
+    let repetitiveQuestion = false
     if (state.recommended.recommendedProblemList.length === 0) {
       checkProblem = true
     }
+    const questions = new Set<string>()
     state.recommended.recommendedProblemList.forEach((problem: RecommendedProblem): void => {
       if (problem.question.length > 200 || problem.question.length < 2) {
         checkProblem = true
       }
+      if (questions.has(problem.question)) {
+        repetitiveQuestion = true
+      }
+      questions.add(problem.question)
     })
     if (checkProblem) {
       ElMessage.error(t('datasource.recommended_problem_tips'))
+      return
+    }
+
+    if (repetitiveQuestion) {
+      ElMessage.error(t('datasource.recommended_repetitive_tips'))
       return
     }
   }
