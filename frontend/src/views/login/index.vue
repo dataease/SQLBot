@@ -28,42 +28,45 @@
         </div>
         <div v-else class="welcome" style="height: 0"></div>
         <div class="login-form">
-          <h2 class="title">{{ $t('common.login') }}</h2>
-          <el-form
-            ref="loginFormRef"
-            class="form-content_error"
-            :model="loginForm"
-            :rules="rules"
-            @keyup.enter="submitForm"
-          >
-            <el-form-item prop="username">
-              <el-input
-                v-model="loginForm.username"
-                clearable
-                :placeholder="$t('common.your_account_email_address')"
-                size="large"
-              ></el-input>
-            </el-form-item>
-            <el-form-item prop="password">
-              <el-input
-                v-model="loginForm.password"
-                :placeholder="$t('common.enter_your_password')"
-                type="password"
-                show-password
-                clearable
-                size="large"
-              ></el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" class="login-btn" @click="submitForm">{{
-                $t('common.login_')
-              }}</el-button>
-            </el-form-item>
-          </el-form>
+          <div class="default-login-tabs">
+            <h2 class="title">{{ $t('common.login') }}</h2>
+            <el-form
+              ref="loginFormRef"
+              class="form-content_error"
+              :model="loginForm"
+              :rules="rules"
+              @keyup.enter="submitForm"
+            >
+              <el-form-item prop="username">
+                <el-input
+                  v-model="loginForm.username"
+                  clearable
+                  :placeholder="$t('common.your_account_email_address')"
+                  size="large"
+                ></el-input>
+              </el-form-item>
+              <el-form-item prop="password">
+                <el-input
+                  v-model="loginForm.password"
+                  :placeholder="$t('common.enter_your_password')"
+                  type="password"
+                  show-password
+                  clearable
+                  size="large"
+                ></el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" class="login-btn" @click="submitForm">{{
+                  $t('common.login_')
+                }}</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
           <Handler
             ref="xpackLoginHandler"
             v-model:loading="showLoading"
             jsname="L2NvbXBvbmVudC9sb2dpbi9IYW5kbGVy"
+            @switch-tab="switchTab"
           />
         </div>
       </div>
@@ -93,7 +96,9 @@ const loginForm = ref({
   username: '',
   password: '',
 })
+const activeName = ref('simple')
 
+// const isLdap = computed(() => activeName.value == 'ldap')
 const bg = computed(() => {
   return appearanceStore.getBg || (appearanceStore.isBlue ? loginImage : login_image)
 })
@@ -117,6 +122,9 @@ const submitForm = () => {
       })
     }
   })
+}
+const switchTab = (name: string) => {
+  activeName.value = name || 'simple'
 }
 </script>
 

@@ -7,23 +7,16 @@ import { request } from '@/utils/request'
 const { t } = useI18n()
 const dialogVisible = ref(false)
 const loadingInstance = ref<ReturnType<typeof ElLoading.service> | null>(null)
-const mappingTips = ref(t('system.for_example'))
 const ldapForm = ref<FormInstance>()
-interface LdapForm {
-  addr?: string
-  dn?: string
-  pwd?: string
-  ou?: string
-  filter?: string
-  mapping?: string
-}
+
+const id = ref<number | null>(null)
 const state = reactive({
-  form: reactive<LdapForm>({
-    addr: '',
-    dn: '',
-    pwd: '',
+  form: reactive<any>({
+    server_address: '',
+    bind_dn: '',
+    bind_pwd: '',
     ou: '',
-    filter: '',
+    user_filter: '',
     mapping: '',
   }),
 })
@@ -35,13 +28,14 @@ const validateMapping = (rule, value, callback) => {
   }
   try {
     JSON.parse(value)
-  } catch (e) {
-    callback(new Error(t('system.in_json_format')))
+  } catch (e: any) {
+    console.error(e)
+    callback(new Error(t('authentication.in_json_format')))
   }
   callback()
 }
 const rule = reactive<FormRules>({
-  addr: [
+  server_address: [
     {
       required: true,
       message: t('common.require'),
@@ -54,14 +48,14 @@ const rule = reactive<FormRules>({
       trigger: 'blur',
     },
   ],
-  dn: [
+  bind_dn: [
     {
       required: true,
       message: t('common.require'),
       trigger: ['blur', 'change'],
     },
   ],
-  pwd: [
+  bind_pwd: [
     {
       required: true,
       message: t('common.require'),
@@ -75,7 +69,7 @@ const rule = reactive<FormRules>({
       trigger: ['blur', 'change'],
     },
   ],
-  filter: [
+  user_filter: [
     {
       required: true,
       message: t('common.require'),
@@ -84,26 +78,27 @@ const rule = reactive<FormRules>({
   ],
   mapping: [
     {
-      required: true,
+      required: false,
       message: t('common.require'),
       trigger: ['blur', 'change'],
     },
-    { required: true, validator: validateMapping, trigger: 'blur' },
+    { required: false, validator: validateMapping, trigger: 'blur' },
   ],
 })
 
 const edit = () => {
   showLoading()
   request
-    .get('/setting/authentication/info/ldap')
+    .get('/system/authentication/3')
     .then((res) => {
-      const resData = res as Partial<LdapForm>
-      ;(Object.keys(resData) as (keyof LdapForm)[]).forEach((key) => {
-        const value = resData[key]
-        if (value !== undefined) {
-          state.form[key] = value as any
-        }
-      })
+      if (!res?.config) {
+        return
+      }
+      id.value = res.id
+      const data = JSON.parse(res.config)
+      for (const key in data) {
+        state.form[key] = data[key] as any
+      }
     })
     .finally(() => {
       closeLoading()
@@ -117,7 +112,15 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid) => {
     if (valid) {
       const param = { ...state.form }
-      const method = request.post('/setting/authentication/save/ldap', param)
+      const data = {
+        id: 3,
+        type: 3,
+        config: JSON.stringify(param),
+        name: 'ldap',
+      }
+      const method = id.value
+        ? request.put('/system/authentication', data)
+        : request.post('/system/authentication', data)
       showLoading()
       method
         .then((res) => {
@@ -138,6 +141,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 const resetForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.resetFields()
+  id.value = null
   dialogVisible.value = false
 }
 
@@ -155,16 +159,21 @@ const closeLoading = () => {
 }
 
 const validate = () => {
-  const url = '/setting/authentication/validate/ldap'
-  const data = state.form
+  const url = '/system/authentication/status'
+  const config_data = state.form
+  const data = {
+    type: 3,
+    name: 'ldap',
+    config: JSON.stringify(config_data),
+  }
   showLoading()
   request
-    .post(url, data)
+    .patch(url, data)
     .then((res) => {
-      if (res === 'true') {
-        ElMessage.success(t('commons.test_connect') + t('report.last_status_success'))
+      if (res) {
+        ElMessage.success(t('ds.connection_success'))
       } else {
-        ElMessage.error(t('commons.test_connect') + t('report.last_status_fail') + ': ' + res.data)
+        ElMessage.error(t('ds.connection_failed'))
       }
     })
     .finally(() => {
@@ -181,7 +190,7 @@ defineExpose({
 <template>
   <el-drawer
     v-model="dialogVisible"
-    :title="t('system.ldap_settings')"
+    :title="t('authentication.ldap_settings')"
     modal-class="platform-info-drawer"
     size="600px"
     direction="rtl"
@@ -194,52 +203,55 @@ defineExpose({
       label-width="80px"
       label-position="top"
     >
-      <el-form-item :label="t('system.ldap_address')" prop="addr">
+      <el-form-item :label="t('authentication.server_address')" prop="addr">
         <el-input
           v-model="state.form.addr"
-          :placeholder="t('common.please_input') + t('system.such_as_ldap')"
+          :placeholder="t('authentication.server_address_placeholder')"
         />
       </el-form-item>
 
-      <el-form-item :label="t('system.bind_dn')" prop="dn">
-        <el-input v-model="state.form.dn" :placeholder="t('common.please_input') + 'DN'" />
+      <el-form-item :label="t('authentication.bind_dn')" prop="bind_dn">
+        <el-input
+          v-model="state.form.bind_dn"
+          :placeholder="t('authentication.bind_dn_placeholder')"
+        />
       </el-form-item>
 
-      <el-form-item :label="t('common.pwd')" prop="pwd">
+      <el-form-item :label="t('authentication.bind_pwd')" prop="bind_pwd">
         <el-input
-          v-model="state.form.pwd"
+          v-model="state.form.bind_pwd"
           type="password"
           show-password
-          :placeholder="t('common.please_input') + t('common.pwd')"
+          :placeholder="t('common.please_input')"
         />
       </el-form-item>
 
-      <el-form-item :label="t('system.user_ou')" prop="ou">
+      <el-form-item :label="t('authentication.ou')" prop="ou">
+        <el-input v-model="state.form.ou" :placeholder="t('authentication.ou_placeholder')" />
+      </el-form-item>
+
+      <el-form-item :label="t('authentication.user_filter')" prop="user_filter">
         <el-input
-          v-model="state.form.ou"
-          :placeholder="t('common.please_input') + t('system.separate_each_ou')"
+          v-model="state.form.user_filter"
+          :placeholder="t('authentication.user_filter_placeholder')"
         />
       </el-form-item>
 
-      <el-form-item :label="t('system.user_filter')" prop="filter">
+      <el-form-item :label="t('authentication.field_mapping')" prop="mapping">
         <el-input
-          v-model="state.form.filter"
-          :placeholder="t('common.please_input') + t('system.such_as_uid')"
+          v-model="state.form.mapping"
+          :placeholder="t('authentication.ldap_field_mapping_placeholder')"
         />
-      </el-form-item>
-
-      <el-form-item :label="t('system.ldap_attribute_mapping')" prop="mapping">
-        <el-input v-model="state.form.mapping" :placeholder="mappingTips" />
       </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
         <el-button secondary @click="resetForm(ldapForm)">{{ t('common.cancel') }}</el-button>
         <el-button secondary :disabled="!state.form.addr" @click="validate">
-          {{ t('commons.test_connect') }}
+          {{ t('ds.test_connection') }}
         </el-button>
         <el-button type="primary" @click="submitForm(ldapForm)">
-          {{ t('commons.save') }}
+          {{ t('common.save') }}
         </el-button>
       </span>
     </template>
