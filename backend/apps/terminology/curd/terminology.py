@@ -793,7 +793,9 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
     for row in t_list:
         pid = str(row.pid) if row.pid is not None else str(row.id)
         if _map.get(pid) is None:
-            _map[pid] = {'words': [], 'description': row.description}
+            _map[pid] = {'words': [], 'description': ''}
+        if row.pid is None:
+            _map[pid]['description'] = row.description
         _map[pid]['words'].append(row.word)
 
     _results: list[dict] = []
