@@ -2,7 +2,7 @@
   <el-icon
     class="show-history_icon"
     :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
-    style=""
+    v-if="assistantStore.assistant && !assistantStore.pageEmbedded && assistantStore.type != 4"
     size="20"
     @click="showFloatPopover"
   >
