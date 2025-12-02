@@ -78,7 +78,8 @@ class Chat(SQLModel, table=True):
     datasource: int = Field(sa_column=Column(BigInteger, nullable=True))
     engine_type: str = Field(max_length=64)
     origin: Optional[int] = Field(
-        sa_column=Column(Integer, nullable=False, default=0))  # 0: default, 1: mcp, 2: assistant
+        sa_column=Column(Integer, nullable=False, default=0)) # 0: default, 1: mcp, 2: assistant
+    brief_generate: bool = Field(default=False)
 
 
 class ChatRecord(SQLModel, table=True):
@@ -149,6 +150,7 @@ class CreateChat(BaseModel):
 class RenameChat(BaseModel):
     id: int = None
     brief: str = ''
+    brief_generate: bool = True
 
 
 class ChatInfo(BaseModel):

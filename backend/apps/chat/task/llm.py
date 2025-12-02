@@ -29,7 +29,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     save_select_datasource_answer, save_recommend_question_answer, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
-    get_last_execute_sql_error, format_json_data, format_chart_fields
+    get_last_execute_sql_error, format_json_data, format_chart_fields, get_chat_brief_generate
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj
 from apps.data_training.curd.data_training import get_training_template
@@ -117,7 +117,7 @@ class LLMService:
         self.generate_sql_logs = list_generate_sql_logs(session=session, chart_id=chat_id)
         self.generate_chart_logs = list_generate_chart_logs(session=session, chart_id=chat_id)
 
-        self.change_title = len(self.generate_sql_logs) == 0
+        self.change_title = not get_chat_brief_generate(session=session, chat_id=chat_id)
 
         chat_question.lang = get_lang_name(current_user.language)
 
@@ -528,7 +528,8 @@ class LLMService:
     def generate_sql(self, _session: Session):
         # append current question
         self.sql_message.append(HumanMessage(
-            self.chat_question.sql_user_question(current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),change_title = self.change_title)))
+            self.chat_question.sql_user_question(current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                 change_title=self.change_title)))
 
         self.current_logs[OperationEnum.GENERATE_SQL] = start_log(session=_session,
                                                                   ai_modal_id=self.chat_question.ai_modal_id,
@@ -997,11 +998,13 @@ class LLMService:
             # return title
             if self.change_title:
                 llm_brief = self.get_brief_from_sql_answer(full_sql_text)
-                if (llm_brief and llm_brief != '')  or (self.chat_question.question and self.chat_question.question.strip() != ''):
-                    save_brief = llm_brief if (llm_brief and llm_brief != '') else self.chat_question.question.strip()[:20]
+                llm_brief_generated = bool(llm_brief)
+                if llm_brief_generated or (self.chat_question.question and self.chat_question.question.strip() != ''):
+                    save_brief = llm_brief if (llm_brief and llm_brief != '') else self.chat_question.question.strip()[
+                                                                                   :20]
                     brief = rename_chat(session=_session,
                                         rename_object=RenameChat(id=self.get_record().chat_id,
-                                                                 brief=save_brief))
+                                                                 brief=save_brief, brief_generate=llm_brief_generated))
                     if in_chat:
                         yield 'data:' + orjson.dumps({'type': 'brief', 'brief': brief}).decode() + '\n\n'
                     if not stream:
@@ -1084,7 +1087,8 @@ class LLMService:
                         for field in result.get('fields'):
                             _column_list.append(AxisObj(name=field, value=field))
 
-                        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(_column_list, result.get('data'))
+                        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(_column_list,
+                                                                                           result.get('data'))
 
                         # data, _fields_list, col_formats = self.format_pd_data(_column_list, result.get('data'))
 
@@ -1202,8 +1206,6 @@ class LLMService:
         finally:
             self.finish(_session)
             session_maker.remove()
-
-
 
     def run_recommend_questions_task_async(self):
         self.future = executor.submit(self.run_recommend_questions_task_cache)

@@ -28,6 +28,10 @@ def get_chat_record_by_id(session: SessionDep, record_id: int):
                             engine_type=r.engine_type, ai_modal_id=r.ai_modal_id, create_by=r.create_by)
     return record
 
+def get_chat(session: SessionDep, chat_id: int) -> Chat:
+    statement = select(Chat).where(Chat.id == chat_id)
+    chat = session.exec(statement).scalars().first()
+    return chat
 
 def list_chats(session: SessionDep, current_user: CurrentUser) -> List[Chat]:
     oid = current_user.oid if current_user.oid is not None else 1
@@ -57,6 +61,7 @@ def rename_chat(session: SessionDep, rename_object: RenameChat) -> str:
         raise Exception(f"Chat with id {rename_object.id} not found")
 
     chat.brief = rename_object.brief.strip()[:20]
+    chat.brief_generate = rename_object.brief_generate
     session.add(chat)
     session.flush()
     session.refresh(chat)
@@ -339,6 +344,13 @@ def format_record(record: ChatRecordResult):
             pass
 
     return _dict
+
+def get_chat_brief_generate(session: SessionDep, chat_id: int):
+    chat  = get_chat(session=session,chat_id=chat_id)
+    if chat is not None and chat.brief_generate is not None:
+        return chat.brief_generate
+    else:
+        return False
 
 
 def list_generate_sql_logs(session: SessionDep, chart_id: int) -> List[ChatLog]:
