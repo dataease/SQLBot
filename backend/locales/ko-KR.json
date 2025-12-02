@@ -39,6 +39,8 @@
     "invalid_origin": "도메인 이름 검증 실패 【{origin}】"
   },
   "i18n_terminology": {
+    "datasource_list_is_not_found": "데이터 소스 목록을 찾을 수 없습니다",
+    "datasource_id_not_found": "데이터 소스 ID: {key}를 찾을 수 없습니다",
     "terminology_not_exists": "이 용어가 존재하지 않습니다",
     "datasource_cannot_be_none": "데이터 소스는 비울 수 없습니다",
     "cannot_be_repeated": "용어 이름과 동의어는 반복될 수 없습니다",

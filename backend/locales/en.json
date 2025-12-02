@@ -65,6 +65,8 @@
     "datasource_not_found": "Datasource not found"
   },
   "i18n_data_training": {
+    "datasource_list_is_not_found": "Data source list not found",
+    "datasource_id_not_found": "Data source ID: {key} not found",
     "datasource_cannot_be_none": "Datasource cannot be empty",
     "datasource_assistant_cannot_be_none": "Datasource or advanced application cannot both be empty",
     "data_training_not_exists": "This example does not exist",

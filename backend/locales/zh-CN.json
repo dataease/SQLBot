@@ -65,6 +65,8 @@
     "datasource_not_found": "找不到数据源"
   },
   "i18n_data_training": {
+    "datasource_list_is_not_found": "数据源列表未找到",
+    "datasource_id_not_found": "数据源ID: {key} 未找到",
     "datasource_cannot_be_none": "数据源不能为空",
     "datasource_assistant_cannot_be_none": "数据源或高级应用不能都为空",
     "data_training_not_exists": "该示例不存在",
