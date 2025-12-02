@@ -7,6 +7,21 @@
     "AI Model Configuration": "AI Model Configuration",
     "Details": "Details"
   },
+  "parameter": {
+    "parameter_configuration": "Parameter Configuration",
+    "question_count_settings": "Question Count Settings",
+    "model_thinking_process": "Expand Model Thinking Process",
+    "rows_of_data": "Limit 1000 Rows of Data",
+    "third_party_platform_settings": "Third-Party Platform Settings",
+    "by_third_party_platform": "Automatic User Creation by Third-Party Platform",
+    "platform_user_organization": "Third-Party Platform User Organization",
+    "platform_user_roles": "Third-Party Platform User Roles",
+    "excessive_data_volume": "Disabling the 1000-row data limit may cause system lag due to excessive data volume.",
+    "prompt": "Prompt",
+    "disabling_successfully": "Disabling Successfully",
+    "closed_by_default": "In the Question Count window, control whether the model thinking process is expanded or closed by default.",
+    "and_platform_integration": "Scope includes authentication settings and platform integration."
+  },
   "prompt": {
     "default_password": "Default password:{msg}",
     "no_sql_sample": "No SQL sample currently available",
