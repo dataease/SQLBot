@@ -48,6 +48,8 @@ async def pager(
     
     if oidlist:
         origin_stmt = origin_stmt.where(UserWsModel.oid.in_(oidlist))
+    if origins:
+        origin_stmt = origin_stmt.where(UserModel.origin.in_(origins))
     if status is not None:
         origin_stmt = origin_stmt.where(UserModel.status == status)        
     if keyword:

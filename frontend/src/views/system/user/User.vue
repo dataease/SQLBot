@@ -76,7 +76,11 @@
         </el-table-column>
         <el-table-column prop="email" show-overflow-tooltip :label="$t('user.email')" />
         <!-- <el-table-column prop="phone" :label="$t('user.phone_number')" width="280" /> -->
-        <!-- <el-table-column prop="user_source" :label="$t('user.user_source')" width="280" /> -->
+        <el-table-column prop="origin" :label="$t('user.user_source')" width="120">
+          <template #default="scope">
+            <span>{{ formatUserOrigin(scope.row.origin) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           show-overflow-tooltip
           prop="oid_list"
@@ -425,13 +429,11 @@ const filterOption = ref<any[]>([
     type: 'enum',
     option: [
       { id: '0', name: t('user.local_creation') },
-      // { id: 1, name: 'LDAP' },
-      // { id: 2, name: 'OIDC' },
-      // { id: 3, name: 'CAS' },
-      // { id: 9, name: 'OAuth2' },
-      // { id: 4, name: t('user.feishu') },
-      // { id: 5, name: t('user.dingtalk') },
-      // { id: 6, name: t('user.wechat_for_business') },
+      { id: '1', name: 'CAS' },
+      { id: '2', name: 'OIDC' },
+      { id: '3', name: 'LDAP' },
+      { id: '4', name: 'OAuth2' },
+      { id: '5', name: 'SAML2' },
     ],
     field: 'origins',
     title: t('user.user_source'),
@@ -823,6 +825,13 @@ const loadDefaultPwd = () => {
       defaultPwd.value = res
     }
   })
+}
+const formatUserOrigin = (origin?: number) => {
+  if (!origin) {
+    return t('user.local_creation')
+  }
+  const originArray = ['CAS', 'OIDC', 'LDAP', 'OAuth2', 'SAML2']
+  return originArray[origin - 1]
 }
 onMounted(() => {
   workspaceList().then((res) => {
