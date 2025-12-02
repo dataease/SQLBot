@@ -764,7 +764,8 @@
     "ou_placeholder": "例如：ou=users,dc=example,dc=com",
     "user_filter": "用户过滤器",
     "user_filter_placeholder": "例如：uid",
-    "ldap_field_mapping_placeholder": "例如：{'{'}\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"{'}'}"
+    "ldap_field_mapping_placeholder": "例如：{'{'}\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"{'}'}",
+    "be_turned_on": "测试连接有效后，可开启"
   },
   "login": {
     "default_login": "默认",

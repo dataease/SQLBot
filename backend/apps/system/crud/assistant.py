@@ -1,4 +1,5 @@
 import json
+import re
 import urllib
 from typing import Optional
 
@@ -142,15 +143,20 @@ class AssistantOutDs:
                 raise Exception(f"Failed to get datasource list from {endpoint}, error: {result_json.get('message')}")
         else:
             raise Exception(f"Failed to get datasource list from {endpoint}, status code: {res.status_code}")
-
+        
+    def get_first_element(self, text: str):
+        parts = re.split(r'[,;]', text.strip())
+        first_domain = parts[0].strip()
+        return first_domain
+    
     def get_complete_endpoint(self, endpoint: str) -> str | None:
         if endpoint.startswith("http://") or endpoint.startswith("https://"):
             return endpoint
         domain_text = self.assistant.domain
         if not domain_text:
             return None
-        if ',' in domain_text:
-            return (self.request_origin.strip('/') if self.request_origin else domain_text.split(',')[0].strip('/')) + endpoint
+        if ',' in domain_text or ';' in domain_text:
+            return (self.request_origin.strip('/') if self.request_origin else self.get_first_element(domain_text).strip('/')) + endpoint
         else:
             return f"{domain_text}{endpoint}"  
     

@@ -23,7 +23,7 @@
                 v-if="!item.valid"
                 class="box-item"
                 effect="dark"
-                :content="t('system.be_turned_on')"
+                :content="t('authentication.be_turned_on')"
                 placement="top"
               >
                 <el-switch

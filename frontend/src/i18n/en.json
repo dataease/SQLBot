@@ -764,7 +764,8 @@
     "ou_placeholder": "Example: ou=users,dc=example,dc=com",
     "user_filter": "User Filter",
     "user_filter_placeholder": "Example: uid",
-    "ldap_field_mapping_placeholder": "Example: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}"
+    "ldap_field_mapping_placeholder": "Example: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}",
+    "be_turned_on": "Once the test connection is confirmed to be effective, it can be enabled"
   },
   "login": {
     "default_login": "Default",

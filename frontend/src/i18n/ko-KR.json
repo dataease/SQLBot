@@ -764,7 +764,8 @@
     "ou_placeholder": "예: ou=users,dc=example,dc=com",
     "user_filter": "사용자 필터",
     "user_filter_placeholder": "예: uid",
-    "ldap_field_mapping_placeholder": "예: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}"
+    "ldap_field_mapping_placeholder": "예: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}",
+    "be_turned_on": "테스트 연결이 유효한 것으로 확인되면 활성화할 수 있습니다"
   },
   "login": {
     "default_login": "기본값",
