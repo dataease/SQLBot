@@ -211,7 +211,7 @@ const handlePublic = () => {
 </style>
 
 <style lang="less">
-.popover-card.popover-card.popover-card {
+.popover-card_ds_copy.popover-card_ds_copy.popover-card_ds_copy {
   box-shadow: 0px 4px 8px 0px #1f23291a;
   border-radius: 4px;
   border: 1px solid #dee0e3;

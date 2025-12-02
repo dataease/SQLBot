@@ -230,6 +230,7 @@ function onChatRenamed(chat: Chat) {
         {{ t('qa.new_chat') }}
       </el-button>
       <el-input
+        @click.stop
         v-model="search"
         :prefix-icon="Search"
         class="search"

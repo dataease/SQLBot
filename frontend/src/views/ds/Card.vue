@@ -126,7 +126,7 @@ const onClickOutside = () => {
           virtual-triggering
           trigger="click"
           :teleported="false"
-          popper-class="popover-card"
+          popper-class="popover-card_ds"
           placement="bottom-end"
         >
           <div class="content">
@@ -273,7 +273,7 @@ const onClickOutside = () => {
 </style>
 
 <style lang="less">
-.popover-card.popover-card.popover-card {
+.popover-card_ds.popover-card_ds.popover-card_ds {
   box-shadow: 0px 4px 8px 0px #1f23291a;
   border-radius: 4px;
   border: 1px solid #dee0e3;

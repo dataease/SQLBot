@@ -117,7 +117,7 @@ const pageLogo = computed(() => {
         virtual-triggering
         trigger="click"
         :teleported="false"
-        popper-class="popover-card"
+        popper-class="popover-card_embedded"
         placement="bottom-start"
       >
         <div class="content">
@@ -256,7 +256,7 @@ const pageLogo = computed(() => {
 </style>
 
 <style lang="less">
-.popover-card.popover-card.popover-card {
+.popover-card_embedded.popover-card_embedded.popover-card_embedded {
   box-shadow: 0px 4px 8px 0px #1f23291a;
   border-radius: 4px;
   border: 1px solid #dee0e3;
