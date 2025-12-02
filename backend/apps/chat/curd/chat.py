@@ -1,5 +1,4 @@
 import datetime
-from idlelib.pyparse import trans
 from typing import List
 from sqlalchemy import desc, func
 
@@ -399,7 +398,7 @@ def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj:
         ds = session.get(CoreDatasource, create_chat_obj.datasource)
 
         if not ds:
-            raise Exception(trans('i18n_data_training.datasource_id_not_found', key=create_chat_obj.datasource))
+            raise Exception(f"Datasource with id {create_chat_obj.datasource} not found")
 
         chat.engine_type = ds.type_name
     else:

@@ -1,7 +1,6 @@
 import json
 import re
 import urllib
-from idlelib.pyparse import trans
 from typing import Optional
 
 import requests
@@ -117,8 +116,7 @@ class AssistantOutDs:
         endpoint: str = config['endpoint']
         endpoint = self.get_complete_endpoint(endpoint=endpoint)
         if not endpoint:
-            raise Exception(
-                f"Failed to get datasource list from {config['endpoint']}, error: [Assistant domain or endpoint miss]")
+            raise Exception(f"Failed to get datasource list from {config['endpoint']}, error: [Assistant domain or endpoint miss]")
         certificateList: list[any] = json.loads(self.certificate)
         header = {}
         cookies = {}
@@ -145,12 +143,12 @@ class AssistantOutDs:
                 raise Exception(f"Failed to get datasource list from {endpoint}, error: {result_json.get('message')}")
         else:
             raise Exception(f"Failed to get datasource list from {endpoint}, status code: {res.status_code}")
-
+        
     def get_first_element(self, text: str):
         parts = re.split(r'[,;]', text.strip())
         first_domain = parts[0].strip()
         return first_domain
-
+    
     def get_complete_endpoint(self, endpoint: str) -> str | None:
         if endpoint.startswith("http://") or endpoint.startswith("https://"):
             return endpoint
@@ -158,12 +156,10 @@ class AssistantOutDs:
         if not domain_text:
             return None
         if ',' in domain_text or ';' in domain_text:
-            return (
-                self.request_origin.strip('/') if self.request_origin else self.get_first_element(domain_text).strip(
-                    '/')) + endpoint
+            return (self.request_origin.strip('/') if self.request_origin else self.get_first_element(domain_text).strip('/')) + endpoint
         else:
-            return f"{domain_text}{endpoint}"
-
+            return f"{domain_text}{endpoint}"  
+    
     def get_simple_ds_list(self):
         if self.ds_list:
             return [{'id': ds.id, 'name': ds.name, 'description': ds.comment} for ds in self.ds_list]
@@ -215,8 +211,8 @@ class AssistantOutDs:
                 if ds.id == ds_id:
                     return ds
         else:
-            raise Exception(trans('i18n_data_training.datasource_list_is_not_found'))
-        raise Exception(trans('i18n_data_training.datasource_id_not_found', key=ds_id))
+            raise Exception("Datasource list is not found.")
+        raise Exception(f"Datasource with id {ds_id} not found.")
 
     def convert2schema(self, ds_dict: dict, config: dict[any]) -> AssistantOutDsSchema:
         id_marker: str = ''
@@ -279,17 +275,17 @@ def get_ds_engine(ds: AssistantOutDsSchema) -> Engine:
     return engine
 
 
-def get_out_ds_conf(ds: AssistantOutDsSchema, timeout: int = 30) -> str:
+def get_out_ds_conf(ds: AssistantOutDsSchema, timeout:int=30) -> str:
     conf = {
-        "host": ds.host or '',
-        "port": ds.port or 0,
-        "username": ds.user or '',
-        "password": ds.password or '',
-        "database": ds.dataBase or '',
-        "driver": '',
-        "extraJdbc": ds.extraParams or '',
-        "dbSchema": ds.db_schema or '',
-        "timeout": timeout or 30
+        "host":ds.host or '',
+        "port":ds.port or 0,
+        "username":ds.user or '',
+        "password":ds.password or '',
+        "database":ds.dataBase or '',
+        "driver":'',
+        "extraJdbc":ds.extraParams or '',
+        "dbSchema":ds.db_schema or '',
+        "timeout":timeout or 30
     }
     conf["extraJdbc"] = ''
     return aes_encrypt(json.dumps(conf))
