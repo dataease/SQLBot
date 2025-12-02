@@ -1,38 +1,13 @@
 <template>
-  <el-popover
-    v-if="assistantStore.assistant && !assistantStore.pageEmbedded && assistantStore.type != 4"
-    :width="280"
-    placement="bottom-start"
-    popper-class="popover-chat_history popover-chat_history_small"
-    :disabled="isPhone"
+  <el-icon
+    class="show-history_icon"
+    :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
+    style=""
+    size="20"
+    @click="showFloatPopover"
   >
-    <template #reference>
-      <el-icon
-        class="show-history_icon"
-        :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
-        style=""
-        size="20"
-        @click="showFloatPopover"
-      >
-        <icon_sidebar_outlined></icon_sidebar_outlined>
-      </el-icon>
-    </template>
-    <ChatListContainer
-      ref="floatPopoverRef"
-      v-model:chat-list="chatList"
-      v-model:current-chat-id="currentChatId"
-      v-model:current-chat="currentChat"
-      v-model:loading="loading"
-      in-popover
-      :app-name="customName"
-      @go-empty="goEmpty"
-      @on-chat-created="onChatCreated"
-      @on-click-history="onClickHistory"
-      @on-chat-deleted="onChatDeleted"
-      @on-chat-renamed="onChatRenamed"
-      @on-click-side-bar-btn="hideSideBar"
-    />
-  </el-popover>
+    <icon_sidebar_outlined></icon_sidebar_outlined>
+  </el-icon>
   <el-container class="chat-container no-padding">
     <el-aside
       v-if="(isCompletePage || pageEmbedded) && chatListSideBarShow"
