@@ -64,7 +64,7 @@ const form_config_list = ref<any[]>([
       {
         min: 10,
         max: 255,
-        message: t('commons.input_limit', [10, 255]),
+        message: t('common.input_limit', [10, 255]),
         trigger: 'blur',
       },
       { required: true, pattern: /^[a-zA-Z][a-zA-Z0-9_]{3,15}$/, message: '', trigger: 'blur' },
@@ -114,7 +114,7 @@ const rule = reactive<FormRules>({
     {
       min: 10,
       max: 255,
-      message: t('commons.input_limit', [10, 255]),
+      message: t('common.input_limit', [10, 255]),
       trigger: 'blur',
     },
     { required: true, validator: validateUrl, trigger: 'blur' },
@@ -128,7 +128,7 @@ const rule = reactive<FormRules>({
     {
       min: 10,
       max: 255,
-      message: t('commons.input_limit', [10, 255]),
+      message: t('common.input_limit', [10, 255]),
       trigger: 'blur',
     },
     { required: true, validator: validateUrl, trigger: 'blur' },
@@ -142,7 +142,7 @@ const rule = reactive<FormRules>({
     {
       min: 10,
       max: 255,
-      message: t('commons.input_limit', [10, 255]),
+      message: t('common.input_limit', [10, 255]),
       trigger: 'blur',
     },
     { required: true, validator: validateUrl, trigger: 'blur' },
@@ -152,7 +152,7 @@ const rule = reactive<FormRules>({
     {
       min: 2,
       max: 50,
-      message: t('commons.input_limit', [2, 50]),
+      message: t('common.input_limit', [2, 50]),
       trigger: 'blur',
     },
   ],
@@ -165,7 +165,7 @@ const rule = reactive<FormRules>({
     {
       min: 2,
       max: 255,
-      message: t('commons.input_limit', [2, 255]),
+      message: t('common.input_limit', [2, 255]),
       trigger: 'blur',
     },
   ],
@@ -178,7 +178,7 @@ const rule = reactive<FormRules>({
     {
       min: 5,
       max: 255,
-      message: t('commons.input_limit', [5, 255]),
+      message: t('common.input_limit', [5, 255]),
       trigger: 'blur',
     },
   ],
@@ -191,7 +191,7 @@ const rule = reactive<FormRules>({
     {
       min: 10,
       max: 255,
-      message: t('commons.input_limit', [10, 255]),
+      message: t('common.input_limit', [10, 255]),
       trigger: 'blur',
     },
     { required: true, validator: validateCbUrl, trigger: 'blur' },

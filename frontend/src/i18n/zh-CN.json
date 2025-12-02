@@ -126,7 +126,8 @@
     "reset_password": "重置密码",
     "password_reset_successful": "重置密码成功",
     "or": "或者",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "input_limit": "长度在 {0} 到 {1} 个字符"
   },
   "dashboard": {
     "open_dashboard": "打开仪表板",

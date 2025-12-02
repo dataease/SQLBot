@@ -40,7 +40,7 @@ const rule = reactive<FormRules>({
     {
       min: 10,
       max: 255,
-      message: t('commons.input_limit', [10, 255]),
+      message: t('common.input_limit', [10, 255]),
       trigger: 'blur',
     },
     { required: true, validator: validateUrl, trigger: 'blur' },

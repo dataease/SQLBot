@@ -126,7 +126,8 @@
     "reset_password": "Reset password",
     "password_reset_successful": "Password reset successful",
     "or": "Or",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "input_limit": "Length cannot exceed {0} characters"
   },
   "dashboard": {
     "open_dashboard": "Open Dashboard",
