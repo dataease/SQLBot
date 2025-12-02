@@ -114,5 +114,8 @@
   },
   "i18n_excel_import": {
     "col_num_not_match": "Excel 열 개수가 일치하지 않습니다"
+  },
+  "i18n_authentication": {
+    "record_not_exist": "{msg} 기록이 존재하지 않습니다. 먼저 저장해 주세요!"
   }
 }

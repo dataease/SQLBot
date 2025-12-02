@@ -11,6 +11,8 @@ import {
   ElSelect,
 } from 'element-plus-secondary'
 import { request } from '@/utils/request'
+import { getSQLBotAddr } from '@/utils/utils'
+
 const { t } = useI18n()
 const dialogVisible = ref(false)
 const loadingInstance = ref<ReturnType<typeof ElLoading.service> | null>(null)
@@ -26,7 +28,7 @@ const state = reactive({
     scope: '',
     client_id: '',
     client_secret: '',
-    redirect_url: '',
+    redirect_url: getSQLBotAddr(),
     token_auth_method: 'basic',
     userinfo_auth_method: 'header',
     logout_redirect_url: '',
@@ -78,6 +80,15 @@ const validateUrl = (rule, value, callback) => {
   } else {
     callback()
   }
+}
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+const validateCbUrl = (rule, value, callback) => {
+  const addr = getSQLBotAddr()
+  if (value === addr || `${value}/` === addr) {
+    callback()
+  }
+  callback(new Error(t('authentication.callback_domain_name_error')))
 }
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
@@ -183,7 +194,7 @@ const rule = reactive<FormRules>({
       message: t('commons.input_limit', [10, 255]),
       trigger: 'blur',
     },
-    { required: true, validator: validateUrl, trigger: 'blur' },
+    { required: true, validator: validateCbUrl, trigger: 'blur' },
   ],
   mapping: [{ required: false, validator: validateMapping, trigger: 'blur' }],
 })

@@ -732,6 +732,7 @@
     "valid": "有效",
     "cas_settings": "CAS 设置",
     "callback_domain_name": "回调地址",
+    "callback_domain_name_error": "回调地址必须是当前访问域名",
     "field_mapping": "用户属性映射",
     "field_mapping_placeholder": "例如：{'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "格式错误，请重新填写",

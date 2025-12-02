@@ -114,5 +114,8 @@
   },
   "i18n_excel_import": {
     "col_num_not_match": "EXCEL列数量不匹配"
+  },
+  "i18n_authentication": {
+    "record_not_exist": "{msg} 记录不存在，请先保存！"
   }
 }

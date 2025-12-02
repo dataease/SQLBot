@@ -255,3 +255,11 @@ export function isMobile() {
     ) && !isTablet()
   )
 }
+
+export const getSQLBotAddr = (portEnd?: boolean) => {
+  const addr = location.origin + location.pathname
+  if (!portEnd || !addr.endsWith('/')) {
+    return addr
+  }
+  return addr.substring(0, addr.length - 1)
+}

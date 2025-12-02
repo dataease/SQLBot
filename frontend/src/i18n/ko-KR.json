@@ -732,6 +732,7 @@
     "valid": "유효함",
     "cas_settings": "CAS 설정",
     "callback_domain_name": "콜백 도메인",
+    "callback_domain_name_error": "콜백 URL은 현재 접속 도메인과 일치해야 합니다",
     "field_mapping": "사용자 속성 매핑",
     "field_mapping_placeholder": "예: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "형식이 잘못되었습니다. 다시 입력해 주세요",

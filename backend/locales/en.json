@@ -114,5 +114,8 @@
   },
   "i18n_excel_import": {
     "col_num_not_match": "Number of columns in Excel does not match"
+  },
+  "i18n_authentication": {
+    "record_not_exist": "{msg} record does not exist. Please save it first!"
   }
 }

@@ -732,6 +732,7 @@
     "valid": "Valid",
     "cas_settings": "CAS Settings",
     "callback_domain_name": "Callback Domain",
+    "callback_domain_name_error": "Callback URL must match the current access domain",
     "field_mapping": "User Attribute Mapping",
     "field_mapping_placeholder": "Example: {'{'}\"account\": \"saml2Account\", \"name\": \"saml2Name\", \"email\": \"email\"{'}'}",
     "incorrect_please_re_enter": "Incorrect format, please re-enter",

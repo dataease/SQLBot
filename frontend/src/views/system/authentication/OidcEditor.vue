@@ -4,6 +4,8 @@ import { ElMessage, ElLoading } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import { request } from '@/utils/request'
+import { getSQLBotAddr } from '@/utils/utils'
+
 const { t } = useI18n()
 const dialogVisible = ref(false)
 const loadingInstance = ref<ReturnType<typeof ElLoading.service> | null>(null)
@@ -15,7 +17,7 @@ const state = reactive({
     client_id: '',
     client_secret: '',
     metadata_url: '',
-    redirect_uri: '',
+    redirect_uri: getSQLBotAddr(),
     realm: '',
     scope: '',
     mapping: '',
@@ -44,6 +46,15 @@ const validateMapping = (rule, value, callback) => {
     callback(new Error(t('system.in_json_format')))
   }
   callback()
+}
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+const validateCbUrl = (rule, value, callback) => {
+  const addr = getSQLBotAddr()
+  if (value === addr || `${value}/` === addr) {
+    callback()
+  }
+  callback(new Error(t('authentication.callback_domain_name_error')))
 }
 const rule = reactive<FormRules>({
   client_id: [
@@ -84,7 +95,7 @@ const rule = reactive<FormRules>({
       message: t('commons.input_limit', [10, 255]),
       trigger: 'blur',
     },
-    { required: true, validator: validateUrl, trigger: 'blur' },
+    { required: true, validator: validateCbUrl, trigger: 'blur' },
   ],
   metadata_url: [
     {
