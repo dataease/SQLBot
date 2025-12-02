@@ -60,7 +60,7 @@
     "term_name_template_example_2": "术语2",
     "term_description_template_example_2": "术语2描述",
     "synonyms_template_example_2": "同义词3",
-    "word_cannot_be_empty": "术语不能为空",
+    "word_cannot_be_empty": "术语名称不能为空",
     "description_cannot_be_empty": "术语描述不能为空",
     "datasource_not_found": "找不到数据源"
   },

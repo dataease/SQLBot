@@ -293,7 +293,7 @@ const submitUpload = () => {
           :disabled="!fileName"
           @click="submitUpload"
         >
-          {{ t('common.continue_to_upload') }}
+          {{ t('user.import') }}
         </el-button>
       </span>
     </template>
