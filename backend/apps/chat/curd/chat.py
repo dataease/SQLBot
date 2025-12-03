@@ -46,8 +46,9 @@ def list_recent_questions(session: SessionDep, current_user: CurrentUser, dataso
             ChatRecord.question,
             func.count(ChatRecord.question).label('question_count')
         )
+        .join(Chat, ChatRecord.chat_id == Chat.id)  # 关联Chat表
         .filter(
-            ChatRecord.datasource == datasource_id,
+            Chat.datasource == datasource_id,  # 使用Chat表的datasource字段
             ChatRecord.question.isnot(None)
         )
         .group_by(ChatRecord.question)
@@ -56,7 +57,6 @@ def list_recent_questions(session: SessionDep, current_user: CurrentUser, dataso
         .all()
     )
     return [record[0] for record in chat_records] if chat_records else []
-
 
 def rename_chat(session: SessionDep, rename_object: RenameChat) -> str:
     chat = session.get(Chat, rename_object.id)
