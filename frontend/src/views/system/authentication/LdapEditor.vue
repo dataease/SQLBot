@@ -203,9 +203,9 @@ defineExpose({
       label-width="80px"
       label-position="top"
     >
-      <el-form-item :label="t('authentication.server_address')" prop="addr">
+      <el-form-item :label="t('authentication.server_address')" prop="server_address">
         <el-input
-          v-model="state.form.addr"
+          v-model="state.form.server_address"
           :placeholder="t('authentication.server_address_placeholder')"
         />
       </el-form-item>
