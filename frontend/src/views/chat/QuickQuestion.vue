@@ -122,7 +122,7 @@ const props = withDefaults(
     </div>
     <template #reference>
       <el-button plain size="small">
-        <el-icon size="16" class="el-icon--left">
+        <el-icon size="16" style="margin-right: 4px">
           <icon_quick_question />
         </el-icon>
         {{ $t('qa.quick_question') }}
