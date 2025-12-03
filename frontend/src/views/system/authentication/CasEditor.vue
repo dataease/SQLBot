@@ -128,8 +128,8 @@ const submitForm = async (formEl: FormInstance | undefined) => {
         name: 'cas',
       }
       const method = id.value
-        ? request.put('/system/authentication', data)
-        : request.post('/system/authentication', data)
+        ? request.put('/system/authentication', data, { requestOptions: { silent: true } })
+        : request.post('/system/authentication', data, { requestOptions: { silent: true } })
       showLoading()
       method
         .then((res) => {
@@ -138,9 +138,16 @@ const submitForm = async (formEl: FormInstance | undefined) => {
             emits('saved')
             reset()
           }
-          closeLoading()
         })
-        .catch(() => {
+        .catch((e: any) => {
+          if (
+            e.message?.startsWith('sqlbot_authentication_connect_error') ||
+            e.response?.data?.startsWith('sqlbot_authentication_connect_error')
+          ) {
+            ElMessage.error(t('ds.connection_failed'))
+          }
+        })
+        .finally(() => {
           closeLoading()
         })
     }
