@@ -120,10 +120,13 @@
                   ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
                   <LOGO_fold v-else></LOGO_fold
                 ></el-icon>
-                {{ appearanceStore.pc_welcome ?? t('qa.greeting') }}
+                {{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}
               </div>
               <div class="sub">
-                {{ appearanceStore.pc_welcome_desc ?? t('qa.hint_description') }}
+                {{
+                  appearanceStore.pc_welcome_desc ??
+                  '我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～'
+                }}
               </div>
             </template>
 
