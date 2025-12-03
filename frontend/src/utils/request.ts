@@ -12,6 +12,7 @@ import { useCache } from '@/utils/useCache'
 import { getLocale } from './utils'
 import { useAssistantStore } from '@/stores/assistant'
 import { useRouter } from 'vue-router'
+import JSONBig from 'json-bigint'
 // import { i18n } from '@/i18n'
 // const t = i18n.global.t
 const assistantStore = useAssistantStore()
@@ -61,6 +62,22 @@ class HttpService {
         'Content-Type': 'application/json',
         ...config?.headers,
       },
+      // add transformResponse to bigint
+      transformResponse: [
+        function (data) {
+          try {
+            return JSONBig.parse(data) // use JSON-bigint
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (e) {
+            try {
+              return JSON.parse(data)
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (parseError) {
+              return data
+            }
+          }
+        },
+      ],
       ...config,
     })
 
@@ -442,7 +459,7 @@ class HttpService {
 export const request = new HttpService({
   baseURL: import.meta.env.VITE_API_BASE_URL,
 })
-/* 
+/*
 const showLicenseKeyError = (msg?: string) => {
   ElMessageBox.confirm(t('license.error_tips'), {
     confirmButtonType: 'primary',

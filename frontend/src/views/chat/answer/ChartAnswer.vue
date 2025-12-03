@@ -3,6 +3,7 @@ import BaseAnswer from './BaseAnswer.vue'
 import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord, questionApi } from '@/api/chat.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import ChartBlock from '@/views/chat/chat-block/ChartBlock.vue'
+import JSONBig from 'json-bigint'
 
 const props = withDefaults(
   defineProps<{
@@ -141,7 +142,7 @@ const sendMessage = async () => {
           for (const str of split) {
             let data
             try {
-              data = JSON.parse(str.replace('data:{', '{'))
+              data = JSONBig.parse(str.replace('data:{', '{'))
             } catch (err) {
               console.error('JSON string:', str)
               throw err
@@ -198,7 +199,6 @@ const sendMessage = async () => {
                 if (!_currentChat.value.datasource) {
                   _currentChat.value.datasource = data.id
                 }
-                _currentChat.value.records[index.value].chart = data.content
                 break
               case 'finish':
                 emits('finish', currentRecord.id)
