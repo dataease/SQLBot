@@ -100,7 +100,7 @@ const validateMapping = (rule, value, callback) => {
     JSON.parse(value)
   } catch (e) {
     console.error(e)
-    callback(new Error(t('system.in_json_format')))
+    callback(new Error(t('authentication.in_json_format')))
   }
   callback()
 }
