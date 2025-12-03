@@ -193,8 +193,7 @@
     "chart_selected": "Selected {0}"
   },
   "qa": {
-    "recommended_repetitive_tips": "Duplicate questions exist",
-    "retrieve_error": "Model recommendation failed...",
+    "retrieve_error": "No content available",
     "retrieve_again": "Retrieve Again",
     "recently": "recently",
     "recommend": "recommend",
@@ -324,6 +323,7 @@
     }
   },
   "datasource": {
+    "recommended_repetitive_tips": "Duplicate questions exist",
     "recommended_problem_tips": "Custom configuration requires at least one problem, each problem should be 2-200 characters",
     "recommended_problem_configuration": "Recommended Problem Configuration",
     "problem_generation_method": "Problem Generation Method",

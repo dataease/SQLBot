@@ -193,8 +193,7 @@
     "chart_selected": "{0}개 선택됨"
   },
   "qa": {
-    "recommended_repetitive_tips": "중복된 문제가 존재합니다",
-    "retrieve_error": "모델 추천 문제 실패...",
+    "retrieve_error": "콘텐츠 없음",
     "retrieve_again": "다시 가져오기",
     "recently": "최근",
     "recommend": "추천",
@@ -324,6 +323,7 @@
     }
   },
   "datasource": {
+    "recommended_repetitive_tips": "중복된 문제가 존재합니다",
     "recommended_problem_tips": "사용자 정의 구성으로 최소 한 개의 문제를 생성하세요, 각 문제는 2~200자로 작성",
     "recommended_problem_configuration": "추천 문제 구성",
     "problem_generation_method": "문제 생성 방식",
