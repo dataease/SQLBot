@@ -8,7 +8,7 @@ from common.core.deps import SessionDep
 from common.core.sqlbot_cache import cache, clear_cache
 from common.utils.locale import I18n
 from common.utils.utils import SQLBotLogUtil
-from ..models.user import UserModel
+from ..models.user import UserModel, UserPlatformModel
 from common.core.security import verify_md5pwd
 import re
 
@@ -69,6 +69,9 @@ async def single_delete(session: SessionDep, id: int):
     user_model: UserModel = get_db_user(session = session, user_id = id)
     del_stmt = sqlmodel_delete(UserWsModel).where(UserWsModel.uid == id)
     session.exec(del_stmt)
+    if user_model and user_model.origin and user_model.origin != 0:
+        platform_del_stmt = sqlmodel_delete(UserPlatformModel).where(UserPlatformModel.uid == id)
+        session.exec(platform_del_stmt)
     session.delete(user_model)
     session.commit()
 
