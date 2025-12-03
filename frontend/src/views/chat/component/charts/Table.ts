@@ -107,11 +107,10 @@ function copyData(event: any, s2?: TableSheet) {
   } else if (cells.length == 1) {
     const c = cells[0]
     const cellMeta = s2.facet.getCellMeta(c.rowIndex, c.colIndex)
-    console.log(cellMeta)
     if (cellMeta) {
       let value = cellMeta.fieldValue
       if (value === null || value === undefined) {
-        value = ''
+        value = '-'
       }
       value = value + ''
       copyToClipboard(value).finally(() => {
@@ -138,7 +137,12 @@ function copyData(event: any, s2?: TableSheet) {
         currentRowData = []
         currentRowIndex = c.rowIndex
       }
-      currentRowData.push(cellMeta.fieldValue as string)
+      let value = cellMeta.fieldValue
+      if (value === null || value === undefined) {
+        value = '-'
+      }
+      value = value + ''
+      currentRowData.push(value)
     }
     rowData.push(currentRowData.join('\t'))
     const finalValue = rowData.join('\n')
