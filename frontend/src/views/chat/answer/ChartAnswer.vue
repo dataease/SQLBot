@@ -194,6 +194,12 @@ const sendMessage = async () => {
               case 'chart':
                 _currentChat.value.records[index.value].chart = data.content
                 break
+              case 'datasource':
+                if (!_currentChat.value.datasource) {
+                  _currentChat.value.datasource = data.id
+                }
+                _currentChat.value.records[index.value].chart = data.content
+                break
               case 'finish':
                 emits('finish', currentRecord.id)
                 break

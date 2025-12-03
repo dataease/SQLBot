@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import icon_quick_question from '@/assets/svg/icon_quick_question.svg'
 import icon_close from '@/assets/svg/operate/ope-close.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
-import RecommendQuestion from '@/views/chat/RecommendQuestion.vue'
 import { ChatInfo } from '@/api/chat.ts'
 import RecentQuestion from '@/views/chat/RecentQuestion.vue'
+import RecommendQuestionQuick from '@/views/chat/RecommendQuestionQuick.vue'
 const activeName = ref('recommend')
 const recommendQuestionRef = ref()
 const recentQuestionRef = ref()
@@ -14,6 +14,7 @@ const getRecommendQuestions = () => {
   recommendQuestionRef.value.getRecommendQuestions(10)
 }
 
+const questions = '[]'
 const retrieveQuestions = () => {
   getRecommendQuestions()
   recentQuestionRef.value.getRecentQuestions()
@@ -37,6 +38,10 @@ const loadingOver = () => {
   emits('loadingOver')
 }
 
+onMounted(() => {
+  getRecommendQuestions()
+})
+
 const emits = defineEmits(['quickAsk', 'loadingOver', 'stop'])
 defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
 
@@ -45,7 +50,6 @@ const props = withDefaults(
     recordId?: number
     datasourceId?: number
     currentChat?: ChatInfo
-    questions?: string
     firstChat?: boolean
     disabled?: boolean
   }>(),
@@ -53,7 +57,6 @@ const props = withDefaults(
     recordId: undefined,
     datasourceId: undefined,
     currentChat: () => new ChatInfo(),
-    questions: '[]',
     firstChat: false,
     disabled: false,
   }
@@ -83,7 +86,7 @@ const props = withDefaults(
     </el-tooltip>
     <el-tabs v-model="activeName" class="quick_question_tab">
       <el-tab-pane :label="$t('qa.recommend')" name="recommend">
-        <RecommendQuestion
+        <RecommendQuestionQuick
           ref="recommendQuestionRef"
           :current-chat="currentChat"
           :record-id="recordId"

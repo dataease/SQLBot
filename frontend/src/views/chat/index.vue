@@ -1,8 +1,8 @@
 <template>
   <el-icon
+    v-if="assistantStore.assistant && !assistantStore.pageEmbedded && assistantStore.type != 4"
     class="show-history_icon"
     :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
-    v-if="assistantStore.assistant && !assistantStore.pageEmbedded && assistantStore.type != 4"
     size="20"
     @click="showFloatPopover"
   >
@@ -371,13 +371,12 @@
               </span>
             </template>
           </div>
-          <div v-if="computedMessages.length > 0" class="quick_question">
+          <div v-if="computedMessages.length > 0 && currentChat.datasource" class="quick_question">
             <quick-question
               ref="quickQuestionRef"
               :datasource-id="currentChat.datasource"
               :current-chat="currentChat"
               :record-id="computedMessages[0].record?.id"
-              :questions="computedMessages[0].recommended_question"
               :disabled="isTyping"
               :first-chat="true"
               @quick-ask="quickAsk"
@@ -698,9 +697,7 @@ const quickQuestionRef = ref()
 
 function onChatCreated(chat: ChatInfo) {
   if (chat.records.length === 1 && !chat.records[0].recommended_question) {
-    nextTick(() => {
-      quickQuestionRef.value.getRecommendQuestions()
-    })
+    // do nothing
   }
 }
 

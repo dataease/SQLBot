@@ -1,63 +1,36 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { endsWith, startsWith } from 'lodash-es'
-import { useI18n } from 'vue-i18n'
-import { chatApi, ChatInfo } from '@/api/chat.ts'
+import { chatApi } from '@/api/chat.ts'
 
 const props = withDefaults(
   defineProps<{
     recordId?: number
-    currentChat?: ChatInfo
-    questions?: string
-    firstChat?: boolean
     disabled?: boolean
-    position?: string
   }>(),
   {
     recordId: undefined,
-    currentChat: () => new ChatInfo(),
-    questions: '[]',
-    firstChat: false,
     disabled: false,
-    position: 'chat',
   }
 )
 
-const emits = defineEmits(['clickQuestion', 'update:currentChat', 'stop', 'loadingOver'])
+const emits = defineEmits(['clickQuestion', 'stop', 'loadingOver'])
 
 const loading = ref(false)
 
-const _currentChat = computed({
-  get() {
-    return props.currentChat
-  },
-  set(v) {
-    emits('update:currentChat', v)
-  },
-})
+const questions = ref('[]')
 
-const computedQuestions = computed<string[]>(() => {
+const computedQuestions = computed<string>(() => {
   if (
-    props.questions &&
-    props.questions.length > 0 &&
-    startsWith(props.questions.trim(), '[') &&
-    endsWith(props.questions.trim(), ']')
+    questions.value &&
+    questions.value.length > 0 &&
+    startsWith(questions.value.trim(), '[') &&
+    endsWith(questions.value.trim(), ']')
   ) {
-    try {
-      const parsedQuestions = JSON.parse(props.questions)
-      if (Array.isArray(parsedQuestions)) {
-        return parsedQuestions.length > 4 ? parsedQuestions.slice(0, 4) : parsedQuestions
-      }
-      return []
-    } catch (error) {
-      console.error('Failed to parse questions:', error)
-      return []
-    }
+    return JSON.parse(questions.value)
   }
   return []
 })
-
-const { t } = useI18n()
 
 function clickQuestion(question: string): void {
   if (!props.disabled) {
@@ -129,15 +102,8 @@ async function getRecommendQuestions(articles_number: number) {
                   startsWith(data.content.trim(), '[') &&
                   endsWith(data.content.trim(), ']')
                 ) {
-                  if (_currentChat.value?.records) {
-                    for (let record of _currentChat.value.records) {
-                      if (record.id === props.recordId) {
-                        record.recommended_question = data.content
-
-                        await nextTick()
-                      }
-                    }
-                  }
+                  questions.value = data.content
+                  await nextTick()
                 }
             }
           }
@@ -165,26 +131,10 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
 
 <template>
   <div v-if="computedQuestions.length > 0 || loading" class="recommend-questions">
-    <template v-if="position === 'chat'">
-      <div v-if="firstChat" style="margin-bottom: 8px">{{ t('qa.guess_u_ask') }}</div>
-      <div v-else class="continue-ask">{{ t('qa.continue_to_ask') }}</div>
-    </template>
     <div v-if="loading">
-      <div v-if="position === 'input'" style="margin-bottom: 8px">{{ t('qa.guess_u_ask') }}</div>
       <el-button style="min-width: unset" type="primary" link loading />
     </div>
-    <div v-else-if="position === 'input'" class="question-grid-input">
-      <div
-        v-for="(question, index) in computedQuestions"
-        :key="index"
-        class="question"
-        :class="{ disabled: disabled }"
-        @click="clickQuestion(question)"
-      >
-        {{ question }}
-      </div>
-    </div>
-    <div v-else class="question-grid">
+    <div v-else class="question-grid-input">
       <div
         v-for="(question, index) in computedQuestions"
         :key="index"
@@ -196,7 +146,7 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
       </div>
     </div>
   </div>
-  <div v-else-if="position === 'input'" class="recommend-questions-error">
+  <div v-else class="recommend-questions-error">
     {{ $t('qa.retrieve_error') }}
   </div>
 </template>
