@@ -34,6 +34,7 @@ class BaseUserDTO(BaseUser, BaseCreatorDTO):
     language: str = Field(pattern=r"^(zh-CN|en|ko-KR)$", default="zh-CN", description="用户语言")
     password: str
     status: int = 1
+    origin: int = 0
 
     def to_dict(self):
         return {

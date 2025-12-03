@@ -11,7 +11,8 @@
   "i18n_login": {
     "account_pwd_error": "Incorrect account or password!",
     "no_associated_ws": "No associated workspace, {msg}",
-    "user_disable": "Account is disabled, {msg}"
+    "user_disable": "Account is disabled, {msg}",
+    "origin_error": "Invalid login method"
   },
   "i18n_user": {
     "account": "Account",

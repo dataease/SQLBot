@@ -28,6 +28,8 @@ async def local_login(
         raise HTTPException(status_code=400, detail=trans('i18n_login.no_associated_ws', msg = trans('i18n_concat_admin')))
     if user.status != 1:
         raise HTTPException(status_code=400, detail=trans('i18n_login.user_disable', msg = trans('i18n_concat_admin')))
+    if user.origin is not None and user.origin != 0:
+        raise HTTPException(status_code=400, detail=trans('i18n_login.origin_error'))
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     user_dict = user.to_dict()
     return Token(access_token=create_access_token(
