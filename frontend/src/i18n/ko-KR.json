@@ -26,7 +26,9 @@
     "edit_prompt_word": "프롬프트 편집",
     "all_236_terms": "모든 {msg}개의 {type} 프롬프트 기록을 내보내시겠습니까?",
     "export_hint": "모든 {type} 프롬프트를 내보내시겠습니까?",
-    "prompt_word_name_de": "프롬프트를 삭제하시겠습니까: {msg}?"
+    "prompt_word_name_de": "프롬프트를 삭제하시겠습니까: {msg}?",
+    "disable_field": "필드 비활성화",
+    "to_disable_it": "이 필드에는 테이블 관계가 설정되어 있습니다. 비활성화하면 관계가 유효하지 않게 됩니다. 비활성화하시겠습니까?"
   },
   "training": {
     "effective_data_sources": "유효한 데이터 소스",

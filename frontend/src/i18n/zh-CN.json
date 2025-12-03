@@ -26,7 +26,9 @@
     "edit_prompt_word": "编辑提示词",
     "all_236_terms": "是否导出全部 {msg} 条{type}提示词？",
     "export_hint": "是否导出全部{type}提示词？",
-    "prompt_word_name_de": "是否删除提示词：{msg}？"
+    "prompt_word_name_de": "是否删除提示词：{msg}？",
+    "disable_field": "禁用字段",
+    "to_disable_it": "该字段已配置表关联关系，若禁用后，关联关系将失效，确定禁用?"
   },
   "training": {
     "effective_data_sources": "生效数据源",

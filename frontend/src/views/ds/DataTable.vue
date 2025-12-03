@@ -211,7 +211,7 @@ const editField = (row: any) => {
   fieldDialog.value = true
 }
 
-const changeStatus = (row: any) => {
+const setStatus = (row: any) => {
   currentField.value = row
   datasourceApi.saveField(currentField.value).then(() => {
     closeField()
@@ -221,6 +221,25 @@ const changeStatus = (row: any) => {
       showClose: true,
     })
   })
+}
+
+const changeStatus = (row: any) => {
+  if (!row.checked) {
+    row.checked = true
+    ElMessageBox.confirm(t('prompt.disable_field'), {
+      type: 'warning',
+      confirmButtonType: 'primary',
+      tip: t('prompt.to_disable_it'),
+      confirmButtonText: t('common.confirm2'),
+      cancelButtonText: t('common.cancel'),
+      autofocus: false,
+    }).then(() => {
+      row.checked = false
+      setStatus(row)
+    })
+    return
+  }
+  setStatus(row)
 }
 
 const emits = defineEmits(['back', 'refresh'])

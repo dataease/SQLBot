@@ -26,7 +26,9 @@
     "edit_prompt_word": "Edit prompt word",
     "all_236_terms": "Export all {msg} {type} prompt records?",
     "export_hint": "Export all {type} prompts?",
-    "prompt_word_name_de": "Do you want to delete the prompt word: {msg}?"
+    "prompt_word_name_de": "Do you want to delete the prompt word: {msg}?",
+    "disable_field": "Disable Field",
+    "to_disable_it": "This field has a configured table relationship. If disabled, the relationship will be invalid. Are you sure you want to disable it?"
   },
   "training": {
     "effective_data_sources": "Effective data sources",
