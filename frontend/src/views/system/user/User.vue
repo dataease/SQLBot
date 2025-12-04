@@ -237,6 +237,7 @@
     v-model="dialogFormVisible"
     :title="dialogTitle"
     destroy-on-close
+    modal-class="user-add-class"
     size="600px"
     :before-close="onFormClose"
   >
@@ -1031,6 +1032,34 @@ onMounted(() => {
     margin-left: 33px;
     display: flex;
     align-items: center;
+  }
+}
+.user-add-class {
+  .down-template {
+    display: flex;
+    width: 100%;
+    height: 40px;
+    align-items: center;
+    line-height: 40px;
+    background: var(--ed-color-primary-80, #d2f1e9);
+    border-radius: 4px;
+    padding-left: 10px;
+    .icon-span {
+      color: var(--ed-color-primary);
+      font-size: 18px;
+      i {
+        top: 3px;
+      }
+    }
+    .down-template-content {
+      font-size: 14px;
+      display: flex;
+      flex-direction: row;
+      margin-left: 10px;
+      .down-button {
+        height: 40px;
+      }
+    }
   }
 }
 </style>

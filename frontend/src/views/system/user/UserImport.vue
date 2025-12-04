@@ -258,8 +258,8 @@ defineExpose({
   <el-dialog
     v-model="dialogShow"
     :title="t('user.batch_import')"
-    width="600px"
-    model-class="user-import-class"
+    width="400px"
+    modal-class="user-import-class"
     @before-close="closeDialog"
   >
     <div class="down-template">
@@ -358,119 +358,121 @@ defineExpose({
 </template>
 
 <style lang="less">
-.upload-user {
-  height: 32px;
-  .ed-upload {
-    width: 100% !important;
-  }
-}
-.color-danger {
-  :deep(.el-link--inner) {
-    color: var(--deDanger, #f54a45) !important;
-  }
-}
-.font12 {
-  color: #8f959e !important;
-  font-family: var(--de-custom_font, 'PingFang');
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 22px;
-}
-.down-template {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  height: 40px;
-  line-height: 40px;
-  background: var(--ed-color-primary-80, #d2f1e9);
-  border-radius: 4px;
-  padding-left: 10px;
-  .icon-span {
-    color: var(--ed-color-primary);
-    font-size: 18px;
-    i {
-      top: 3px;
+.user-import-class {
+  .upload-user {
+    height: 32px;
+    .ed-upload {
+      width: 100% !important;
     }
   }
-  .down-template-content {
+  .color-danger {
+    :deep(.el-link--inner) {
+      color: var(--deDanger, #f54a45) !important;
+    }
+  }
+  .font12 {
+    color: #8f959e !important;
+    font-family: var(--de-custom_font, 'PingFang');
     font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px;
+  }
+  .down-template {
     display: flex;
-    flex-direction: row;
-    margin-left: 10px;
-    .down-button {
-      height: 40px;
+    width: 100%;
+    height: 40px;
+    align-items: center;
+    line-height: 40px;
+    background: var(--ed-color-primary-80, #d2f1e9);
+    border-radius: 4px;
+    padding-left: 10px;
+    .icon-span {
+      color: var(--ed-color-primary);
+      font-size: 18px;
+      i {
+        top: 3px;
+      }
+    }
+    .down-template-content {
+      font-size: 14px;
+      display: flex;
+      flex-direction: row;
+      margin-left: 10px;
+      .down-button {
+        height: 40px;
+      }
     }
   }
-}
-.import-form {
-  margin-top: 16px;
+  .import-form {
+    margin-top: 16px;
 
-  .pdf-card {
-    width: 100%;
-    height: 58px;
-    display: flex;
-    align-items: center;
-    padding: 0 16px 0 12px;
-    border: 1px solid #dee0e3;
-    border-radius: 6px;
+    .pdf-card {
+      width: 100%;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px 0 12px;
+      border: 1px solid #dee0e3;
+      border-radius: 6px;
 
-    .file-name {
-      margin-left: 8px;
-      .name {
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 22px;
+      .file-name {
+        margin-left: 8px;
+        .name {
+          font-weight: 400;
+          font-size: 14px;
+          line-height: 22px;
+        }
+
+        .size {
+          font-weight: 400;
+          font-size: 12px;
+          line-height: 20px;
+          color: #8f959e;
+        }
       }
 
-      .size {
-        font-weight: 400;
-        font-size: 12px;
-        line-height: 20px;
-        color: #8f959e;
-      }
-    }
-
-    .action-btn {
-      margin-left: auto;
-    }
-
-    .ed-icon {
-      position: relative;
-      cursor: pointer;
-      color: #646a73;
-
-      &::after {
-        content: '';
-        background-color: #1f23291a;
-        position: absolute;
-        border-radius: 6px;
-        width: 24px;
-        height: 24px;
-        transform: translate(-50%, -50%);
-        top: 50%;
-        left: 50%;
-        display: none;
+      .action-btn {
+        margin-left: auto;
       }
 
-      &:hover {
+      .ed-icon {
+        position: relative;
+        cursor: pointer;
+        color: #646a73;
+
         &::after {
-          display: block;
+          content: '';
+          background-color: #1f23291a;
+          position: absolute;
+          border-radius: 6px;
+          width: 24px;
+          height: 24px;
+          transform: translate(-50%, -50%);
+          top: 50%;
+          left: 50%;
+          display: none;
+        }
+
+        &:hover {
+          &::after {
+            display: block;
+          }
         }
       }
     }
   }
-}
-.import-tip-box {
-  strong {
-    font-size: 16px;
-  }
-  span {
-    font-size: 13px;
-  }
-  .error-record-tip {
-    font-size: 13px;
-    flex-flow: wrap;
+  .import-tip-box {
+    strong {
+      font-size: 16px;
+    }
+    span {
+      font-size: 13px;
+    }
+    .error-record-tip {
+      font-size: 13px;
+      flex-flow: wrap;
+    }
   }
 }
 </style>

@@ -224,7 +224,7 @@ const submitUpload = () => {
     v-model="dialogShow"
     :title="t('user.batch_import')"
     width="600px"
-    class="user-import-class"
+    modal-class="user-import-class"
     @close="close"
   >
     <div class="import-container">
