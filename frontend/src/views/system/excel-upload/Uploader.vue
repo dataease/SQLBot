@@ -9,6 +9,7 @@ import { genFileId, type UploadInstance, type UploadProps, type UploadRawFile } 
 import { useCache } from '@/utils/useCache.ts'
 import { settingsApi } from '@/api/setting.ts'
 import ccmUpload from '@/assets/svg/icon_ccm-upload_outlined.svg'
+import { getLocale } from '@/utils/utils.ts'
 
 const { t } = useI18n()
 const { wsCache } = useCache()
@@ -25,7 +26,8 @@ const uploadRef = ref<UploadInstance>()
 const uploadLoading = ref(false)
 
 const token = wsCache.get('user.token')
-const headers = ref<any>({ 'X-SQLBOT-TOKEN': `Bearer ${token}` })
+const locale = getLocale()
+const headers = ref<any>({ 'X-SQLBOT-TOKEN': `Bearer ${token}`, 'Accept-Language': locale })
 const getUploadURL = () => {
   return import.meta.env.VITE_API_BASE_URL + props.uploadPath
 }
