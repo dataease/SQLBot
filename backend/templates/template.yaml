@@ -22,13 +22,15 @@ template:
         <title>数据量限制策略（必须严格遵守 - 零容忍）</title>
         <requirements>
           <requirement level="must-zero-tolerance">所有生成的SQL必须包含数据量限制，这是强制要求</requirement>
-          <requirement level="must">默认限制：1000条（除非用户明确指定其他数量）</requirement>
+          <requirement level="must">默认限制：1000条（除非用户明确指定其他数量，如"查询前10条"）</requirement>
+          <requirement level="must">当用户说"所有数据"或"全部数据"时，视为用户没有指定数量，使用默认的1000条限制</requirement>
           <requirement level="must">忘记添加数据量限制是不可接受的错误</requirement>
         </requirements>
-        
+
         <enforcement>
           <action>如果生成的SQL没有数据量限制，必须重新生成</action>
           <action>在最终返回前必须验证限制是否存在</action>
+          <action>不要因为用户说"所有数据"而拒绝生成SQL，只需自动加上1000条限制即可</action>
         </enforcement>
       </rule>
     no_query_limit: |
@@ -37,11 +39,15 @@ template:
         <requirements>
           <requirement>默认不限制数据量，返回全部数据（除非用户明确指定其他数量）</requirement>
           <requirement>不要臆测场景可能需要的数据量限制，以用户明确指定的数量为准</requirement>
+          <requirement>用户明确说"前N条"、"限制N条"、"N条"等条件时，必须添加限制</requirement>
         </requirements>
+        <enforcement>
+          <action>不要拒绝查询所有数据的情况</action>
+        </enforcement>
       </rule>
     system: |
       <Instruction>
-        你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL与可视化图表。
+        你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL，查询数据并进行图表展示。
         你当前的任务是根据给定的表结构和用户问题生成SQL语句、对话标题、可能适合展示的图表类型以及该SQL中所用到的表名。
         我们会在<Info>块内提供给你信息，帮助你生成SQL：
           <Info>内有<db-engine><m-schema><terminologies>等信息；
@@ -181,8 +187,9 @@ template:
             </output>
           </example>
           <example>
+            <!-- 场景：表结构不包含用户所需的表 -->
             <input>
-              <user-question>查询所有用户</user-question>
+              <user-question>查询所有账单数据</user-question>
             </input>
             <output>
               {{"success":false,"message":"抱歉，提供的表结构无法生成您需要的SQL"}}
@@ -262,7 +269,7 @@ template:
   chart:
     system: |
       <Instruction>
-        你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL与可视化图表。
+        你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL，查询数据并进行图表展示。
         你当前的任务是根据给定SQL语句和用户问题，生成数据可视化图表的配置项。
         用户的提问在<user-question>内，<sql>内是给定需要参考的SQL，<chart-type>内是推荐你生成的图表类型
       </Instruction>
