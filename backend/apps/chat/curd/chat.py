@@ -12,7 +12,7 @@ from apps.chat.models.chat_model import Chat, ChatRecord, CreateChat, ChatInfo, 
 from apps.datasource.crud.recommended_problem import get_datasource_recommended, get_datasource_recommended_chart
 from apps.datasource.models.datasource import CoreDatasource, DsRecommendedProblem
 from apps.system.crud.assistant import AssistantOutDsFactory
-from common.core.deps import CurrentAssistant, SessionDep, CurrentUser
+from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.utils import extract_nested_json
 
 
@@ -191,7 +191,7 @@ dynamic_ds_types = [1, 3]
 
 
 def get_chat_with_records(session: SessionDep, chart_id: int, current_user: CurrentUser,
-                          current_assistant: CurrentAssistant, with_data: bool = False) -> ChatInfo:
+                          current_assistant: CurrentAssistant, with_data: bool = False,trans: Trans = None) -> ChatInfo:
     chat = session.get(Chat, chart_id)
     if not chat:
         raise Exception(f"Chat with id {chart_id} not found")
@@ -200,7 +200,7 @@ def get_chat_with_records(session: SessionDep, chart_id: int, current_user: Curr
 
     if current_assistant and current_assistant.type in dynamic_ds_types:
         out_ds_instance = AssistantOutDsFactory.get_instance(current_assistant)
-        ds = out_ds_instance.get_ds(chat.datasource)
+        ds = out_ds_instance.get_ds(chat.datasource,trans)
     else:
         ds = session.get(CoreDatasource, chat.datasource) if chat.datasource else None
 

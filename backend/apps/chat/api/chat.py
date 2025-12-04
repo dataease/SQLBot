@@ -26,10 +26,11 @@ async def chats(session: SessionDep, current_user: CurrentUser):
 
 
 @router.get("/{chart_id}")
-async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int, current_assistant: CurrentAssistant):
+async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int, current_assistant: CurrentAssistant,
+                   trans: Trans):
     def inner():
         return get_chat_with_records(chart_id=chart_id, session=session, current_user=current_user,
-                                     current_assistant=current_assistant)
+                                     current_assistant=current_assistant, trans=trans)
 
     return await asyncio.to_thread(inner)
 
@@ -108,7 +109,7 @@ async def start_chat(session: SessionDep, current_user: CurrentUser):
 
 @router.post("/recommend_questions/{chat_record_id}")
 async def recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
-                              current_assistant: CurrentAssistant, articles_number: Optional[int]  = 4):
+                              current_assistant: CurrentAssistant, articles_number: Optional[int] = 4):
     def _return_empty():
         yield 'data:' + orjson.dumps({'content': '[]', 'type': 'recommended_question'}).decode() + '\n\n'
 
@@ -133,6 +134,7 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, ch
         return StreamingResponse(_err(e), media_type="text/event-stream")
 
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
+
 
 @router.get("/recent_questions/{datasource_id}")
 async def recommend_questions(session: SessionDep, current_user: CurrentUser, datasource_id: int):

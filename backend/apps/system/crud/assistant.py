@@ -20,6 +20,7 @@ from common.core.db import engine
 from common.core.sqlbot_cache import cache
 from common.utils.aes_crypto import simple_aes_decrypt
 from common.utils.utils import equals_ignore_case, string_to_numeric_hash
+from common.core.deps import Trans
 
 
 @cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="assistant_id")
@@ -143,12 +144,12 @@ class AssistantOutDs:
                 raise Exception(f"Failed to get datasource list from {endpoint}, error: {result_json.get('message')}")
         else:
             raise Exception(f"Failed to get datasource list from {endpoint}, status code: {res.status_code}")
-        
+
     def get_first_element(self, text: str):
         parts = re.split(r'[,;]', text.strip())
         first_domain = parts[0].strip()
         return first_domain
-    
+
     def get_complete_endpoint(self, endpoint: str) -> str | None:
         if endpoint.startswith("http://") or endpoint.startswith("https://"):
             return endpoint
@@ -158,8 +159,8 @@ class AssistantOutDs:
         if ',' in domain_text or ';' in domain_text:
             return (self.request_origin.strip('/') if self.request_origin else self.get_first_element(domain_text).strip('/')) + endpoint
         else:
-            return f"{domain_text}{endpoint}"  
-    
+            return f"{domain_text}{endpoint}"
+
     def get_simple_ds_list(self):
         if self.ds_list:
             return [{'id': ds.id, 'name': ds.name, 'description': ds.comment} for ds in self.ds_list]
@@ -205,14 +206,14 @@ class AssistantOutDs:
 
         return schema_str
 
-    def get_ds(self, ds_id: int):
+    def get_ds(self, ds_id: int,trans: Trans = None):
         if self.ds_list:
             for ds in self.ds_list:
                 if ds.id == ds_id:
                     return ds
         else:
             raise Exception("Datasource list is not found.")
-        raise Exception(f"Datasource with id {ds_id} not found.")
+        raise Exception(f"Datasource id {ds_id} is not found." if trans is None else trans('i18n_data_training.datasource_id_not_found', key=ds_id))
 
     def convert2schema(self, ds_dict: dict, config: dict[any]) -> AssistantOutDsSchema:
         id_marker: str = ''
