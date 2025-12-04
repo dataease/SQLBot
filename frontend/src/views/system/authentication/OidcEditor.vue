@@ -28,7 +28,7 @@ const state = reactive({
 const validateUrl = (rule, value, callback) => {
   const reg = new RegExp(/(http|https):\/\/([\w.]+\/?)\S*/)
   if (!reg.test(value)) {
-    callback(new Error(t('system.incorrect_please_re_enter')))
+    callback(new Error(t('authentication.incorrect_please_re_enter')))
   } else {
     callback()
   }

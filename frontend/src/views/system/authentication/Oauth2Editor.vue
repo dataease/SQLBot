@@ -76,7 +76,7 @@ const form_config_list = ref<any[]>([
 const validateUrl = (rule, value, callback) => {
   const reg = new RegExp(/(http|https):\/\/([\w.]+\/?)\S*/)
   if (!reg.test(value)) {
-    callback(new Error(t('system.incorrect_please_re_enter_de')))
+    callback(new Error(t('authentication.incorrect_please_re_enter')))
   } else {
     callback()
   }
