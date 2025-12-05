@@ -74,6 +74,16 @@ class CreateDatasource(BaseModel):
     tables: List[CoreTable] = []
     recommended_config: int = 1
 
+class RecommendedProblemResponse:
+    def __init__(self, datasource_id,recommended_config,questions):
+        self.datasource_id = datasource_id
+        self.recommended_config = recommended_config
+        self.questions = questions
+    datasource_id: int = None
+    recommended_config: int = None
+    questions: str = None
+
+
 class RecommendedProblemBase(BaseModel):
     datasource_id: int = None
     recommended_config: int = None

@@ -2,15 +2,18 @@
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { endsWith, startsWith } from 'lodash-es'
 import { chatApi } from '@/api/chat.ts'
+import { recommendedApi } from '@/api/recommendedApi.ts'
 
 const props = withDefaults(
   defineProps<{
     recordId?: number
     disabled?: boolean
+    datasource?: number
   }>(),
   {
     recordId: undefined,
     disabled: false,
+    datasource: undefined,
   }
 )
 
@@ -41,6 +44,16 @@ function clickQuestion(question: string): void {
 const stopFlag = ref(false)
 
 async function getRecommendQuestions(articles_number: number) {
+  recommendedApi.get_datasource_recommended_base(props.datasource).then((res) => {
+    if (res.recommended_config === 2) {
+      questions.value = res.questions
+    } else {
+      getRecommendQuestionsLLM(articles_number)
+    }
+  })
+}
+
+async function getRecommendQuestionsLLM(articles_number: number) {
   stopFlag.value = false
   loading.value = true
   try {

@@ -104,6 +104,7 @@ const props = withDefaults(
         :current-chat="currentChat"
         :record-id="recordId"
         :questions="questions"
+        :datasource="datasourceId"
         :disabled="disabled"
         :first-chat="firstChat"
         position="input"
