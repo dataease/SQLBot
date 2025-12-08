@@ -16,6 +16,7 @@ import { setSize } from '@/utils/utils'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import icon_fileExcel_colorful from '@/assets/datasource/icon_excel.png'
 import IconOpeDelete from '@/assets/svg/icon_delete.svg'
+import { useCache } from '@/utils/useCache'
 
 const props = withDefaults(
   defineProps<{
@@ -127,6 +128,10 @@ const close = () => {
   excelUploadSuccess.value = false
   saveLoading.value = false
 }
+
+const { wsCache } = useCache()
+const token = wsCache.get('user.token')
+const headers = ref<any>({ 'X-SQLBOT-TOKEN': `Bearer ${token}` })
 
 const initForm = (item: any, editTable: boolean = false) => {
   isEditTable.value = false
@@ -539,6 +544,7 @@ defineExpose({
               v-if="form.filename && !form.id"
               class="upload-user"
               accept=".xlsx,.xls,.csv"
+              :headers="headers"
               :action="getUploadURL"
               :before-upload="beforeUpload"
               :on-error="onError"
@@ -554,6 +560,7 @@ defineExpose({
               v-else-if="!form.id"
               class="upload-user"
               accept=".xlsx,.xls,.csv"
+              :headers="headers"
               :action="getUploadURL"
               :before-upload="beforeUpload"
               :on-success="onSuccess"
