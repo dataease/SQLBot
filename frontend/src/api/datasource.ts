@@ -17,7 +17,8 @@ export const datasourceApi = {
     request.post(`/datasource/execSql/${id}`, { sql: sql }),
   chooseTables: (id: number, data: any) => request.post(`/datasource/chooseTables/${id}`, data),
   tableList: (id: number) => request.post(`/datasource/tableList/${id}`),
-  fieldList: (id: number) => request.post(`/datasource/fieldList/${id}`),
+  fieldList: (id: number, data = { fieldName: '' }) =>
+    request.post(`/datasource/fieldList/${id}`, data),
   edit: (data: any) => request.post('/datasource/editLocalComment', data),
   previewData: (id: number, data: any) => request.post(`/datasource/previewData/${id}`, data),
   saveTable: (data: any) => request.post('/datasource/editTable', data),

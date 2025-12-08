@@ -244,13 +244,17 @@ const renderHeader = ({ column }: any) => {
   return column.label
 }
 
+const fieldNameSearch = () => {
+  btnSelectClick(btnSelect.value)
+}
+const fieldName = ref('')
 const btnSelectClick = (val: any) => {
   btnSelect.value = val
   loading.value = true
 
   if (val === 'd') {
     datasourceApi
-      .fieldList(currentTable.value.id)
+      .fieldList(currentTable.value.id, { fieldName: fieldName.value })
       .then((res) => {
         fieldList.value = res
         pageInfo.total = res.length
@@ -402,6 +406,15 @@ const btnSelectClick = (val: any) => {
             >
               {{ t('ds.preview') }}
             </el-button>
+          </div>
+          <div v-if="btnSelect === 'd'" class="field-name">
+            <el-input
+              :placeholder="t('dashboard.search')"
+              v-model="fieldName"
+              @blur="fieldNameSearch"
+              autocomplete="off"
+              clearable
+            />
           </div>
 
           <div
@@ -785,6 +798,14 @@ const btnSelectClick = (val: any) => {
       .table-content {
         padding: 16px 24px;
         height: calc(100% - 80px);
+        position: relative;
+
+        .field-name {
+          position: absolute;
+          right: 16px;
+          top: 16px;
+          width: 240px;
+        }
 
         .btn-select {
           height: 32px;
