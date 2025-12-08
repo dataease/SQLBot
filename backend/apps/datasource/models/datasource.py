@@ -35,6 +35,7 @@ class CoreTable(SQLModel, table=True):
     custom_comment: str = Field(sa_column=Column(Text))
     embedding: str = Field(sa_column=Column(Text, nullable=True))
 
+
 class DsRecommendedProblem(SQLModel, table=True):
     __tablename__ = "ds_recommended_problem"
     id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
@@ -82,6 +83,7 @@ class RecommendedProblemResponse:
     datasource_id: int = None
     recommended_config: int = None
     questions: str = None
+
 
 
 class RecommendedProblemBase(BaseModel):
@@ -164,3 +166,7 @@ class TableAndFields:
     schema: str
     table: CoreTable
     fields: List[CoreField]
+
+
+class FieldObj(BaseModel):
+    fieldName: str | None

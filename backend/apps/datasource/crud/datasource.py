@@ -269,11 +269,17 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
     ds = session.query(CoreDatasource).filter(CoreDatasource.id == id).first()
     # check_status(session, ds, True)
 
-    if data.fields is None or len(data.fields) == 0:
+    # ignore data's fields param, query fields from database
+    if not data.table.id:
+        return {"fields": [], "data": [], "sql": ''}
+
+    fields = session.query(CoreField).filter(CoreField.table_id == data.table.id).all()
+
+    if fields is None or len(fields) == 0:
         return {"fields": [], "data": [], "sql": ''}
 
     where = ''
-    f_list = [f for f in data.fields if f.checked]
+    f_list = [f for f in fields if f.checked]
     if is_normal_user(current_user):
         # column is checked, and, column permission for data.fields
         contain_rules = session.query(DsRules).all()

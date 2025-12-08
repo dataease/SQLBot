@@ -20,7 +20,7 @@ from ..crud.datasource import get_datasource_list, check_status, create_ds, upda
     check_status_by_id
 from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
-from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField
+from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj
 
 router = APIRouter(tags=["datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
@@ -164,8 +164,8 @@ async def table_list(session: SessionDep, id: int):
 
 
 @router.post("/fieldList/{id}")
-async def field_list(session: SessionDep, id: int):
-    return get_fields_by_table_id(session, id)
+async def field_list(session: SessionDep, id: int, field: FieldObj):
+    return get_fields_by_table_id(session, id, field)
 
 
 @router.post("/editLocalComment")
