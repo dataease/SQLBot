@@ -424,6 +424,7 @@ const btnSelectClick = (val: any) => {
           <div v-if="btnSelect === 'd'" class="field-name">
             <el-input
               v-model="fieldName"
+              style="width: 240px"
               :placeholder="t('dashboard.search')"
               autocomplete="off"
               clearable
@@ -827,7 +828,6 @@ const btnSelectClick = (val: any) => {
           position: absolute;
           right: 16px;
           top: 16px;
-          width: 360px;
           display: flex;
         }
 
