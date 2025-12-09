@@ -14,13 +14,15 @@
     "rows_of_data": "데이터 1,000행 제한",
     "third_party_platform_settings": "타사 플랫폼 설정",
     "by_third_party_platform": "타사 플랫폼에 의한 자동 사용자 생성",
-    "platform_user_organization": "타사 플랫폼 사용자 구성",
+    "platform_user_organization": "제3자 플랫폼 작업 공간",
     "platform_user_roles": "타사 플랫폼 사용자 역할",
     "excessive_data_volume": "1,000행 데이터 제한을 비활성화하면 과도한 데이터 양으로 인해 시스템 지연이 발생할 수 있습니다.",
     "prompt": "프롬프트",
     "disabling_successfully": "비활성화 완료",
     "closed_by_default": "질문 수 창에서 모델 사고 프로세스를 기본적으로 확장할지 또는 닫을지 여부를 제어합니다.",
-    "and_platform_integration": "범위에는 인증 설정 및 플랫폼 통합이 포함됩니다."
+    "and_platform_integration": "범위에는 인증 설정 및 플랫폼 통합이 포함됩니다.",
+    "login_settings": "로그인 설정",
+    "default_login": "기본 로그인 방식"
   },
   "prompt": {
     "default_password:": "기본 비밀번호:{msg}",

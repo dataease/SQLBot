@@ -95,6 +95,7 @@ export const routes = [
   },
   {
     path: '/set',
+    name: 'set',
     component: LayoutDsl,
     redirect: '/set/member',
     meta: { title: t('workspace.set'), iconActive: 'set', iconDeActive: 'noSet' },
@@ -145,6 +146,7 @@ export const routes = [
   },
   {
     path: '/system',
+    name: 'system',
     component: LayoutDsl,
     redirect: '/system/user',
     meta: { hidden: true },

@@ -1,23 +1,63 @@
 <script lang="ts" setup>
-import { ref, shallowRef } from 'vue'
+import { onMounted, provide, reactive, unref } from 'vue'
 import icon_info_outlined_1 from '@/assets/svg/icon_info_outlined_1.svg'
 import { useI18n } from 'vue-i18n'
-
+import PlatformParam from './xpack/PlatformParam.vue'
+import { request } from '@/utils/request'
+import { formatArg } from '@/utils/utils'
 const { t } = useI18n()
 
-const chatSetting = ref({
-  modelThinkingProcess: false,
-  rows_of_data: false,
+const state = reactive({
+  parameterForm: reactive<any>({
+    'chat.enable_model_thinking': false,
+    'chat.rows_of_data': false,
+  }),
 })
-
-const platform = ref({
-  organization: false,
-  modelThinkingProcess: false,
-  roles: [],
+provide('parameterForm', state.parameterForm)
+const loadData = () => {
+  request.get('/system/parameter').then((res: any) => {
+    if (res) {
+      res.forEach((item: any) => {
+        if (
+          item.pkey?.startsWith('chat') ||
+          item.pkey?.startsWith('login') ||
+          item.pkey?.startsWith('platform')
+        ) {
+          state.parameterForm[item.pkey] = formatArg(item.pval)
+        }
+      })
+      console.log(state.parameterForm)
+    }
+  })
+}
+const buildParam = () => {
+  const changedItemArray = Object.keys(state.parameterForm).map((key: string) => {
+    return {
+      pkey: key,
+      pval: Object.prototype.hasOwnProperty.call(state.parameterForm, 'key')
+        ? state.parameterForm[key].toString()
+        : state.parameterForm[key],
+    }
+  })
+  const formData = new FormData()
+  formData.append('data', JSON.stringify(unref(changedItemArray)))
+  return formData
+}
+const saveHandler = () => {
+  const param = buildParam()
+  request
+    .post('/system/parameter', param, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    .then(() => {
+      ElMessage.success(t('common.save_success'))
+    })
+}
+onMounted(() => {
+  loadData()
 })
-
-const organizations = shallowRef<any[]>([])
-const roles = shallowRef<any[]>([])
 </script>
 
 <template>
@@ -41,7 +81,7 @@ const roles = shallowRef<any[]>([])
             </el-tooltip>
           </div>
           <div class="value">
-            <el-switch v-model="chatSetting.modelThinkingProcess" />
+            <el-switch v-model="state.parameterForm['chat.enable_model_thinking']" />
           </div>
         </div>
 
@@ -59,77 +99,15 @@ const roles = shallowRef<any[]>([])
             </el-tooltip>
           </div>
           <div class="value">
-            <el-switch v-model="chatSetting.rows_of_data" />
+            <el-switch v-model="state.parameterForm['chat.rows_of_data']" />
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">
-          {{ t('parameter.third_party_platform_settings') }}
-        </div>
-        <div class="card-item" style="width: 100%">
-          <div class="label">
-            {{ t('parameter.by_third_party_platform') }}
-          </div>
-          <div class="value">
-            <el-switch v-model="platform.modelThinkingProcess" />
-          </div>
-        </div>
-        <div class="card-item">
-          <div class="label">
-            {{ t('parameter.platform_user_organization') }}
-            <span class="require"></span>
-            <el-tooltip
-              effect="dark"
-              :content="t('parameter.and_platform_integration')"
-              placement="top"
-            >
-              <el-icon size="16">
-                <icon_info_outlined_1></icon_info_outlined_1>
-              </el-icon>
-            </el-tooltip>
-          </div>
-          <div class="value">
-            <el-select filterable v-model="platform.organization">
-              <el-option
-                v-for="item in organizations"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </div>
-        </div>
-        <div class="card-item" style="margin-left: 16px">
-          <div class="label">
-            {{ t('parameter.platform_user_roles') }}
-            <span class="require"></span>
-            <el-tooltip
-              effect="dark"
-              :content="t('parameter.and_platform_integration')"
-              placement="top"
-            >
-              <el-icon size="16">
-                <icon_info_outlined_1></icon_info_outlined_1>
-              </el-icon>
-            </el-tooltip>
-          </div>
-          <div class="value">
-            <el-select multiple filterable v-model="platform.roles">
-              <el-option
-                v-for="item in roles"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </div>
-        </div>
-      </div>
+      <platform-param />
     </div>
     <div class="save" style="margin-top: 16px">
-      <el-button type="primary">{{ t('common.save') }}</el-button>
+      <el-button type="primary" @click="saveHandler">{{ t('common.save') }}</el-button>
     </div>
   </div>
 </template>

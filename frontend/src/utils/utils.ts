@@ -263,3 +263,22 @@ export const getSQLBotAddr = (portEnd?: boolean) => {
   }
   return addr.substring(0, addr.length - 1)
 }
+
+export const formatArg = (text: string) => {
+  if (!text) {
+    return false
+  }
+  const mappingArray = ['true', 'false', '1', '0']
+  const match = mappingArray.some((item: string) => {
+    return item === text.toLocaleLowerCase()
+  })
+  if (!match) {
+    return text
+  }
+  try {
+    return JSON.parse(text)
+  } catch (e: any) {
+    console.warn(e)
+    return text
+  }
+}

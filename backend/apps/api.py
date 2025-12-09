@@ -5,7 +5,7 @@ from apps.dashboard.api import dashboard_api
 from apps.data_training.api import data_training
 from apps.datasource.api import datasource, table_relation, recommended_problem
 from apps.mcp import mcp
-from apps.system.api import login, user, aimodel, workspace, assistant
+from apps.system.api import login, user, aimodel, workspace, assistant, parameter
 from apps.terminology.api import terminology
 from apps.settings.api import base
 
@@ -23,5 +23,6 @@ api_router.include_router(chat.router)
 api_router.include_router(dashboard_api.router)
 api_router.include_router(mcp.router)
 api_router.include_router(table_relation.router)
+api_router.include_router(parameter.router)
 
 api_router.include_router(recommended_problem.router)

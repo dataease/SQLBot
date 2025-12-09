@@ -14,13 +14,15 @@
     "rows_of_data": "限制 1000 行数据",
     "third_party_platform_settings": "第三方平台设置",
     "by_third_party_platform": "第三方自动创建用户",
-    "platform_user_organization": "第三方平台用户组织",
+    "platform_user_organization": "第三方平台工作空间",
     "platform_user_roles": "第三方平台用户角色",
     "excessive_data_volume": "关闭1000行的数据限制后，数据量过大，可能会造成系统卡顿",
     "prompt": "提示",
     "disabling_successfully": "关闭成功",
     "closed_by_default": "在问数窗口中，控制模型思考过程默认展开或者关闭",
-    "and_platform_integration": "作用域包括认证设置和平台对接"
+    "and_platform_integration": "作用域包括认证设置和平台对接",
+    "login_settings": "登录设置",
+    "default_login": "默认登录方式"
   },
   "prompt": {
     "default_password": "默认密码：{msg}",
