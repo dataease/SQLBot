@@ -17,7 +17,7 @@ from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.utils import SQLBotLogUtil
 from ..crud.datasource import get_datasource_list, check_status, create_ds, update_ds, delete_ds, getTables, getFields, \
     execSql, update_table_and_fields, getTablesByDs, chooseTables, preview, updateTable, updateField, get_ds, fieldEnum, \
-    check_status_by_id
+    check_status_by_id, sync_single_fields
 from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj
@@ -132,6 +132,11 @@ async def get_schema_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasour
 @router.post("/getFields/{id}/{table_name}")
 async def get_fields(session: SessionDep, id: int, table_name: str):
     return getFields(session, id, table_name)
+
+
+@router.post("/syncFields/{id}")
+async def sync_fields(session: SessionDep, id: int):
+    return sync_single_fields(session, id)
 
 
 from pydantic import BaseModel

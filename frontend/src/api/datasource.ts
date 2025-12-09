@@ -26,4 +26,5 @@ export const datasourceApi = {
   getDs: (id: number) => request.post(`/datasource/get/${id}`),
   cancelRequests: () => request.cancelRequests(),
   getSchema: (data: any) => request.post('/datasource/getSchemaByConf', data),
+  syncFields: (id: number) => request.post(`/datasource/syncFields/${id}`),
 }

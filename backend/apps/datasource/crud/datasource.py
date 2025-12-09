@@ -109,11 +109,13 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
     run_save_ds_embeddings([ds.id])
     return ds
 
-def update_ds_recommended_config(session: SessionDep,datasource_id: int, recommended_config:int):
+
+def update_ds_recommended_config(session: SessionDep, datasource_id: int, recommended_config: int):
     record = session.exec(select(CoreDatasource).where(CoreDatasource.id == datasource_id)).first()
     record.recommended_config = recommended_config
     session.add(record)
     session.commit()
+
 
 def delete_ds(session: SessionDep, id: int):
     term = session.exec(select(CoreDatasource).where(CoreDatasource.id == id)).first()
@@ -161,6 +163,19 @@ def getFieldsByDs(session: SessionDep, ds: CoreDatasource, table_name: str):
 def execSql(session: SessionDep, id: int, sql: str):
     ds = session.exec(select(CoreDatasource).where(CoreDatasource.id == id)).first()
     return exec_sql(ds, sql, True)
+
+
+def sync_single_fields(session: SessionDep, id: int):
+    table = session.query(CoreTable).filter(CoreTable.id == id).first()
+    ds = session.query(CoreDatasource).filter(CoreDatasource.id == table.ds_id).first()
+
+    # sync field
+    fields = getFieldsByDs(session, ds, table.table_name)
+    sync_fields(session, ds, table, fields)
+
+    # do table embedding
+    run_save_table_embeddings([table.id])
+    run_save_ds_embeddings([ds.id])
 
 
 def sync_table(session: SessionDep, ds: CoreDatasource, tables: List[CoreTable]):

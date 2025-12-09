@@ -335,7 +335,8 @@
       },
       "timeout": "쿼리 시간 초과(초)",
       "address": "주소"
-    }
+    },
+    "sync_fields": "동기화된 테이블 구조"
   },
   "datasource": {
     "recommended_repetitive_tips": "중복된 문제가 존재합니다",

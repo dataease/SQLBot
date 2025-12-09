@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 import ParamsForm from './ParamsForm.vue'
 import TableRelationship from '@/views/ds/TableRelationship.vue'
 import icon_mindnote_outlined from '@/assets/svg/icon_mindnote_outlined.svg'
+import { Refresh } from '@element-plus/icons-vue'
 interface Table {
   name: string
   host: string
@@ -223,6 +224,19 @@ const changeStatus = (row: any) => {
   })
 }
 
+const syncFields = () => {
+  loading.value = true
+  datasourceApi
+    .syncFields(currentTable.value.id)
+    .then(() => {
+      btnSelectClick('d')
+      loading.value = false
+    })
+    .catch(() => {
+      loading.value = false
+    })
+}
+
 const emits = defineEmits(['back', 'refresh'])
 const back = () => {
   emits('back')
@@ -316,13 +330,13 @@ const btnSelectClick = (val: any) => {
               :key="ele.table_name"
               :draggable="activeRelationship && !tableName.includes(ele.id)"
               class="model"
-              @dragstart="($event: any) => singleDragStartD($event, ele)"
-              @dragend="singleDragEnd"
               :class="[
                 currentTable.table_name === ele.table_name && 'isActive',
                 tableName.includes(ele.id) && activeRelationship && 'disabled-table',
               ]"
               :title="ele.table_name"
+              @dragstart="($event: any) => singleDragStartD($event, ele)"
+              @dragend="singleDragEnd"
               @click="clickTable(ele)"
             >
               <el-icon size="16">
@@ -349,7 +363,7 @@ const btnSelectClick = (val: any) => {
           </div>
         </div>
         <div class="table-relationship">
-          <div @click="handleRelationship" :class="activeRelationship && 'active'" class="btn">
+          <div :class="activeRelationship && 'active'" class="btn" @click="handleRelationship">
             <el-icon size="16">
               <icon_mindnote_outlined></icon_mindnote_outlined>
             </el-icon>
@@ -362,9 +376,9 @@ const btnSelectClick = (val: any) => {
         <div class="title">{{ t('training.table_relationship_management') }}</div>
         <div class="content">
           <TableRelationship
-            @getTableName="getTableName"
-            :dragging="isDrag"
             :id="info.id"
+            :dragging="isDrag"
+            @get-table-name="getTableName"
           ></TableRelationship>
         </div>
       </div>
@@ -409,12 +423,20 @@ const btnSelectClick = (val: any) => {
           </div>
           <div v-if="btnSelect === 'd'" class="field-name">
             <el-input
-              :placeholder="t('dashboard.search')"
               v-model="fieldName"
-              @blur="fieldNameSearch"
+              :placeholder="t('dashboard.search')"
               autocomplete="off"
               clearable
+              @blur="fieldNameSearch"
             />
+            <el-button
+              v-if="ds.type !== 'excel'"
+              :icon="Refresh"
+              style="margin-left: 12px"
+              @click="syncFields()"
+            >
+              {{ t('ds.sync_fields') }}
+            </el-button>
           </div>
 
           <div
@@ -804,7 +826,8 @@ const btnSelectClick = (val: any) => {
           position: absolute;
           right: 16px;
           top: 16px;
-          width: 240px;
+          width: 360px;
+          display: flex;
         }
 
         .btn-select {

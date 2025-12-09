@@ -336,7 +336,8 @@
       },
       "timeout": "查询超时(秒)",
       "address": "地址"
-    }
+    },
+    "sync_fields": "同步表结构"
   },
   "datasource": {
     "recommended_repetitive_tips": "存在重复问题",

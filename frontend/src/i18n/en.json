@@ -335,7 +335,8 @@
       },
       "timeout": "Timeout(second)",
       "address": "Address"
-    }
+    },
+    "sync_fields": "Sync Fields"
   },
   "datasource": {
     "recommended_repetitive_tips": "Duplicate questions exist",
