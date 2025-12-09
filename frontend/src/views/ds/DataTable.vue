@@ -518,6 +518,7 @@ const btnSelectClick = (val: any) => {
                   :key="index"
                   :prop="c"
                   :label="c"
+                  min-width="150"
                   :render-header="renderHeader"
                 />
               </el-table>
