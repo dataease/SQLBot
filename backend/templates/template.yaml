@@ -217,8 +217,8 @@ template:
               </background-infos>
               <user-question>使用饼图展示去年各个国家的GDP</user-question>
             </input>
-                {example_answer_2}
             <output>
+                {example_answer_2}
             </output>
           </example>
           <example>
@@ -230,8 +230,8 @@ template:
               </background-infos>
               <user-question>查询今年中国大陆的GDP</user-question>
             </input>
-                {example_answer_3}
             <output>
+                {example_answer_3}
             </output>
           </example>
         </chat-examples>
@@ -388,7 +388,7 @@ template:
       - 推测的问题不能与当前用户问题重复
       - 推测的问题必须与给出的表结构相关
       - 若有以往用户提问列表，则根据以往用户提问列表，推测用户最频繁提问的问题，加入到你生成的推测问题中
-      - 忽略“重新生成”想关的问题
+      - 忽略“重新生成”相关的问题
       - 如果用户没有提问且没有以往用户提问，则仅根据提供的表结构推测问题
       - 生成的推测问题使用JSON格式返回：
       ["推测问题1", "推测问题2", "推测问题3", "推测问题4"]
