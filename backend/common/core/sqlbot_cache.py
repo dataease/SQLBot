@@ -37,6 +37,8 @@ def custom_key_builder(
             
             # 支持属性路径格式
             parts = keyExpression.split('.')
+            if not bound_args.arguments.get(parts[0]):
+                return f"{base_key}{parts[0]}"
             value = bound_args.arguments[parts[0]]
             for part in parts[1:]:
                 value = getattr(value, part)

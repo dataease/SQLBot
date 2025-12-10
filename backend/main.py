@@ -51,6 +51,7 @@ async def lifespan(app: FastAPI):
     SQLBotLogUtil.info("✅ SQLBot 初始化完成")
     await sqlbot_xpack.core.clean_xpack_cache()
     await async_model_info()  # 异步加密已有模型的密钥和地址
+    await sqlbot_xpack.core.monitor_app(app)
     yield
     SQLBotLogUtil.info("SQLBot 应用关闭")
 
