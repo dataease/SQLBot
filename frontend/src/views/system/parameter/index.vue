@@ -30,6 +30,24 @@ const loadData = () => {
     }
   })
 }
+
+const beforeChange = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (!state.parameterForm['chat.rows_of_data']) {
+      return resolve(true)
+    }
+    ElMessageBox.confirm(t('parameter.excessive_data_volume'), t('parameter.prompt'), {
+      confirmButtonType: 'primary',
+      confirmButtonText: t('common.confirm2'),
+      cancelButtonText: t('common.cancel'),
+      customClass: 'confirm-no_icon confirm_no_icon_parameter',
+      autofocus: false,
+      callback: (action: any) => {
+        resolve(action && action === 'confirm')
+      },
+    })
+  })
+}
 const buildParam = () => {
   const changedItemArray = Object.keys(state.parameterForm).map((key: string) => {
     return {
@@ -99,7 +117,10 @@ onMounted(() => {
             </el-tooltip>
           </div>
           <div class="value">
-            <el-switch v-model="state.parameterForm['chat.rows_of_data']" />
+            <el-switch
+              v-model="state.parameterForm['chat.rows_of_data']"
+              :before-change="beforeChange"
+            />
           </div>
         </div>
       </div>
@@ -111,7 +132,18 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
+<style lang="less">
+.confirm_no_icon_parameter {
+  .ed-message-box__header {
+    margin-bottom: var(--ed-messagebox-padding-primary);
+  }
+  .ed-message-box__message > p {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+  }
+}
+</style>
 <style lang="less" scoped>
 .parameter {
   .title {
