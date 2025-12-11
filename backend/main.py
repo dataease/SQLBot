@@ -1,9 +1,12 @@
 import os
+from typing import Dict, Any
 
 import sqlbot_xpack
 from alembic.config import Config
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 from fastapi_mcp import FastApiMCP
@@ -12,14 +15,16 @@ from starlette.middleware.cors import CORSMiddleware
 
 from alembic import command
 from apps.api import api_router
-from common.utils.embedding_threads import fill_empty_table_and_ds_embeddings
+from apps.swagger.i18n import PLACEHOLDER_PREFIX, tags_metadata
+from apps.swagger.i18n import get_translation, DEFAULT_LANG
 from apps.system.crud.aimodel_manage import async_model_info
 from apps.system.crud.assistant import init_dynamic_cors
 from apps.system.middleware.auth import TokenMiddleware
 from common.core.config import settings
 from common.core.response_middleware import ResponseMiddleware, exception_handler
 from common.core.sqlbot_cache import init_sqlbot_cache
-from common.utils.embedding_threads import fill_empty_terminology_embeddings, fill_empty_data_training_embeddings
+from common.utils.embedding_threads import fill_empty_terminology_embeddings, fill_empty_data_training_embeddings, \
+    fill_empty_table_and_ds_embeddings
 from common.utils.utils import SQLBotLogUtil
 
 
@@ -65,8 +70,103 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None
 )
+
+# cache docs for different text
+_openapi_cache: Dict[str, Dict[str, Any]] = {}
+
+# replace placeholder
+def replace_placeholders_in_schema(schema: Dict[str, Any], trans: Dict[str, str]) -> None:
+    """
+    search OpenAPI schema，replace PLACEHOLDER_xxx to text。
+    """
+    if isinstance(schema, dict):
+        for key, value in schema.items():
+            if isinstance(value, str) and value.startswith(PLACEHOLDER_PREFIX):
+                placeholder_key = value[len(PLACEHOLDER_PREFIX):]
+                schema[key] = trans.get(placeholder_key, value)
+            else:
+                replace_placeholders_in_schema(value, trans)
+    elif isinstance(schema, list):
+        for item in schema:
+            replace_placeholders_in_schema(item, trans)
+
+
+
+# OpenAPI build
+def get_language_from_request(request: Request) -> str:
+    # get param from query ?lang=zh
+    lang = request.query_params.get("lang")
+    if lang in ["en", "zh"]:
+        return lang
+    # get lang from Accept-Language Header
+    accept_lang = request.headers.get("accept-language", "")
+    if "zh" in accept_lang.lower():
+        return "zh"
+    return DEFAULT_LANG
+
+
+def generate_openapi_for_lang(lang: str) -> Dict[str, Any]:
+    if lang in _openapi_cache:
+        return _openapi_cache[lang]
+
+    # tags metadata
+    trans = get_translation(lang)
+    localized_tags = []
+    for tag in tags_metadata:
+        desc = tag["description"]
+        if desc.startswith(PLACEHOLDER_PREFIX):
+            key = desc[len(PLACEHOLDER_PREFIX):]
+            desc = trans.get(key, desc)
+        localized_tags.append({
+            "name": tag["name"],
+            "description": desc
+        })
+
+    # 1. create OpenAPI
+    openapi_schema = get_openapi(
+        title="SQLBot API Document" if lang == "en" else "SQLBot API 文档",
+        version="1.0.0",
+        routes=app.routes,
+        tags=localized_tags
+    )
+
+    # openapi version
+    openapi_schema.setdefault("openapi", "3.1.0")
+
+    # 2. get trans for lang
+    trans = get_translation(lang)
+
+    # 3. replace placeholder
+    replace_placeholders_in_schema(openapi_schema, trans)
+
+    # 4. cache
+    _openapi_cache[lang] = openapi_schema
+    return openapi_schema
+
+
+
+# custom /openapi.json and /docs
+@app.get("/openapi.json", include_in_schema=False)
+async def custom_openapi(request: Request):
+    lang = get_language_from_request(request)
+    schema = generate_openapi_for_lang(lang)
+    return JSONResponse(schema)
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui(request: Request):
+    lang = get_language_from_request(request)
+    from fastapi.openapi.docs import get_swagger_ui_html
+    return get_swagger_ui_html(
+        openapi_url=f"/openapi.json?lang={lang}",
+        title="SQLBot API Docs",
+        swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+    )
+
 
 mcp_app = FastAPI()
 # mcp server, images path

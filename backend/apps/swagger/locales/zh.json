@@ -1,0 +1,7 @@
+{
+  "ds_api": "数据源接口",
+  "ds_list": "数据源列表",
+  "ds_list_description": "获取当前工作空间下所有数据源",
+  "ds_get": "获取数据源",
+  "ds_id": "数据源 ID"
+}

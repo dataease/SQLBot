@@ -1,0 +1,7 @@
+{
+  "ds_api": "Datasource API",
+  "ds_list": "Datasource list",
+  "ds_list_description": "Retrieve all data sources under the current workspace",
+  "ds_get": "Get Datasource",
+  "ds_id": "Datasource ID"
+}

@@ -8,10 +8,11 @@ from typing import List
 
 import orjson
 import pandas as pd
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Path
 
 from apps.db.db import get_schema
 from apps.db.engine import get_engine_conn
+from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.utils import SQLBotLogUtil
@@ -22,7 +23,7 @@ from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj
 
-router = APIRouter(tags=["datasource"], prefix="/datasource")
+router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
 
 
@@ -33,13 +34,14 @@ async def query_by_oid(session: SessionDep, user: CurrentUser, oid: int) -> List
     return get_datasource_list(session=session, user=user, oid=oid)
 
 
-@router.get("/list")
+@router.get("/list", response_model=List[CoreDatasource], summary=f"{PLACEHOLDER_PREFIX}ds_list",
+            description=f"{PLACEHOLDER_PREFIX}ds_list_description")
 async def datasource_list(session: SessionDep, user: CurrentUser):
     return get_datasource_list(session=session, user=user)
 
 
-@router.post("/get/{id}")
-async def get_datasource(session: SessionDep, id: int):
+@router.post("/get/{id}", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_get")
+async def get_datasource(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     return get_ds(session, id)
 
 
