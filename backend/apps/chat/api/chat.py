@@ -12,9 +12,10 @@ from sqlalchemy import and_, select
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
     format_json_data, format_json_list_data, get_chart_config, list_recent_questions
-from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj
+from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand
 from apps.chat.task.llm import LLMService
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
+from common.utils.command_utils import parse_quick_command
 from common.utils.data_format import DataFormat
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
@@ -141,20 +142,99 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, da
     return list_recent_questions(session=session, current_user=current_user, datasource_id=datasource_id)
 
 
+def find_base_question(record_id: int, session: SessionDep):
+    stmt = select(ChatRecord.question, ChatRecord.regenerate_record_id).where(
+        and_(ChatRecord.id == record_id))
+    _record = session.execute(stmt).fetchone()
+    if not _record:
+        raise Exception(f'Cannot find base chat record')
+    rec_question, rec_regenerate_record_id = _record
+    if rec_regenerate_record_id:
+        return find_base_question(rec_regenerate_record_id, session)
+    else:
+        return rec_question
+
+
 @router.post("/question")
+async def question_answer(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
+                          current_assistant: CurrentAssistant):
+    try:
+        command, text_before_command, record_id, warning_info = parse_quick_command(request_question.question)
+        if command:
+            # todo 暂不支持分析和预测，需要改造前端
+            if command == QuickCommand.ANALYSIS or command == QuickCommand.PREDICT_DATA:
+                raise Exception(f'Command: {command.value} temporary not supported')
+
+            if record_id is not None:
+                # 排除analysis和predict
+                stmt = select(ChatRecord.id, ChatRecord.chat_id, ChatRecord.analysis_record_id,
+                              ChatRecord.predict_record_id, ChatRecord.regenerate_record_id,
+                              ChatRecord.first_chat).where(
+                    and_(ChatRecord.id == record_id))
+                _record = session.execute(stmt).fetchone()
+                if not _record:
+                    raise Exception(f'Record id: {record_id} does not exist')
+
+                rec_id, rec_chat_id, rec_analysis_record_id, rec_predict_record_id, rec_regenerate_record_id, rec_first_chat = _record
+
+                if rec_chat_id != request_question.chat_id:
+                    raise Exception(f'Record id: {record_id} does not belong to this chat')
+                if rec_first_chat:
+                    raise Exception(f'Record id: {record_id} does not support this operation')
+
+                if command == QuickCommand.REGENERATE:
+                    if rec_analysis_record_id:
+                        raise Exception('Analysis record does not support this operation')
+                    if rec_predict_record_id:
+                        raise Exception('Predict data record does not support this operation')
+
+            else:  # get last record id
+                stmt = select(ChatRecord.id, ChatRecord.chat_id, ChatRecord.regenerate_record_id).where(
+                    and_(ChatRecord.chat_id == request_question.chat_id,
+                         ChatRecord.first_chat == False,
+                         ChatRecord.analysis_record_id.is_(None),
+                         ChatRecord.predict_record_id.is_(None))).order_by(
+                    ChatRecord.create_time.desc()).limit(1)
+                _record = session.execute(stmt).fetchone()
+
+                if not _record:
+                    raise Exception(f'You have not ask any question')
+
+                rec_id, rec_chat_id, rec_regenerate_record_id = _record
+
+            # 没有指定的，就查询上一个
+            if not rec_regenerate_record_id:
+                rec_regenerate_record_id = rec_id
+
+            # 针对已经是重新生成的提问，需要找到原来的提问是什么
+            base_question_text = find_base_question(rec_regenerate_record_id, session)
+            text_before_command = text_before_command + ("\n" if text_before_command else "") + base_question_text
+
+            if command == QuickCommand.REGENERATE:
+                request_question.question = text_before_command
+                request_question.regenerate_record_id = rec_id
+                return await stream_sql(session, current_user, request_question, current_assistant)
+
+            elif command == QuickCommand.ANALYSIS:
+                return await analysis_or_predict(session, current_user, rec_id, 'analysis', current_assistant)
+
+            elif command == QuickCommand.PREDICT_DATA:
+                return await analysis_or_predict(session, current_user, rec_id, 'predict', current_assistant)
+            else:
+                raise Exception(f'Unknown command: {command.value}')
+        else:
+            return await stream_sql(session, current_user, request_question, current_assistant)
+    except Exception as e:
+        traceback.print_exc()
+
+        def _err(_e: Exception):
+            yield 'data:' + orjson.dumps({'content': str(_e), 'type': 'error'}).decode() + '\n\n'
+
+        return StreamingResponse(_err(e), media_type="text/event-stream")
+
+
 async def stream_sql(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
                      current_assistant: CurrentAssistant):
-    """Stream SQL analysis results
-    
-    Args:
-        session: Database session
-        current_user: CurrentUser
-        request_question: User question model
-        
-    Returns:
-        Streaming response with analysis results
-    """
-
     try:
         llm_service = await LLMService.create(session, current_user, request_question, current_assistant,
                                               embedding=True)
@@ -172,6 +252,12 @@ async def stream_sql(session: SessionDep, current_user: CurrentUser, request_que
 
 
 @router.post("/record/{chat_record_id}/{action_type}")
+async def analysis_or_predict_question(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
+                                       action_type: str,
+                                       current_assistant: CurrentAssistant):
+    return await analysis_or_predict(session, current_user, chat_record_id, action_type, current_assistant)
+
+
 async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, chat_record_id: int, action_type: str,
                               current_assistant: CurrentAssistant):
     try:
