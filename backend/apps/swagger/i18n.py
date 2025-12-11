@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Dict
 
+i18n_list = ["en", "zh"]
+
 # placeholder prefix（trans key prefix）
 PLACEHOLDER_PREFIX = "PLACEHOLDER_"
 

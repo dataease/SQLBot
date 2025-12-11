@@ -15,7 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from alembic import command
 from apps.api import api_router
-from apps.swagger.i18n import PLACEHOLDER_PREFIX, tags_metadata
+from apps.swagger.i18n import PLACEHOLDER_PREFIX, tags_metadata, i18n_list
 from apps.swagger.i18n import get_translation, DEFAULT_LANG
 from apps.system.crud.aimodel_manage import async_model_info
 from apps.system.crud.assistant import init_dynamic_cors
@@ -100,7 +100,7 @@ def replace_placeholders_in_schema(schema: Dict[str, Any], trans: Dict[str, str]
 def get_language_from_request(request: Request) -> str:
     # get param from query ?lang=zh
     lang = request.query_params.get("lang")
-    if lang in ["en", "zh"]:
+    if lang in i18n_list:
         return lang
     # get lang from Accept-Language Header
     accept_lang = request.headers.get("accept-language", "")
