@@ -12,7 +12,8 @@
     "account_pwd_error": "Incorrect account or password!",
     "no_associated_ws": "No associated workspace, {msg}",
     "user_disable": "Account is disabled, {msg}",
-    "origin_error": "Invalid login method"
+    "origin_error": "Invalid login method",
+    "prohibit_auto_create": "Automatically creating users is prohibited. Please synchronize users first"
   },
   "i18n_user": {
     "account": "Account",
