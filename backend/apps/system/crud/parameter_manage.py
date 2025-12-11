@@ -9,6 +9,10 @@ async def get_parameter_args(session: SessionDep) -> list[SysArgModel]:
     group_args = await get_group_args(session=session)
     return [x for x in group_args if not x.pkey.startswith('appearance.')]
 
+async def get_groups(session: SessionDep, flag: str) -> list[SysArgModel]:
+    group_args = await get_group_args(session=session, flag=flag)
+    return group_args
+
 async def save_parameter_args(session: SessionDep, request: Request):
     allow_file_mapping = {
         """ "test_logo": { "types": [".jpg", ".jpeg", ".png", ".svg"], "size": 5 * 1024 * 1024 } """

@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import QrcodeLdap from './QrcodeLdap.vue'
 import LdapLoginForm from './LdapLoginForm.vue'
 /* import Oidc from './Oidc.vue'
@@ -77,14 +77,18 @@ defineProps<{
   loading: boolean
 }>()
 const emits = defineEmits(['switchTab', 'autoCallback', 'update:loading'])
-const updateLoading = (show: boolean) => {
-  emits('update:loading', show)
+const updateLoading = (show: boolean, time: number = 1000) => {
+  setTimeout(() => {
+    emits('update:loading', show)
+  }, time)
 }
 const { t } = useI18n()
 interface Categoryparam {
   category: string
   proxy?: string
 }
+
+const adminLogin = computed(() => router.currentRoute?.value?.name === 'admin-login')
 const loginDialogVisible = ref(false)
 const dialogTitle = ref('')
 const dialogInterval = ref<any>(null)
@@ -102,7 +106,7 @@ const userStore = useUserStore()
 const qrStatus = ref(false)
 const loginCategory = ref({} as LoginCategory)
 const anyEnable = ref(false)
-// const qrcodeLdapHandler = ref()
+const qrcodeLdapHandler = ref()
 const oauth2Handler = ref()
 const saml2Handler = ref()
 /* const state = reactive({
@@ -232,21 +236,21 @@ const toMfa = (mfa) => {
     document.getElementsByClassName('preheat-container')[0].setAttribute('style', 'display: none;')
   }
 } */
-/* const ssoLogin = (category) => {
+const ssoLogin = (category: any) => {
   const array = [
-    { category: 'ldap', proxy: '' },
-    { category: 'oidc', proxy: '/oidcbi/#' },
     { category: 'cas', proxy: '/casbi/#' },
+    { category: 'oidc', proxy: '/oidcbi/#' },
+    { category: 'ldap', proxy: '' },
     { category: 'oauth2', proxy: '/#' },
     { category: 'saml2', proxy: '/#' },
   ]
   if (category) {
-    if (category === 1) {
+    if (category === 3) {
       qrcodeLdapHandler.value?.setActive('ldap')
     }
     switcherCategory(array[category - 1])
   }
-} */
+}
 
 const switcherCategory = async (param: Categoryparam) => {
   const { category, proxy } = param
@@ -540,47 +544,41 @@ const callBackType = () => {
   return getQueryString('state')
 }
 
-/* const auto2Platform = async () => {
-  const resultParam = {
-    preheat: true,
-    loadingText: '加载中...',
-    activeName: 'simple',
+const auto2Platform = async () => {
+  if (adminLogin.value) {
+    updateLoading(false, 100)
+    return
   }
-  if (!checkPlatform()) {
-    const res = await loginCategoryApi()
-    const adminLogin = router.currentRoute?.value?.name === 'admin-login'
-    if (adminLogin && (!res.data || res.data === 1)) {
-      emits('autoCallback', resultParam)
-      router.push('/401')
-      return
+  const resData = await request.get('/system/parameter/login')
+  let res = 0
+  const resObj = {} as any
+  resData.forEach((item: any) => {
+    resObj[item.pkey] = item.pval
+  })
+  res = parseInt(resObj['login.default_login'] || 0)
+
+  if (res && !adminLogin.value) {
+    if (res === 3) {
+      qrStatusChange('ldap')
+      updateLoading(false)
     }
-    if (res.data && !adminLogin) {
-      if (res.data === 1) {
-        resultParam.activeName = 'ldap'
-        resultParam.preheat = false
-      } else {
-        resultParam.loadingText = '加载中...'
-        document.getElementsByClassName('ed-loading-text')?.length &&
-          (document.getElementsByClassName('ed-loading-text')[0]['innerText'] =
-            resultParam.loadingText)
-      }
-      nextTick(() => {
-        ssoLogin(res.data)
-      })
-    } else {
-      resultParam.preheat = false
-    }
-  } else if (getQueryString('state')?.includes('fit2clouddeoauth2')) {
-    resultParam.preheat = true
+    nextTick(() => {
+      ssoLogin(res)
+    })
+  } else {
+    updateLoading(false)
   }
-  emits('autoCallback', resultParam)
-} */
+}
 
 onMounted(() => {
+  if (adminLogin.value) {
+    updateLoading(false, 100)
+    return
+  }
   // eslint-disable-next-line no-undef
   const obj = LicenseGenerator.getLicense()
   if (obj?.status !== 'valid') {
-    updateLoading(false)
+    updateLoading(false, 100)
     return
   }
   wsCache.delete('de-platform-client')
@@ -594,7 +592,7 @@ onMounted(() => {
     } else if (state?.includes('oidc')) {
       oidcLogin()
     } else {
-      updateLoading(false)
+      auto2Platform()
     }
     /*  else if (window.location.pathname.includes('/oidcbi/')) {
       platformLogin(2)

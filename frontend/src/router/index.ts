@@ -232,6 +232,11 @@ export const routes = [
     component: assistantTest,
   },
   {
+    path: '/admin-login',
+    name: 'admin-login',
+    component: login,
+  },
+  {
     path: '/401',
     name: '401',
     hidden: true,

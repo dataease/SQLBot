@@ -8,7 +8,7 @@ import type { Router } from 'vue-router'
 const appearanceStore = useAppearanceStoreWithOut()
 const userStore = useUserStore()
 const { wsCache } = useCache()
-const whiteList = ['/login']
+const whiteList = ['/login', '/admin-login']
 const assistantWhiteList = ['/assistant', '/embeddedPage', '/401']
 export const watchRouter = (router: Router) => {
   router.beforeEach(async (to: any, from: any, next: any) => {
@@ -40,7 +40,7 @@ export const watchRouter = (router: Router) => {
       next('/chat')
       return
     }
-    if (to.path === '/login') {
+    if (to.path === '/login' || to.path === '/admin-login') {
       console.info(from)
       next('/chat')
     } else {

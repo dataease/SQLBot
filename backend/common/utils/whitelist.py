@@ -36,6 +36,7 @@ wlist = [
     "/system/authentication/platform/status",
     "/system/authentication/login/*",
     "/system/authentication/sso/*",
+    "/system/parameter/login"
 ]
 
 class WhitelistChecker:

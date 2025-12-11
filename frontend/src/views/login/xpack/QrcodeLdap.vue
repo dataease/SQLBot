@@ -139,6 +139,9 @@ const setActive = (active?: string) => {
   }
   validComponentList.value[index] = componentMap.value[activeComponent.value]
   activeComponent.value = item.key
+  if (active === 'ldap') {
+    hiddenDefaultTabs()
+  }
 }
 defineExpose({
   setActive,

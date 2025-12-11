@@ -3,10 +3,14 @@ from fastapi import APIRouter, Request
 from sqlbot_xpack.config.model import SysArgModel
 
 
-from apps.system.crud.parameter_manage import get_parameter_args, save_parameter_args
+from apps.system.crud.parameter_manage import get_groups, get_parameter_args, save_parameter_args
 from common.core.deps import SessionDep
 
 router = APIRouter(tags=["system/parameter"], prefix="/system/parameter")
+
+@router.get("/login")
+async def get_login_args(session: SessionDep) -> list[SysArgModel]:
+    return await get_groups(session, "login")
 
 @router.get("")
 async def get_args(session: SessionDep) -> list[SysArgModel]:
