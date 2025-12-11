@@ -75,15 +75,16 @@ class CreateDatasource(BaseModel):
     tables: List[CoreTable] = []
     recommended_config: int = 1
 
+
 class RecommendedProblemResponse:
-    def __init__(self, datasource_id,recommended_config,questions):
+    def __init__(self, datasource_id, recommended_config, questions):
         self.datasource_id = datasource_id
         self.recommended_config = recommended_config
         self.questions = questions
+
     datasource_id: int = None
     recommended_config: int = None
     questions: str = None
-
 
 
 class RecommendedProblemBase(BaseModel):
@@ -146,12 +147,23 @@ class TableSchema:
     tableComment: str
 
 
+class TableSchemaResponse(BaseModel):
+    tableName: str = None
+    tableComment: str = None
+
+
 class ColumnSchema:
     def __init__(self, attr1, attr2, attr3):
         self.fieldName = attr1
         self.fieldType = attr2
         self.fieldComment = attr3 if attr3 is None or isinstance(attr3, str) else attr3.decode("utf-8")
 
+    fieldName: str
+    fieldType: str
+    fieldComment: str
+
+
+class ColumnSchemaResponse(BaseModel):
     fieldName: str
     fieldType: str
     fieldComment: str
@@ -170,3 +182,8 @@ class TableAndFields:
 
 class FieldObj(BaseModel):
     fieldName: str | None
+
+class PreviewResponse(BaseModel):
+    fields:List = []
+    data:List = []
+    sql:str = ''
