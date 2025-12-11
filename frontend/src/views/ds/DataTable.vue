@@ -826,7 +826,7 @@ const btnSelectClick = (val: any) => {
 
         .field-name {
           position: absolute;
-          right: 16px;
+          right: 24px;
           top: 16px;
           display: flex;
         }
