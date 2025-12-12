@@ -103,11 +103,11 @@ class UserInfoDTO(UserEditor):
 
 
 class AssistantBase(BaseModel):
-    name: str
-    domain: str
-    type: int = 0  # 0普通小助手 1高级 4页面嵌入
-    configuration: Optional[str] = None
-    description: Optional[str] = None
+    name: str = Field(description=f"{PLACEHOLDER_PREFIX}model_name")
+    domain: str = Field(description=f"{PLACEHOLDER_PREFIX}assistant_domain")
+    type: int = Field(default=0, description=f"{PLACEHOLDER_PREFIX}assistant_type")  # 0普通小助手 1高级 4页面嵌入
+    configuration: Optional[str] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}assistant_configuration")
+    description: Optional[str] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}assistant_description")
 
 
 class AssistantDTO(AssistantBase, BaseCreatorDTO):

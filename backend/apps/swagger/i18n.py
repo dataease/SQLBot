@@ -54,6 +54,14 @@ tags_metadata = [
         "name": "system_ws",
         "description": f"{PLACEHOLDER_PREFIX}system_ws_api"
     },
+    {
+        "name": "system_model",
+        "description": f"{PLACEHOLDER_PREFIX}system_model_api"
+    },
+    {
+        "name": "system_assistant",
+        "description": f"{PLACEHOLDER_PREFIX}system_assistant_api"
+    },
     {   "name": "Table Relation",
         "description": f"{PLACEHOLDER_PREFIX}tr_api"
     },
