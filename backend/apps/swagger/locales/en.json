@@ -67,7 +67,7 @@
   "ws_query_api": "Get Workspace Details",
   "ws_del_api": "Delete Workspace",
 
-  "weight": "Weight (1: Admin, 0: Regular User)"
+  "weight": "Weight (1: Admin, 0: Regular User)",
   
   "per_api": "Data Permission",
   "per_save": "Save Permission",
