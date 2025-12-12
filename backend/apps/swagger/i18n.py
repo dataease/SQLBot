@@ -53,8 +53,8 @@ tags_metadata = [
     {
         "name": "system_ws",
         "description": f"{PLACEHOLDER_PREFIX}system_ws_api"
-    }
-        "name": "Table Relation",
+    },
+    {   "name": "Table Relation",
         "description": f"{PLACEHOLDER_PREFIX}tr_api"
     },
     {
