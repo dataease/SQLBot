@@ -13,6 +13,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException, Path
 from apps.db.db import get_schema
 from apps.db.engine import get_engine_conn
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
+from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.utils import SQLBotLogUtil
@@ -78,6 +79,7 @@ async def choose_tables(session: SessionDep, trans: Trans, id: int, tables: List
 
 
 @router.post("/update", response_model=CoreDatasource)
+@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="ds.id"))
 async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
     def inner():
         return update_ds(session, trans, user, ds)
@@ -86,11 +88,13 @@ async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreD
 
 
 @router.post("/delete/{id}", response_model=CoreDatasource)
+@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="id"))
 async def delete(session: SessionDep, id: int):
     return delete_ds(session, id)
 
 
 @router.post("/getTables/{id}")
+@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="id"))
 async def get_tables(session: SessionDep, id: int):
     return getTables(session, id)
 

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query
 from sqlmodel import func, select, update
 
 from apps.system.models.system_model import AiModelDetail
+from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import SessionDep, Trans
 from common.utils.crypto import sqlbot_decrypt
 from common.utils.time import get_timestamp
@@ -51,6 +52,7 @@ async def check_default(session: SessionDep, trans: Trans):
         raise Exception(trans('i18n_llm.miss_default'))
     
 @router.put("/default/{id}")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def set_default(session: SessionDep, id: int):
     db_model = session.get(AiModelDetail, id)
     if not db_model:
@@ -70,6 +72,7 @@ async def set_default(session: SessionDep, id: int):
         raise e
 
 @router.get("", response_model=list[AiModelGridItem])
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def query(
         session: SessionDep,
         keyword: Union[str, None] = Query(default=None, max_length=255)
@@ -113,6 +116,7 @@ async def get_model_by_id(
     return AiModelEditor(**data)
 
 @router.post("")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def add_model(
         session: SessionDep,
         creator: AiModelCreator
@@ -129,6 +133,7 @@ async def add_model(
     session.commit()
 
 @router.put("")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def update_model(
         session: SessionDep,
         editor: AiModelEditor
@@ -144,6 +149,7 @@ async def update_model(
     session.commit()
 
 @router.delete("/{id}")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def delete_model(
         session: SessionDep,
         trans: Trans,

@@ -6,6 +6,7 @@ from apps.system.crud.user import check_account_exists, check_email_exists, chec
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.models.user import UserModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
+from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from apps.system.schemas.system_schema import PwdEditor, UserCreator, UserEditor, UserGrid, UserLanguage, UserStatus, UserWs
 from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
@@ -20,11 +21,14 @@ router = APIRouter(tags=["user"], prefix="/user")
 async def user_info(current_user: CurrentUser):
     return current_user
 
+ 
 @router.get("/defaultPwd")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 async def default_pwd() -> str:
     return settings.DEFAULT_PWD
 
 @router.get("/pager/{pageNum}/{pageSize}", response_model=PaginatedResponse[UserGrid])
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 async def pager(
     session: SessionDep,
     pageNum: int,
@@ -123,6 +127,7 @@ async def ws_change(session: SessionDep, current_user: CurrentUser, trans:Trans,
     session.commit()
 
 @router.get("/{id}", response_model=UserEditor)
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 async def query(session: SessionDep, trans: Trans, id: int) -> UserEditor:
     db_user: UserModel = get_db_user(session = session, user_id = id)
     u_ws_options = await user_ws_options(session, id, trans)
@@ -131,7 +136,9 @@ async def query(session: SessionDep, trans: Trans, id: int) -> UserEditor:
         result.oid_list = [item.id for item in u_ws_options]
     return result
 
+
 @router.post("")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 async def create(session: SessionDep, creator: UserCreator, trans: Trans):
     if check_account_exists(session=session, account=creator.account):
         raise Exception(trans('i18n_exist', msg = f"{trans('i18n_user.account')} [{creator.account}]"))
@@ -158,8 +165,10 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
         user_model.oid = creator.oid_list[0]   
     session.add(user_model)
     session.commit()
+
     
 @router.put("")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="editor.id")
 async def update(session: SessionDep, editor: UserEditor, trans: Trans):
     user_model: UserModel = get_db_user(session = session, user_id = editor.id)
@@ -193,12 +202,14 @@ async def update(session: SessionDep, editor: UserEditor, trans: Trans):
         user_model.oid = origin_oid if origin_oid in editor.oid_list else  editor.oid_list[0]
     session.add(user_model)
     session.commit()
-    
+
 @router.delete("/{id}")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def delete(session: SessionDep, id: int):
     await single_delete(session, id)
 
-@router.delete("")    
+@router.delete("")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 async def batch_del(session: SessionDep, id_list: list[int]):
     for id in id_list:
         await single_delete(session, id)
@@ -213,8 +224,10 @@ async def langChange(session: SessionDep, current_user: CurrentUser, trans: Tran
     db_user.language = lang
     session.add(db_user)
     session.commit()
-    
+
+   
 @router.patch("/pwd/{id}")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="id")
 async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans, id: int):
     if not current_user.isAdmin:
@@ -236,8 +249,10 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
     db_user.password = md5pwd(new_pwd)
     session.add(db_user)
     session.commit()
+
     
 @router.patch("/status")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="statusDto.id")
 async def langChange(session: SessionDep, current_user: CurrentUser, trans: Trans, statusDto: UserStatus):
     if not current_user.isAdmin:
