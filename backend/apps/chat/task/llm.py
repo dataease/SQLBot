@@ -167,6 +167,11 @@ class LLMService:
     def init_messages(self):
         last_sql_messages: List[dict[str, Any]] = self.generate_sql_logs[-1].messages if len(
             self.generate_sql_logs) > 0 else []
+        if self.chat_question.regenerate_record_id:
+            # filter record before regenerate_record_id
+            _temp_log = next(
+                filter(lambda obj: obj.pid == self.chat_question.regenerate_record_id, self.generate_sql_logs), None)
+            last_sql_messages: List[dict[str, Any]] = _temp_log.messages if _temp_log else []
 
         # todo maybe can configure
         count_limit = 0 - base_message_count_limit
@@ -947,6 +952,11 @@ class LLMService:
             # return id
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'id', 'id': self.get_record().id}).decode() + '\n\n'
+                if self.get_record().regenerate_record_id:
+                    yield 'data:' + orjson.dumps({'type': 'regenerate_record_id',
+                                                  'regenerate_record_id': self.get_record().regenerate_record_id}).decode() + '\n\n'
+                yield 'data:' + orjson.dumps(
+                    {'type': 'question', 'question': self.get_record().question}).decode() + '\n\n'
             if not stream:
                 json_result['record_id'] = self.get_record().id
 

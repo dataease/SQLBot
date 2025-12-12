@@ -30,16 +30,24 @@ export class Pie extends BaseG2Chart {
         y: y[0].value,
         color: series[0].value,
       },
+      scale: {
+        x: {
+          nice: true,
+        },
+        y: {
+          type: 'linear',
+        },
+      },
       legend: {
         color: { position: 'bottom', layout: { justifyContent: 'center' } },
       },
+      animate: { enter: { type: 'waveIn' } },
       labels: [
         {
-          position: 'outside',
+          position: 'spider',
           text: (data: any) => {
             return `${data[series[0].value]}: ${data[y[0].value]}${_data.isPercent ? '%' : ''}`
           },
-          transform: [{ type: 'exceedAdjust' }, { type: 'overlapHide' }],
         },
       ],
       tooltip: {

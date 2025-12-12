@@ -48,6 +48,12 @@ class ChatFinishStep(Enum):
     GENERATE_CHART = 3
 
 
+class QuickCommand(Enum):
+    REGENERATE = '/regenerate'
+    ANALYSIS = '/analysis'
+    PREDICT_DATA = '/predict'
+
+
 #     TODO choose table / check connection / generate description
 
 class ChatLog(SQLModel, table=True):
@@ -78,7 +84,7 @@ class Chat(SQLModel, table=True):
     datasource: int = Field(sa_column=Column(BigInteger, nullable=True))
     engine_type: str = Field(max_length=64)
     origin: Optional[int] = Field(
-        sa_column=Column(Integer, nullable=False, default=0)) # 0: default, 1: mcp, 2: assistant
+        sa_column=Column(Integer, nullable=False, default=0))  # 0: default, 1: mcp, 2: assistant
     brief_generate: bool = Field(default=False)
 
 
@@ -110,6 +116,7 @@ class ChatRecord(SQLModel, table=True):
     error: str = Field(sa_column=Column(Text, nullable=True))
     analysis_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
     predict_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
+    regenerate_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
 
 
 class ChatRecordResult(BaseModel):
@@ -134,6 +141,7 @@ class ChatRecordResult(BaseModel):
     error: Optional[str] = None
     analysis_record_id: Optional[int] = None
     predict_record_id: Optional[int] = None
+    regenerate_record_id: Optional[int] = None
     sql_reasoning_content: Optional[str] = None
     chart_reasoning_content: Optional[str] = None
     analysis_reasoning_content: Optional[str] = None
@@ -184,6 +192,7 @@ class AiModelQuestion(BaseModel):
     data_training: str = ""
     custom_prompt: str = ""
     error_msg: str = ""
+    regenerate_record_id: Optional[int] = None
 
     def sql_sys_question(self, db_type: Union[str, DB], enable_query_limit: bool = True):
         _sql_template = get_sql_example_template(db_type)
@@ -213,7 +222,10 @@ class AiModelQuestion(BaseModel):
                                                example_answer_3=_example_answer_3)
 
     def sql_user_question(self, current_time: str, change_title: bool):
-        return get_sql_template()['user'].format(engine=self.engine, schema=self.db_schema, question=self.question,
+        _question = self.question
+        if self.regenerate_record_id:
+            _question = get_sql_template()['regenerate_hint'] + self.question
+        return get_sql_template()['user'].format(engine=self.engine, schema=self.db_schema, question=_question,
                                                  rule=self.rule, current_time=current_time, error_msg=self.error_msg,
                                                  change_title=change_title)
 

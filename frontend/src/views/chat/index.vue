@@ -211,7 +211,11 @@
                 <!--                  @stop="onChatStop"-->
                 <!--                  @loading-over="loadingOver"-->
                 <!--                />-->
-                <UserChat v-if="message.role === 'user'" :message="message" />
+                <UserChat
+                  v-if="message.role === 'user'"
+                  :message="message"
+                  :all-messages="computedMessages"
+                />
                 <template v-if="message.role === 'assistant' && !message.first_chat">
                   <ChartAnswer
                     v-if="
@@ -397,7 +401,7 @@
             type="textarea"
             :autosize="{ minRows: 1, maxRows: 8.583 }"
             :placeholder="t('qa.question_placeholder')"
-            @keydown.enter.exact.prevent="($event: any) => sendMessage($event)"
+            @keydown.enter.exact.prevent="($event: any) => sendMessage(undefined, $event)"
             @keydown.ctrl.enter.exact.prevent="handleCtrlEnter"
           />
 
@@ -764,7 +768,10 @@ const assistantPrepareSend = async () => {
     }
   }
 }
-const sendMessage = async ($event: any = {}) => {
+const sendMessage = async (
+  regenerate_record_id: number | undefined = undefined,
+  $event: any = {}
+) => {
   if ($event?.isComposing) {
     return
   }
@@ -783,6 +790,7 @@ const sendMessage = async ($event: any = {}) => {
   currentRecord.create_time = new Date()
   currentRecord.chat_id = currentChatId.value
   currentRecord.question = inputMessage.value
+  currentRecord.regenerate_record_id = regenerate_record_id
   currentRecord.sql_answer = ''
   currentRecord.sql = ''
   currentRecord.chart_answer = ''
@@ -829,9 +837,21 @@ function onAnalysisAnswerError() {
 }
 
 function askAgain(message: ChatMessage) {
-  inputMessage.value = message.record?.question ?? ''
+  if (message.record?.question?.trim() === '') {
+    return
+  }
+  // regenerate
+  inputMessage.value = '/regenerate'
+  let regenerate_record_id = message.record?.id
+  if (message.record?.id == undefined && message.record?.regenerate_record_id) {
+    //只有当前对话内，上一次执行失败的重试会进这里
+    regenerate_record_id = message.record?.regenerate_record_id
+  }
+  if (regenerate_record_id) {
+    inputMessage.value = inputMessage.value + ' ' + regenerate_record_id
+  }
   nextTick(() => {
-    sendMessage()
+    sendMessage(regenerate_record_id)
   })
 }
 

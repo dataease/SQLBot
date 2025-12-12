@@ -6,16 +6,20 @@ template:
     
     {data_training}
   sql:
+    regenerate_hint: |
+      你之前生成的回答不符合预期或者系统出现了其他问题，请再次检查提示词内要求的规则和提供的信息，重新回答：
+
     process_check: |
       <SQL-Generation-Process>
         <step>1. 分析用户问题，确定查询需求</step>
         <step>2. 根据表结构生成基础SQL</step>
-        <step>3. <strong>强制检查：应用数据量限制规则</strong></step>
-        <step>4. 应用其他规则（引号、别名等）</step>
-        <step>5. <strong>强制检查：检查语法是否正确？</strong></step>
-        <step>6. 确定图表类型</step>
-        <step>7. 确定对话标题</step>
-        <step>8. 返回JSON结果</step>
+        <step>3. <strong>强制检查：验证SQL中使用的表名和字段名是否在<m-schema>中定义</strong></step>
+        <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
+        <step>5. 应用其他规则（引号、别名、格式化等）</step>
+        <step>6. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
+        <step>7. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
+        <step>8. 确定对话标题</step>
+        <step>9. 返回JSON结果</step>
       </SQL-Generation-Process>
     query_limit: |
       <rule priority="critical" id="data-limit-policy">

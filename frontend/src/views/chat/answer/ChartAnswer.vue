@@ -163,6 +163,15 @@ const sendMessage = async () => {
                 currentRecord.id = data.id
                 _currentChat.value.records[index.value].id = data.id
                 break
+              case 'regenerate_record_id':
+                currentRecord.regenerate_record_id = data.regenerate_record_id
+                _currentChat.value.records[index.value].regenerate_record_id =
+                  data.regenerate_record_id
+                break
+              case 'question':
+                currentRecord.question = data.question
+                _currentChat.value.records[index.value].question = data.question
+                break
               case 'info':
                 console.info(data.msg)
                 break

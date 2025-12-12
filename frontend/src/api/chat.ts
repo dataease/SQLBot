@@ -51,6 +51,7 @@ export class ChatRecord {
   recommended_question?: string
   analysis_record_id?: number
   predict_record_id?: number
+  regenerate_record_id?: number
 
   constructor()
   constructor(
@@ -75,7 +76,8 @@ export class ChatRecord {
     first_chat: boolean,
     recommended_question: string | undefined,
     analysis_record_id: number | undefined,
-    predict_record_id: number | undefined
+    predict_record_id: number | undefined,
+    regenerate_record_id: number | undefined
   )
   constructor(
     id?: number,
@@ -99,7 +101,8 @@ export class ChatRecord {
     first_chat?: boolean,
     recommended_question?: string,
     analysis_record_id?: number,
-    predict_record_id?: number
+    predict_record_id?: number,
+    regenerate_record_id?: number
   ) {
     this.id = id
     this.chat_id = chat_id
@@ -123,6 +126,7 @@ export class ChatRecord {
     this.recommended_question = recommended_question
     this.analysis_record_id = analysis_record_id
     this.predict_record_id = predict_record_id
+    this.regenerate_record_id = regenerate_record_id
   }
 }
 
@@ -252,7 +256,8 @@ const toChatRecord = (data?: any): ChatRecord | undefined => {
     data.first_chat,
     data.recommended_question,
     data.analysis_record_id,
-    data.predict_record_id
+    data.predict_record_id,
+    data.regenerate_record_id
   )
 }
 const toChatRecordList = (list: any = []): ChatRecord[] => {

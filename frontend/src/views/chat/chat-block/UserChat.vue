@@ -3,9 +3,11 @@ import type { ChatMessage } from '@/api/chat.ts'
 import icon_copy_outlined from '@/assets/embedded/icon_copy_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import { useClipboard } from '@vueuse/core'
+import { computed } from 'vue'
 
 const props = defineProps<{
   message?: ChatMessage
+  allMessages?: ChatMessage[]
 }>()
 const { t } = useI18n()
 const { copy } = useClipboard({ legacy: true })
@@ -16,6 +18,13 @@ function clickAnalysis() {
 function clickPredict() {
   console.info('predict_record_id: ' + props.message?.record?.predict_record_id)
 }
+function clickRegenerated() {
+  console.info('regenerate_record_id: ' + props.message?.record?.regenerate_record_id)
+}
+
+const isRegenerated = computed(() => {
+  return !!props.message?.record?.regenerate_record_id
+})
 
 const copyCode = () => {
   const str = props.message?.content || ''
@@ -36,6 +45,9 @@ const copyCode = () => {
     </span>
     <span v-else-if="message?.record?.predict_record_id" class="prefix-title" @click="clickPredict">
       {{ t('qa.data_predict') }}
+    </span>
+    <span v-else-if="isRegenerated" class="prefix-title" @click="clickRegenerated">
+      {{ t('qa.data_regenerated') }}
     </span>
     <span style="width: 100%">{{ message?.content }}</span>
     <div style="position: absolute; right: 12px; bottom: -24px">
