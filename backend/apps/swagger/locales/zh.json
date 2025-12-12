@@ -21,5 +21,16 @@
   "ds_edit_field": "编辑字段信息",
   "ds_preview_data": "预览数据",
   "ds_upload_excel": "上传Excel",
-  "ds_excel": "文件"
+  "ds_excel": "文件",
+
+  "per_api": "数据权限",
+  "per_save": "保存权限",
+  "per_delete": "删除权限",
+  "per_id": "权限 ID",
+  "per_list": "获取权限列表",
+  "per_get": "获取单条权限详情",
+
+  "tr_api": "表关联关系",
+  "tr_save": "保存关联关系",
+  "tr_get": "查询关联关系"
 }

@@ -21,5 +21,16 @@
   "ds_edit_field": "Edit Field Info",
   "ds_preview_data": "Preview Data",
   "ds_upload_excel": "Upload Excel",
-  "ds_excel": "File"
+  "ds_excel": "File",
+
+  "per_api": "Data Permission",
+  "per_save": "Save Permission",
+  "per_delete": "Delete Permission",
+  "per_id": "Permission ID",
+  "per_list": "Get Permission List",
+  "per_get": "Get Permission Item Info",
+
+  "tr_api": "Table Relation",
+  "tr_save": "Save Table Relation",
+  "tr_get": "Get Table Relation"
 }

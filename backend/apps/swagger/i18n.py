@@ -45,7 +45,16 @@ tags_metadata = [
     {
         "name": "Datasource",
         "description": f"{PLACEHOLDER_PREFIX}ds_api"
-    }
+    },
+    {
+        "name": "Table Relation",
+        "description": f"{PLACEHOLDER_PREFIX}tr_api"
+    },
+    {
+        "name": "Data Permission",
+        "description": f"{PLACEHOLDER_PREFIX}per_api"
+    },
+
 ]
 
 
