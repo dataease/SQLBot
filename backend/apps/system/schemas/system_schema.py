@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from common.core.schemas import BaseCreatorDTO
 
 EMAIL_REGEX = re.compile(
@@ -18,11 +19,11 @@ PWD_REGEX = re.compile(
 
 
 class UserStatus(BaseCreatorDTO):
-    status: int = 1
+    status: int = Field(default=1, description=f"{PLACEHOLDER_PREFIX}status")
 
 
 class UserLanguage(BaseModel):
-    language: str
+    language: str = Field(description=f"{PLACEHOLDER_PREFIX}language")
 
 
 class BaseUser(BaseModel):
@@ -51,11 +52,11 @@ class BaseUserDTO(BaseUser, BaseCreatorDTO):
 
 
 class UserCreator(BaseUser):
-    name: str = Field(min_length=1, max_length=100, description="用户名")
-    email: str = Field(min_length=1, max_length=100, description="用户邮箱")
-    status: int = 1
-    origin: Optional[int] = 0
-    oid_list: Optional[list[int]] = None
+    name: str = Field(min_length=1, max_length=100, description=f"{PLACEHOLDER_PREFIX}user_name")
+    email: str = Field(min_length=1, max_length=100, description=f"{PLACEHOLDER_PREFIX}user_email")
+    status: int = Field(default=1, description=f"{PLACEHOLDER_PREFIX}status")
+    origin: Optional[int] = Field(default=0, description=f"{PLACEHOLDER_PREFIX}origin")
+    oid_list: Optional[list[int]] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}oid")
 
     """ @field_validator("email")
     def validate_email(cls, lang: str) -> str:
@@ -69,30 +70,30 @@ class UserEditor(UserCreator, BaseCreatorDTO):
 
 
 class UserGrid(UserEditor):
-    create_time: int
-    language: str = "zh-CN"
+    create_time: int = Field(description=f"{PLACEHOLDER_PREFIX}create_time")
+    language: str = Field(default="zh-CN" ,description=f"{PLACEHOLDER_PREFIX}language") 
     # space_name: Optional[str] = None
     # origin: str = ''
 
 
 class PwdEditor(BaseModel):
-    pwd: str
-    new_pwd: str
+    pwd: str = Field(description=f"{PLACEHOLDER_PREFIX}origin_pwd")
+    new_pwd: str = Field(description=f"{PLACEHOLDER_PREFIX}new_pwd")
 
 
 class UserWsBase(BaseModel):
-    uid_list: list[int]
-    oid: Optional[int] = None
+    uid_list: list[int] = Field(description=f"{PLACEHOLDER_PREFIX}uid")
+    oid: Optional[int] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}oid")
 
 
 class UserWsDTO(UserWsBase):
-    weight: Optional[int] = 0
+    weight: Optional[int] = Field(default=0, description=f"{PLACEHOLDER_PREFIX}weight")
 
 
 class UserWsEditor(BaseModel):
-    uid: int
-    oid: int
-    weight: int = 0
+    uid: int = Field(description=f"{PLACEHOLDER_PREFIX}uid")
+    oid: int = Field(description=f"{PLACEHOLDER_PREFIX}oid")
+    weight: int = Field(default=0, description=f"{PLACEHOLDER_PREFIX}weight")
 
 
 class UserInfoDTO(UserEditor):
@@ -149,11 +150,11 @@ class WorkspaceUser(UserEditor):
 
 
 class UserWs(BaseCreatorDTO):
-    name: str
+    name: str = Field(description="user_name")
 
 
 class UserWsOption(UserWs):
-    account: str
+    account: str = Field(description="user_account")
 
 
 class AssistantFieldSchema(BaseModel):

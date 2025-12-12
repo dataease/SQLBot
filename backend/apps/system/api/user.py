@@ -1,42 +1,44 @@
 from collections import defaultdict
 from typing import Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
+from pydantic import Field
 from sqlmodel import SQLModel, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.models.user import UserModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
-from apps.system.schemas.system_schema import PwdEditor, UserCreator, UserEditor, UserGrid, UserLanguage, UserStatus, UserWs
+from apps.system.schemas.system_schema import PwdEditor, UserCreator, UserEditor, UserGrid, UserInfoDTO, UserLanguage, UserStatus, UserWs
 from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
 from common.core.schemas import PaginatedResponse, PaginationParams
 from common.core.security import default_md5_pwd, md5pwd, verify_md5pwd
 from common.core.sqlbot_cache import clear_cache
 from common.core.config import settings
+from apps.swagger.i18n import PLACEHOLDER_PREFIX
 
-router = APIRouter(tags=["user"], prefix="/user")
+router = APIRouter(tags=["system_user"], prefix="/user")
 
-@router.get("/info")
-async def user_info(current_user: CurrentUser):
+@router.get("/info", summary=f"{PLACEHOLDER_PREFIX}system_user_current_user", description=f"{PLACEHOLDER_PREFIX}system_user_current_user_desc")
+async def user_info(current_user: CurrentUser) -> UserInfoDTO:
     return current_user
 
  
-@router.get("/defaultPwd")
+@router.get("/defaultPwd", include_in_schema=False)
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def default_pwd() -> str:
     return settings.DEFAULT_PWD
 
-@router.get("/pager/{pageNum}/{pageSize}", response_model=PaginatedResponse[UserGrid])
+@router.get("/pager/{pageNum}/{pageSize}", response_model=PaginatedResponse[UserGrid], summary=f"{PLACEHOLDER_PREFIX}system_user_grid", description=f"{PLACEHOLDER_PREFIX}system_user_grid")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def pager(
     session: SessionDep,
-    pageNum: int,
-    pageSize: int,
-    keyword: Optional[str] = Query(None, description="搜索关键字(可选)"),
-    status: Optional[int] = Query(None, description="状态"),
-    origins: Optional[list[int]] = Query(None, description="来源"),
-    oidlist: Optional[list[int]] = Query(None, description="空间ID集合(可选)"),
+    pageNum: int = Path(..., title=f"{PLACEHOLDER_PREFIX}page_num", description=f"{PLACEHOLDER_PREFIX}page_num"),
+    pageSize: int = Path(..., title=f"{PLACEHOLDER_PREFIX}page_size", description=f"{PLACEHOLDER_PREFIX}page_size"),
+    keyword: Optional[str] = Query(None, description=f"{PLACEHOLDER_PREFIX}keyword"),
+    status: Optional[int] = Query(None, description=f"{PLACEHOLDER_PREFIX}status"),
+    origins: Optional[list[int]] = Query(None, description=f"{PLACEHOLDER_PREFIX}origin"),
+    oidlist: Optional[list[int]] = Query(None, description=f"{PLACEHOLDER_PREFIX}oid"),
 ):
     pagination = PaginationParams(page=pageNum, size=pageSize)
     paginator = Paginator(session)
@@ -108,13 +110,14 @@ def format_user_dict(row) -> dict:
             result_dict[key] = item
     
     return result_dict
-@router.get("/ws")
+
+@router.get("/ws", include_in_schema=False)
 async def ws_options(session: SessionDep, current_user: CurrentUser, trans: Trans) -> list[UserWs]:
     return await user_ws_options(session, current_user.id, trans)
 
-@router.put("/ws/{oid}")
+@router.put("/ws/{oid}", summary=f"{PLACEHOLDER_PREFIX}switch_oid_api", description=f"{PLACEHOLDER_PREFIX}switch_oid_api")
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
-async def ws_change(session: SessionDep, current_user: CurrentUser, trans:Trans, oid: int):
+async def ws_change(session: SessionDep, current_user: CurrentUser, trans:Trans, oid: int = Path(description=f"{PLACEHOLDER_PREFIX}oid")):
     ws_list: list[UserWs] = await user_ws_options(session, current_user.id)
     if not any(x.id == oid for x in ws_list):
         db_ws = session.get(WorkspaceModel, oid)
@@ -126,9 +129,9 @@ async def ws_change(session: SessionDep, current_user: CurrentUser, trans:Trans,
     session.add(user_model)
     session.commit()
 
-@router.get("/{id}", response_model=UserEditor)
+@router.get("/{id}", response_model=UserEditor, summary=f"{PLACEHOLDER_PREFIX}user_detail_api", description=f"{PLACEHOLDER_PREFIX}user_detail_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
-async def query(session: SessionDep, trans: Trans, id: int) -> UserEditor:
+async def query(session: SessionDep, trans: Trans, id: int = Path(description=f"{PLACEHOLDER_PREFIX}uid")) -> UserEditor:
     db_user: UserModel = get_db_user(session = session, user_id = id)
     u_ws_options = await user_ws_options(session, id, trans)
     result = UserEditor.model_validate(db_user.model_dump())
@@ -137,7 +140,7 @@ async def query(session: SessionDep, trans: Trans, id: int) -> UserEditor:
     return result
 
 
-@router.post("")
+@router.post("", summary=f"{PLACEHOLDER_PREFIX}user_create_api", description=f"{PLACEHOLDER_PREFIX}user_create_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def create(session: SessionDep, creator: UserCreator, trans: Trans):
     if check_account_exists(session=session, account=creator.account):
@@ -167,7 +170,7 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
     session.commit()
 
     
-@router.put("")
+@router.put("", summary=f"{PLACEHOLDER_PREFIX}user_update_api", description=f"{PLACEHOLDER_PREFIX}user_update_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="editor.id")
 async def update(session: SessionDep, editor: UserEditor, trans: Trans):
@@ -203,18 +206,18 @@ async def update(session: SessionDep, editor: UserEditor, trans: Trans):
     session.add(user_model)
     session.commit()
 
-@router.delete("/{id}")
+@router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}user_del_api", description=f"{PLACEHOLDER_PREFIX}user_del_api")
 @require_permissions(permission=SqlbotPermission(role=['admin'])) 
-async def delete(session: SessionDep, id: int):
+async def delete(session: SessionDep, id: int = Path(description=f"{PLACEHOLDER_PREFIX}uid")):
     await single_delete(session, id)
 
-@router.delete("")
+@router.delete("", summary=f"{PLACEHOLDER_PREFIX}user_batchdel_api", description=f"{PLACEHOLDER_PREFIX}user_batchdel_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def batch_del(session: SessionDep, id_list: list[int]):
     for id in id_list:
         await single_delete(session, id)
     
-@router.put("/language")
+@router.put("/language", summary=f"{PLACEHOLDER_PREFIX}language_change", description=f"{PLACEHOLDER_PREFIX}language_change")
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
 async def langChange(session: SessionDep, current_user: CurrentUser, trans: Trans, language: UserLanguage):
     lang = language.language
@@ -226,10 +229,10 @@ async def langChange(session: SessionDep, current_user: CurrentUser, trans: Tran
     session.commit()
 
    
-@router.patch("/pwd/{id}")
+@router.patch("/pwd/{id}", summary=f"{PLACEHOLDER_PREFIX}reset_pwd", description=f"{PLACEHOLDER_PREFIX}reset_pwd")
 @require_permissions(permission=SqlbotPermission(role=['admin'])) 
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="id")
-async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans, id: int):
+async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans, id: int = Path(description=f"{PLACEHOLDER_PREFIX}uid")):
     if not current_user.isAdmin:
         raise Exception(trans('i18n_permission.no_permission', url = " patch[/user/pwd/id],", msg = trans('i18n_permission.only_admin')))
     db_user: UserModel = get_db_user(session=session, user_id=id)
@@ -237,7 +240,7 @@ async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans,
     session.add(db_user)
     session.commit()
 
-@router.put("/pwd")
+@router.put("/pwd", summary=f"{PLACEHOLDER_PREFIX}update_pwd", description=f"{PLACEHOLDER_PREFIX}update_pwd")
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
 async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans, editor: PwdEditor):
     new_pwd = editor.new_pwd
@@ -251,10 +254,10 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
     session.commit()
 
     
-@router.patch("/status")
+@router.patch("/status", summary=f"{PLACEHOLDER_PREFIX}update_status", description=f"{PLACEHOLDER_PREFIX}update_status")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="statusDto.id")
-async def langChange(session: SessionDep, current_user: CurrentUser, trans: Trans, statusDto: UserStatus):
+async def statusChange(session: SessionDep, current_user: CurrentUser, trans: Trans, statusDto: UserStatus):
     if not current_user.isAdmin:
         raise Exception(trans('i18n_permission.no_permission', url = ", ", msg = trans('i18n_permission.only_admin')))
     status = statusDto.status

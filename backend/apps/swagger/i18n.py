@@ -45,6 +45,14 @@ tags_metadata = [
     {
         "name": "Datasource",
         "description": f"{PLACEHOLDER_PREFIX}ds_api"
+    },
+    {
+        "name": "system_user",
+        "description": f"{PLACEHOLDER_PREFIX}system_user_api"
+    },
+    {
+        "name": "system_ws",
+        "description": f"{PLACEHOLDER_PREFIX}system_ws_api"
     }
 ]
 

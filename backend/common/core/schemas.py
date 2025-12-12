@@ -1,8 +1,9 @@
 from fastapi import HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import SQLModel
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
+from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from common.core.config import settings
 from fastapi.security.utils import get_authorization_scheme_param
 from typing import Generic, TypeVar, Optional
@@ -46,15 +47,15 @@ class PaginationParams(BaseModel):
     desc: bool = False
 
 class PaginatedResponse(BaseModel, Generic[T]):
-    items: list[T]
-    total: int
-    page: int
-    size: int
-    total_pages: int
+    items: list[T] = Field(description=f"{PLACEHOLDER_PREFIX}grid_items")
+    total: int = Field(description=f"{PLACEHOLDER_PREFIX}grid_total")
+    page: int = Field(description=f"{PLACEHOLDER_PREFIX}page_num")
+    size: int = Field(description=f"{PLACEHOLDER_PREFIX}page_size")
+    total_pages: int = Field(description=f"{PLACEHOLDER_PREFIX}grid_total_pages")
     
 
 class BaseCreatorDTO(BaseModel):
-    id: int
+    id: int = Field(description="ID")
     class Config:
         json_encoders = {
             int: lambda v: str(v) if isinstance(v, int) and v > (2**53 - 1) else v
