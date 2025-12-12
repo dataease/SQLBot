@@ -54,6 +54,14 @@ tags_metadata = [
         "name": "system_ws",
         "description": f"{PLACEHOLDER_PREFIX}system_ws_api"
     }
+        "name": "Table Relation",
+        "description": f"{PLACEHOLDER_PREFIX}tr_api"
+    },
+    {
+        "name": "Data Permission",
+        "description": f"{PLACEHOLDER_PREFIX}per_api"
+    },
+
 ]
 
 
