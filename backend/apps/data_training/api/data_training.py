@@ -14,15 +14,16 @@ from apps.chat.models.chat_model import AxisObj
 from apps.data_training.curd.data_training import page_data_training, create_training, update_training, delete_training, \
     enable_training, get_all_data_training, batch_create_training
 from apps.data_training.models.data_training_model import DataTrainingInfo
+from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
 from common.utils.excel import get_excel_column_count
 
-router = APIRouter(tags=["DataTraining"], prefix="/system/data-training")
+router = APIRouter(tags=["SQL Examples"], prefix="/system/data-training")
 
 
-@router.get("/page/{current_page}/{page_size}")
+@router.get("/page/{current_page}/{page_size}", summary=f"{PLACEHOLDER_PREFIX}get_dt_page")
 async def pager(session: SessionDep, current_user: CurrentUser, current_page: int, page_size: int,
                 question: Optional[str] = Query(None, description="搜索问题(可选)")):
     current_page, page_size, total_count, total_pages, _list = page_data_training(session, current_page, page_size,
@@ -38,7 +39,7 @@ async def pager(session: SessionDep, current_user: CurrentUser, current_page: in
     }
 
 
-@router.put("")
+@router.put("", response_model=int, summary=f"{PLACEHOLDER_PREFIX}create_or_update_dt")
 async def create_or_update(session: SessionDep, current_user: CurrentUser, trans: Trans, info: DataTrainingInfo):
     oid = current_user.oid
     if info.id:
@@ -47,17 +48,17 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
         return create_training(session, info, oid, trans)
 
 
-@router.delete("")
+@router.delete("", summary=f"{PLACEHOLDER_PREFIX}delete_dt")
 async def delete(session: SessionDep, id_list: list[int]):
     delete_training(session, id_list)
 
 
-@router.get("/{id}/enable/{enabled}")
+@router.get("/{id}/enable/{enabled}", summary=f"{PLACEHOLDER_PREFIX}enable_dt")
 async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
     enable_training(session, id, enabled, trans)
 
 
-@router.get("/export")
+@router.get("/export", summary=f"{PLACEHOLDER_PREFIX}export_dt")
 async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentUser,
                        question: Optional[str] = Query(None, description="搜索术语(可选)")):
     def inner():
@@ -98,7 +99,7 @@ async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentU
     return StreamingResponse(result, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
-@router.get("/template")
+@router.get("/template", summary=f"{PLACEHOLDER_PREFIX}excel_template_dt")
 async def excel_template(trans: Trans, current_user: CurrentUser):
     def inner():
         data_list = []
@@ -113,10 +114,12 @@ async def excel_template(trans: Trans, current_user: CurrentUser):
         fields = []
         fields.append(AxisObj(name=trans('i18n_data_training.problem_description_template'), value='question'))
         fields.append(AxisObj(name=trans('i18n_data_training.sample_sql_template'), value='description'))
-        fields.append(AxisObj(name=trans('i18n_data_training.effective_data_sources_template'), value='datasource_name'))
+        fields.append(
+            AxisObj(name=trans('i18n_data_training.effective_data_sources_template'), value='datasource_name'))
         if current_user.oid == 1:
             fields.append(
-                AxisObj(name=trans('i18n_data_training.advanced_application_template'), value='advanced_application_name'))
+                AxisObj(name=trans('i18n_data_training.advanced_application_template'),
+                        value='advanced_application_name'))
 
         md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
@@ -144,7 +147,7 @@ from sqlmodel import Session
 session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 
 
-@router.post("/uploadExcel")
+@router.post("/uploadExcel", summary=f"{PLACEHOLDER_PREFIX}upload_excel_dt")
 async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):

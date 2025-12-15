@@ -119,5 +119,50 @@
 
   "tr_api": "Table Relation",
   "tr_save": "Save Table Relation",
-  "tr_get": "Get Table Relation"
+  "tr_get": "Get Table Relation",
+
+  "data_qa": "Data Q&A",
+  "get_chat_list": "Get Chat List",
+  "get_chat": "Get Chat Details",
+  "get_chat_with_data": "Get Chat Details (With Data)",
+  "get_chart_data": "Get Chart Data",
+  "get_chart_predict_data": "Get Chart Prediction Data",
+  "rename_chat": "Rename Chat",
+  "delete_chat": "Delete Chat",
+  "start_chat": "Create Chat",
+  "assistant_start_chat": "Assistant Create Chat",
+  "ask_recommend_questions": "AI Get Recommended Questions",
+  "get_recommend_questions": "Query Recommended Questions",
+  "ask_question": "Ask Question",
+  "analysis_or_predict": "Analyze Data / Predict Data",
+  "export_chart_data": "Export Chart Data",
+  "analysis_or_predict_action_type": "Type, allowed values: analysis | predict",
+
+  "download-fail-info": "Download Error Information",
+
+  "data_training_api": "SQL Examples",
+  "get_dt_page": "Pagination Query for SQL Examples",
+  "create_or_update_dt": "Create/Update SQL Example",
+  "delete_dt": "Delete SQL Example",
+  "enable_dt": "Enable/Disable",
+  "export_dt": "Export SQL Examples",
+  "excel_template_dt": "Download Template",
+  "upload_excel_dt": "Import SQL Examples",
+
+  "terminology_api": "Terminology",
+  "get_term_page": "Pagination Query for Terms",
+  "create_or_update_term": "Create/Update Term",
+  "delete_term": "Delete Term",
+  "enable_term": "Enable/Disable",
+  "export_term": "Export Terms",
+  "excel_template_term": "Download Template",
+  "upload_term": "Import Terms",
+
+  "custom_prompt_api": "Custom Prompts",
+  "custom_prompt_page": "Pagination Query for Custom Prompts",
+  "create_or_update_custom_prompt": "Create/Update Custom Prompt",
+  "delete_custom_prompt": "Delete Custom Prompt",
+  "export_custom_prompt": "Export Custom Prompts",
+  "excel_template_custom_prompt": "Download Template",
+  "upload_custom_prompt": "Import Custom Prompts"
 }

@@ -43,6 +43,10 @@ def load_translation(lang: str) -> Dict[str, str]:
 # group tags
 tags_metadata = [
     {
+        "name": "Data Q&A",
+        "description": f"{PLACEHOLDER_PREFIX}data_qa"
+    },
+    {
         "name": "Datasource",
         "description": f"{PLACEHOLDER_PREFIX}ds_api"
     },
@@ -76,6 +80,18 @@ tags_metadata = [
     {
         "name": "Data Permission",
         "description": f"{PLACEHOLDER_PREFIX}per_api"
+    },
+    {
+        "name": "SQL Examples",
+        "description": f"{PLACEHOLDER_PREFIX}data_training_api"
+    },
+    {
+        "name": "Terminology",
+        "description": f"{PLACEHOLDER_PREFIX}terminology_api"
+    },
+    {
+        "name": "CustomPrompt",
+        "description": f"{PLACEHOLDER_PREFIX}custom_prompt_api"
     },
 
 ]

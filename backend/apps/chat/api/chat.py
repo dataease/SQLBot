@@ -1,19 +1,21 @@
 import asyncio
 import io
 import traceback
-from typing import Optional
+from typing import Optional, List
 
 import orjson
 import pandas as pd
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Path
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, select
 
 from apps.chat.curd.chat import list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
     format_json_data, format_json_list_data, get_chart_config, list_recent_questions
-from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand
+from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
+    ChatInfo, Chat
 from apps.chat.task.llm import LLMService
+from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.command_utils import parse_quick_command
@@ -22,12 +24,12 @@ from common.utils.data_format import DataFormat
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
 
-@router.get("/list")
+@router.get("/list", response_model=List[Chat], summary=f"{PLACEHOLDER_PREFIX}get_chat_list")
 async def chats(session: SessionDep, current_user: CurrentUser):
     return list_chats(session, current_user)
 
 
-@router.get("/{chart_id}")
+@router.get("/{chart_id}", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}get_chat")
 async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int, current_assistant: CurrentAssistant,
                    trans: Trans):
     def inner():
@@ -37,7 +39,7 @@ async def get_chat(session: SessionDep, current_user: CurrentUser, chart_id: int
     return await asyncio.to_thread(inner)
 
 
-@router.get("/{chart_id}/with_data")
+@router.get("/{chart_id}/with_data", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}get_chat_with_data")
 async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, chart_id: int,
                              current_assistant: CurrentAssistant):
     def inner():
@@ -47,7 +49,7 @@ async def get_chat_with_data(session: SessionDep, current_user: CurrentUser, cha
     return await asyncio.to_thread(inner)
 
 
-@router.get("/record/{chat_record_id}/data")
+@router.get("/record/{chat_record_id}/data", summary=f"{PLACEHOLDER_PREFIX}get_chart_data")
 async def chat_record_data(session: SessionDep, chat_record_id: int):
     def inner():
         data = get_chat_chart_data(chat_record_id=chat_record_id, session=session)
@@ -56,7 +58,7 @@ async def chat_record_data(session: SessionDep, chat_record_id: int):
     return await asyncio.to_thread(inner)
 
 
-@router.get("/record/{chat_record_id}/predict_data")
+@router.get("/record/{chat_record_id}/predict_data", summary=f"{PLACEHOLDER_PREFIX}get_chart_predict_data")
 async def chat_predict_data(session: SessionDep, chat_record_id: int):
     def inner():
         data = get_chat_predict_data(chat_record_id=chat_record_id, session=session)
@@ -65,7 +67,7 @@ async def chat_predict_data(session: SessionDep, chat_record_id: int):
     return await asyncio.to_thread(inner)
 
 
-@router.post("/rename")
+@router.post("/rename", response_model=str, summary=f"{PLACEHOLDER_PREFIX}rename_chat")
 async def rename(session: SessionDep, chat: RenameChat):
     try:
         return rename_chat(session=session, rename_object=chat)
@@ -76,7 +78,7 @@ async def rename(session: SessionDep, chat: RenameChat):
         )
 
 
-@router.delete("/{chart_id}")
+@router.delete("/{chart_id}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
 async def delete(session: SessionDep, chart_id: int):
     try:
         return delete_chat(session=session, chart_id=chart_id)
@@ -87,7 +89,7 @@ async def delete(session: SessionDep, chart_id: int):
         )
 
 
-@router.post("/start")
+@router.post("/start", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}start_chat")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="create_chat_obj.datasource"))
 async def start_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj: CreateChat):
     try:
@@ -99,7 +101,7 @@ async def start_chat(session: SessionDep, current_user: CurrentUser, create_chat
         )
 
 
-@router.post("/assistant/start")
+@router.post("/assistant/start", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}assistant_start_chat")
 async def start_chat(session: SessionDep, current_user: CurrentUser):
     try:
         return create_chat(session, current_user, CreateChat(origin=2), False)
@@ -110,9 +112,9 @@ async def start_chat(session: SessionDep, current_user: CurrentUser):
         )
 
 
-@router.post("/recommend_questions/{chat_record_id}")
-async def recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
-                              current_assistant: CurrentAssistant, articles_number: Optional[int] = 4):
+@router.post("/recommend_questions/{chat_record_id}", summary=f"{PLACEHOLDER_PREFIX}ask_recommend_questions")
+async def ask_recommend_questions(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
+                                  current_assistant: CurrentAssistant, articles_number: Optional[int] = 4):
     def _return_empty():
         yield 'data:' + orjson.dumps({'content': '[]', 'type': 'recommended_question'}).decode() + '\n\n'
 
@@ -139,9 +141,11 @@ async def recommend_questions(session: SessionDep, current_user: CurrentUser, ch
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
 
 
-@router.get("/recent_questions/{datasource_id}")
+@router.get("/recent_questions/{datasource_id}", response_model=List[str],
+            summary=f"{PLACEHOLDER_PREFIX}get_recommend_questions")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="datasource_id"))
-async def recommend_questions(session: SessionDep, current_user: CurrentUser, datasource_id: int):
+async def recommend_questions(session: SessionDep, current_user: CurrentUser,
+                              datasource_id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     return list_recent_questions(session=session, current_user=current_user, datasource_id=datasource_id)
 
 
@@ -158,7 +162,7 @@ def find_base_question(record_id: int, session: SessionDep):
         return rec_question
 
 
-@router.post("/question")
+@router.post("/question", summary=f"{PLACEHOLDER_PREFIX}ask_question")
 @require_permissions(permission=SqlbotPermission(type='chat', keyExpression="request_question.chat_id"))
 async def question_answer(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
                           current_assistant: CurrentAssistant):
@@ -255,10 +259,10 @@ async def stream_sql(session: SessionDep, current_user: CurrentUser, request_que
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
 
 
-@router.post("/record/{chat_record_id}/{action_type}")
-async def analysis_or_predict_question(session: SessionDep, current_user: CurrentUser, chat_record_id: int,
-                                       action_type: str,
-                                       current_assistant: CurrentAssistant):
+@router.post("/record/{chat_record_id}/{action_type}", summary=f"{PLACEHOLDER_PREFIX}analysis_or_predict")
+async def analysis_or_predict_question(session: SessionDep, current_user: CurrentUser,
+                                       current_assistant: CurrentAssistant, chat_record_id: int,
+                                       action_type: str = Path(..., description=f"{PLACEHOLDER_PREFIX}analysis_or_predict_action_type")):
     return await analysis_or_predict(session, current_user, chat_record_id, action_type, current_assistant)
 
 
@@ -302,7 +306,7 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
     return StreamingResponse(llm_service.await_result(), media_type="text/event-stream")
 
 
-@router.get("/record/{chat_record_id}/excel/export")
+@router.get("/record/{chat_record_id}/excel/export", summary=f"{PLACEHOLDER_PREFIX}export_chart_data")
 async def export_excel(session: SessionDep, chat_record_id: int, trans: Trans):
     chat_record = session.get(ChatRecord, chat_record_id)
     if not chat_record:

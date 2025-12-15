@@ -119,5 +119,50 @@
 
   "tr_api": "表关联关系",
   "tr_save": "保存关联关系",
-  "tr_get": "查询关联关系"
+  "tr_get": "查询关联关系",
+
+  "data_qa": "智能问数",
+  "get_chat_list": "获取对话列表",
+  "get_chat": "获取对话详情",
+  "get_chat_with_data": "获取对话详情(带数据)",
+  "get_chart_data": "获取图表数据",
+  "get_chart_predict_data": "获取图表预测数据",
+  "rename_chat": "重命名对话",
+  "delete_chat": "删除对话",
+  "start_chat": "创建对话",
+  "assistant_start_chat": "小助手创建对话",
+  "ask_recommend_questions": "AI获取推荐提问",
+  "get_recommend_questions": "查询推荐提问",
+  "ask_question": "提问",
+  "analysis_or_predict": "分析数据/预测数据",
+  "export_chart_data": "导出图表数据",
+  "analysis_or_predict_action_type": "类型，可传入值为：analysis | predict",
+
+  "download-fail-info": "下载错误信息",
+
+  "data_training_api": "SQL示例",
+  "get_dt_page": "分页查询SQL示例",
+  "create_or_update_dt": "创建/更新SQL示例",
+  "delete_dt": "删除SQL示例",
+  "enable_dt": "启用/禁用",
+  "export_dt": "导出SQL示例",
+  "excel_template_dt": "下载模板",
+  "upload_excel_dt": "导入SQL示例",
+
+  "terminology_api": "术语",
+  "get_term_page": "分页查询术语",
+  "create_or_update_term": "创建/更新术语",
+  "delete_term": "删除术语",
+  "enable_term": "启用/禁用",
+  "export_term": "导出术语",
+  "excel_template_term": "下载模板",
+  "upload_term": "导入术语",
+
+  "custom_prompt_api": "自定义提示词",
+  "custom_prompt_page": "分页查询自定义提示词",
+  "create_or_update_custom_prompt": "创建/更新自定义提示词",
+  "delete_custom_prompt": "删除自定义提示词",
+  "export_custom_prompt": "导出自定义提示词",
+  "excel_template_custom_prompt": "下载模板",
+  "upload_custom_prompt": "导入自定义提示词"
 }
