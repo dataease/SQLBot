@@ -103,7 +103,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
         version = int(db_version.split('.')[0])
         if version < 22:
             return """
-                    SELECT name, null as comment
+                    SELECT name, '' as comment
                     FROM system.tables
                     WHERE database = :param
                       AND engine NOT IN ('Dictionary')
