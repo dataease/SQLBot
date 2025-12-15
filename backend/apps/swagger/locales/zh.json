@@ -102,6 +102,14 @@
   "assistant_configuration": "配置",
   "assistant_description": "描述",
 
+  "system_embedded_api": "页面嵌入式api",
+  "embedded_resetsecret_api": "重置 Secret",
+
+  "system_authentication_api": "认证设置api",
+  "authentication_enable_api": "设置开启",
+  "authentication_status_api": "查询状态",
+  "authentication_validate_api": "校验状态",
+
   "per_api": "数据权限",
   "per_save": "保存权限",
   "per_delete": "删除权限",

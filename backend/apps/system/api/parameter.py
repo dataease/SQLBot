@@ -7,7 +7,7 @@ from apps.system.crud.parameter_manage import get_groups, get_parameter_args, sa
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import SessionDep
 
-router = APIRouter(tags=["system/parameter"], prefix="/system/parameter")
+router = APIRouter(tags=["system/parameter"], prefix="/system/parameter", include_in_schema=False)
 
 @router.get("/login")
 async def get_login_args(session: SessionDep) -> list[SysArgModel]:

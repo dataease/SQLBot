@@ -101,6 +101,14 @@
   "assistant_type": "Assistant Type (0: Basic, 1: Advanced, 4: Page)",
   "assistant_configuration": "Configuration",
   "assistant_description": "Description",
+
+  "system_embedded_api": "Page Embedded API",
+  "embedded_resetsecret_api": "Reset Secret",
+
+  "system_authentication_api": "Authentication Settings API",
+  "authentication_enable_api": "Enable Authentication",
+  "authentication_status_api": "Get Authentication Status",
+  "authentication_validate_api": "Validate Authentication",
   
   "per_api": "Data Permission",
   "per_save": "Save Permission",

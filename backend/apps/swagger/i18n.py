@@ -62,6 +62,14 @@ tags_metadata = [
         "name": "system_assistant",
         "description": f"{PLACEHOLDER_PREFIX}system_assistant_api"
     },
+    {
+        "name": "system_embedded",
+        "description": f"{PLACEHOLDER_PREFIX}system_embedded_api"
+    },
+    {
+        "name": "system_authentication",
+        "description": f"{PLACEHOLDER_PREFIX}system_authentication_api"
+    },
     {   "name": "Table Relation",
         "description": f"{PLACEHOLDER_PREFIX}tr_api"
     },
