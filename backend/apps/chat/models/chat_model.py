@@ -200,8 +200,8 @@ class AiModelQuestion(BaseModel):
         _process_check = _sql_template.get('process_check') if _sql_template.get('process_check') else _base_template[
             'process_check']
         _query_limit = _base_template['query_limit'] if enable_query_limit else _base_template['no_query_limit']
-        _base_sql_rules = _sql_template['quot_rule'] + _query_limit + _sql_template['limit_rule'] + _sql_template[
-            'other_rule']
+        _other_rule = _sql_template['other_rule'].format(multi_table_condition=_base_template['multi_table_condition'])
+        _base_sql_rules = _sql_template['quot_rule'] + _query_limit + _sql_template['limit_rule'] + _other_rule
         _sql_examples = _sql_template['basic_example']
         _example_engine = _sql_template['example_engine']
         _example_answer_1 = _sql_template['example_answer_1_with_limit'] if enable_query_limit else _sql_template[

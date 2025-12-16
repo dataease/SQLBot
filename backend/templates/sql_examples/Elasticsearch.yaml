@@ -21,6 +21,20 @@ template:
 
   other_rule: |
     <rule>必须为每个索引生成别名（不加AS）</rule>
+    <rule>
+      <title>Elasticsearch SQL多表查询字段限定规则</title>
+      <requirements>
+        <requirement>当使用JOIN涉及多个索引时，所有字段引用必须明确限定索引别名</requirement>
+        <requirement>适用于SELECT、WHERE、GROUP BY、HAVING、ORDER BY、ON等子句中的所有字段引用</requirement>
+        <requirement>单索引查询不需要表名前缀</requirement>
+      </requirements>
+      <notes>
+        <note>Elasticsearch的JOIN性能有限，仅适合小数据量关联</note>
+        <note>标识符引用使用双引号（"）</note>
+        <note>大多数Elasticsearch查询是单索引查询，不需要字段限定</note>
+        <note>嵌套字段通过点号访问，如 "customer.name"，不需要表名前缀</note>
+      </notes>
+    </rule>
     <rule>禁止使用星号(*)，必须明确字段名</rule>
     <rule>中文/特殊字符字段需保留原名并添加英文别名</rule>
     <rule>函数字段必须加别名</rule>

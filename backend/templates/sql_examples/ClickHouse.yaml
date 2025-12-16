@@ -21,6 +21,7 @@ template:
 
   other_rule: |
     <rule>必须为每个表生成简短别名（如t1/t2）</rule>
+    {multi_table_condition}
     <rule>禁止使用星号(*)，必须明确字段名</rule>
     <rule>JSON字段需用点号语法访问：`"column.field"`</rule>
     <rule>函数字段必须加别名</rule>

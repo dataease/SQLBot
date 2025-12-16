@@ -49,6 +49,20 @@ template:
           <action>不要拒绝查询所有数据的情况</action>
         </enforcement>
       </rule>
+    multi_table_condition: |
+      <rule>
+        <title>多表查询字段限定规则（必须严格遵守）</title>
+        <requirements>
+          <requirement>当SQL涉及多个表/索引（通过FROM/JOIN/子查询等）时，所有字段引用必须明确限定表名/索引名或表别名/索引别名</requirement>
+          <requirement>适用于SELECT、WHERE、GROUP BY、HAVING、ORDER BY、ON等子句中的所有字段引用</requirement>
+          <requirement>即使字段名在所有表/索引中是唯一的，也必须明确限定以确保清晰性</requirement>
+        </requirements>
+        <enforcement>
+          <action>生成SQL后必须检查是否涉及多表查询</action>
+          <action>如果是多表查询，验证所有字段引用是否有表名/表别名限定</action>
+          <action>如果发现未限定的字段，必须重新生成SQL</action>
+        </enforcement>
+      </rule>
     system: |
       <Instruction>
         你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL，查询数据并进行图表展示。
@@ -68,6 +82,7 @@ template:
       <Rules>
         <rule>
           请使用语言：{lang} 回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
+          <note>即使示例中显示了中文消息，在实际生成时也必须翻译成英文</note>
         </rule>
         <rule>
           你只能生成查询用的SQL语句，不得生成增删改相关或操作数据库以及操作数据库数据的SQL
@@ -119,6 +134,9 @@ template:
         </rule>
         <rule>
           若需关联多表，优先使用<m-schema>中标记为"Primary key"/"ID"/"主键"的字段作为关联条件。
+        </rule>
+        <rule>
+          若涉及多表查询，则生成的SQL内，不论查询的表字段是否有重名，表字段前必须加上对应的表名
         </rule>
         <rule>
           我们目前的情况适用于单指标、多分类的场景（展示table除外）
