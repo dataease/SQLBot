@@ -410,7 +410,7 @@
             type="primary"
             class="input-icon"
             :disabled="isTyping"
-            @click.stop="sendMessage"
+            @click.stop="($event: any) => sendMessage(undefined, $event)"
           >
             <el-icon size="16">
               <icon_send_filled />
@@ -458,6 +458,7 @@ import { debounce } from 'lodash-es'
 import { isMobile } from '@/utils/utils'
 import router from '@/router'
 import QuickQuestion from '@/views/chat/QuickQuestion.vue'
+import { useChatConfigStore } from '@/stores/chatConfig.ts'
 const userStore = useUserStore()
 const props = defineProps<{
   startChatDsId?: number
@@ -486,6 +487,9 @@ const customName = computed(() => {
   return ''
 })
 const { t } = useI18n()
+
+const chatConfig = useChatConfigStore()
+
 const isPhone = computed(() => {
   return isMobile()
 })
@@ -1062,6 +1066,7 @@ function jumpCreatChat() {
 }
 
 onMounted(() => {
+  chatConfig.fetchGlobalConfig()
   if (isPhone.value) {
     chatListSideBarShow.value = false
     if (props.pageEmbedded) {

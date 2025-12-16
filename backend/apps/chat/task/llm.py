@@ -17,6 +17,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, BaseMessageChunk
 from sqlalchemy import and_, select
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlbot_xpack.config.model import SysArgModel
 from sqlbot_xpack.custom_prompt.curd.custom_prompt import find_custom_prompts
 from sqlbot_xpack.custom_prompt.models.custom_prompt_model import CustomPromptTypeEnum
 from sqlbot_xpack.license.license_manage import SQLBotLicenseUtil
@@ -39,6 +40,7 @@ from apps.datasource.embedding.ds_embedding import get_ds_embedding
 from apps.datasource.models.datasource import CoreDatasource
 from apps.db.db import exec_sql, get_version, check_connection
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_ds
+from apps.system.crud.parameter_manage import get_groups
 from apps.system.schemas.system_schema import AssistantOutDsSchema
 from apps.terminology.curd.terminology import get_terminology_template
 from common.core.config import settings
@@ -85,6 +87,8 @@ class LLMService:
 
     last_execute_sql_error: str = None
     articles_number: int = 4
+
+    enable_sql_row_limit: bool = settings.GENERATE_SQL_QUERY_LIMIT_ENABLED
 
     def __init__(self, session: Session, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
@@ -152,6 +156,14 @@ class LLMService:
     async def create(cls, *args, **kwargs):
         config: LLMConfig = await get_default_config()
         instance = cls(*args, **kwargs, config=config)
+
+        chat_params: list[SysArgModel] = await get_groups(args[0], "chat")
+        for config in chat_params:
+            if config.pkey == 'chat.limit_rows':
+                if config.pval.lower().strip() == 'true':
+                    instance.enable_sql_row_limit = True
+                else:
+                    instance.enable_sql_row_limit = False
         return instance
 
     def is_running(self, timeout=0.5):
@@ -179,7 +191,7 @@ class LLMService:
         self.sql_message = []
         # add sys prompt
         self.sql_message.append(SystemMessage(
-            content=self.chat_question.sql_sys_question(self.ds.type, settings.GENERATE_SQL_QUERY_LIMIT_ENABLED)))
+            content=self.chat_question.sql_sys_question(self.ds.type, self.enable_sql_row_limit)))
         if last_sql_messages is not None and len(last_sql_messages) > 0:
             # limit count
             for last_sql_message in last_sql_messages[count_limit:]:
@@ -861,7 +873,7 @@ class LLMService:
             limit = 1000
             if data_result:
                 data_result = prepare_for_orjson(data_result)
-                if data_result and len(data_result) > limit and settings.GENERATE_SQL_QUERY_LIMIT_ENABLED:
+                if data_result and len(data_result) > limit and self.enable_sql_row_limit:
                     data_obj['data'] = data_result[:limit]
                     data_obj['limit'] = limit
                 else:

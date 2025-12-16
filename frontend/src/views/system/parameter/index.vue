@@ -9,8 +9,8 @@ const { t } = useI18n()
 
 const state = reactive({
   parameterForm: reactive<any>({
-    'chat.enable_model_thinking': false,
-    'chat.rows_of_data': false,
+    'chat.expand_thinking_block': false,
+    'chat.limit_rows': false,
   }),
 })
 provide('parameterForm', state.parameterForm)
@@ -99,7 +99,7 @@ onMounted(() => {
             </el-tooltip>
           </div>
           <div class="value">
-            <el-switch v-model="state.parameterForm['chat.enable_model_thinking']" />
+            <el-switch v-model="state.parameterForm['chat.expand_thinking_block']" />
           </div>
         </div>
 
@@ -118,7 +118,7 @@ onMounted(() => {
           </div>
           <div class="value">
             <el-switch
-              v-model="state.parameterForm['chat.rows_of_data']"
+              v-model="state.parameterForm['chat.limit_rows']"
               :before-change="beforeChange"
             />
           </div>

@@ -5,6 +5,7 @@ import MdComponent from '@/views/chat/component/MdComponent.vue'
 import icon_up_outlined from '@/assets/svg/icon_up_outlined.svg'
 import icon_down_outlined from '@/assets/svg/icon_down_outlined.svg'
 import { useI18n } from 'vue-i18n'
+import { useChatConfigStore } from '@/stores/chatConfig.ts'
 
 const props = withDefaults(
   defineProps<{
@@ -23,6 +24,8 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+
+const chatConfig = useChatConfigStore()
 
 const show = ref<boolean>(false)
 
@@ -63,7 +66,8 @@ function clickShow() {
 
 onMounted(() => {
   if (props.message.isTyping) {
-    show.value = true
+    // 根据配置项是否默认展开
+    show.value = chatConfig.getExpandThinkingBlock
   }
 })
 </script>
