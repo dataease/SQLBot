@@ -136,7 +136,7 @@ const props = withDefaults(
 .quick_question_popover {
   padding: 4px !important;
   .quick_question_title {
-    width: 40px;
+    min-width: 40px;
     height: 24px;
     border-radius: 6px;
     opacity: 1;
@@ -149,8 +149,8 @@ const props = withDefaults(
     cursor: pointer;
     margin-left: 8px;
     &:hover {
-      color: rgba(24, 158, 122, 0.5);
-      background: rgba(28, 186, 144, 0.1);
+      color: #189e7a;
+      background: #1f23291a;
     }
   }
   .title-active {

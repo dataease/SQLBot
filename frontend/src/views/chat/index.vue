@@ -1197,7 +1197,7 @@ onMounted(() => {
       }
 
       .quick_question {
-        width: 100px;
+        min-width: 100px;
         position: absolute;
         margin-left: 1px;
         margin-top: 1px;
