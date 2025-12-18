@@ -169,6 +169,9 @@ class TokenMiddleware(BaseHTTPMiddleware):
                     raise Exception(message)
                 assistant_info = await get_assistant_info(session=session, assistant_id=embeddedId)
                 assistant_info = AssistantModel.model_validate(assistant_info)
+                payload = jwt.decode(
+                    param, assistant_info.app_secret, algorithms=[security.ALGORITHM]
+                )
                 assistant_info = AssistantHeader.model_validate(assistant_info.model_dump(exclude_unset=True))
                 return True, session_user, assistant_info
         except Exception as e:
