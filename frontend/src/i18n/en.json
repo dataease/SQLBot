@@ -8,6 +8,7 @@
     "Details": "Details"
   },
   "parameter": {
+    "memo": "Memo update rules: Match table name and field name. If a match is found, update the table memo and field memo; otherwise, leave the memo unchanged.",
     "parameter_configuration": "Parameter Config",
     "question_count_settings": "Question Count Settings",
     "model_thinking_process": "Expand Model Thinking Process",

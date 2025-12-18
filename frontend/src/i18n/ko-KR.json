@@ -8,6 +8,7 @@
     "Details": "세부"
   },
   "parameter": {
+    "memo": "메모 업데이트 규칙: 테이블 이름과 필드 이름이 일치하는지 확인합니다. 일치하는 항목이 있으면 테이블 메모와 필드 메모를 업데이트하고, 그렇지 않으면 메모를 변경하지 않고 그대로 둡니다.",
     "parameter_configuration": "매개변수 구성",
     "question_count_settings": "질문 수 설정",
     "model_thinking_process": "모델 사고 프로세스 확장",

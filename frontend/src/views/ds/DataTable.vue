@@ -3,14 +3,17 @@ import { ref, computed, onMounted, reactive } from 'vue'
 import { datasourceApi } from '@/api/datasource'
 import icon_right_outlined from '@/assets/svg/icon_right_outlined.svg'
 import icon_form_outlined from '@/assets/svg/icon_form_outlined.svg'
+import icon_import_outlined from '@/assets/svg/icon_import_outlined.svg'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import edit from '@/assets/svg/icon_edit_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import ParamsForm from './ParamsForm.vue'
+import UploaderRemark from '@/views/system/excel-upload/UploaderRemark.vue'
 import TableRelationship from '@/views/ds/TableRelationship.vue'
 import icon_mindnote_outlined from '@/assets/svg/icon_mindnote_outlined.svg'
 import { Refresh } from '@element-plus/icons-vue'
+
 interface Table {
   name: string
   host: string
@@ -106,17 +109,29 @@ const fieldListComputed = computed(() => {
   return fieldList.value.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 })
 
-const init = () => {
+const init = (reset = false) => {
   initLoading.value = true
   datasourceApi.getDs(props.info.id).then((res) => {
     ds.value = res
     fieldList.value = []
     pageInfo.total = 0
     pageInfo.currentPage = 1
-    datasourceApi.tableList(props.info.id).then((res) => {
-      tableList.value = res
-      initLoading.value = false
-    })
+    datasourceApi
+      .tableList(props.info.id)
+      .then((res) => {
+        tableList.value = res
+
+        if (currentTable.value?.id && reset) {
+          tableList.value.forEach((ele) => {
+            if (ele.id === currentTable.value?.id) {
+              clickTable(ele)
+            }
+          })
+        }
+      })
+      .finally(() => {
+        initLoading.value = false
+      })
   })
 }
 onMounted(() => {
@@ -237,6 +252,47 @@ const syncFields = () => {
     })
 }
 
+function downloadTemplate() {
+  datasourceApi
+    .exportDsSchema(props.info.id)
+    .then((res) => {
+      const blob = new Blob([res], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = props.info.name + '.xlsx'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    })
+    .catch(async (error) => {
+      if (error.response) {
+        try {
+          let text = await error.response.data.text()
+          try {
+            text = JSON.parse(text)
+          } finally {
+            ElMessage({
+              message: text,
+              type: 'error',
+              showClose: true,
+            })
+          }
+        } catch (e) {
+          console.error('Error processing error response:', e)
+        }
+      } else {
+        console.error('Other error:', error)
+        ElMessage({
+          message: error,
+          type: 'error',
+          showClose: true,
+        })
+      }
+    })
+}
+
 const emits = defineEmits(['back', 'refresh'])
 const back = () => {
   emits('back')
@@ -298,6 +354,16 @@ const btnSelectClick = (val: any) => {
         <icon_right_outlined></icon_right_outlined>
       </el-icon>
       <div class="name">{{ info.name }}</div>
+      <el-button @click="downloadTemplate" class="export-remark" secondary>
+        <template #icon>
+          <icon_import_outlined></icon_import_outlined>
+        </template>
+        {{ $t('professional.export') }}
+      </el-button>
+      <UploaderRemark
+        :upload-path="`/datasource/uploadDsSchema/${info.id}`"
+        @upload-finished="init"
+      ></UploaderRemark>
     </div>
     <div class="content">
       <div class="side-list">
@@ -590,8 +656,9 @@ const btnSelectClick = (val: any) => {
     line-height: 22px;
     color: #646a73;
     border-bottom: 1px solid #1f232926;
+    position: relative;
 
-    .ed-button {
+    .ed-button.is-text {
       height: 22px;
       line-height: 22px;
       color: #646a73;
@@ -604,6 +671,12 @@ const btnSelectClick = (val: any) => {
         color: var(--ed-color-primary-dark-2);
         background: var(--ed-color-primary-33, #1cba9033);
       }
+    }
+
+    .export-remark {
+      position: absolute;
+      right: 116px;
+      top: 12px;
     }
 
     .name {

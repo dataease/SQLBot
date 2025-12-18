@@ -27,4 +27,9 @@ export const datasourceApi = {
   cancelRequests: () => request.cancelRequests(),
   getSchema: (data: any) => request.post('/datasource/getSchemaByConf', data),
   syncFields: (id: number) => request.post(`/datasource/syncFields/${id}`),
+  exportDsSchema: (id: any) =>
+    request.get(`/datasource/exportDsSchema/${id}`, {
+      responseType: 'blob',
+      requestOptions: { customError: true },
+    }),
 }

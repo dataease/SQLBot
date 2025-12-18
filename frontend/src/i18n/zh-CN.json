@@ -8,6 +8,7 @@
     "Details": "详情"
   },
   "parameter": {
+    "memo": "备注更新规则：根据表名和字段名匹配，如果匹配则更新表备注和字段备注；如果匹配不上，备注保持不变。",
     "parameter_configuration": "参数配置",
     "question_count_settings": "问数设置",
     "model_thinking_process": "展开模型思考过程",
@@ -140,7 +141,7 @@
     "click_to_select_file": "点击选择文件",
     "upload_hint_first": "先",
     "upload_hint_download_template": "下载模板",
-    "upload_hint_end": "，按要求填写后上传",
+    "upload_hint_end": "，按要求填写后上传。",
     "continue_to_upload": "继续导入",
     "reset_password": "重置密码",
     "password_reset_successful": "重置密码成功",
