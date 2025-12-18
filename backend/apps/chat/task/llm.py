@@ -30,7 +30,8 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     save_select_datasource_answer, save_recommend_question_answer, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
-    get_last_execute_sql_error, format_json_data, format_chart_fields, get_chat_brief_generate
+    get_last_execute_sql_error, format_json_data, format_chart_fields, get_chat_brief_generate, get_chat_predict_data, \
+    get_chat_chart_config
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj
 from apps.data_training.curd.data_training import get_training_template
@@ -969,6 +970,10 @@ class LLMService:
                                                   'regenerate_record_id': self.get_record().regenerate_record_id}).decode() + '\n\n'
                 yield 'data:' + orjson.dumps(
                     {'type': 'question', 'question': self.get_record().question}).decode() + '\n\n'
+            else:
+                if stream:
+                    yield '> ID: ' + str(self.get_record().id) + '\n'
+                    yield '> ' + self.get_record().question + '\n\n'
             if not stream:
                 json_result['record_id'] = self.get_record().id
 
@@ -1150,26 +1155,8 @@ class LLMService:
                     {'content': orjson.dumps(chart).decode(), 'type': 'chart'}).decode() + '\n\n'
             else:
                 if stream:
-                    _fields = {}
-                    if chart.get('columns'):
-                        for _column in chart.get('columns'):
-                            if _column:
-                                _fields[_column.get('value')] = _column.get('name')
-                    if chart.get('axis'):
-                        if chart.get('axis').get('x'):
-                            _fields[chart.get('axis').get('x').get('value')] = chart.get('axis').get('x').get('name')
-                        if chart.get('axis').get('y'):
-                            _fields[chart.get('axis').get('y').get('value')] = chart.get('axis').get('y').get('name')
-                        if chart.get('axis').get('series'):
-                            _fields[chart.get('axis').get('series').get('value')] = chart.get('axis').get('series').get(
-                                'name')
-                    _column_list = []
-                    for field in result.get('fields'):
-                        _column_list.append(
-                            AxisObj(name=field if not _fields.get(field) else _fields.get(field), value=field))
-
-                    md_data, _fields_list = DataFormat.convert_object_array_for_pandas(_column_list, result.get('data'))
-
+                    md_data, _fields_list = DataFormat.convert_data_fields_for_pandas(chart, result.get('fields'),
+                                                                                      result.get('data'))
                     # data, _fields_list, col_formats = self.format_pd_data(_column_list, result.get('data'))
 
                     if not md_data or not _fields_list:
@@ -1183,7 +1170,7 @@ class LLMService:
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
             else:
-                # todo generate picture
+                # generate picture
                 try:
                     if chart['type'] != 'table':
                         yield '### generated chart picture\n\n'
@@ -1255,51 +1242,123 @@ class LLMService:
         finally:
             session_maker.remove()
 
-    def run_analysis_or_predict_task_async(self, session: Session, action_type: str, base_record: ChatRecord):
+    def run_analysis_or_predict_task_async(self, session: Session, action_type: str, base_record: ChatRecord,
+                                           in_chat: bool = True, stream: bool = True):
         self.set_record(save_analysis_predict_record(session, base_record, action_type))
-        self.future = executor.submit(self.run_analysis_or_predict_task_cache, action_type)
+        self.future = executor.submit(self.run_analysis_or_predict_task_cache, action_type, in_chat, stream)
 
-    def run_analysis_or_predict_task_cache(self, action_type: str):
-        for chunk in self.run_analysis_or_predict_task(action_type):
+    def run_analysis_or_predict_task_cache(self, action_type: str, in_chat: bool = True, stream: bool = True):
+        for chunk in self.run_analysis_or_predict_task(action_type, in_chat, stream):
             self.chunk_list.append(chunk)
 
-    def run_analysis_or_predict_task(self, action_type: str):
+    def run_analysis_or_predict_task(self, action_type: str, in_chat: bool = True, stream: bool = True):
+        json_result: Dict[str, Any] = {'success': True}
         _session = None
         try:
             _session = session_maker()
-            yield 'data:' + orjson.dumps({'type': 'id', 'id': self.get_record().id}).decode() + '\n\n'
+            if in_chat:
+                yield 'data:' + orjson.dumps({'type': 'id', 'id': self.get_record().id}).decode() + '\n\n'
+            else:
+                if stream:
+                    yield '> ID: ' + str(self.get_record().id) + '\n'
+                    yield '> ' + self.get_record().question + '\n\n'
+            if not stream:
+                json_result['record_id'] = self.get_record().id
 
             if action_type == 'analysis':
                 # generate analysis
                 analysis_res = self.generate_analysis(_session)
+                full_text = ''
                 for chunk in analysis_res:
-                    yield 'data:' + orjson.dumps(
-                        {'content': chunk.get('content'), 'reasoning_content': chunk.get('reasoning_content'),
-                         'type': 'analysis-result'}).decode() + '\n\n'
-                yield 'data:' + orjson.dumps({'type': 'info', 'msg': 'analysis generated'}).decode() + '\n\n'
-
-                yield 'data:' + orjson.dumps({'type': 'analysis_finish'}).decode() + '\n\n'
+                    full_text += chunk.get('content')
+                    if in_chat:
+                        yield 'data:' + orjson.dumps(
+                            {'content': chunk.get('content'), 'reasoning_content': chunk.get('reasoning_content'),
+                             'type': 'analysis-result'}).decode() + '\n\n'
+                    else:
+                        if stream:
+                            yield chunk.get('content')
+                if in_chat:
+                    yield 'data:' + orjson.dumps({'type': 'info', 'msg': 'analysis generated'}).decode() + '\n\n'
+                    yield 'data:' + orjson.dumps({'type': 'analysis_finish'}).decode() + '\n\n'
+                else:
+                    if stream:
+                        yield '\n\n'
+                if not stream:
+                    json_result['content'] = full_text
 
             elif action_type == 'predict':
                 # generate predict
                 analysis_res = self.generate_predict(_session)
                 full_text = ''
                 for chunk in analysis_res:
-                    yield 'data:' + orjson.dumps(
-                        {'content': chunk.get('content'), 'reasoning_content': chunk.get('reasoning_content'),
-                         'type': 'predict-result'}).decode() + '\n\n'
                     full_text += chunk.get('content')
-                yield 'data:' + orjson.dumps({'type': 'info', 'msg': 'predict generated'}).decode() + '\n\n'
+                    if in_chat:
+                        yield 'data:' + orjson.dumps(
+                            {'content': chunk.get('content'), 'reasoning_content': chunk.get('reasoning_content'),
+                             'type': 'predict-result'}).decode() + '\n\n'
+                if in_chat:
+                    yield 'data:' + orjson.dumps({'type': 'info', 'msg': 'predict generated'}).decode() + '\n\n'
 
-                _data = self.check_save_predict_data(session=_session, res=full_text)
-                if _data:
-                    yield 'data:' + orjson.dumps({'type': 'predict-success'}).decode() + '\n\n'
+                has_data = self.check_save_predict_data(session=_session, res=full_text)
+                if has_data:
+                    if in_chat:
+                        yield 'data:' + orjson.dumps({'type': 'predict-success'}).decode() + '\n\n'
+                    else:
+                        chart = get_chat_chart_config(_session, self.record.id)
+                        origin_data = get_chat_chart_data(_session, self.record.id)
+                        predict_data = get_chat_predict_data(_session, self.record.id)
+
+                        if stream:
+                            md_data, _fields_list = DataFormat.convert_data_fields_for_pandas(chart,
+                                                                                              origin_data.get('fields'),
+                                                                                              predict_data)
+                            if not md_data or not _fields_list:
+                                yield 'Predict data result is empty.\n\n'
+                            else:
+                                df = pd.DataFrame(md_data, columns=_fields_list)
+                                df_safe = DataFormat.safe_convert_to_string(df)
+                                markdown_table = df_safe.to_markdown(index=False)
+                                yield markdown_table + '\n\n'
+
+                        else:
+                            json_result['origin_data'] = origin_data
+                            json_result['predict_data'] = predict_data
+
+                        # generate picture
+                        try:
+                            if chart['type'] != 'table':
+                                yield '### generated chart picture\n\n'
+
+                                _data = get_chat_chart_data(_session, self.record.id)
+                                _data['data'] = _data['data'] + predict_data
+
+                                image_url = request_picture(self.record.chat_id, self.record.id, chart,
+                                                            format_json_data(_data))
+                                SQLBotLogUtil.info(image_url)
+                                if stream:
+                                    yield f'![{chart["type"]}]({image_url})'
+                                else:
+                                    json_result['image_url'] = image_url
+                        except Exception as e:
+                            if stream:
+                                raise e
                 else:
-                    yield 'data:' + orjson.dumps({'type': 'predict-failed'}).decode() + '\n\n'
-
-                yield 'data:' + orjson.dumps({'type': 'predict_finish'}).decode() + '\n\n'
+                    if in_chat:
+                        yield 'data:' + orjson.dumps({'type': 'predict-failed'}).decode() + '\n\n'
+                    else:
+                        if stream:
+                            yield full_text + '\n\n'
+                    if not stream:
+                        json_result['success'] = False
+                        json_result['message'] = full_text
+                if in_chat:
+                    yield 'data:' + orjson.dumps({'type': 'predict_finish'}).decode() + '\n\n'
 
             self.finish(_session)
+
+            if not stream:
+                yield json_result
         except Exception as e:
             error_msg: str
             if isinstance(e, SingleMessageError):
@@ -1308,7 +1367,15 @@ class LLMService:
                 error_msg = orjson.dumps({'message': str(e), 'traceback': traceback.format_exc(limit=1)}).decode()
             if _session:
                 self.save_error(session=_session, message=error_msg)
-            yield 'data:' + orjson.dumps({'content': error_msg, 'type': 'error'}).decode() + '\n\n'
+            if in_chat:
+                yield 'data:' + orjson.dumps({'content': error_msg, 'type': 'error'}).decode() + '\n\n'
+            else:
+                if stream:
+                    yield f'> &#x274c; **ERROR**\n\n> \n\n> {error_msg}。'
+                else:
+                    json_result['success'] = False
+                    json_result['message'] = error_msg
+                    yield json_result
         finally:
             # end
             session_maker.remove()

@@ -163,6 +163,17 @@ def format_json_list_data(origin_data: list[dict]):
     return data
 
 
+def get_chat_chart_config(session: SessionDep, chat_record_id: int):
+    stmt = select(ChatRecord.chart).where(and_(ChatRecord.id == chat_record_id))
+    res = session.execute(stmt)
+    for row in res:
+        try:
+            return orjson.loads(row.data)
+        except Exception:
+            pass
+    return {}
+
+
 def get_chat_chart_data(session: SessionDep, chat_record_id: int):
     stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chat_record_id))
     res = session.execute(stmt)

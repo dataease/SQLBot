@@ -1,5 +1,8 @@
 import pandas as pd
 
+from apps.chat.models.chat_model import AxisObj
+
+
 class DataFormat:
     @staticmethod
     def safe_convert_to_string(df):
@@ -75,6 +78,30 @@ class DataFormat:
                 value = inner_data.get(field.value)
                 _row.append(value)
             md_data.append(_row)
+        return md_data, _fields_list
+
+    @staticmethod
+    def convert_data_fields_for_pandas(chart: dict, fields: list, data: list):
+        _fields = {}
+        if chart.get('columns'):
+            for _column in chart.get('columns'):
+                if _column:
+                    _fields[_column.get('value')] = _column.get('name')
+        if chart.get('axis'):
+            if chart.get('axis').get('x'):
+                _fields[chart.get('axis').get('x').get('value')] = chart.get('axis').get('x').get('name')
+            if chart.get('axis').get('y'):
+                _fields[chart.get('axis').get('y').get('value')] = chart.get('axis').get('y').get('name')
+            if chart.get('axis').get('series'):
+                _fields[chart.get('axis').get('series').get('value')] = chart.get('axis').get('series').get(
+                    'name')
+        _column_list = []
+        for field in fields:
+            _column_list.append(
+                AxisObj(name=field if not _fields.get(field) else _fields.get(field), value=field))
+
+        md_data, _fields_list = DataFormat.convert_object_array_for_pandas(_column_list, data)
+
         return md_data, _fields_list
 
     @staticmethod
