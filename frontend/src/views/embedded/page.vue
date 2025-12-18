@@ -1,5 +1,8 @@
 <template>
-  <div :class="dynamicType === 4 ? 'sqlbot--embedded-page' : 'sqlbot-embedded-assistant-page'">
+  <div
+    v-loading="divLoading"
+    :class="dynamicType === 4 ? 'sqlbot--embedded-page' : 'sqlbot-embedded-assistant-page'"
+  >
     <chat-component
       v-if="!loading"
       ref="chatRef"
@@ -13,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import ChatComponent from '@/views/chat/index.vue'
-import { nextTick, onBeforeMount, onBeforeUnmount, reactive, ref } from 'vue'
+import { nextTick, onBeforeMount, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { assistantApi } from '@/api/assistant'
 import { useAssistantStore } from '@/stores/assistant'
@@ -47,6 +50,7 @@ const validator = ref({
   token: '',
 })
 const loading = ref(true)
+const divLoading = ref(true)
 const eventName = 'sqlbot_embedded_event'
 const communicationCb = async (event: any) => {
   if (event.data?.eventName === eventName) {
@@ -80,6 +84,17 @@ const communicationCb = async (event: any) => {
     }
   }
 }
+
+watch(
+  () => loading.value,
+  (val) => {
+    nextTick(() => {
+      setTimeout(() => {
+        divLoading.value = val
+      }, 1000)
+    })
+  }
+)
 const createChat = () => {
   chatRef.value?.createNewChat()
 }
