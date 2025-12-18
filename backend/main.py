@@ -166,6 +166,8 @@ async def custom_swagger_ui(request: Request):
         openapi_url=f"/openapi.json?lang={lang}",
         title="SQLBot API Docs",
         swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+        swagger_js_url="/swagger-ui-bundle.js",
+        swagger_css_url="/swagger-ui.css",
     )
 
 
