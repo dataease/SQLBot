@@ -21,7 +21,7 @@
     "prompt": "프롬프트",
     "disabling_successfully": "비활성화 완료",
     "closed_by_default": "질문 수 창에서 모델 사고 프로세스를 기본적으로 확장할지 또는 닫을지 여부를 제어합니다.",
-    "and_platform_integration": "범위에는 인증 설정 및 플랫폼 통합이 포함됩니다.",
+    "and_platform_integration": "인증 관련",
     "login_settings": "로그인 설정",
     "default_login": "기본 로그인 방식"
   },

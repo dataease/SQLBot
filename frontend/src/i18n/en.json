@@ -21,7 +21,7 @@
     "prompt": "Prompt",
     "disabling_successfully": "Disabling Successfully",
     "closed_by_default": "In the Question Count window, control whether the model thinking process is expanded or closed by default.",
-    "and_platform_integration": "Scope includes authentication settings and platform integration.",
+    "and_platform_integration": "Authentication-related",
     "login_settings": "Login Settings",
     "default_login": "Default Login Method"
   },

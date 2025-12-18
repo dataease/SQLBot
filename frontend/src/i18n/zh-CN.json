@@ -21,7 +21,7 @@
     "prompt": "提示",
     "disabling_successfully": "关闭成功",
     "closed_by_default": "在问数窗口中，控制模型思考过程默认展开或者关闭",
-    "and_platform_integration": "作用域包括认证设置和平台对接",
+    "and_platform_integration": "登录认证相关",
     "login_settings": "登录设置",
     "default_login": "默认登录方式"
   },
