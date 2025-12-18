@@ -39,6 +39,8 @@ class TokenMiddleware(BaseHTTPMiddleware):
             validator: tuple[any] = await self.validateAssistant(assistantToken, trans)
             if validator[0]:
                 request.state.current_user = validator[1]
+                if request.state.current_user and trans.lang:
+                    request.state.current_user.language = trans.lang
                 request.state.assistant = validator[2]
                 origin = request.headers.get("X-SQLBOT-HOST-ORIGIN") or get_origin_from_referer(request)
                 if origin and validator[2]:
