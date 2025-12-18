@@ -33,7 +33,7 @@ reusable_oauth2 = XOAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
 
-router = APIRouter(tags=["mcp"], prefix="/mcp", include_in_schema=False)
+router = APIRouter(tags=["mcp"], prefix="/mcp")
 
 
 # @router.post("/access_token", operation_id="access_token")
