@@ -456,7 +456,7 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
         field_sheets = []
         table_sheet = None  # []
         for sheet in sheet_names:
-            df = pd.read_excel(excel_file, sheet_name=sheet, engine="openpyxl")
+            df = pd.read_excel(excel_file, sheet_name=sheet, engine="openpyxl").fillna('')
             if sheet == t_sheet:
                 table_sheet = df.where(pd.notnull(df), None).to_dict(orient="records")
             else:
