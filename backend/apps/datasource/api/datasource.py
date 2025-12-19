@@ -372,7 +372,7 @@ f_n_col = "字段名"
 f_c_col = "字段备注"
 
 
-@router.get("/exportDsSchema/{id}")
+@router.get("/exportDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_export_ds_schema")
 async def export_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     # {
     #     'sheet':'', sheet name
@@ -438,7 +438,7 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
     )
 
 
-@router.post("/uploadDsSchema/{id}")
+@router.post("/uploadDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_upload_ds_schema")
 async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
                            file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
