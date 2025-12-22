@@ -276,9 +276,6 @@ const submitUpload = () => {
 <style scoped lang="less">
 .up-loader-remark {
   margin: 0;
-  position: absolute;
-  top: 12px;
-  right: 24px;
 }
 .import-container {
   display: flex;

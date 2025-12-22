@@ -354,16 +354,18 @@ const btnSelectClick = (val: any) => {
         <icon_right_outlined></icon_right_outlined>
       </el-icon>
       <div class="name">{{ info.name }}</div>
-      <el-button @click="downloadTemplate" class="export-remark" secondary>
-        <template #icon>
-          <icon_import_outlined></icon_import_outlined>
-        </template>
-        {{ $t('professional.export') }}
-      </el-button>
-      <UploaderRemark
-        :upload-path="`/datasource/uploadDsSchema/${info.id}`"
-        @upload-finished="init"
-      ></UploaderRemark>
+      <div class="export-remark">
+        <el-button style="margin-right: 12px" @click="downloadTemplate" secondary>
+          <template #icon>
+            <icon_import_outlined></icon_import_outlined>
+          </template>
+          {{ $t('professional.export') }}
+        </el-button>
+        <UploaderRemark
+          :upload-path="`/datasource/uploadDsSchema/${info.id}`"
+          @upload-finished="init"
+        ></UploaderRemark>
+      </div>
     </div>
     <div class="content">
       <div class="side-list">
@@ -579,16 +581,18 @@ const btnSelectClick = (val: any) => {
               <div class="preview-num">
                 {{ t('ds.pieces_in_total', { msg: total, ms: showNum }) }}
               </div>
-              <el-table :data="previewData.data" style="width: 100%">
-                <el-table-column
-                  v-for="(c, index) in previewData.fields"
-                  :key="index"
-                  :prop="c"
-                  :label="c"
-                  min-width="150"
-                  :render-header="renderHeader"
-                />
-              </el-table>
+              <div class="table-container">
+                <el-table :data="previewData.data" style="width: 100%; height: 100%">
+                  <el-table-column
+                    v-for="(c, index) in previewData.fields"
+                    :key="index"
+                    :prop="c"
+                    :label="c"
+                    min-width="150"
+                    :render-header="renderHeader"
+                  />
+                </el-table>
+              </div>
             </template>
           </div>
         </div>
@@ -675,7 +679,7 @@ const btnSelectClick = (val: any) => {
 
     .export-remark {
       position: absolute;
-      right: 116px;
+      right: 24px;
       top: 12px;
     }
 
@@ -936,10 +940,6 @@ const btnSelectClick = (val: any) => {
           margin-top: 16px;
           height: calc(100% - 50px);
 
-          &.overflow-preview {
-            overflow-y: auto;
-          }
-
           .table-content_preview {
             max-height: calc(100% - 50px);
             overflow-y: auto;
@@ -1005,6 +1005,11 @@ const btnSelectClick = (val: any) => {
             font-size: 14px;
             line-height: 22px;
             color: #646a73;
+          }
+
+          .table-container {
+            width: 100%;
+            height: calc(100% - 46px);
           }
         }
       }
