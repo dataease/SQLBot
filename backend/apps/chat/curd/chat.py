@@ -168,7 +168,7 @@ def get_chat_chart_config(session: SessionDep, chat_record_id: int):
     res = session.execute(stmt)
     for row in res:
         try:
-            return orjson.loads(row.data)
+            return orjson.loads(row.chart)
         except Exception:
             pass
     return {}

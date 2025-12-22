@@ -198,11 +198,10 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
                 if rec_first_chat:
                     raise Exception(f'Record id: {record_id} does not support this operation')
 
-                if command == QuickCommand.REGENERATE:
-                    if rec_analysis_record_id:
-                        raise Exception('Analysis record does not support this operation')
-                    if rec_predict_record_id:
-                        raise Exception('Predict data record does not support this operation')
+                if rec_analysis_record_id:
+                    raise Exception('Analysis record does not support this operation')
+                if rec_predict_record_id:
+                    raise Exception('Predict data record does not support this operation')
 
             else:  # get last record id
                 stmt = select(ChatRecord.id, ChatRecord.chat_id, ChatRecord.regenerate_record_id).where(
@@ -233,10 +232,12 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
                                         finish_step, embedding)
 
             elif command == QuickCommand.ANALYSIS:
-                return await analysis_or_predict(session, current_user, rec_id, 'analysis', current_assistant, in_chat, stream)
+                return await analysis_or_predict(session, current_user, rec_id, 'analysis', current_assistant, in_chat,
+                                                 stream)
 
             elif command == QuickCommand.PREDICT_DATA:
-                return await analysis_or_predict(session, current_user, rec_id, 'predict', current_assistant, in_chat, stream)
+                return await analysis_or_predict(session, current_user, rec_id, 'predict', current_assistant, in_chat,
+                                                 stream)
             else:
                 raise Exception(f'Unknown command: {command.value}')
         else:
@@ -247,7 +248,11 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
 
         if stream:
             def _err(_e: Exception):
-                yield 'data:' + orjson.dumps({'content': str(_e), 'type': 'error'}).decode() + '\n\n'
+                if in_chat:
+                    yield 'data:' + orjson.dumps({'content': str(_e), 'type': 'error'}).decode() + '\n\n'
+                else:
+                    yield f'&#x274c; **ERROR:**\n'
+                    yield f'> {str(_e)}\n'
 
             return StreamingResponse(_err(e), media_type="text/event-stream")
         else:

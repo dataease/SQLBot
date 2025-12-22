@@ -1172,15 +1172,17 @@ class LLMService:
             else:
                 # generate picture
                 try:
-                    if chart['type'] != 'table':
+                    if chart.get('type') != 'table':
                         yield '### generated chart picture\n\n'
-                        image_url = request_picture(self.record.chat_id, self.record.id, chart,
-                                                    format_json_data(result))
+                        image_url, error = request_picture(self.record.chat_id, self.record.id, chart,
+                                                           format_json_data(result))
                         SQLBotLogUtil.info(image_url)
                         if stream:
-                            yield f'![{chart["type"]}]({image_url})'
+                            yield f'![{chart.get("type")}]({image_url})'
                         else:
                             json_result['image_url'] = image_url
+                        if error is not None:
+                            raise error
                 except Exception as e:
                     if stream:
                         raise e
@@ -1207,7 +1209,8 @@ class LLMService:
                 yield 'data:' + orjson.dumps({'content': error_msg, 'type': 'error'}).decode() + '\n\n'
             else:
                 if stream:
-                    yield f'> &#x274c; **ERROR**\n\n> \n\n> {error_msg}。'
+                    yield f'&#x274c; **ERROR:**\n'
+                    yield f'> {error_msg}\n'
                 else:
                     json_result['success'] = False
                     json_result['message'] = error_msg
@@ -1327,19 +1330,21 @@ class LLMService:
 
                         # generate picture
                         try:
-                            if chart['type'] != 'table':
+                            if chart.get('type') != 'table':
                                 yield '### generated chart picture\n\n'
 
                                 _data = get_chat_chart_data(_session, self.record.id)
-                                _data['data'] = _data['data'] + predict_data
+                                _data['data'] = _data.get('data') + predict_data
 
-                                image_url = request_picture(self.record.chat_id, self.record.id, chart,
-                                                            format_json_data(_data))
+                                image_url, error = request_picture(self.record.chat_id, self.record.id, chart,
+                                                                   format_json_data(_data))
                                 SQLBotLogUtil.info(image_url)
                                 if stream:
-                                    yield f'![{chart["type"]}]({image_url})'
+                                    yield f'![{chart.get("type")}]({image_url})'
                                 else:
                                     json_result['image_url'] = image_url
+                                if error is not None:
+                                    raise error
                         except Exception as e:
                             if stream:
                                 raise e
@@ -1360,6 +1365,7 @@ class LLMService:
             if not stream:
                 yield json_result
         except Exception as e:
+            traceback.print_exc()
             error_msg: str
             if isinstance(e, SingleMessageError):
                 error_msg = str(e)
@@ -1371,7 +1377,8 @@ class LLMService:
                 yield 'data:' + orjson.dumps({'content': error_msg, 'type': 'error'}).decode() + '\n\n'
             else:
                 if stream:
-                    yield f'> &#x274c; **ERROR**\n\n> \n\n> {error_msg}。'
+                    yield f'&#x274c; **ERROR:**\n'
+                    yield f'> {error_msg}\n'
                 else:
                     json_result['success'] = False
                     json_result['message'] = error_msg
@@ -1451,16 +1458,20 @@ def request_picture(chat_id: int, record_id: int, chart: dict, data: dict):
 
     request_obj = {
         "path": os.path.join(settings.MCP_IMAGE_PATH, file_name),
-        "type": chart['type'],
+        "type": chart.get('type'),
         "data": orjson.dumps(data.get('data') if data.get('data') else []).decode(),
         "axis": orjson.dumps(axis).decode(),
     }
 
-    requests.post(url=settings.MCP_IMAGE_HOST, json=request_obj)
+    _error = None
+    try:
+        requests.post(url=settings.MCP_IMAGE_HOST, json=request_obj, timeout=settings.SERVER_IMAGE_TIMEOUT)
+    except Exception as e:
+        _error = e
 
     request_path = urllib.parse.urljoin(settings.SERVER_IMAGE_HOST, f"{file_name}.png")
 
-    return request_path
+    return request_path, _error
 
 
 def get_token_usage(chunk: BaseMessageChunk, token_usage: dict = None):
