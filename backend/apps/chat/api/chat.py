@@ -21,6 +21,8 @@ from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.command_utils import parse_quick_command
 from common.utils.data_format import DataFormat
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
@@ -80,6 +82,12 @@ async def rename(session: SessionDep, chat: RenameChat):
 
 
 @router.delete("/{chart_id}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
+@system_log(LogConfig(
+    operation_type=OperationType.DELETE_QA,
+    operation_detail=OperationDetails.DELETE_QA_DETAILS,
+    module=OperationModules.QA,
+    resource_id_expr="chart_id"
+))
 async def delete(session: SessionDep, chart_id: int):
     try:
         return delete_chat(session=session, chart_id=chart_id)
@@ -92,6 +100,12 @@ async def delete(session: SessionDep, chart_id: int):
 
 @router.post("/start", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}start_chat")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="create_chat_obj.datasource"))
+@system_log(LogConfig(
+    operation_type=OperationType.CREATE_QA,
+    operation_detail=OperationDetails.CREATE_QA_DETAILS,
+    module=OperationModules.QA,
+    result_id_expr="id"
+))
 async def start_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj: CreateChat):
     try:
         return create_chat(session, current_user, create_chat_obj)

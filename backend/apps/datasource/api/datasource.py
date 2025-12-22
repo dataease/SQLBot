@@ -28,7 +28,8 @@ from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj, \
     TableSchemaResponse, ColumnSchemaResponse, PreviewResponse
-
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
 
@@ -69,6 +70,12 @@ async def check_by_id(session: SessionDep, trans: Trans,
 
 
 @router.post("/add", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_add")
+@system_log(LogConfig(
+    operation_type=OperationType.CREATE_DATASOURCE,
+    operation_detail=OperationDetails.CREATE_DATASOURCE_DETAILS,
+    module=OperationModules.DATASOURCE,
+    result_id_expr="id"
+))
 async def add(session: SessionDep, trans: Trans, user: CurrentUser, ds: CreateDatasource):
     def inner():
         return create_ds(session, trans, user, ds)
@@ -87,6 +94,12 @@ async def choose_tables(session: SessionDep, trans: Trans, tables: List[CoreTabl
 
 @router.post("/update", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_update")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="ds.id"))
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE_DATASOURCE,
+    operation_detail=OperationDetails.UPDATE_DATASOURCE_DETAILS,
+    module=OperationModules.DATASOURCE,
+    resource_id_expr="ds.id"
+))
 async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
     def inner():
         return update_ds(session, trans, user, ds)
@@ -96,6 +109,12 @@ async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreD
 
 @router.post("/delete/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_delete")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="id"))
+@system_log(LogConfig(
+    operation_type=OperationType.DELETE_DATASOURCE,
+    operation_detail=OperationDetails.DELETE_DATASOURCE_DETAILS,
+    module=OperationModules.DATASOURCE,
+    resource_id_expr="id"
+))
 async def delete(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     return delete_ds(session, id)
 

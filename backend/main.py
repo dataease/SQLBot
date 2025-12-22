@@ -21,6 +21,7 @@ from apps.system.crud.aimodel_manage import async_model_info
 from apps.system.crud.assistant import init_dynamic_cors
 from apps.system.middleware.auth import TokenMiddleware
 from apps.system.schemas.permission import RequestContextMiddleware
+from sqlbot_xpack.audit.schemas.request_context import RequestContextMiddlewareCommon
 from common.core.config import settings
 from common.core.response_middleware import ResponseMiddleware, exception_handler
 from common.core.sqlbot_cache import init_sqlbot_cache
@@ -201,6 +202,7 @@ if settings.all_cors_origins:
 app.add_middleware(TokenMiddleware)
 app.add_middleware(ResponseMiddleware)
 app.add_middleware(RequestContextMiddleware)
+app.add_middleware(RequestContextMiddlewareCommon)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # Register exception handlers
