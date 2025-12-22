@@ -31,7 +31,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
     get_last_execute_sql_error, format_json_data, format_chart_fields, get_chat_brief_generate, get_chat_predict_data, \
-    get_chat_chart_config
+    get_chat_chart_config, get_chat_history_questions
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj
 from apps.data_training.curd.data_training import get_training_template
@@ -101,6 +101,12 @@ class LLMService:
         chat: Chat | None = session.get(Chat, chat_id)
         if not chat:
             raise SingleMessageError(f"Chat with id {chat_id} not found")
+
+        # 获取历史问题（用于多轮对话embedding）
+        history_questions = []
+        if settings.MULTI_TURN_EMBEDDING_ENABLED:
+            history_questions = get_chat_history_questions(session, chat_id, settings.MULTI_TURN_HISTORY_COUNT)
+
         ds: CoreDatasource | AssistantOutDsSchema | None = None
         if chat.datasource:
             # Get available datasource
