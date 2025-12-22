@@ -3,6 +3,7 @@
 import json
 import time
 import traceback
+from typing import List
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.embedding.utils import cosine_similarity
@@ -10,7 +11,38 @@ from common.core.config import settings
 from common.utils.utils import SQLBotLogUtil
 
 
-def get_table_embedding(tables: list[dict], question: str):
+def build_context_query(current_question: str, history_questions: List[str] = None) -> str:
+    """
+    构建包含上下文的查询文本
+
+    Args:
+        current_question: 当前问题
+        history_questions: 历史问题列表（按时间正序，最旧的在前）
+
+    Returns:
+        拼接后的查询文本
+    """
+    if not settings.MULTI_TURN_EMBEDDING_ENABLED or not history_questions:
+        return current_question
+
+    max_history = settings.MULTI_TURN_HISTORY_COUNT
+    recent_history = history_questions[-max_history:] if history_questions else []
+
+    if not recent_history:
+        return current_question
+
+    # 拼接：历史问题 + 当前问题
+    context_parts = recent_history + [current_question]
+
+    # 使用分隔符拼接，保持语义连贯
+    context_query = " | ".join(context_parts)
+
+    SQLBotLogUtil.info(f"Context query for embedding: {context_query}")
+
+    return context_query
+
+
+def get_table_embedding(tables: list[dict], question: str, history_questions: List[str] = None):
     _list = []
     for table in tables:
         _list.append({"id": table.get('id'), "schema_table": table.get('schema_table'), "cosine_similarity": 0.0})
@@ -25,7 +57,9 @@ def get_table_embedding(tables: list[dict], question: str):
             end_time = time.time()
             SQLBotLogUtil.info(str(end_time - start_time))
 
-            q_embedding = model.embed_query(question)
+            # 构建包含上下文的查询
+            context_query = build_context_query(question, history_questions)
+            q_embedding = model.embed_query(context_query)
             for index in range(len(results)):
                 item = results[index]
                 _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, item)
@@ -40,7 +74,18 @@ def get_table_embedding(tables: list[dict], question: str):
     return _list
 
 
-def calc_table_embedding(tables: list[dict], question: str):
+def calc_table_embedding(tables: list[dict], question: str, history_questions: List[str] = None):
+    """
+    计算表结构与问题的embedding相似度
+
+    Args:
+        tables: 表结构列表
+        question: 当前问题
+        history_questions: 历史问题列表（可选，用于多轮对话）
+
+    Returns:
+        按相似度排序的表列表
+    """
     _list = []
     for table in tables:
         _list.append(
@@ -58,7 +103,9 @@ def calc_table_embedding(tables: list[dict], question: str):
             # SQLBotLogUtil.info(str(end_time - start_time))
             results = [item.get('embedding') for item in _list]
 
-            q_embedding = model.embed_query(question)
+            # 构建包含上下文的查询
+            context_query = build_context_query(question, history_questions)
+            q_embedding = model.embed_query(context_query)
             for index in range(len(results)):
                 item = results[index]
                 if item:

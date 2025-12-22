@@ -425,7 +425,7 @@ def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: Core
 
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
-                     embedding: bool = True) -> str:
+                     embedding: bool = True, history_questions: List[str] = None) -> str:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -464,7 +464,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
 
     # do table embedding
     if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
-        tables = calc_table_embedding(tables, question)
+        tables = calc_table_embedding(tables, question, history_questions)
     # splice schema
     if tables:
         for s in tables:
