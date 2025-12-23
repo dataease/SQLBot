@@ -1,7 +1,7 @@
 import { request } from '@/utils/request'
 
 export const userImportApi = {
-  downExcelTemplateApi: () => request.post('/user/excelTemplate', {}, { responseType: 'blob' }),
+  downExcelTemplateApi: () => request.get('/user/template', { responseType: 'blob' }),
   importUserApi: (data: any) =>
     request.post('/user/batchImport', data, {
       headers: {

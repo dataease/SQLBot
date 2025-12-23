@@ -20,7 +20,18 @@
     "email": "이메일",
     "password": "비밀번호",
     "language_not_support": "시스템이 [{key}] 언어를 지원하지 않습니다!",
-    "ws_miss": "현재 사용자가 [{ws}] 작업 공간에 속해 있지 않습니다!"
+    "ws_miss": "현재 사용자가 [{ws}] 작업 공간에 속해 있지 않습니다!",
+    "name": "성명",
+    "status": "사용자 상태",
+    "origin": "사용자 출처",
+    "workspace": "작업 공간",
+    "role": "역할",
+    "platform_user_id": "외부 사용자 고유 식별자",
+    "administrator": "관리자",
+    "ordinary_member": "일반 멤버",
+    "status_enabled": "활성화됨",
+    "status_disabled": "비활성화됨",
+    "local_creation": "로컬 생성"
   },
   "i18n_ws": {
     "title": "작업 공간"

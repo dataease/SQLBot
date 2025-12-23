@@ -20,7 +20,18 @@
     "email": "Email",
     "password": "Password",
     "language_not_support": "The system does not support [{key}] language!",
-    "ws_miss": "Current user is not in the workspace [{ws}]!"
+    "ws_miss": "Current user is not in the workspace [{ws}]!",
+    "name": "Name",
+    "status": "User Status",
+    "origin": "User Source",
+    "workspace": "Workspace",
+    "role": "Role",
+    "platform_user_id": "External User Unique Identifier",
+    "administrator": "Administrator",
+    "ordinary_member": "Member",
+    "status_enabled": "Enabled",
+    "status_disabled": "Disabled",
+    "local_creation": "Local"
   },
   "i18n_ws": {
     "title": "Workspace"

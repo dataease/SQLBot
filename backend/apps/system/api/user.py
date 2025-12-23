@@ -1,9 +1,10 @@
 from collections import defaultdict
 from typing import Optional
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, File, Path, Query, UploadFile
 from pydantic import Field
 from sqlmodel import SQLModel, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
+from apps.system.crud.user_excel import batchUpload, downTemplate
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.models.user import UserModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
@@ -18,6 +19,15 @@ from common.core.config import settings
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 
 router = APIRouter(tags=["system_user"], prefix="/user")
+
+
+@router.get("/template")
+async def templateExcel(trans: Trans):
+    return await downTemplate(trans)
+
+@router.post("/upload")
+async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
+    batchUpload(trans, file)
 
 @router.get("/info", summary=f"{PLACEHOLDER_PREFIX}system_user_current_user", description=f"{PLACEHOLDER_PREFIX}system_user_current_user_desc")
 async def user_info(current_user: CurrentUser) -> UserInfoDTO:
@@ -267,3 +277,11 @@ async def statusChange(session: SessionDep, current_user: CurrentUser, trans: Tr
     db_user.status = status
     session.add(db_user)
     session.commit()
+    
+
+
+""" async def batchUpload():
+    pass
+
+async def errorData():
+    pass """

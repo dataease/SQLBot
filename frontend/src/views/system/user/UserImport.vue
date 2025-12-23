@@ -91,8 +91,9 @@ const downExcel = () => {
   userImportApi
     .downExcelTemplateApi()
     .then((res) => {
-      const blobData = res.data
-      const blob = new Blob([blobData], { type: 'application/vnd.ms-excel' })
+      const blob = new Blob([res], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
       const link = document.createElement('a')
       link.style.display = 'none'
       link.href = URL.createObjectURL(blob)
@@ -258,7 +259,7 @@ defineExpose({
   <el-dialog
     v-model="dialogShow"
     :title="t('user.batch_import')"
-    width="400px"
+    width="600px"
     modal-class="user-import-class"
     @before-close="closeDialog"
   >

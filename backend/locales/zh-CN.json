@@ -20,7 +20,18 @@
     "email": "邮箱",
     "password": "密码",
     "language_not_support": "系统不支持[{key}]语言！",
-    "ws_miss": "当前用户不在工作空间[{ws}]中！"
+    "ws_miss": "当前用户不在工作空间[{ws}]中！",
+    "name": "姓名",
+    "status": "用户状态",
+    "origin": "用户来源",
+    "workspace": "工作空间",
+    "role": "角色",
+    "platform_user_id": "外部用户唯一标识",
+    "administrator": "管理员",
+    "ordinary_member": "普通成员",
+    "status_enabled": "已启用",
+    "status_disabled": "已禁用",
+    "local_creation": "本地创建"
   },
   "i18n_ws": {
     "title": "工作空间"
