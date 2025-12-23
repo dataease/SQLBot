@@ -8,14 +8,12 @@ class DataFormat:
     def safe_convert_to_string(df):
         df_copy = df.copy()
 
-        def format_value(x):
-            if pd.isna(x):
-                return ""
-
-            return "\u200b" + str(x)
-
         for col in df_copy.columns:
-            df_copy[col] = df_copy[col].apply(format_value)
+            # 使用map避免ambiguous truth value问题
+            df_copy[col] = df_copy[col].map(
+                # 关键：在数字字符串前添加零宽空格，阻止pandas的自动格式化
+                lambda x: "" if pd.isna(x) else "\u200b" + str(x)
+            )
 
         return df_copy
 
