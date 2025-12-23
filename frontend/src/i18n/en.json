@@ -819,5 +819,11 @@
   },
   "modelType": {
     "llm": "Large Language Model"
+  },
+  "api_key": {
+    "info_tips": "The API Key is your credential for accessing the SQLBot API, with full permissions for your account. Please keep it secure! Do not disclose the API Key in any public channels to avoid security risks from unauthorized use.",
+    "create": "Create",
+    "to_doc": "View API",
+    "trigger_limit": "Supports up to {0} API Keys"
   }
 }
