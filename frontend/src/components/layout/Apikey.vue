@@ -80,6 +80,13 @@ const deleteHandler = (row: any) => {
     },
   })
 }
+const sortChange = (param: any) => {
+  if (param?.order === 'ascending') {
+    state.tableData.sort((a: any, b: any) => a.create_time - b.create_time)
+  } else {
+    state.tableData.sort((a: any, b: any) => b.create_time - a.create_time)
+  }
+}
 const loadGridData = () => {
   request.get('/system/apikey').then((res: any) => {
     state.tableData = res || []
@@ -133,7 +140,12 @@ onMounted(() => {
       </el-button>
     </div>
     <div class="api-key-grid">
-      <el-table ref="multipleTableRef" :data="state.tableData" style="width: 100%">
+      <el-table
+        ref="multipleTableRef"
+        :data="state.tableData"
+        style="width: 100%"
+        @sort-change="sortChange"
+      >
         <el-table-column prop="access_key" label="Access Key" width="256">
           <template #default="scope">
             <div class="user-status-container">

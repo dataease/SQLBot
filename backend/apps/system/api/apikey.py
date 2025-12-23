@@ -8,7 +8,7 @@ from common.core.deps import CurrentUser, SessionDep
 from common.utils.time import get_timestamp
 import secrets
 
-router = APIRouter(tags=["system_apikey"], prefix="/system/apikey")
+router = APIRouter(tags=["system_apikey"], prefix="/system/apikey", include_in_schema=False)
 
 @router.get("")
 async def grid(session: SessionDep, current_user: CurrentUser) -> list[ApikeyGridItem]:
