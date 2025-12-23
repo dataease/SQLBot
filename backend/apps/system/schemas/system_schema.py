@@ -207,3 +207,13 @@ class AssistantUiSchema(BaseCreatorDTO):
     name: Optional[str] = None
     welcome: Optional[str] = None
     welcome_desc: Optional[str] = None
+
+class ApikeyStatus(BaseModel):
+    id: int = Field(description=f"{PLACEHOLDER_PREFIX}id")
+    status: bool = Field(description=f"{PLACEHOLDER_PREFIX}status")
+
+class ApikeyGridItem(BaseCreatorDTO):
+    access_key: str = Field(description=f"Access Key")
+    secret_key: str = Field(description=f"Secret Key")
+    status: bool = Field(description=f"{PLACEHOLDER_PREFIX}status")
+    create_time: int = Field(description=f"{PLACEHOLDER_PREFIX}create_time")

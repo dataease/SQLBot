@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import icon_warning_filled from '@/assets/svg/icon_info_colorful.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
@@ -11,6 +11,8 @@ import icon_visible_outlined from '@/assets/embedded/icon_visible_outlined.svg'
 import { formatTimestamp } from '@/utils/date'
 import { useClipboard } from '@vueuse/core'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
+import { request } from '@/utils/request'
+
 const { t } = useI18n()
 
 const limitCount = ref(5)
@@ -23,37 +25,13 @@ const state = reactive({
   tableData: [] as any,
 })
 
-state.tableData = [
-  {
-    access_key: 'fwafwafwafwaf',
-    secret_key: '1234567',
-    status: false,
-    create_time: 1766455902237,
-  },
-  {
-    access_key: 'asdasdasdasd',
-    secret_key: '987654321',
-    status: true,
-    create_time: 1766455902237,
-  },
-  {
-    access_key: 'asdasdasdasd',
-    secret_key: '987654321',
-    status: true,
-    create_time: 1766455902237,
-  },
-  {
-    access_key: 'asdasdasdasd',
-    secret_key: '987654321',
-    status: true,
-    create_time: 1766455902237,
-  },
-]
 const handleAdd = () => {
   if (triggerLimit.value) {
     return
   }
-  console.log('Add API Key')
+  request.post('/system/apikey', {}).then(() => {
+    loadGridData()
+  })
 }
 const pwd = ref('**********')
 const toApiDoc = () => {
@@ -63,14 +41,13 @@ const toApiDoc = () => {
 }
 
 const statusHandler = (row: any) => {
-  /* state.form = { ...row }
-  editTerm() */
   const param = {
     id: row.id,
     status: row.status,
   }
-  console.log(row, param)
-  // userApi.status(param)
+  request.put('/system/apikey/status', param).then(() => {
+    loadGridData()
+  })
 }
 const { copy } = useClipboard({ legacy: true })
 
@@ -90,18 +67,27 @@ const deleteHandler = (row: any) => {
     cancelButtonText: t('common.cancel'),
     customClass: 'confirm-no_icon',
     autofocus: false,
-  }).then(() => {
-    /* userApi.delete(row.id).then(() => {
-      multipleSelectionAll.value = multipleSelectionAll.value.filter((ele) => ele.id !== row.id)
-      ElMessage({
-        type: 'success',
-        message: t('dashboard.delete_success'),
-      })
-      search()
-    }) */
-    console.log('execute delete')
+    callback: (action: any) => {
+      if (action === 'confirm') {
+        request.delete(`/system/apikey/${row.id}`).then(() => {
+          loadGridData()
+          ElMessage({
+            type: 'success',
+            message: t('dashboard.delete_success'),
+          })
+        })
+      }
+    },
   })
 }
+const loadGridData = () => {
+  request.get('/system/apikey').then((res: any) => {
+    state.tableData = res || []
+  })
+}
+onMounted(() => {
+  loadGridData()
+})
 </script>
 
 <template>

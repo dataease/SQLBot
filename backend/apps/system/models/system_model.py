@@ -68,3 +68,14 @@ class AuthenticationModel(SnowflakeBase, AuthenticationBaseModel, table=True):
     create_time: Optional[int] = Field(default=0, sa_type=BigInteger())
     enable: bool = Field(default=False, nullable=False)
     valid: bool = Field(default=False, nullable=False)
+    
+
+class ApiKeyBaseModel(SQLModel):
+    access_key: str = Field(max_length=255, nullable=False)
+    secret_key: str = Field(max_length=255, nullable=False)
+    create_time: int = Field(default=0, sa_type=BigInteger())
+    uid: int = Field(default=0,nullable=False, sa_type=BigInteger())
+    status: bool = Field(default=True, nullable=False)
+    
+class ApiKeyModel(SnowflakeBase, ApiKeyBaseModel, table=True):
+    __tablename__ = "sys_apikey"
