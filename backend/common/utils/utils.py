@@ -274,6 +274,16 @@ def origin_match_domain(origin: str, domain: str) -> bool:
             return True
     
     return False
+
+def get_domain_list(domain: str) -> list[str]:
+    domains = []
+    if not domain:
+        return domains
+    for d in re.split(r'[,;]', domain):
+        d_clean = d.strip().rstrip('/')
+        if d_clean:
+            domains.append(d_clean)
+    return domains
     
 
 def equals_ignore_case(str1: str, *args: str) -> bool:

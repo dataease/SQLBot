@@ -19,7 +19,7 @@ from common.core.config import settings
 from common.core.db import engine
 from common.core.sqlbot_cache import cache
 from common.utils.aes_crypto import simple_aes_decrypt
-from common.utils.utils import equals_ignore_case, string_to_numeric_hash
+from common.utils.utils import equals_ignore_case, get_domain_list, string_to_numeric_hash
 from common.core.deps import Trans
 
 
@@ -81,7 +81,7 @@ def init_dynamic_cors(app: FastAPI):
             unique_domains = []
             for item in list_result:
                 if item.domain:
-                    for domain in item.domain.split(','):
+                    for domain in get_domain_list(item.domain):
                         domain = domain.strip()
                         if domain and domain not in seen:
                             seen.add(domain)
