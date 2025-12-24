@@ -205,6 +205,12 @@ class TokenMiddleware(BaseHTTPMiddleware):
                 return False, f"Miss account payload error!"
             account = payload['account']
             with Session(engine) as session:
+                assistant_info = await get_assistant_info(session=session, assistant_id=embeddedId)
+                assistant_info = AssistantModel.model_validate(assistant_info)
+                payload = jwt.decode(
+                    param, assistant_info.app_secret, algorithms=[security.ALGORITHM]
+                )
+                assistant_info = AssistantHeader.model_validate(assistant_info.model_dump(exclude_unset=True))
                 """ session_user = await get_user_info(session = session, user_id = token_data.id)
                 session_user = UserInfoDTO.model_validate(session_user) """
                 session_user = get_user_by_account(session = session, account=account)
@@ -220,12 +226,7 @@ class TokenMiddleware(BaseHTTPMiddleware):
                 if not session_user.oid or session_user.oid == 0:
                     message = trans('i18n_login.no_associated_ws', msg = trans('i18n_concat_admin'))
                     raise Exception(message)
-                assistant_info = await get_assistant_info(session=session, assistant_id=embeddedId)
-                assistant_info = AssistantModel.model_validate(assistant_info)
-                payload = jwt.decode(
-                    param, assistant_info.app_secret, algorithms=[security.ALGORITHM]
-                )
-                assistant_info = AssistantHeader.model_validate(assistant_info.model_dump(exclude_unset=True))
+                
                 return True, session_user, assistant_info
         except Exception as e:
             SQLBotLogUtil.exception(f"Embedded validation error: {str(e)}")

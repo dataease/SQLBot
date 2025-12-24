@@ -18,6 +18,7 @@ from common.utils.utils import SQLBotLogUtil, prepare_model_arg
 router = APIRouter(tags=["system_model"], prefix="/system/aimodel")
 
 @router.post("/status", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def check_llm(info: AiModelCreator, trans: Trans):
     async def generate():
         try:
@@ -92,6 +93,7 @@ async def query(
     return items
 
 @router.get("/{id}", response_model=AiModelEditor, summary=f"{PLACEHOLDER_PREFIX}system_model_query", description=f"{PLACEHOLDER_PREFIX}system_model_query")
+@require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def get_model_by_id(
         session: SessionDep,
         id: int = Path(description="ID")
