@@ -159,7 +159,7 @@ async def ask_recommend_questions(session: SessionDep, current_user: CurrentUser
 
 @router.get("/recent_questions/{datasource_id}", response_model=List[str],
             summary=f"{PLACEHOLDER_PREFIX}get_recommend_questions")
-@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="datasource_id"))
+#@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="datasource_id"))
 async def recommend_questions(session: SessionDep, current_user: CurrentUser,
                               datasource_id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     return list_recent_questions(session=session, current_user=current_user, datasource_id=datasource_id)
@@ -201,7 +201,7 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
                 stmt = select(ChatRecord.id, ChatRecord.chat_id, ChatRecord.analysis_record_id,
                               ChatRecord.predict_record_id, ChatRecord.regenerate_record_id,
                               ChatRecord.first_chat).where(
-                    and_(ChatRecord.id == record_id))
+                    and_(ChatRecord.id == record_id)).order_by(ChatRecord.create_time.desc())
                 _record = session.execute(stmt).fetchone()
                 if not _record:
                     raise Exception(f'Record id: {record_id} does not exist')

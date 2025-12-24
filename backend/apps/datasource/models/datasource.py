@@ -148,8 +148,8 @@ class TableSchema:
 
 
 class TableSchemaResponse(BaseModel):
-    tableName: str = None
-    tableComment: str = None
+    tableName: str = ''
+    tableComment: str | None = ''
 
 
 class ColumnSchema:
@@ -164,9 +164,9 @@ class ColumnSchema:
 
 
 class ColumnSchemaResponse(BaseModel):
-    fieldName: str
-    fieldType: str
-    fieldComment: str
+    fieldName: str | None = ''
+    fieldType: str | None = ''
+    fieldComment: str | None = ''
 
 
 class TableAndFields:
@@ -183,7 +183,8 @@ class TableAndFields:
 class FieldObj(BaseModel):
     fieldName: str | None
 
+
 class PreviewResponse(BaseModel):
-    fields:List = []
-    data:List = []
-    sql:str = ''
+    fields: List | None = []
+    data: List | None = []
+    sql: str | None = ''

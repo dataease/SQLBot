@@ -195,7 +195,7 @@ async def get_one(session: SessionDep, id: int = Path(description="ID")):
     return db_model
 
 
-@router.delete("/{id}", response_model=AssistantModel, summary=f"{PLACEHOLDER_PREFIX}assistant_del_api", description=f"{PLACEHOLDER_PREFIX}assistant_del_api")
+@router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}assistant_del_api", description=f"{PLACEHOLDER_PREFIX}assistant_del_api")
 @clear_cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="id")
 async def delete(request: Request, session: SessionDep, id: int = Path(description="ID")):
     db_model = session.get(AssistantModel, id)

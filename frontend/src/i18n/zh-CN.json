@@ -8,6 +8,8 @@
     "Details": "详情"
   },
   "parameter": {
+    "export_notes": "导出备注",
+    "import_notes": "导入备注",
     "memo": "备注更新规则：根据表名和字段名匹配，如果匹配则更新表备注和字段备注；如果匹配不上，备注保持不变。",
     "parameter_configuration": "参数配置",
     "question_count_settings": "问数设置",
@@ -854,5 +856,11 @@
     "setting_update_rule": "设置规则",
     "setting_update_rule_user": "设置用户",
     "setting_create_terminology": "新建术语"
+  }
+  "api_key": {
+    "info_tips": "API Key 是您访问 SQLBot API 的密钥，具有账户的完全权限，请您务必妥善保管！不要以任何方式公开 API Key 到外部渠道，避免被他人利用造成安全威胁。",
+    "create": "创建",
+    "to_doc": "查看 API",
+    "trigger_limit": "最多支持创建 {0} 个 API Key"
   }
 }

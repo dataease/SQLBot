@@ -39,7 +39,7 @@ function downloadTemplate() {
       })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
-      link.download = '备注.xlsx'
+      link.download = t('parameter.import_notes') + '.xlsx'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -169,7 +169,7 @@ const submitUpload = () => {
     <template #icon>
       <ccmUpload></ccmUpload>
     </template>
-    {{ $t('user.import') }}
+    {{ $t('parameter.import_notes') }}
   </el-button>
   <el-dialog
     v-if="dialogShow"

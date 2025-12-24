@@ -8,6 +8,8 @@
     "Details": "Details"
   },
   "parameter": {
+    "export_notes": "Export notes",
+    "import_notes": "Import notes",
     "memo": "Memo update rules: Match table name and field name. If a match is found, update the table memo and field memo; otherwise, leave the memo unchanged.",
     "parameter_configuration": "Parameter Config",
     "question_count_settings": "Question Count Settings",
@@ -53,7 +55,7 @@
     "all_data_sources": "All data sources",
     "partial_data_sources": "Partial data sources",
     "add_it_here": "Drag the table name on the left to add it here",
-    "table_relationship_management": "Table relationship management",
+    "table_relationship_management": "Table relationship manage",
     "system_management": "System Management",
     "data_training": "SQL Sample Lib",
     "problem_description": "Problem Description",
@@ -853,5 +855,11 @@
     "setting_update_rule": "Configure Rules",
     "setting_update_rule_user": "Configure Users",
     "setting_create_terminology": "Create Terminology"
+  }
+  "api_key": {
+    "info_tips": "The API Key is your credential for accessing the SQLBot API, with full permissions for your account. Please keep it secure! Do not disclose the API Key in any public channels to avoid security risks from unauthorized use.",
+    "create": "Create",
+    "to_doc": "View API",
+    "trigger_limit": "Supports up to {0} API Keys"
   }
 }

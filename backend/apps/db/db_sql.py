@@ -148,7 +148,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
     elif equals_ignore_case(ds.type, "kingbase"):
         return """
               SELECT c.relname                                       AS TABLE_NAME,
-                     COALESCE(d.description, obj_description(c.oid)) AS TABLE_COMMENT
+                     COALESCE(COALESCE(d.description, obj_description(c.oid)), '') AS TABLE_COMMENT
               FROM pg_class c
                        LEFT JOIN
                    pg_namespace n ON n.oid = c.relnamespace

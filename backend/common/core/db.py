@@ -11,7 +11,14 @@ engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI),
 
 def get_session():
     with Session(engine) as session:
-        yield session
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
 
 def init_db():
