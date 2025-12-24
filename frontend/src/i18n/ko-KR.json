@@ -855,7 +855,7 @@
     "setting_update_rule": "규칙 설정",
     "setting_update_rule_user": "사용자 설정",
     "setting_create_terminology": "용어 생성"
-  }
+  },
   "api_key": {
     "info_tips": "API 키는 SQLBot API에 액세스하는 비밀키로 계정의 모든 권한을 갖고 있습니다. 꼭 안전하게 보관하세요! 외부 채널에 어떠한 방식으로도 API 키를 공개하지 마시고, 타인이 악용하여 보안 위협이 발생하는 것을 방지하세요.",
     "create": "생성",

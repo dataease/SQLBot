@@ -856,7 +856,7 @@
     "setting_update_rule": "设置规则",
     "setting_update_rule_user": "设置用户",
     "setting_create_terminology": "新建术语"
-  }
+  },
   "api_key": {
     "info_tips": "API Key 是您访问 SQLBot API 的密钥，具有账户的完全权限，请您务必妥善保管！不要以任何方式公开 API Key 到外部渠道，避免被他人利用造成安全威胁。",
     "create": "创建",
