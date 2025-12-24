@@ -200,7 +200,7 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
                 stmt = select(ChatRecord.id, ChatRecord.chat_id, ChatRecord.analysis_record_id,
                               ChatRecord.predict_record_id, ChatRecord.regenerate_record_id,
                               ChatRecord.first_chat).where(
-                    and_(ChatRecord.id == record_id))
+                    and_(ChatRecord.id == record_id)).order_by(ChatRecord.create_time.desc())
                 _record = session.execute(stmt).fetchone()
                 if not _record:
                     raise Exception(f'Record id: {record_id} does not exist')
