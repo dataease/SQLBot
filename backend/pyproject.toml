@@ -83,11 +83,11 @@ url = "https://test.pypi.org/simple"
 explicit = true
 
 [tool.uv.sources]
+sqlbot-xpack = { index = "testpypi" }
 torch = [
     { index = "pytorch-cpu", extra = "cpu" },
     { index = "pytorch-cu128", extra = "cu128" },
 ]
-sqlbot-xpack = { path = "../../sqlbot-xpack" }
 
 [tool.uv]
 conflicts = [
