@@ -387,6 +387,7 @@ def insert_pg(df, tableName, engine):
 
 
 t_sheet = "数据表列表"
+t_s_col = "Sheet名称"
 t_n_col = "表名"
 t_c_col = "表备注"
 f_n_col = "字段名"
@@ -406,7 +407,8 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
         if id == 0:  # download template
             file_name = '批量上传备注'
             df_list = [
-                {'sheet': t_sheet, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c1': ["user", "score"],
+                {'sheet': t_sheet, 'c0_h': t_s_col, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c0': ["数据表1", "数据表2"],
+                 'c1': ["user", "score"],
                  'c2': ["用来存放用户信息的数据表", "用来存放用户课程信息的数据表"]},
                 {'sheet': '数据表1', 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': ["id", "name"],
                  'c2': ["用户id", "用户姓名"]},
@@ -421,14 +423,15 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
                 raise HTTPException(400, "No tables")
 
             df_list = []
-            df1 = {'sheet': t_sheet, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c1': [], 'c2': []}
+            df1 = {'sheet': t_sheet, 'c0_h': t_s_col,'c1_h': t_n_col, 'c2_h': t_c_col,'c0': [], 'c1': [], 'c2': []}
             df_list.append(df1)
-            for table in tables:
+            for index, table in enumerate(tables):
+                df1['c0'].append(f"Sheet{index}")
                 df1['c1'].append(table.table_name)
                 df1['c2'].append(table.custom_comment)
 
                 fields = session.query(CoreField).filter(CoreField.table_id == table.id).all()
-                df_fields = {'sheet': table.table_name, 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': [], 'c2': []}
+                df_fields = {'sheet': f"Sheet{index}", 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': [], 'c2': []}
                 for field in fields:
                     df_fields['c1'].append(field.field_name)
                     df_fields['c2'].append(field.custom_comment)
@@ -437,10 +440,14 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
         # build dataframe and export
         output = io.BytesIO()
 
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            for df in df_list:
-                pd.DataFrame({df['c1_h']: df['c1'], df['c2_h']: df['c2']}).to_excel(writer, sheet_name=df['sheet'],
-                                                                                    index=False)
+        with (pd.ExcelWriter(output, engine='xlsxwriter') as writer):
+            for index, df in enumerate(df_list):
+                if index == 0:
+                    pd.DataFrame({df['c0_h']: df['c0'], df['c1_h']: df['c1'], df['c2_h']: df['c2']}
+                                 ).to_excel(writer, sheet_name=df['sheet'], index=False)
+                else:
+                    pd.DataFrame({df['c1_h']: df['c1'], df['c2_h']: df['c2']}).to_excel(writer, sheet_name=df['sheet'],
+                                                                                        index=False)
 
         output.seek(0)
 
@@ -486,10 +493,14 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
 
         # print(field_sheets)
 
+        # sheet table mapping
+        sheet_table_map = {}
+
         # get data and update
         # update table comment
         if table_sheet and len(table_sheet) > 0:
             for table in table_sheet:
+                sheet_table_map[table[t_s_col]] = table[t_n_col]
                 session.query(CoreTable).filter(
                     and_(CoreTable.ds_id == id, CoreTable.table_name == table[t_n_col])).update(
                     {'custom_comment': table[t_c_col]})
@@ -499,8 +510,9 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
             for fields in field_sheets:
                 if len(fields['data']) > 0:
                     # get table id
+                    table_name = sheet_table_map[fields['sheet_name']]
                     table = session.query(CoreTable).filter(
-                        and_(CoreTable.ds_id == id, CoreTable.table_name == fields['sheet_name'])).first()
+                        and_(CoreTable.ds_id == id, CoreTable.table_name == table_name)).first()
                     if table:
                         for field in fields['data']:
                             session.query(CoreField).filter(
@@ -512,4 +524,4 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
 
         return True
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"解析 Excel 失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Parse Excel Failed: {str(e)}")
