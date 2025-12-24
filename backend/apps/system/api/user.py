@@ -127,7 +127,6 @@ async def ws_change(session: SessionDep, current_user: CurrentUser, trans:Trans,
     user_model: UserModel = get_db_user(session = session, user_id = current_user.id)
     user_model.oid = oid
     session.add(user_model)
-    session.commit()
 
 @router.get("/{id}", response_model=UserEditor, summary=f"{PLACEHOLDER_PREFIX}user_detail_api", description=f"{PLACEHOLDER_PREFIX}user_detail_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
@@ -142,6 +141,9 @@ async def query(session: SessionDep, trans: Trans, id: int = Path(description=f"
 
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}user_create_api", description=f"{PLACEHOLDER_PREFIX}user_create_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
+async def user_create(session: SessionDep, creator: UserCreator, trans: Trans):
+    await create(session=session, creator=creator, trans=trans)
+    
 async def create(session: SessionDep, creator: UserCreator, trans: Trans):
     if check_account_exists(session=session, account=creator.account):
         raise Exception(trans('i18n_exist', msg = f"{trans('i18n_user.account')} [{creator.account}]"))
@@ -167,7 +169,6 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
         session.add_all(db_model_list)
         user_model.oid = creator.oid_list[0]   
     session.add(user_model)
-    session.commit()
 
     
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}user_update_api", description=f"{PLACEHOLDER_PREFIX}user_update_api")
@@ -204,7 +205,6 @@ async def update(session: SessionDep, editor: UserEditor, trans: Trans):
         session.add_all(db_model_list)
         user_model.oid = origin_oid if origin_oid in editor.oid_list else  editor.oid_list[0]
     session.add(user_model)
-    session.commit()
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}user_del_api", description=f"{PLACEHOLDER_PREFIX}user_del_api")
 @require_permissions(permission=SqlbotPermission(role=['admin'])) 
@@ -226,7 +226,6 @@ async def langChange(session: SessionDep, current_user: CurrentUser, trans: Tran
     db_user: UserModel = get_db_user(session=session, user_id=current_user.id)
     db_user.language = lang
     session.add(db_user)
-    session.commit()
 
    
 @router.patch("/pwd/{id}", summary=f"{PLACEHOLDER_PREFIX}reset_pwd", description=f"{PLACEHOLDER_PREFIX}reset_pwd")
@@ -238,7 +237,6 @@ async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans,
     db_user: UserModel = get_db_user(session=session, user_id=id)
     db_user.password = default_md5_pwd()
     session.add(db_user)
-    session.commit()
 
 @router.put("/pwd", summary=f"{PLACEHOLDER_PREFIX}update_pwd", description=f"{PLACEHOLDER_PREFIX}update_pwd")
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
@@ -251,7 +249,6 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
         raise Exception(trans('i18n_error', key = trans('i18n_user.password')))
     db_user.password = md5pwd(new_pwd)
     session.add(db_user)
-    session.commit()
 
     
 @router.patch("/status", summary=f"{PLACEHOLDER_PREFIX}update_status", description=f"{PLACEHOLDER_PREFIX}update_status")
@@ -266,4 +263,3 @@ async def statusChange(session: SessionDep, current_user: CurrentUser, trans: Tr
     db_user: UserModel = get_db_user(session=session, user_id=statusDto.id)
     db_user.status = status
     session.add(db_user)
-    session.commit()

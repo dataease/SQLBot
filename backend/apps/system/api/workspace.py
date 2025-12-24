@@ -141,10 +141,12 @@ async def create(session: SessionDep, current_user: CurrentUser, trans: Trans, c
         await clean_user_cache(uid)
         
     session.add_all(db_model_list)
-    session.commit()
 
 @router.put("/uws", summary=f"{PLACEHOLDER_PREFIX}ws_user_status_api", description=f"{PLACEHOLDER_PREFIX}ws_user_status_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))     
+async def uws_edit(session: SessionDep, trans: Trans, editor: UserWsEditor):
+    await edit(session, trans, editor)
+    
 async def edit(session: SessionDep, trans: Trans, editor: UserWsEditor):
     if not editor.oid or not editor.uid:
         raise Exception(trans('i18n_miss_args', key = '[oid, uid]'))
@@ -158,7 +160,6 @@ async def edit(session: SessionDep, trans: Trans, editor: UserWsEditor):
     session.add(db_model)
     
     await clean_user_cache(editor.uid)
-    session.commit()
 
 @router.delete("/uws", summary=f"{PLACEHOLDER_PREFIX}ws_user_unbind_api", description=f"{PLACEHOLDER_PREFIX}ws_user_unbind_api")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))     
@@ -176,8 +177,6 @@ async def delete(session: SessionDep, current_user: CurrentUser, trans: Trans, d
         await reset_single_user_oid(session, uid, oid, False)
         await clean_user_cache(uid)
         
-    session.commit()
-
 @router.get("", response_model=list[WorkspaceModel], summary=f"{PLACEHOLDER_PREFIX}ws_all_api", description=f"{PLACEHOLDER_PREFIX}ws_all_api")
 @require_permissions(permission=SqlbotPermission(role=['admin'])) 
 async def query(session: SessionDep, trans: Trans):
@@ -194,7 +193,6 @@ async def add(session: SessionDep, creator: WorkspaceBase):
     db_model = WorkspaceModel.model_validate(creator)
     db_model.create_time = get_timestamp()
     session.add(db_model)
-    session.commit()
     
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}ws_update_api", description=f"{PLACEHOLDER_PREFIX}ws_update_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
@@ -205,7 +203,6 @@ async def update(session: SessionDep, editor: WorkspaceEditor):
         raise HTTPException(f"WorkspaceModel with id {id} not found")
     db_model.name = editor.name
     session.add(db_model)
-    session.commit()
 
 @router.get("/{id}", response_model=WorkspaceModel, summary=f"{PLACEHOLDER_PREFIX}ws_query_api", description=f"{PLACEHOLDER_PREFIX}ws_query_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))    
@@ -245,6 +242,5 @@ async def single_delete(session: SessionDep, current_user: CurrentUser, id: int 
         session.exec(sqlmodel_delete(UserWsModel).where(UserWsModel.oid == id))
         
     session.delete(db_model)
-    session.commit()
 
 
