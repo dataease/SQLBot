@@ -107,10 +107,13 @@ async def get_model_by_id(
             config_list = [AiModelConfigItem(**item) for item in raw]
         except Exception:
             pass
-    if db_model.api_key:
-        db_model.api_key = await sqlbot_decrypt(db_model.api_key)
-    if db_model.api_domain:
-        db_model.api_domain = await sqlbot_decrypt(db_model.api_domain)
+    try:
+        if db_model.api_key:
+            db_model.api_key = await sqlbot_decrypt(db_model.api_key)
+        if db_model.api_domain:
+            db_model.api_domain = await sqlbot_decrypt(db_model.api_domain)
+    except Exception:
+        pass
     data = AiModelDetail.model_validate(db_model).model_dump(exclude_unset=True)
     data.pop("config", None)
     data["config_list"] = config_list
