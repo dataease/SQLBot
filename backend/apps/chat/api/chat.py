@@ -81,14 +81,15 @@ async def rename(session: SessionDep, chat: RenameChat):
         )
 
 
-@router.delete("/{chart_id}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
+@router.delete("/{chart_id}/{brief}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
 @system_log(LogConfig(
     operation_type=OperationType.DELETE_QA,
     operation_detail=OperationDetails.DELETE_QA_DETAILS,
     module=OperationModules.QA,
-    resource_id_expr="chart_id"
+    resource_id_expr="chart_id",
+    remark_expr="brief"
 ))
-async def delete(session: SessionDep, chart_id: int):
+async def delete(session: SessionDep, chart_id: int, brief: str):
     try:
         return delete_chat(session=session, chart_id=chart_id)
     except Exception as e:

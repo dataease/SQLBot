@@ -230,7 +230,7 @@ const operation = (opt: string, data: SQTreeNode) => {
       autofocus: false,
       showClose: false,
     }).then(() => {
-      dashboardApi.delete_resource({ id: data.id }).then(() => {
+      dashboardApi.delete_resource({ id: data.id, name: data.name }).then(() => {
         ElMessage.success(t('dashboard.delete_success'))
         getTree()
         dashboardStore.canvasDataInit()

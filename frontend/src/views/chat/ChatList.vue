@@ -122,7 +122,7 @@ function handleCommand(command: string | number | object, chat: Chat) {
         }).then(() => {
           _loading.value = true
           chatApi
-            .deleteChat(chat.id)
+            .deleteChat(chat.id, chat.brief)
             .then(() => {
               ElMessage({
                 type: 'success',

@@ -30,6 +30,7 @@ from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, Core
     TableSchemaResponse, ColumnSchemaResponse, PreviewResponse
 from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
 from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
+
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
 
@@ -107,15 +108,16 @@ async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreD
     return await asyncio.to_thread(inner)
 
 
-@router.post("/delete/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_delete")
+@router.post("/delete/{id}/{name}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_delete")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="id"))
 @system_log(LogConfig(
     operation_type=OperationType.DELETE_DATASOURCE,
     operation_detail=OperationDetails.DELETE_DATASOURCE_DETAILS,
     module=OperationModules.DATASOURCE,
-    resource_id_expr="id"
+    resource_id_expr="id",
+    remark_expr="name"
 ))
-async def delete(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
+async def delete(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"), name: str = None):
     return delete_ds(session, id)
 
 

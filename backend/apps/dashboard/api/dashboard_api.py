@@ -30,14 +30,15 @@ async def update_resource_api(session: SessionDep, user: CurrentUser, dashboard:
     return update_resource(session=session, user=user, dashboard=dashboard)
 
 
-@router.delete("/delete_resource/{resource_id}")
+@router.delete("/delete_resource/{resource_id}/{name}")
 @system_log(LogConfig(
     operation_type=OperationType.DELETE_DASHBOARD,
     operation_detail=OperationDetails.DELETE_DASHBOARD_DETAILS,
     module=OperationModules.DASHBOARD,
-    resource_id_expr="resource_id"
+    resource_id_expr="resource_id",
+    remark_expr="name"
 ))
-async def delete_resource_api(session: SessionDep, resource_id: str):
+async def delete_resource_api(session: SessionDep, resource_id: str, name: str):
     return delete_resource(session, resource_id)
 
 

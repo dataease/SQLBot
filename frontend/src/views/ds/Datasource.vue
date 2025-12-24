@@ -159,7 +159,7 @@ const deleteHandler = (item: any) => {
       ''
     ),
   }).then(() => {
-    datasourceApi.delete(item.id).then(() => {
+    datasourceApi.delete(item.id, item.name).then(() => {
       ElMessage({
         type: 'success',
         message: t('dashboard.delete_success'),

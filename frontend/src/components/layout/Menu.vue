@@ -55,6 +55,7 @@ const routerList = computed(() => {
       !route.path.includes('prompt') &&
       !route.path.includes('permission') &&
       !route.path.includes('preview') &&
+      !route.path.includes('audit') &&
       route.path !== '/login' &&
       !route.path.includes('/system') &&
       ((route.path.includes('set') && userStore.isSpaceAdmin) || !route.redirect) &&

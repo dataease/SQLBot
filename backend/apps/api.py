@@ -9,6 +9,7 @@ from apps.system.api import login, user, aimodel, workspace, assistant, paramete
 from apps.terminology.api import terminology
 from apps.settings.api import base
 
+
 api_router = APIRouter()
 api_router.include_router(login.router)
 api_router.include_router(user.router)
