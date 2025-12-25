@@ -36,6 +36,7 @@ class BaseUserDTO(BaseUser, BaseCreatorDTO):
     password: str
     status: int = 1
     origin: int = 0
+    name: str
 
     def to_dict(self):
         return {

@@ -3,8 +3,8 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from apps.dashboard.crud.dashboard_service import list_resource, load_resource, \
     create_resource, create_canvas, validate_name, delete_resource, update_resource, update_canvas
 from apps.dashboard.models.dashboard_model import CreateDashboard, BaseDashboard, QueryDashboard, DashboardResponse
-from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
-from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import LogConfig, system_log
 from common.core.deps import SessionDep, CurrentUser
 
 router = APIRouter(tags=["dashboard"], prefix="/dashboard")
@@ -32,8 +32,7 @@ async def update_resource_api(session: SessionDep, user: CurrentUser, dashboard:
 
 @router.delete("/delete_resource/{resource_id}/{name}")
 @system_log(LogConfig(
-    operation_type=OperationType.DELETE_DASHBOARD,
-    operation_detail=OperationDetails.DELETE_DASHBOARD_DETAILS,
+    operation_type=OperationType.DELETE,
     module=OperationModules.DASHBOARD,
     resource_id_expr="resource_id",
     remark_expr="name"
@@ -44,8 +43,7 @@ async def delete_resource_api(session: SessionDep, resource_id: str, name: str):
 
 @router.post("/create_canvas", response_model=BaseDashboard)
 @system_log(LogConfig(
-    operation_type=OperationType.CREATE_DASHBOARD,
-    operation_detail=OperationDetails.CREATE_DASHBOARD_DETAILS,
+    operation_type=OperationType.CREATE,
     module=OperationModules.DASHBOARD,
     result_id_expr="id"
 ))
@@ -55,8 +53,7 @@ async def create_canvas_api(session: SessionDep, user: CurrentUser, dashboard: C
 
 @router.post("/update_canvas", response_model=BaseDashboard)
 @system_log(LogConfig(
-    operation_type=OperationType.UPDATE_DASHBOARD,
-    operation_detail=OperationDetails.UPDATE_DASHBOARD_DETAILS,
+    operation_type=OperationType.UPDATE,
     module=OperationModules.DASHBOARD,
     resource_id_expr="dashboard.id"
 ))

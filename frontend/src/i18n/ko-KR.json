@@ -95,6 +95,8 @@
     "the_term_gmv": "용어를 삭제하시겠습니까: {msg}?"
   },
   "common": {
+    "start_time": "시작 시간",
+    "end_time": "종료 시간",
     "require": "필수 입력 항목",
     "zoom_in": "확대",
     "zoom_out": "축소",
@@ -840,21 +842,7 @@
     "success": "성공",
     "failed": "실패",
     "failed_info": "작업 실패 상세",
-    "create_qa": "Q&A 생성",
-    "delete_qa": "Q&A 삭제",
-    "create_datasource": "데이터 소스 생성",
-    "update_datasource": "데이터 소스 편집",
-    "delete_datasource": "데이터 소스 삭제",
-    "create_dashboard": "대시보드 생성",
-    "update_dashboard": "대시보드 편집",
-    "delete_dashboard": "대시보드 삭제",
-    "setting_create_user": "멤버 추가",
-    "setting_delete_user": "멤버 제거",
-    "setting_create_rule": "규칙 그룹 추가",
-    "setting_delete_rule": "규칙 그룹 제거",
-    "setting_update_rule": "규칙 설정",
-    "setting_update_rule_user": "사용자 설정",
-    "setting_create_terminology": "용어 생성"
+    "opt_time": "작업 시간"
   },
   "api_key": {
     "info_tips": "API 키는 SQLBot API에 액세스하는 비밀키로 계정의 모든 권한을 갖고 있습니다. 꼭 안전하게 보관하세요! 외부 채널에 어떠한 방식으로도 API 키를 공개하지 마시고, 타인이 악용하여 보안 위협이 발생하는 것을 방지하세요.",

@@ -95,6 +95,8 @@
     "the_term_gmv": "Delete the term: {msg}?"
   },
   "common": {
+    "start_time": "Start Time",
+    "end_time": "End Time",
     "require": "Required",
     "zoom_in": "Zoom in",
     "zoom_out": "Zoom out",
@@ -840,21 +842,7 @@
     "success": "Success",
     "failed": "Failed",
     "failed_info": "Operation Failure Details",
-    "create_qa": "Create Q&A",
-    "delete_qa": "Delete Q&A",
-    "create_datasource": "Create Datasource",
-    "update_datasource": "Edit Datasource",
-    "delete_datasource": "Delete Datasource",
-    "create_dashboard": "Create Dashboard",
-    "update_dashboard": "Edit Dashboard",
-    "delete_dashboard": "Delete Dashboard",
-    "setting_create_user": "Add Member",
-    "setting_delete_user": "Remove Member",
-    "setting_create_rule": "Add Rule Group",
-    "setting_delete_rule": "Remove Rule Group",
-    "setting_update_rule": "Configure Rules",
-    "setting_update_rule_user": "Configure Users",
-    "setting_create_terminology": "Create Terminology"
+    "opt_time": "Operation Time"
   },
   "api_key": {
     "info_tips": "The API Key is your credential for accessing the SQLBot API, with full permissions for your account. Please keep it secure! Do not disclose the API Key in any public channels to avoid security risks from unauthorized use.",

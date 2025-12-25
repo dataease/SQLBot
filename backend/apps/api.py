@@ -8,6 +8,7 @@ from apps.mcp import mcp
 from apps.system.api import login, user, aimodel, workspace, assistant, parameter, apikey
 from apps.terminology.api import terminology
 from apps.settings.api import base
+#from apps.audit.api import audit_api
 
 
 api_router = APIRouter()
@@ -28,3 +29,5 @@ api_router.include_router(parameter.router)
 api_router.include_router(apikey.router)
 
 api_router.include_router(recommended_problem.router)
+
+#api_router.include_router(audit_api.router)

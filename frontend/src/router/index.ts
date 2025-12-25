@@ -131,12 +131,6 @@ export const routes = [
         component: Prompt,
         meta: { title: t('prompt.customize_prompt_words') },
       },
-      {
-        path: '/set/audit',
-        name: 'audit',
-        component: Audit,
-        meta: { title: t('audit.system_log') },
-      },
     ],
   },
   {
@@ -219,6 +213,12 @@ export const routes = [
             meta: { title: t('system.authentication_settings') },
           },
         ],
+      },
+      {
+        path: 'audit',
+        name: 'audit',
+        component: Audit,
+        meta: { title: t('audit.system_log'), iconActive: 'log', iconDeActive: 'noLog' },
       },
     ],
   },
