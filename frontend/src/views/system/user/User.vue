@@ -434,7 +434,7 @@ const filterOption = ref<any[]>([
       { id: '2', name: 'OIDC' },
       { id: '3', name: 'LDAP' },
       { id: '4', name: 'OAuth2' },
-      { id: '5', name: 'SAML2' },
+      /* { id: '5', name: 'SAML2' }, */
     ],
     field: 'origins',
     title: t('user.user_source'),

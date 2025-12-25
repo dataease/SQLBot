@@ -240,7 +240,7 @@ defineExpose({
       <el-form-item :label="t('authentication.user_filter')" prop="user_filter">
         <el-input
           v-model="state.form.user_filter"
-          :placeholder="t('authentication.user_filter_placeholder')"
+          :placeholder="t('authentication.user_filter_placeholder', ['|', '|'])"
         />
       </el-form-item>
 

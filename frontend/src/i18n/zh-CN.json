@@ -790,7 +790,7 @@
     "ou": "用户 OU",
     "ou_placeholder": "例如：ou=users,dc=example,dc=com",
     "user_filter": "用户过滤器",
-    "user_filter_placeholder": "例如：uid",
+    "user_filter_placeholder": "例如：uid 或 uid {0} email, 多属性以 {1} 分割",
     "ldap_field_mapping_placeholder": "例如：{'{'}\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"{'}'}",
     "be_turned_on": "测试连接有效后，可开启"
   },
