@@ -1,45 +1,100 @@
 from fastapi import Request
 from sqlbot_xpack.config.arg_manage import get_group_args, save_group_args
-from sqlbot_xpack.config.model import SysArgModel
+# from sqlbot_xpack.config.model import SysArgModel
+from sqlmodel import select, delete
 import json
 from common.core.deps import SessionDep
-from sqlbot_xpack.file_utils import SQLBotFileUtils
+# from sqlbot_xpack.file_utils import SQLBotFileUtils
+from apps.system.models.parameter_model import SysParameter, SysArgModel
+from common.utils.local_file import LocalFileUtils
 
-async def get_parameter_args(session: SessionDep) -> list[SysArgModel]:
-    group_args = await get_group_args(session=session)
-    return [x for x in group_args if not x.pkey.startswith('appearance.')]
+# 定义所有属于外观设置的图片 Key，确保它们能被正确处理
+# 包含用户提到的 web, login, 以及常见的 navigate (导航栏Logo), favicon
+IMAGE_KEYS = ["login", "navigate", "web", "favicon", "loginBg"]
 
+# 定义外观相关的 Key 列表，用于强制分组
+APPEARANCE_KEYS = [
+                      "name", "slogan", "pc_welcome", "pc_welcome_desc",
+                      "foot", "footContent", "help", "showSlogan", "showDoc", "showAbout", "bg"
+                  ] + IMAGE_KEYS
+
+# 1. 获取参数列表
 async def get_groups(session: SessionDep, flag: str) -> list[SysArgModel]:
-    group_args = await get_group_args(session=session, flag=flag)
-    return group_args
+    # 从数据库查
+    stmt = select(SysParameter).where(SysParameter.group_name == flag)
+    db_params = session.exec(stmt).all()
 
+    # 转换为前端需要的格式 (这里可以根据需求补全默认值，防止数据库为空时报错)
+    result = []
+    for p in db_params:
+        result.append(SysArgModel(pkey=p.pkey, pval=p.pval))
+    return result
+
+
+# 2. 获取通用参数列表
+async def get_parameter_args(session: SessionDep) -> list[SysArgModel]:
+    stmt = select(SysParameter).where(SysParameter.group_name != "appearance")
+    db_params = session.exec(stmt).all()
+    return [SysArgModel(pkey=p.pkey, pval=p.pval) for p in db_params]
+
+
+# 3. 保存参数
 async def save_parameter_args(session: SessionDep, request: Request):
-    allow_file_mapping = {
-        """ "test_logo": { "types": [".jpg", ".jpeg", ".png", ".svg"], "size": 5 * 1024 * 1024 } """
-    }
     form_data = await request.form()
     files = form_data.getlist("files")
     json_text = form_data.get("data")
-    sys_args = [
-        SysArgModel(**{**item, "pkey": f"{item['pkey']}"})
-        for item in json.loads(json_text)
-        if "pkey" in item
-    ]
-    if not sys_args:
+
+    if not json_text:
         return
-    file_mapping = None
-    if files:
-        file_mapping = {}
-        for file in files:
-            origin_file_name = file.filename
-            file_name, flag_name = SQLBotFileUtils.split_filename_and_flag(origin_file_name)
-            file.filename = file_name
-            allow_limit_obj = allow_file_mapping.get(flag_name)
-            if allow_limit_obj:
-                SQLBotFileUtils.check_file(file=file, file_types=allow_limit_obj.get("types"), limit_file_size=allow_limit_obj.get("size"))
-            else:
-                raise Exception(f'The file [{file_name}] is not allowed to be uploaded!')
-            file_id = await SQLBotFileUtils.upload(file)
-            file_mapping[f"{flag_name}"] = file_id
-    
-    await save_group_args(session=session, sys_args=sys_args, file_mapping=file_mapping)
+    sys_args_data = json.loads(json_text)
+
+    for item in sys_args_data:
+        key = item.get("pkey")
+        val = item.get("pval")
+        ptype = item.get("ptype")
+
+        # --- 处理文件上传 ---
+        if ptype == 'file':
+            try:
+                # 尝试匹配上传的文件
+                if files:
+                    target_file = None
+                    for f in files:
+                        if key in f.filename:
+                            target_file = f
+                            break
+                    if not target_file and len(files) > 0:
+                        target_file = files[0]
+
+                    if target_file:
+                        file_id = await LocalFileUtils.upload(target_file)
+                        val = file_id
+                        files.remove(target_file)
+            except Exception:
+                pass
+
+        # Upsert 逻辑 (存在则更新，不存在则插入)
+        db_obj = session.get(SysParameter, key)
+        if not db_obj:
+            # 【关键修复：正确分组】
+            group = "system"
+            if key.startswith("login."):
+                group = "login"
+            elif key.startswith("chat."):
+                group = "chat"
+            # 只要是定义的 Appearance Key，统统归类到 appearance
+            elif key in APPEARANCE_KEYS:
+                group = "appearance"
+
+            db_obj = SysParameter(pkey=key, pval=val, group_name=group)
+            session.add(db_obj)
+        else:
+            # 如果之前分组错了（比如变成了 system），这里强制修正回来
+            if key in APPEARANCE_KEYS and db_obj.group_name != "appearance":
+                db_obj.group_name = "appearance"
+
+            if val is not None:
+                db_obj.pval = val
+            session.add(db_obj)
+
+    session.commit()
