@@ -32,7 +32,7 @@ def upgrade():
                     sa.Column('create_time', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
                     sa.Column('module', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
                     sa.Column('remark', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
-                    sa.Column('resource_id',sa.VARCHAR(length=255), autoincrement=False, nullable=True),
+                    sa.Column('resource_id',sa.TEXT(), autoincrement=False, nullable=True),
                     sa.Column('request_method', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
                     sa.Column('request_path', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
                     sa.PrimaryKeyConstraint('id', name=op.f('sys_logs_pkey'))
