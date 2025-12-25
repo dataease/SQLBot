@@ -288,7 +288,8 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
     if not data.table.id:
         return {"fields": [], "data": [], "sql": ''}
 
-    fields = session.query(CoreField).filter(CoreField.table_id == data.table.id).all()
+    fields = session.query(CoreField).filter(CoreField.table_id == data.table.id).order_by(
+        CoreField.field_index.asc()).all()
 
     if fields is None or len(fields) == 0:
         return {"fields": [], "data": [], "sql": ''}
