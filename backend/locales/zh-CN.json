@@ -40,6 +40,9 @@
   "i18n_embedded": {
     "invalid_origin": "域名校验失败【{origin}】"
   },
+  "i18n_chat": {
+    "record_id_in_mcp": "响应ID: "
+  },
   "i18n_terminology": {
     "terminology_not_exists": "该术语不存在",
     "datasource_cannot_be_none": "数据源不能为空",

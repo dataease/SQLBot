@@ -40,6 +40,9 @@
   "i18n_embedded": {
     "invalid_origin": "도메인 이름 검증 실패 【{origin}】"
   },
+  "i18n_chat": {
+    "record_id_in_mcp": "응답 ID: "
+  },
   "i18n_terminology": {
     "datasource_list_is_not_found": "데이터 소스 목록을 찾을 수 없습니다",
     "datasource_id_not_found": "데이터 소스 ID: {key}를 찾을 수 없습니다",

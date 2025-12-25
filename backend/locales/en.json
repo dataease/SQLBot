@@ -40,6 +40,9 @@
   "i18n_embedded": {
     "invalid_origin": "Domain name validation failed【{origin}】"
   },
+  "i18n_chat": {
+    "record_id_in_mcp": "Answer ID: "
+  },
   "i18n_terminology": {
     "terminology_not_exists": "This terminology does not exist",
     "datasource_cannot_be_none": "Datasource cannot be empty",

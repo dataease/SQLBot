@@ -49,6 +49,7 @@ from common.core.db import engine
 from common.core.deps import CurrentAssistant, CurrentUser
 from common.error import SingleMessageError, SQLBotDBError, ParseSQLResultError, SQLBotDBConnectionError
 from common.utils.data_format import DataFormat
+from common.utils.locale import I18n, I18nHelper
 from common.utils.utils import SQLBotLogUtil, extract_nested_json, prepare_for_orjson
 
 warnings.filterwarnings("ignore")
@@ -61,6 +62,8 @@ dynamic_ds_types = [1, 3]
 dynamic_subsql_prefix = 'select * from sqlbot_dynamic_temp_table_'
 
 session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
+
+i18n = I18n()
 
 
 class LLMService:
@@ -85,6 +88,8 @@ class LLMService:
 
     chunk_list: List[str] = []
     future: Future
+
+    trans: I18nHelper = None
 
     last_execute_sql_error: str = None
     articles_number: int = 4
@@ -125,6 +130,7 @@ class LLMService:
         self.change_title = not get_chat_brief_generate(session=session, chat_id=chat_id)
 
         chat_question.lang = get_lang_name(current_user.language)
+        self.trans = i18n(lang=current_user.language)
 
         self.ds = (
             ds if isinstance(ds, AssistantOutDsSchema) else CoreDatasource(**ds.model_dump())) if ds else None
@@ -972,7 +978,7 @@ class LLMService:
                     {'type': 'question', 'question': self.get_record().question}).decode() + '\n\n'
             else:
                 if stream:
-                    yield '> ID: ' + str(self.get_record().id) + '\n'
+                    yield '> ' + self.trans('i18n_chat.record_id_in_mcp') + str(self.get_record().id) + '\n'
                     yield '> ' + self.get_record().question + '\n\n'
             if not stream:
                 json_result['record_id'] = self.get_record().id
@@ -1173,7 +1179,7 @@ class LLMService:
                 # generate picture
                 try:
                     if chart.get('type') != 'table':
-                        yield '### generated chart picture\n\n'
+                        # yield '### generated chart picture\n\n'
                         image_url, error = request_picture(self.record.chat_id, self.record.id, chart,
                                                            format_json_data(result))
                         SQLBotLogUtil.info(image_url)
@@ -1185,6 +1191,8 @@ class LLMService:
                             raise error
                 except Exception as e:
                     if stream:
+                        if chart.get('type') != 'table':
+                            yield 'generate or fetch chart picture error.\n\n'
                         raise e
 
             if not stream:
@@ -1263,7 +1271,7 @@ class LLMService:
                 yield 'data:' + orjson.dumps({'type': 'id', 'id': self.get_record().id}).decode() + '\n\n'
             else:
                 if stream:
-                    yield '> ID: ' + str(self.get_record().id) + '\n'
+                    yield '> ' + self.trans('i18n_chat.record_id_in_mcp') + str(self.get_record().id) + '\n'
                     yield '> ' + self.get_record().question + '\n\n'
             if not stream:
                 json_result['record_id'] = self.get_record().id
@@ -1331,7 +1339,7 @@ class LLMService:
                         # generate picture
                         try:
                             if chart.get('type') != 'table':
-                                yield '### generated chart picture\n\n'
+                                # yield '### generated chart picture\n\n'
 
                                 _data = get_chat_chart_data(_session, self.record.id)
                                 _data['data'] = _data.get('data') + predict_data
@@ -1347,6 +1355,8 @@ class LLMService:
                                     raise error
                         except Exception as e:
                             if stream:
+                                if chart.get('type') != 'table':
+                                    yield 'generate or fetch chart picture error.\n\n'
                                 raise e
                 else:
                     if in_chat:

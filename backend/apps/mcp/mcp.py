@@ -91,6 +91,7 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
     db_user: UserModel = get_db_user(session=session, user_id=token_data.id)
     session_user = UserInfoDTO.model_validate(db_user.model_dump())
     session_user.isAdmin = session_user.id == 1 and session_user.account == 'admin'
+    session_user.language = chat.lang
     if session_user.isAdmin:
         session_user = session_user
     ws_model: UserWsModel = session.exec(
