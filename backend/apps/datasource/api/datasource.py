@@ -418,19 +418,21 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
         else:
             ds = session.query(CoreDatasource).filter(CoreDatasource.id == id).first()
             file_name = ds.name
-            tables = session.query(CoreTable).filter(CoreTable.ds_id == id).all()
+            tables = session.query(CoreTable).filter(CoreTable.ds_id == id).order_by(
+                CoreTable.table_name.asc()).all()
             if len(tables) == 0:
                 raise HTTPException(400, "No tables")
 
             df_list = []
-            df1 = {'sheet': t_sheet, 'c0_h': t_s_col,'c1_h': t_n_col, 'c2_h': t_c_col,'c0': [], 'c1': [], 'c2': []}
+            df1 = {'sheet': t_sheet, 'c0_h': t_s_col, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c0': [], 'c1': [], 'c2': []}
             df_list.append(df1)
             for index, table in enumerate(tables):
                 df1['c0'].append(f"Sheet{index}")
                 df1['c1'].append(table.table_name)
                 df1['c2'].append(table.custom_comment)
 
-                fields = session.query(CoreField).filter(CoreField.table_id == table.id).all()
+                fields = session.query(CoreField).filter(CoreField.table_id == table.id).order_by(
+                    CoreField.field_index.asc()).all()
                 df_fields = {'sheet': f"Sheet{index}", 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': [], 'c2': []}
                 for field in fields:
                     df_fields['c1'].append(field.field_name)
