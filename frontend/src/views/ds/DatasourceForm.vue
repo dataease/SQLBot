@@ -41,6 +41,7 @@ const checkList = ref<any>([])
 const tableList = ref<any>([])
 const excelUploadSuccess = ref(false)
 const tableListLoading = ref(false)
+const tableListLoadingV1 = ref(false)
 const checkLoading = ref(false)
 const dialogTitle = ref('')
 const getUploadURL = import.meta.env.VITE_API_BASE_URL + '/datasource/uploadExcel'
@@ -167,38 +168,44 @@ const initForm = (item: any, editTable: boolean = false) => {
       isCreate.value = false
       // request tables and check tables
 
-      datasourceApi.tableList(item.id).then((res: any) => {
-        checkList.value = res.map((ele: any) => {
-          return ele.table_name
-        })
-        if (item.type === 'excel') {
-          tableList.value = form.value.sheets
-          nextTick(() => {
-            handleCheckedTablesChange([...checkList.value])
+      tableListLoadingV1.value = true
+      datasourceApi
+        .tableList(item.id)
+        .then((res: any) => {
+          checkList.value = res.map((ele: any) => {
+            return ele.table_name
           })
-        } else {
-          tableListLoading.value = true
-          const requestObj = buildConf()
-          datasourceApi
-            .getTablesByConf(requestObj)
-            .then((table) => {
-              tableList.value = table
-              checkList.value = checkList.value.filter((ele: string) => {
-                return table
-                  .map((ele: any) => {
-                    return ele.tableName
-                  })
-                  .includes(ele)
-              })
-              nextTick(() => {
-                handleCheckedTablesChange([...checkList.value])
-              })
+          if (item.type === 'excel') {
+            tableList.value = form.value.sheets
+            nextTick(() => {
+              handleCheckedTablesChange([...checkList.value])
             })
-            .finally(() => {
-              tableListLoading.value = false
-            })
-        }
-      })
+          } else {
+            tableListLoading.value = true
+            const requestObj = buildConf()
+            datasourceApi
+              .getTablesByConf(requestObj)
+              .then((table) => {
+                tableList.value = table
+                checkList.value = checkList.value.filter((ele: string) => {
+                  return table
+                    .map((ele: any) => {
+                      return ele.tableName
+                    })
+                    .includes(ele)
+                })
+                nextTick(() => {
+                  handleCheckedTablesChange([...checkList.value])
+                })
+              })
+              .finally(() => {
+                tableListLoading.value = false
+              })
+          }
+        })
+        .finally(() => {
+          tableListLoadingV1.value = false
+        })
     }
   } else {
     dialogTitle.value = t('ds.form.title.add')
@@ -708,7 +715,11 @@ defineExpose({
           </el-form-item>
         </div>
       </el-form>
-      <div v-show="activeStep === 2" v-loading="tableListLoading" class="select-data_table">
+      <div
+        v-show="activeStep === 2"
+        v-loading="tableListLoading || tableListLoadingV1"
+        class="select-data_table"
+      >
         <div class="title">
           {{ $t('ds.form.choose_tables') }} ({{ checkTableList.length }}/ {{ tableList.length }})
         </div>
