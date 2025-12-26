@@ -1,10 +1,9 @@
 from collections import defaultdict
 from typing import Optional
 from fastapi import APIRouter, File, Path, Query, UploadFile
-from pydantic import Field
 from sqlmodel import SQLModel, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
-from apps.system.crud.user_excel import batchUpload, downTemplate
+from apps.system.crud.user_excel import batchUpload, downTemplate, download_error_file
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.models.user import UserModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
@@ -21,13 +20,21 @@ from apps.swagger.i18n import PLACEHOLDER_PREFIX
 router = APIRouter(tags=["system_user"], prefix="/user")
 
 
-@router.get("/template")
+@router.get("/template", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['admin']))
 async def templateExcel(trans: Trans):
     return await downTemplate(trans)
 
-@router.post("/upload")
-async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
-    batchUpload(trans, file)
+@router.post("/batchImport", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def upload_excel(session: SessionDep, trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
+    return await batchUpload(session, trans, file)
+
+
+@router.get("/errorRecord/{file_id}", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def download_error(file_id: str):
+    return download_error_file(file_id)
 
 @router.get("/info", summary=f"{PLACEHOLDER_PREFIX}system_user_current_user", description=f"{PLACEHOLDER_PREFIX}system_user_current_user_desc")
 async def user_info(current_user: CurrentUser) -> UserInfoDTO:

@@ -152,7 +152,7 @@ const sure = () => {
     .importUserApi(param)
     .then((res) => {
       closeLoading()
-      const data = res.data
+      const data = res
       errorFileKey.value = data.dataKey
       closeDialog()
       showTips(data.successCount, data.errorCount)
@@ -167,12 +167,13 @@ const downErrorExcel = () => {
     userImportApi
       .downErrorRecordApi(errorFileKey.value)
       .then((res) => {
-        const blobData = res.data
-        const blob = new Blob([blobData], { type: 'application/vnd.ms-excel' })
+        const blob = new Blob([res], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
         const link = document.createElement('a')
         link.style.display = 'none'
         link.href = URL.createObjectURL(blob)
-        link.download = 'error.xlsx' // 下载的文件名
+        link.download = 'error.xlsx'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -185,20 +186,16 @@ const downErrorExcel = () => {
   }
 }
 const showTips = (successCount: any, errorCount: any) => {
-  let title = !errorCount
-    ? t('user.data_import_successful')
-    : successCount
-      ? t('user.data_import_failed')
-      : t('user.data_import_failed_de')
+  let title = successCount ? t('user.data_import_completed') : t('user.data_import_failed')
   const childrenDomList = [
     h('strong', null, title),
     h('br', {}, {}),
-    h('span', null, t('user.imported_1_data', { msg: successCount })),
+    h('span', null, t('user.imported_100_data', { msg: successCount })),
   ]
   if (errorCount) {
-    const errorCountDom = h('span', null, t('user.import_1_data', { msg: errorCount }))
+    const errorCountDom = h('span', null, t('user.failed_100_can', { msg: errorCount }))
     const errorDom = h('div', { class: 'error-record-tip flex-align-center' }, [
-      h('span', null, t('user.can')),
+      /* h('span', null, t('user.can')), */
       h(
         ElButton,
         {
@@ -226,20 +223,20 @@ const showTips = (successCount: any, errorCount: any) => {
     confirmButtonText: t('user.continue_importing'),
   })
     .then(() => {
-      clearErrorRecord()
+      // clearErrorRecord()
       showDialog()
       emits('refresh-grid')
     })
     .catch(() => {
-      clearErrorRecord()
+      // clearErrorRecord()
       toGrid()
     })
 }
-const clearErrorRecord = () => {
+/* const clearErrorRecord = () => {
   if (errorFileKey.value) {
     userImportApi.clearErrorApi(errorFileKey.value)
   }
-}
+} */
 
 const rules = {
   file: [

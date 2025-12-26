@@ -23,12 +23,12 @@
           </template>
           {{ $t('user.filter') }}
         </el-button>
-        <el-button secondary @click="handleUserImport">
+        <!--  <el-button secondary @click="handleUserImport">
           <template #icon>
             <ccmUpload></ccmUpload>
           </template>
           {{ $t('user.batch_import') }}
-        </el-button>
+        </el-button> -->
         <el-button type="primary" @click="editHandler(null)">
           <template #icon>
             <icon_add_outlined></icon_add_outlined>
@@ -371,7 +371,7 @@
       </div>
     </template>
   </el-dialog>
-  <UserImport ref="userImportRef"></UserImport>
+  <UserImport ref="userImportRef" @refresh-grid="search"></UserImport>
   <drawer-main
     ref="drawerMainRef"
     :filter-options="filterOption"
@@ -393,7 +393,7 @@ import IconLock from '@/assets/svg/icon-key_outlined.svg'
 import IconOpeEdit from '@/assets/svg/icon_edit_outlined.svg'
 import IconOpeDelete from '@/assets/svg/icon_delete.svg'
 import iconFilter from '@/assets/svg/icon-filter_outlined.svg'
-import ccmUpload from '@/assets/svg/icon_ccm-upload_outlined.svg'
+// import ccmUpload from '@/assets/svg/icon_ccm-upload_outlined.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import { userApi } from '@/api/user'
 import { workspaceList } from '@/api/workspace'
@@ -579,9 +579,9 @@ const handleEditPassword = (id: any) => {
   })
 }
 
-const handleUserImport = () => {
+/* const handleUserImport = () => {
   userImportRef.value.showDialog()
-}
+} */
 
 const handleConfirmPassword = () => {
   passwordRef.value.validate((val: any) => {
