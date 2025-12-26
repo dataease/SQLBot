@@ -9,6 +9,8 @@ from apps.system.models.user import UserModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from apps.system.schemas.system_schema import PwdEditor, UserCreator, UserEditor, UserGrid, UserInfoDTO, UserLanguage, UserStatus, UserWs
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import LogConfig, system_log
 from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
 from common.core.schemas import PaginatedResponse, PaginationParams
@@ -117,6 +119,11 @@ async def ws_options(session: SessionDep, current_user: CurrentUser, trans: Tran
 
 @router.put("/ws/{oid}", summary=f"{PLACEHOLDER_PREFIX}switch_oid_api", description=f"{PLACEHOLDER_PREFIX}switch_oid_api")
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.USER,
+    resource_id_expr="editor.id"
+))
 async def ws_change(session: SessionDep, current_user: CurrentUser, trans:Trans, oid: int = Path(description=f"{PLACEHOLDER_PREFIX}oid")):
     ws_list: list[UserWs] = await user_ws_options(session, current_user.id)
     if not any(x.id == oid for x in ws_list):
@@ -141,8 +148,13 @@ async def query(session: SessionDep, trans: Trans, id: int = Path(description=f"
 
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}user_create_api", description=f"{PLACEHOLDER_PREFIX}user_create_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(
+    operation_type=OperationType.CREATE,
+    module=OperationModules.USER,
+    result_id_expr="id"
+))
 async def user_create(session: SessionDep, creator: UserCreator, trans: Trans):
-    await create(session=session, creator=creator, trans=trans)
+    return await create(session=session, creator=creator, trans=trans)
     
 async def create(session: SessionDep, creator: UserCreator, trans: Trans):
     if check_account_exists(session=session, account=creator.account):
@@ -169,11 +181,17 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
         session.add_all(db_model_list)
         user_model.oid = creator.oid_list[0]   
     session.add(user_model)
+    return user_model
 
     
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}user_update_api", description=f"{PLACEHOLDER_PREFIX}user_update_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="editor.id")
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.USER,
+    resource_id_expr="editor.id"
+))
 async def update(session: SessionDep, editor: UserEditor, trans: Trans):
     user_model: UserModel = get_db_user(session = session, user_id = editor.id)
     if not user_model:
@@ -207,7 +225,12 @@ async def update(session: SessionDep, editor: UserEditor, trans: Trans):
     session.add(user_model)
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}user_del_api", description=f"{PLACEHOLDER_PREFIX}user_del_api")
-@require_permissions(permission=SqlbotPermission(role=['admin'])) 
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(
+    operation_type=OperationType.DELETE,
+    module=OperationModules.USER,
+    resource_id_expr="id"
+))
 async def delete(session: SessionDep, id: int = Path(description=f"{PLACEHOLDER_PREFIX}uid")):
     await single_delete(session, id)
 
@@ -231,6 +254,11 @@ async def langChange(session: SessionDep, current_user: CurrentUser, trans: Tran
 @router.patch("/pwd/{id}", summary=f"{PLACEHOLDER_PREFIX}reset_pwd", description=f"{PLACEHOLDER_PREFIX}reset_pwd")
 @require_permissions(permission=SqlbotPermission(role=['admin'])) 
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="id")
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.USER,
+    resource_id_expr="id"
+))
 async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans, id: int = Path(description=f"{PLACEHOLDER_PREFIX}uid")):
     if not current_user.isAdmin:
         raise Exception(trans('i18n_permission.no_permission', url = " patch[/user/pwd/id],", msg = trans('i18n_permission.only_admin')))
@@ -240,6 +268,11 @@ async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans,
 
 @router.put("/pwd", summary=f"{PLACEHOLDER_PREFIX}update_pwd", description=f"{PLACEHOLDER_PREFIX}update_pwd")
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="current_user.id")
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.USER,
+    result_id_expr="id"
+))
 async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans, editor: PwdEditor):
     new_pwd = editor.new_pwd
     if not check_pwd_format(new_pwd):
@@ -249,11 +282,17 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
         raise Exception(trans('i18n_error', key = trans('i18n_user.password')))
     db_user.password = md5pwd(new_pwd)
     session.add(db_user)
+    return db_user
 
     
 @router.patch("/status", summary=f"{PLACEHOLDER_PREFIX}update_status", description=f"{PLACEHOLDER_PREFIX}update_status")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.USER_INFO, keyExpression="statusDto.id")
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.USER,
+    resource_id_expr="statusDto.id"
+))
 async def statusChange(session: SessionDep, current_user: CurrentUser, trans: Trans, statusDto: UserStatus):
     if not current_user.isAdmin:
         raise Exception(trans('i18n_permission.no_permission', url = ", ", msg = trans('i18n_permission.only_admin')))

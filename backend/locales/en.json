@@ -156,6 +156,12 @@
     "edit": "Edit",
     "login": "Login",
     "export": "Export",
-    "import": "Import"
+    "import": "Import",
+    "add": "Add",
+    "create_or_update": "Change",
+    "api_key": "API Key",
+    "params_setting": "Parameters Setting",
+    "rules": "Permission Rules",
+    "log_setting": "Login Authentication"
   }
 }

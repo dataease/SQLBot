@@ -156,6 +156,12 @@
     "edit": "编辑",
     "login": "登录",
     "export": "导出",
-    "import": "导入"
+    "import": "导入",
+    "add": "添加",
+    "create_or_update": "变更",
+    "api_key": "API Key",
+    "params_setting": "参数设置",
+    "rules": "权限规则",
+    "log_setting": "登录认证"
   }
 }

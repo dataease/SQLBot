@@ -284,7 +284,7 @@ const initOptions = () => {
       />
       <div class="preview-or-schema">
         <el-table ref="multipleTableRef" :data="fieldList" style="width: 100%">
-          <el-table-column prop="word" :label="$t('audit.operation_type')" width="120">
+          <el-table-column prop="word" :label="$t('audit.operation_type')" width="140">
             <template #default="scope">
               {{ scope.row.operation_type_name }}
             </template>

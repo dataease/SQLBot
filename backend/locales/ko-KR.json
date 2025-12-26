@@ -156,6 +156,12 @@
     "edit": "편집",
     "login": "로그인",
     "export": "내보내기",
-    "import": "가져오기"
+    "import": "가져오기",
+    "add": "추가",
+    "create_or_update": "변경",
+    "api_key": "API 키",
+    "params_setting": "매개변수 설정",
+    "rules": "권한 규칙",
+    "log_setting": "로그인 인증"
   }
 }

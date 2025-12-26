@@ -8,6 +8,8 @@ from apps.system.models.system_model import UserWsModel, WorkspaceBase, Workspac
 from apps.system.models.user import UserModel
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from apps.system.schemas.system_schema import UserWsBase, UserWsDTO, UserWsEditor, UserWsOption, WorkspaceUser
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
 from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
 from common.core.schemas import PaginatedResponse, PaginationParams
@@ -121,7 +123,9 @@ async def pager(
     
 
 @router.post("/uws", summary=f"{PLACEHOLDER_PREFIX}ws_user_bind_api", description=f"{PLACEHOLDER_PREFIX}ws_user_bind_api")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))     
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+@system_log(LogConfig(operation_type=OperationType.ADD, module=OperationModules.MEMBER, resource_id_expr="creator.uid_list",
+                      ))
 async def create(session: SessionDep, current_user: CurrentUser, trans: Trans, creator: UserWsDTO):
     if not current_user.isAdmin and current_user.weight == 0:
         raise Exception(trans('i18n_permission.no_permission', url = '', msg = ''))
@@ -143,7 +147,9 @@ async def create(session: SessionDep, current_user: CurrentUser, trans: Trans, c
     session.add_all(db_model_list)
 
 @router.put("/uws", summary=f"{PLACEHOLDER_PREFIX}ws_user_status_api", description=f"{PLACEHOLDER_PREFIX}ws_user_status_api")
-@require_permissions(permission=SqlbotPermission(role=['admin']))     
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.MEMBER, resource_id_expr="editor.uid_list",
+                      ))
 async def uws_edit(session: SessionDep, trans: Trans, editor: UserWsEditor):
     await edit(session, trans, editor)
     
@@ -162,7 +168,9 @@ async def edit(session: SessionDep, trans: Trans, editor: UserWsEditor):
     await clean_user_cache(editor.uid)
 
 @router.delete("/uws", summary=f"{PLACEHOLDER_PREFIX}ws_user_unbind_api", description=f"{PLACEHOLDER_PREFIX}ws_user_unbind_api")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))     
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+@system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.MEMBER, resource_id_expr="dto.uid_list",
+                      ))
 async def delete(session: SessionDep, current_user: CurrentUser, trans: Trans, dto: UserWsBase):
     if not current_user.isAdmin and current_user.weight == 0:
         raise Exception(trans('i18n_permission.no_permission', url = '', msg = ''))
@@ -189,13 +197,18 @@ async def query(session: SessionDep, trans: Trans):
 
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}ws_create_api", description=f"{PLACEHOLDER_PREFIX}ws_create_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.WORKSPACE, result_id_expr="id",
+                      ))
 async def add(session: SessionDep, creator: WorkspaceBase):
     db_model = WorkspaceModel.model_validate(creator)
     db_model.create_time = get_timestamp()
     session.add(db_model)
+    return db_model
     
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}ws_update_api", description=f"{PLACEHOLDER_PREFIX}ws_update_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.WORKSPACE, resource_id_expr="editor.id",
+                      ))
 async def update(session: SessionDep, editor: WorkspaceEditor):
     id = editor.id
     db_model = session.get(WorkspaceModel, id)
@@ -215,7 +228,9 @@ async def get_one(session: SessionDep, trans: Trans, id: int = Path(description=
     return db_model
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}ws_del_api", description=f"{PLACEHOLDER_PREFIX}ws_del_api")
-@require_permissions(permission=SqlbotPermission(role=['admin']))  
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.WORKSPACE, resource_id_expr="id",
+                      ))
 async def single_delete(session: SessionDep, current_user: CurrentUser, id: int = Path(description=f"{PLACEHOLDER_PREFIX}oid")):
     if not current_user.isAdmin:
         raise HTTPException("only admin can delete workspace")

@@ -21,6 +21,8 @@ from common.core.sqlbot_cache import clear_cache
 from common.utils.utils import get_origin_from_referer, origin_match_domain
 
 router = APIRouter(tags=["system_assistant"], prefix="/system/assistant")
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import LogConfig, system_log
 
 
 @router.get("/info/{id}", include_in_schema=False)
@@ -168,12 +170,14 @@ async def query_advanced_application(session: SessionDep):
 
 
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}assistant_create_api", description=f"{PLACEHOLDER_PREFIX}assistant_create_api")
+@system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.APPLICATION, result_id_expr="id"))
 async def add(request: Request, session: SessionDep, creator: AssistantBase):
-    await save(request, session, creator)
+    return await save(request, session, creator)
 
 
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}assistant_update_api", description=f"{PLACEHOLDER_PREFIX}assistant_update_api")
 @clear_cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="editor.id")
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.APPLICATION, resource_id_expr="editor.id"))
 async def update(request: Request, session: SessionDep, editor: AssistantDTO):
     id = editor.id
     db_model = session.get(AssistantModel, id)
@@ -197,6 +201,7 @@ async def get_one(session: SessionDep, id: int = Path(description="ID")):
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}assistant_del_api", description=f"{PLACEHOLDER_PREFIX}assistant_del_api")
 @clear_cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="id")
+@system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.APPLICATION, resource_id_expr="id"))
 async def delete(request: Request, session: SessionDep, id: int = Path(description="ID")):
     db_model = session.get(AssistantModel, id)
     if not db_model:

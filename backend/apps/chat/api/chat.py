@@ -71,6 +71,11 @@ async def chat_predict_data(session: SessionDep, chat_record_id: int):
 
 
 @router.post("/rename", response_model=str, summary=f"{PLACEHOLDER_PREFIX}rename_chat")
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.CHAT,
+    resource_id_expr="chat.id"
+))
 async def rename(session: SessionDep, chat: RenameChat):
     try:
         return rename_chat(session=session, rename_object=chat)

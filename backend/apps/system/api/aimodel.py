@@ -16,6 +16,8 @@ from common.utils.time import get_timestamp
 from common.utils.utils import SQLBotLogUtil, prepare_model_arg
 
 router = APIRouter(tags=["system_model"], prefix="/system/aimodel")
+from sqlbot_xpack.audit.models.log_model import OperationType, OperationModules
+from sqlbot_xpack.audit.schemas.logger_decorator import LogConfig, system_log
 
 @router.post("/status", include_in_schema=False)
 @require_permissions(permission=SqlbotPermission(role=['admin'])) 
@@ -54,7 +56,8 @@ async def check_default(session: SessionDep, trans: Trans):
         raise Exception(trans('i18n_llm.miss_default'))
     
 @router.put("/default/{id}", summary=f"{PLACEHOLDER_PREFIX}system_model_default", description=f"{PLACEHOLDER_PREFIX}system_model_default")
-@require_permissions(permission=SqlbotPermission(role=['admin'])) 
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.AI_MODEL, resource_id_expr="id"))
 async def set_default(session: SessionDep, id: int = Path(description="ID")):
     db_model = session.get(AiModelDetail, id)
     if not db_model:
@@ -122,7 +125,8 @@ async def get_model_by_id(
     return AiModelEditor(**data)
 
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}system_model_create", description=f"{PLACEHOLDER_PREFIX}system_model_create")
-@require_permissions(permission=SqlbotPermission(role=['admin'])) 
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.AI_MODEL, result_id_expr="id"))
 async def add_model(
         session: SessionDep,
         creator: AiModelCreator
@@ -137,9 +141,11 @@ async def add_model(
         detail.default_model = True
     session.add(detail)
     session.commit()
+    return detail
 
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}system_model_update", description=f"{PLACEHOLDER_PREFIX}system_model_update")
-@require_permissions(permission=SqlbotPermission(role=['admin'])) 
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.AI_MODEL, resource_id_expr="editor.id"))
 async def update_model(
         session: SessionDep,
         editor: AiModelEditor
@@ -155,7 +161,8 @@ async def update_model(
     session.commit()
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}system_model_del", description=f"{PLACEHOLDER_PREFIX}system_model_del")
-@require_permissions(permission=SqlbotPermission(role=['admin'])) 
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.AI_MODEL, resource_id_expr="id"))
 async def delete_model(
         session: SessionDep,
         trans: Trans,

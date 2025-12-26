@@ -26,6 +26,11 @@ async def create_resource_api(session: SessionDep, user: CurrentUser, dashboard:
 
 
 @router.post("/update_resource", response_model=BaseDashboard)
+@system_log(LogConfig(
+    operation_type=OperationType.UPDATE,
+    module=OperationModules.DASHBOARD,
+    resource_id_expr="dashboard.id"
+))
 async def update_resource_api(session: SessionDep, user: CurrentUser, dashboard: QueryDashboard):
     return update_resource(session=session, user=user, dashboard=dashboard)
 

@@ -38,3 +38,4 @@ async def save(request: Request, session: Session, creator: AssistantBase):
     session.add(db_model)
     session.commit()
     dynamic_upgrade_cors(request=request, session=session)
+    return db_model
