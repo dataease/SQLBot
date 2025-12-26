@@ -174,5 +174,6 @@
     "params_setting": "参数设置",
     "rules": "权限规则",
     "log_setting": "登录认证"
-  }
+  },
+  "i18n_table_not_exist": "当前表不存在"
 }

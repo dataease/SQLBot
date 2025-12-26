@@ -165,9 +165,17 @@ def execSql(session: SessionDep, id: int, sql: str):
     return exec_sql(ds, sql, True)
 
 
-def sync_single_fields(session: SessionDep, id: int):
+def sync_single_fields(session: SessionDep, trans: Trans, id: int):
     table = session.query(CoreTable).filter(CoreTable.id == id).first()
     ds = session.query(CoreDatasource).filter(CoreDatasource.id == table.ds_id).first()
+
+    tables = getTablesByDs(session, ds)
+    t_name = []
+    for _t in tables:
+        t_name.append(_t.tableName)
+
+    if not table.table_name in t_name:
+        raise HTTPException(status_code=500, detail=trans('i18n_table_not_exist'))
 
     # sync field
     fields = getFieldsByDs(session, ds, table.table_name)

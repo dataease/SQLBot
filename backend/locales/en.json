@@ -174,5 +174,6 @@
     "params_setting": "Parameters Setting",
     "rules": "Permission Rules",
     "log_setting": "Login Authentication"
-  }
+  },
+  "i18n_table_not_exist": "Table not exist"
 }

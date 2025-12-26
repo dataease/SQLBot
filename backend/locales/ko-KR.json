@@ -174,5 +174,6 @@
     "params_setting": "매개변수 설정",
     "rules": "권한 규칙",
     "log_setting": "로그인 인증"
-  }
+  },
+  "i18n_table_not_exist": "현재 테이블이 존재하지 않습니다"
 }
