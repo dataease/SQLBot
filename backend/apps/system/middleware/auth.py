@@ -136,9 +136,9 @@ class TokenMiddleware(BaseHTTPMiddleware):
     
     async def validateEmbedded(self, param: str, trans: I18n) -> tuple[any]:
         try: 
-            """ payload = jwt.decode(
-                param, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-            ) """
+            # WARNING: Signature verification is disabled for embedded tokens
+            # This is a security risk and should only be used if absolutely necessary
+            # Consider implementing proper signature verification with a shared secret
             payload: dict = jwt.decode(
                 param,
                 options={"verify_signature": False, "verify_exp": False},

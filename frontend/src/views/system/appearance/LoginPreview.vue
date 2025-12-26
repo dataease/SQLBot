@@ -108,6 +108,7 @@ import logoHeader from '@/assets/blue/LOGO-head_blue.png'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import loginImage from '@/assets/blue/login-image_blue.png'
 import { propTypes } from '@/utils/propTypes'
+import { sanitizeHtml } from '@/utils/xss'
 import { isBtnShow } from '@/utils/utils'
 import { useI18n } from 'vue-i18n'
 import { computed, ref, onMounted, nextTick } from 'vue'
@@ -156,9 +157,11 @@ const pageBg = computed(() =>
 const pageName = computed(() => props.name)
 const pageSlogan = computed(() => props.slogan)
 const showFoot = computed(() => props.foot && props.foot === 'true')
-const pageFootContent = computed(() =>
-  props.foot && props.foot === 'true' ? props.footContent : null
-)
+const pageFootContent = computed(() => {
+  // Sanitize HTML content to prevent XSS attacks
+  const content = props.foot && props.foot === 'true' ? props.footContent : null
+  return content ? sanitizeHtml(content) : null
+})
 const customStyle = computed(() => {
   const result = { height: `${props.height + 23}px` } as {
     [key: string]: any

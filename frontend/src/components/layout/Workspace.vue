@@ -9,6 +9,7 @@ import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { highlightKeyword } from '@/utils/xss'
 
 const userStore = useUserStore()
 const { t } = useI18n()
@@ -30,11 +31,8 @@ const defaultWorkspaceListWithSearch = computed(() => {
   )
 })
 const formatKeywords = (item: string) => {
-  if (!workspaceKeywords.value) return item
-  return item.replaceAll(
-    workspaceKeywords.value,
-    `<span class="isSearch">${workspaceKeywords.value}</span>`
-  )
+  // Use XSS-safe highlight function
+  return highlightKeyword(item, workspaceKeywords.value, 'isSearch')
 }
 
 const emit = defineEmits(['selectWorkspace'])

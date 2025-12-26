@@ -386,7 +386,8 @@ def get_tables(ds: CoreDatasource):
                                   password=conf.password,
                                   options=f"-c statement_timeout={conf.timeout * 1000}",
                                   **extra_config_dict) as conn, conn.cursor() as cursor:
-                cursor.execute(sql.format(sql_param))
+                # Use parameterized query for security
+                cursor.execute(sql, (sql_param,))
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
@@ -437,7 +438,8 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                                   password=conf.password,
                                   options=f"-c statement_timeout={conf.timeout * 1000}",
                                   **extra_config_dict) as conn, conn.cursor() as cursor:
-                cursor.execute(sql.format(p1, p2))
+                # Use parameterized query for security
+                cursor.execute(sql, (p1, p2))
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
