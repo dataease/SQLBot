@@ -293,6 +293,7 @@ class McpQuestion(BaseModel):
     chat_id: int = Body(description='会话ID')
     token: str = Body(description='token')
     stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)
+    lang: Optional[str] = Body(description='语言：zh-CN|en|ko-KR', default='zh-CN')
 
 
 class AxisObj(BaseModel):

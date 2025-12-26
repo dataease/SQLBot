@@ -146,6 +146,10 @@ onMounted(() => {
 </style>
 <style lang="less" scoped>
 .parameter {
+  :deep(.ed-radio) {
+    --ed-radio-input-height: 16px;
+    --ed-radio-input-width: 16px;
+  }
   .title {
     font-weight: 500;
     font-style: Medium;
@@ -162,6 +166,7 @@ onMounted(() => {
       display: flex;
       flex-wrap: wrap;
       margin-top: 16px;
+
       .card-title {
         font-weight: 500;
         font-style: Medium;

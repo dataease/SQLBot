@@ -22,6 +22,10 @@
   "ds_preview_data": "Preview Data",
   "ds_upload_excel": "Upload Excel",
   "ds_excel": "File",
+  "ds_export_ds_schema": "Export Comment",
+  "ds_upload_ds_schema": "Upload Comment",
+
+  "mcp_api": "MCP Tools(It is not recommended to call via API)",
 
   "system": "System Management",
   "system_user_api": "User APIs",

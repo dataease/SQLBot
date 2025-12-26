@@ -8,6 +8,8 @@
     "Details": "详情"
   },
   "parameter": {
+    "export_notes": "导出备注",
+    "import_notes": "导入备注",
     "memo": "备注更新规则：根据表名和字段名匹配，如果匹配则更新表备注和字段备注；如果匹配不上，备注保持不变。",
     "parameter_configuration": "参数配置",
     "question_count_settings": "问数设置",
@@ -93,6 +95,8 @@
     "the_term_gmv": "是否删除术语：{msg}？"
   },
   "common": {
+    "start_time": "开始时间",
+    "end_time": "结束时间",
     "require": "必填",
     "zoom_in": "放大",
     "zoom_out": "缩小",
@@ -788,7 +792,7 @@
     "ou": "用户 OU",
     "ou_placeholder": "例如：ou=users,dc=example,dc=com",
     "user_filter": "用户过滤器",
-    "user_filter_placeholder": "例如：uid",
+    "user_filter_placeholder": "例如：uid 或 uid {0} email, 多属性以 {1} 分割",
     "ldap_field_mapping_placeholder": "例如：{'{'}\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"{'}'}",
     "be_turned_on": "测试连接有效后，可开启"
   },
@@ -820,5 +824,31 @@
   },
   "modelType": {
     "llm": "大语言模型"
+  },
+  "audit": {
+    "system_log": "操作日志",
+    "search_log": "搜索日志",
+    "operation_type": "操作类型",
+    "operation_details": "操作详情",
+    "operation_user_name": "操作用户",
+    "operation_status": "操作状态",
+    "user_name": "操作日志",
+    "oid_name": "工作空间",
+    "ip_address": "IP 地址",
+    "create_time": "创建时间",
+    "no_log": "暂无日志",
+    "all_236_terms": "是否导出全部 {msg} 条日志？",
+    "export_hint": "是否导出全部日志？",
+    "export": "导出",
+    "success": "成功",
+    "failed": "失败",
+    "failed_info": "操作失败详情",
+    "opt_time": "操作时间"
+  },
+  "api_key": {
+    "info_tips": "API Key 是您访问 SQLBot API 的密钥，具有账户的完全权限，请您务必妥善保管！不要以任何方式公开 API Key 到外部渠道，避免被他人利用造成安全威胁。",
+    "create": "创建",
+    "to_doc": "查看 API",
+    "trigger_limit": "最多支持创建 {0} 个 API Key"
   }
 }

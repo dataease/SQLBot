@@ -18,6 +18,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { chatApi } from '@/api/chat'
 import RecommendedProblemConfigDialog from '@/views/ds/RecommendedProblemConfigDialog.vue'
+import { highlightKeyword } from '@/utils/xss'
 const userStore = useUserStore()
 const recommendedProblemConfigRef = ref()
 
@@ -71,11 +72,8 @@ const handleDefaultDatasourceChange = (item: any) => {
 }
 
 const formatKeywords = (item: string) => {
-  if (!defaultDatasourceKeywords.value) return item
-  return item.replaceAll(
-    defaultDatasourceKeywords.value,
-    `<span class="isSearch">${defaultDatasourceKeywords.value}</span>`
-  )
+  // Use XSS-safe highlight function
+  return highlightKeyword(item, defaultDatasourceKeywords.value, 'isSearch')
 }
 const handleEditDatasource = (res: any) => {
   addDrawerRef.value.handleEditDatasource(res)
@@ -159,7 +157,7 @@ const deleteHandler = (item: any) => {
       ''
     ),
   }).then(() => {
-    datasourceApi.delete(item.id).then(() => {
+    datasourceApi.delete(item.id, item.name).then(() => {
       ElMessage({
         type: 'success',
         message: t('dashboard.delete_success'),

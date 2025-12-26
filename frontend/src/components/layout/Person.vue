@@ -6,6 +6,7 @@ import icon_info_outlined_1 from '@/assets/svg/icon_info_outlined_1.svg'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import icon_maybe_outlined from '@/assets/svg/icon-maybe_outlined.svg'
 import icon_key_outlined from '@/assets/svg/icon-key_outlined.svg'
+import icon_api_key from '@/assets/svg/icon-api_key.svg'
 import icon_translate_outlined from '@/assets/svg/icon_translate_outlined.svg'
 import icon_logout_outlined from '@/assets/svg/icon_logout_outlined.svg'
 import icon_right_outlined from '@/assets/svg/icon_right_outlined.svg'
@@ -13,6 +14,7 @@ import AboutDialog from '@/components/about/index.vue'
 import icon_done_outlined from '@/assets/svg/icon_done_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import PwdForm from './PwdForm.vue'
+import Apikey from './Apikey.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { userApi } from '@/api/auth'
@@ -33,6 +35,7 @@ const currentLanguage = computed(() => userStore.getLanguage)
 const isAdmin = computed(() => userStore.isAdmin)
 const isLocalUser = computed(() => !userStore.getOrigin)
 const dialogVisible = ref(false)
+const apikeyDialogVisible = ref(false)
 const aboutRef = ref()
 const languageList = computed(() => [
   {
@@ -76,7 +79,9 @@ const openPwd = () => {
 const closePwd = () => {
   dialogVisible.value = false
 }
-
+const openApikey = () => {
+  apikeyDialogVisible.value = true
+}
 const toAbout = () => {
   aboutRef.value?.open()
 }
@@ -125,6 +130,12 @@ const logout = async () => {
             <icon_key_outlined></icon_key_outlined>
           </el-icon>
           <div class="datasource-name">{{ $t('user.change_password') }}</div>
+        </div>
+        <div class="popover-item" @click="openApikey">
+          <el-icon size="16">
+            <icon_api_key></icon_api_key>
+          </el-icon>
+          <div class="datasource-name">API Key</div>
         </div>
         <el-popover :teleported="false" popper-class="system-language" placement="right">
           <template #reference>
@@ -184,6 +195,9 @@ const logout = async () => {
         <el-button type="primary" @click="savePwdHandler">{{ t('common.save') }}</el-button>
       </div>
     </template>
+  </el-dialog>
+  <el-dialog v-model="apikeyDialogVisible" title="API Key" width="840">
+    <apikey v-if="apikeyDialogVisible" ref="apikeyRef" />
   </el-dialog>
   <AboutDialog ref="aboutRef" />
 </template>

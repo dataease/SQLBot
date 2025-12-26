@@ -15,6 +15,7 @@ import Card from './Card.vue'
 import { getModelTypeName } from '@/entity/CommonEntity.ts'
 import { useI18n } from 'vue-i18n'
 import { get_supplier } from '@/entity/supplier'
+import { highlightKeyword } from '@/utils/xss'
 
 interface Model {
   name: string
@@ -170,11 +171,8 @@ const handleDefaultModelChange = (item: any) => {
 }
 
 const formatKeywords = (item: string) => {
-  if (!defaultModelKeywords.value) return item
-  return item.replaceAll(
-    defaultModelKeywords.value,
-    `<span class="isSearch">${defaultModelKeywords.value}</span>`
-  )
+  // Use XSS-safe highlight function
+  return highlightKeyword(item, defaultModelKeywords.value, 'isSearch')
 }
 const handleAddModel = () => {
   activeStep.value = 0

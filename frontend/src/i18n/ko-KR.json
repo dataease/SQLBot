@@ -8,6 +8,8 @@
     "Details": "세부"
   },
   "parameter": {
+    "export_notes": "수출 참고사항",
+    "import_notes": "수입 참고사항",
     "memo": "메모 업데이트 규칙: 테이블 이름과 필드 이름이 일치하는지 확인합니다. 일치하는 항목이 있으면 테이블 메모와 필드 메모를 업데이트하고, 그렇지 않으면 메모를 변경하지 않고 그대로 둡니다.",
     "parameter_configuration": "매개변수 구성",
     "question_count_settings": "질문 수 설정",
@@ -93,6 +95,8 @@
     "the_term_gmv": "용어를 삭제하시겠습니까: {msg}?"
   },
   "common": {
+    "start_time": "시작 시간",
+    "end_time": "종료 시간",
     "require": "필수 입력 항목",
     "zoom_in": "확대",
     "zoom_out": "축소",
@@ -787,7 +791,7 @@
     "ou": "사용자 OU",
     "ou_placeholder": "예: ou=users,dc=example,dc=com",
     "user_filter": "사용자 필터",
-    "user_filter_placeholder": "예: uid",
+    "user_filter_placeholder": "예: uid 또는 uid {0} email. 여러 속성은 {1}로 구분합니다",
     "ldap_field_mapping_placeholder": "예: {\"account\": \"ldapAccount\", \"name\": \"ldapName\", \"email\": \"mail\"}",
     "be_turned_on": "테스트 연결이 유효한 것으로 확인되면 활성화할 수 있습니다"
   },
@@ -819,5 +823,31 @@
   },
   "modelType": {
     "llm": "대형 언어 모델"
+  },
+  "audit": {
+    "system_log": "시스템 로그",
+    "search_log": "검색 로그",
+    "operation_type": "작업 유형",
+    "operation_details": "작업 상세",
+    "operation_user_name": "작업 사용자",
+    "operation_status": "작업 상태",
+    "user_name": "사용자 이름",
+    "oid_name": "작업 공간",
+    "ip_address": "IP 주소",
+    "create_time": "생성 시간",
+    "no_log": "로그 없음",
+    "all_236_terms": "전체 {msg}개의 로그를 내보내시겠습니까?",
+    "export_hint": "모든 로그를 내보내시겠습니까?",
+    "export": "내보내기",
+    "success": "성공",
+    "failed": "실패",
+    "failed_info": "작업 실패 상세",
+    "opt_time": "작업 시간"
+  },
+  "api_key": {
+    "info_tips": "API 키는 SQLBot API에 액세스하는 비밀키로 계정의 모든 권한을 갖고 있습니다. 꼭 안전하게 보관하세요! 외부 채널에 어떠한 방식으로도 API 키를 공개하지 마시고, 타인이 악용하여 보안 위협이 발생하는 것을 방지하세요.",
+    "create": "생성",
+    "to_doc": "API 보기",
+    "trigger_limit": "최대 {0}개의 API 키 생성 지원"
   }
 }

@@ -13,6 +13,7 @@ import UploaderRemark from '@/views/system/excel-upload/UploaderRemark.vue'
 import TableRelationship from '@/views/ds/TableRelationship.vue'
 import icon_mindnote_outlined from '@/assets/svg/icon_mindnote_outlined.svg'
 import { Refresh } from '@element-plus/icons-vue'
+import { debounce } from 'lodash-es'
 
 interface Table {
   name: string
@@ -106,7 +107,9 @@ const handleCurrentChange = (val: number) => {
 
 const fieldListComputed = computed(() => {
   const { currentPage, pageSize } = pageInfo
-  return fieldList.value.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  return fieldList.value
+    .filter((ele: any) => ele.field_name.toLowerCase().includes(fieldName.value.toLowerCase()))
+    .slice((currentPage - 1) * pageSize, currentPage * pageSize)
 })
 
 const init = (reset = false) => {
@@ -166,6 +169,7 @@ const clickTable = (table: any) => {
       fieldList.value = res
       pageInfo.total = res.length
       pageInfo.currentPage = 1
+      fieldName.value = ''
       datasourceApi.previewData(props.info.id, buildData()).then((res) => {
         previewData.value = res
       })
@@ -313,10 +317,10 @@ const renderHeader = ({ column }: any) => {
   document.body.removeChild(span)
   return column.label
 }
-
-const fieldNameSearch = () => {
-  btnSelectClick(btnSelect.value)
-}
+const fieldNameSearch = debounce(() => {
+  pageInfo.currentPage = 1
+  pageInfo.total = fieldListComputed.value.length
+}, 100)
 const fieldName = ref('')
 const btnSelectClick = (val: any) => {
   btnSelect.value = val
@@ -324,11 +328,12 @@ const btnSelectClick = (val: any) => {
 
   if (val === 'd') {
     datasourceApi
-      .fieldList(currentTable.value.id, { fieldName: fieldName.value })
+      .fieldList(currentTable.value.id, { fieldName: '' })
       .then((res) => {
         fieldList.value = res
         pageInfo.total = res.length
         pageInfo.currentPage = 1
+        fieldName.value = ''
       })
       .finally(() => {
         loading.value = false
@@ -354,16 +359,18 @@ const btnSelectClick = (val: any) => {
         <icon_right_outlined></icon_right_outlined>
       </el-icon>
       <div class="name">{{ info.name }}</div>
-      <el-button @click="downloadTemplate" class="export-remark" secondary>
-        <template #icon>
-          <icon_import_outlined></icon_import_outlined>
-        </template>
-        {{ $t('professional.export') }}
-      </el-button>
-      <UploaderRemark
-        :upload-path="`/datasource/uploadDsSchema/${info.id}`"
-        @upload-finished="init"
-      ></UploaderRemark>
+      <div class="export-remark">
+        <el-button style="margin-right: 12px" @click="downloadTemplate" secondary>
+          <template #icon>
+            <icon_import_outlined></icon_import_outlined>
+          </template>
+          {{ $t('parameter.export_notes') }}
+        </el-button>
+        <UploaderRemark
+          :upload-path="`/datasource/uploadDsSchema/${info.id}`"
+          @upload-finished="init"
+        ></UploaderRemark>
+      </div>
     </div>
     <div class="content">
       <div class="side-list">
@@ -494,7 +501,7 @@ const btnSelectClick = (val: any) => {
               :placeholder="t('dashboard.search')"
               autocomplete="off"
               clearable
-              @blur="fieldNameSearch"
+              @input="fieldNameSearch"
             />
             <el-button
               v-if="ds.type !== 'excel'"
@@ -563,7 +570,7 @@ const btnSelectClick = (val: any) => {
                 </el-table-column>
               </el-table>
             </div>
-            <div v-if="fieldList.length && btnSelect === 'd'" class="pagination-container">
+            <div v-if="pageInfo.total && btnSelect === 'd'" class="pagination-container">
               <el-pagination
                 v-model:current-page="pageInfo.currentPage"
                 v-model:page-size="pageInfo.pageSize"
@@ -579,16 +586,18 @@ const btnSelectClick = (val: any) => {
               <div class="preview-num">
                 {{ t('ds.pieces_in_total', { msg: total, ms: showNum }) }}
               </div>
-              <el-table :data="previewData.data" style="width: 100%">
-                <el-table-column
-                  v-for="(c, index) in previewData.fields"
-                  :key="index"
-                  :prop="c"
-                  :label="c"
-                  min-width="150"
-                  :render-header="renderHeader"
-                />
-              </el-table>
+              <div class="table-container">
+                <el-table :data="previewData.data" style="width: 100%; height: 100%">
+                  <el-table-column
+                    v-for="(c, index) in previewData.fields"
+                    :key="index"
+                    :prop="c"
+                    :label="c"
+                    min-width="150"
+                    :render-header="renderHeader"
+                  />
+                </el-table>
+              </div>
             </template>
           </div>
         </div>
@@ -675,7 +684,7 @@ const btnSelectClick = (val: any) => {
 
     .export-remark {
       position: absolute;
-      right: 116px;
+      right: 24px;
       top: 12px;
     }
 
@@ -936,10 +945,6 @@ const btnSelectClick = (val: any) => {
           margin-top: 16px;
           height: calc(100% - 50px);
 
-          &.overflow-preview {
-            overflow-y: auto;
-          }
-
           .table-content_preview {
             max-height: calc(100% - 50px);
             overflow-y: auto;
@@ -1005,6 +1010,11 @@ const btnSelectClick = (val: any) => {
             font-size: 14px;
             line-height: 22px;
             color: #646a73;
+          }
+
+          .table-container {
+            width: 100%;
+            height: calc(100% - 46px);
           }
         }
       }

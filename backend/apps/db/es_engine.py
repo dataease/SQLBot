@@ -110,7 +110,18 @@ def get_es_data_by_http(conf: DatasourceConf, sql: str):
 
     host = f'{url}/_sql?format=json'
 
-    response = requests.post(host, data=json.dumps({"query": sql}), headers=get_es_auth(conf), verify=False)
+    # Security improvement: Enable SSL certificate verification
+    # Note: In production, always set verify=True or provide path to CA bundle
+    # If using self-signed certificates, provide the cert path: verify='/path/to/cert.pem'
+    verify_ssl = True if not url.startswith('https://localhost') else False
+    
+    response = requests.post(
+        host, 
+        data=json.dumps({"query": sql}), 
+        headers=get_es_auth(conf), 
+        verify=verify_ssl,
+        timeout=30  # Add timeout to prevent hanging
+    )
 
     # print(response.json())
     res = response.json()

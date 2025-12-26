@@ -51,6 +51,9 @@
   "i18n_embedded": {
     "invalid_origin": "도메인 이름 검증 실패 【{origin}】"
   },
+  "i18n_chat": {
+    "record_id_in_mcp": "응답 ID: "
+  },
   "i18n_terminology": {
     "datasource_list_is_not_found": "데이터 소스 목록을 찾을 수 없습니다",
     "datasource_id_not_found": "데이터 소스 ID: {key}를 찾을 수 없습니다",
@@ -132,5 +135,44 @@
   },
   "i18n_authentication": {
     "record_not_exist": "{msg} 기록이 존재하지 않습니다. 먼저 저장해 주세요!"
+  },
+  "i18n_audit": {
+    "success": "성공",
+    "failed": "실패",
+    "system_log": "작업 로그",
+    "operation_type_name": "작업 유형",
+    "operation_detail_info": "작업 상세",
+    "user_name": "작업자",
+    "oid_name": "작업 공간",
+    "operation_status_name": "작업 상태",
+    "error_message": "오류 메시지",
+    "ip_address": "IP 주소",
+    "create_time": "작업 시간",
+    "chat": "지능형 질의",
+    "datasource": "데이터 소스",
+    "dashboard": "대시보드",
+    "member": "구성원",
+    "permission": "권한",
+    "terminology": "용어",
+    "data_training": "SQL 예제 라이브러리",
+    "prompt_words": "프롬프트 단어",
+    "user": "사용자",
+    "workspace": "작업 공간",
+    "ai_model": "AI 모델",
+    "application": "애플리케이션",
+    "theme": "외관 설정",
+    "create": "생성",
+    "delete": "삭제",
+    "update": "수정",
+    "edit": "편집",
+    "login": "로그인",
+    "export": "내보내기",
+    "import": "가져오기",
+    "add": "추가",
+    "create_or_update": "변경",
+    "api_key": "API 키",
+    "params_setting": "매개변수 설정",
+    "rules": "권한 규칙",
+    "log_setting": "로그인 인증"
   }
 }

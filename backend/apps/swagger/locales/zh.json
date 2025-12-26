@@ -22,6 +22,10 @@
   "ds_preview_data": "预览数据",
   "ds_upload_excel": "上传Excel",
   "ds_excel": "文件",
+  "ds_export_ds_schema": "导出备注信息",
+  "ds_upload_ds_schema": "导入备注信息",
+
+  "mcp_api": "MCP Tools(不建议api方式调用)",
 
   "system": "系统管理",
   "system_user_api": "用户接口",

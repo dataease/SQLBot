@@ -7,6 +7,7 @@ from apps.system.schemas.system_schema import AssistantBase
 from common.core.config import settings
 from apps.system.models.system_model import AssistantModel
 from common.utils.time import get_timestamp
+from common.utils.utils import get_domain_list
 
 
 def dynamic_upgrade_cors(request: Request, session: Session):
@@ -15,7 +16,7 @@ def dynamic_upgrade_cors(request: Request, session: Session):
     unique_domains = []
     for item in list_result:
         if item.domain:
-            for domain in item.domain.split(','):
+            for domain in get_domain_list(item.domain):
                 domain = domain.strip()
                 if domain and domain not in seen:
                     seen.add(domain)
@@ -37,3 +38,4 @@ async def save(request: Request, session: Session, creator: AssistantBase):
     session.add(db_model)
     session.commit()
     dynamic_upgrade_cors(request=request, session=session)
+    return db_model

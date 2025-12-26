@@ -28,6 +28,8 @@ from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj, \
     TableSchemaResponse, ColumnSchemaResponse, PreviewResponse
+from common.audit.models.log_model import OperationType, OperationModules
+from common.audit.schemas.logger_decorator import LogConfig, system_log
 
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
@@ -69,6 +71,7 @@ async def check_by_id(session: SessionDep, trans: Trans,
 
 
 @router.post("/add", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_add")
+@system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.DATASOURCE, result_id_expr="id"))
 async def add(session: SessionDep, trans: Trans, user: CurrentUser, ds: CreateDatasource):
     def inner():
         return create_ds(session, trans, user, ds)
@@ -87,6 +90,8 @@ async def choose_tables(session: SessionDep, trans: Trans, tables: List[CoreTabl
 
 @router.post("/update", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_update")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="ds.id"))
+@system_log(
+    LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.DATASOURCE, resource_id_expr="ds.id"))
 async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
     def inner():
         return update_ds(session, trans, user, ds)
@@ -94,9 +99,11 @@ async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreD
     return await asyncio.to_thread(inner)
 
 
-@router.post("/delete/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_delete")
+@router.post("/delete/{id}/{name}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_delete")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="id"))
-async def delete(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
+@system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.DATASOURCE, resource_id_expr="id",
+                      ))
+async def delete(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"), name: str = None):
     return delete_ds(session, id)
 
 
@@ -366,13 +373,14 @@ def insert_pg(df, tableName, engine):
 
 
 t_sheet = "数据表列表"
+t_s_col = "Sheet名称"
 t_n_col = "表名"
 t_c_col = "表备注"
 f_n_col = "字段名"
 f_c_col = "字段备注"
 
 
-@router.get("/exportDsSchema/{id}")
+@router.get("/exportDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_export_ds_schema")
 async def export_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     # {
     #     'sheet':'', sheet name
@@ -385,7 +393,8 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
         if id == 0:  # download template
             file_name = '批量上传备注'
             df_list = [
-                {'sheet': t_sheet, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c1': ["user", "score"],
+                {'sheet': t_sheet, 'c0_h': t_s_col, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c0': ["数据表1", "数据表2"],
+                 'c1': ["user", "score"],
                  'c2': ["用来存放用户信息的数据表", "用来存放用户课程信息的数据表"]},
                 {'sheet': '数据表1', 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': ["id", "name"],
                  'c2': ["用户id", "用户姓名"]},
@@ -395,19 +404,22 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
         else:
             ds = session.query(CoreDatasource).filter(CoreDatasource.id == id).first()
             file_name = ds.name
-            tables = session.query(CoreTable).filter(CoreTable.ds_id == id).all()
+            tables = session.query(CoreTable).filter(CoreTable.ds_id == id).order_by(
+                CoreTable.table_name.asc()).all()
             if len(tables) == 0:
                 raise HTTPException(400, "No tables")
 
             df_list = []
-            df1 = {'sheet': t_sheet, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c1': [], 'c2': []}
+            df1 = {'sheet': t_sheet, 'c0_h': t_s_col, 'c1_h': t_n_col, 'c2_h': t_c_col, 'c0': [], 'c1': [], 'c2': []}
             df_list.append(df1)
-            for table in tables:
+            for index, table in enumerate(tables):
+                df1['c0'].append(f"Sheet{index}")
                 df1['c1'].append(table.table_name)
                 df1['c2'].append(table.custom_comment)
 
-                fields = session.query(CoreField).filter(CoreField.table_id == table.id).all()
-                df_fields = {'sheet': table.table_name, 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': [], 'c2': []}
+                fields = session.query(CoreField).filter(CoreField.table_id == table.id).order_by(
+                    CoreField.field_index.asc()).all()
+                df_fields = {'sheet': f"Sheet{index}", 'c1_h': f_n_col, 'c2_h': f_c_col, 'c1': [], 'c2': []}
                 for field in fields:
                     df_fields['c1'].append(field.field_name)
                     df_fields['c2'].append(field.custom_comment)
@@ -416,10 +428,14 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
         # build dataframe and export
         output = io.BytesIO()
 
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            for df in df_list:
-                pd.DataFrame({df['c1_h']: df['c1'], df['c2_h']: df['c2']}).to_excel(writer, sheet_name=df['sheet'],
-                                                                                    index=False)
+        with (pd.ExcelWriter(output, engine='xlsxwriter') as writer):
+            for index, df in enumerate(df_list):
+                if index == 0:
+                    pd.DataFrame({df['c0_h']: df['c0'], df['c1_h']: df['c1'], df['c2_h']: df['c2']}
+                                 ).to_excel(writer, sheet_name=df['sheet'], index=False)
+                else:
+                    pd.DataFrame({df['c1_h']: df['c1'], df['c2_h']: df['c2']}).to_excel(writer, sheet_name=df['sheet'],
+                                                                                        index=False)
 
         output.seek(0)
 
@@ -438,7 +454,7 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
     )
 
 
-@router.post("/uploadDsSchema/{id}")
+@router.post("/uploadDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_upload_ds_schema")
 async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
                            file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
@@ -456,7 +472,7 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
         field_sheets = []
         table_sheet = None  # []
         for sheet in sheet_names:
-            df = pd.read_excel(excel_file, sheet_name=sheet, engine="openpyxl")
+            df = pd.read_excel(excel_file, sheet_name=sheet, engine="openpyxl").fillna('')
             if sheet == t_sheet:
                 table_sheet = df.where(pd.notnull(df), None).to_dict(orient="records")
             else:
@@ -465,10 +481,14 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
 
         # print(field_sheets)
 
+        # sheet table mapping
+        sheet_table_map = {}
+
         # get data and update
         # update table comment
         if table_sheet and len(table_sheet) > 0:
             for table in table_sheet:
+                sheet_table_map[table[t_s_col]] = table[t_n_col]
                 session.query(CoreTable).filter(
                     and_(CoreTable.ds_id == id, CoreTable.table_name == table[t_n_col])).update(
                     {'custom_comment': table[t_c_col]})
@@ -478,8 +498,9 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
             for fields in field_sheets:
                 if len(fields['data']) > 0:
                     # get table id
+                    table_name = sheet_table_map.get(fields['sheet_name'])
                     table = session.query(CoreTable).filter(
-                        and_(CoreTable.ds_id == id, CoreTable.table_name == fields['sheet_name'])).first()
+                        and_(CoreTable.ds_id == id, CoreTable.table_name == table_name)).first()
                     if table:
                         for field in fields['data']:
                             session.query(CoreField).filter(
@@ -491,4 +512,4 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
 
         return True
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"解析 Excel 失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Parse Excel Failed: {str(e)}")

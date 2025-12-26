@@ -19,7 +19,8 @@ from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
 from common.utils.excel import get_excel_column_count
-
+from common.audit.models.log_model import OperationType, OperationModules
+from common.audit.schemas.logger_decorator import LogConfig, system_log
 router = APIRouter(tags=["Terminology"], prefix="/system/terminology")
 
 
@@ -40,6 +41,7 @@ async def pager(session: SessionDep, current_user: CurrentUser, current_page: in
 
 
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}create_or_update_term")
+@system_log(LogConfig(operation_type=OperationType.CREATE_OR_UPDATE, module=OperationModules.TERMINOLOGY,resource_id_expr='info.id', result_id_expr="result_self"))
 async def create_or_update(session: SessionDep, current_user: CurrentUser, trans: Trans, info: TerminologyInfo):
     oid = current_user.oid
     if info.id:
@@ -49,16 +51,19 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 
 
 @router.delete("", summary=f"{PLACEHOLDER_PREFIX}delete_term")
+@system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.TERMINOLOGY,resource_id_expr='id_list'))
 async def delete(session: SessionDep, id_list: list[int]):
     delete_terminology(session, id_list)
 
 
 @router.get("/{id}/enable/{enabled}", summary=f"{PLACEHOLDER_PREFIX}enable_term")
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.TERMINOLOGY,resource_id_expr='id'))
 async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
     enable_terminology(session, id, enabled, trans)
 
 
 @router.get("/export", summary=f"{PLACEHOLDER_PREFIX}export_term")
+@system_log(LogConfig(operation_type=OperationType.EXPORT, module=OperationModules.TERMINOLOGY))
 async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentUser,
                        word: Optional[str] = Query(None, description="搜索术语(可选)")):
     def inner():
@@ -154,6 +159,7 @@ session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 
 
 @router.post("/uploadExcel", summary=f"{PLACEHOLDER_PREFIX}upload_term")
+@system_log(LogConfig(operation_type=OperationType.IMPORT, module=OperationModules.TERMINOLOGY))
 async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):

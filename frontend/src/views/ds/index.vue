@@ -109,7 +109,7 @@ const deleteDs = (item: any) => {
     type: 'warning',
   })
     .then(() => {
-      datasourceApi.delete(item.id).then(() => {
+      datasourceApi.delete(item.id, item.name).then(() => {
         refresh()
       })
     })

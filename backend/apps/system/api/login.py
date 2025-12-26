@@ -11,9 +11,18 @@ from datetime import timedelta
 from common.core.config import settings
 from common.core.schemas import Token
 from sqlbot_xpack.authentication.manage import logout as xpack_logout
+
+from common.audit.models.log_model import OperationType, OperationModules
+from common.audit.schemas.logger_decorator import system_log, LogConfig
+
 router = APIRouter(tags=["login"], prefix="/login")
 
 @router.post("/access-token")
+@system_log(LogConfig(
+    operation_type=OperationType.LOGIN,
+    module=OperationModules.USER,
+    result_id_expr="id"
+))
 async def local_login(
     session: SessionDep,
     trans: Trans,

@@ -51,6 +51,9 @@
   "i18n_embedded": {
     "invalid_origin": "Domain name validation failed【{origin}】"
   },
+  "i18n_chat": {
+    "record_id_in_mcp": "Answer ID: "
+  },
   "i18n_terminology": {
     "terminology_not_exists": "This terminology does not exist",
     "datasource_cannot_be_none": "Datasource cannot be empty",
@@ -132,5 +135,44 @@
   },
   "i18n_authentication": {
     "record_not_exist": "{msg} record does not exist. Please save it first!"
+  },
+  "i18n_audit": {
+    "success": "Success",
+    "failed": "Failed",
+    "system_log": "Operation Log",
+    "operation_type_name": "Operation Type",
+    "operation_detail_info": "Operation Details",
+    "user_name": "Operator",
+    "oid_name": "Workspace",
+    "operation_status_name": "Operation Status",
+    "error_message": "Error Message",
+    "ip_address": "IP Address",
+    "create_time": "Operation Time",
+    "chat": "AI Q&A",
+    "datasource": "Datasource",
+    "dashboard": "Dashboard",
+    "member": "Member",
+    "permission": "Permission",
+    "terminology": "Terminology",
+    "data_training": "SQL Examples",
+    "prompt_words": "Prompt Words",
+    "user": "User",
+    "workspace": "Workspace",
+    "ai_model": "AI Model",
+    "application": "Application",
+    "theme": "Appearance Settings",
+    "create": "Create",
+    "delete": "Delete",
+    "update": "Update",
+    "edit": "Edit",
+    "login": "Login",
+    "export": "Export",
+    "import": "Import",
+    "add": "Add",
+    "create_or_update": "Change",
+    "api_key": "API Key",
+    "params_setting": "Parameters Setting",
+    "rules": "Permission Rules",
+    "log_setting": "Login Authentication"
   }
 }

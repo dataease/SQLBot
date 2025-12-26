@@ -9,6 +9,6 @@ export const dashboardApi = {
   update_canvas: (params: any) => request.post('/dashboard/update_canvas', params),
   check_name: (params: any) => request.post('/dashboard/check_name', params),
   delete_resource: (params: any) =>
-    request.delete(`/dashboard/delete_resource/${params.id}`, params),
+    request.delete(`/dashboard/delete_resource/${params.id}/${params.name}`, params),
   move_resource: (params: any) => request.delete(`/dashboard/move_resource/${params.id}`, params),
 }

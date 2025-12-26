@@ -5,6 +5,8 @@ from apps.datasource.crud.recommended_problem import get_datasource_recommended,
     save_recommended_problem, get_datasource_recommended_base
 from apps.datasource.models.datasource import RecommendedProblemBase
 from common.core.deps import SessionDep, CurrentUser
+from common.audit.models.log_model import OperationType, OperationModules
+from common.audit.schemas.logger_decorator import LogConfig, system_log
 
 router = APIRouter(tags=["recommended_problem"], prefix="/recommended_problem")
 
@@ -19,6 +21,8 @@ async def datasource_recommended(session: SessionDep, ds_id: int):
 
 
 @router.post("/save_recommended_problem")
+@system_log(
+    LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.DATASOURCE, resource_id_expr="data_info.datasource_id"))
 async def datasource_recommended(session: SessionDep, user: CurrentUser, data_info: RecommendedProblemBase):
     update_ds_recommended_config(session, data_info.datasource_id, data_info.recommended_config)
     return save_recommended_problem(session, user, data_info)

@@ -93,7 +93,10 @@ tags_metadata = [
         "name": "CustomPrompt",
         "description": f"{PLACEHOLDER_PREFIX}custom_prompt_api"
     },
-
+    {
+        "name": "mcp",
+        "description": f"{PLACEHOLDER_PREFIX}mcp_api"
+    },
 ]
 
 

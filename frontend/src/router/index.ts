@@ -18,6 +18,7 @@ import Member from '@/views/system/member/index.vue'
 import Professional from '@/views/system/professional/index.vue'
 import Training from '@/views/system/training/index.vue'
 import Prompt from '@/views/system/prompt/index.vue'
+import Audit from '@/views/system/audit/index.vue'
 import Appearance from '@/views/system/appearance/index.vue'
 import Parameter from '@/views/system/parameter/index.vue'
 import Authentication from '@/views/system/authentication/index.vue'
@@ -212,6 +213,12 @@ export const routes = [
             meta: { title: t('system.authentication_settings') },
           },
         ],
+      },
+      {
+        path: 'audit',
+        name: 'audit',
+        component: Audit,
+        meta: { title: t('audit.system_log'), iconActive: 'log', iconDeActive: 'noLog' },
       },
     ],
   },
