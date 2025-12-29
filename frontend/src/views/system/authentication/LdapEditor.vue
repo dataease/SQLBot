@@ -254,7 +254,7 @@ defineExpose({
     <template #footer>
       <span class="dialog-footer">
         <el-button secondary @click="resetForm(ldapForm)">{{ t('common.cancel') }}</el-button>
-        <el-button secondary :disabled="!state.form.addr" @click="validate">
+        <el-button secondary :disabled="!state.form.server_address" @click="validate">
           {{ t('ds.test_connection') }}
         </el-button>
         <el-button type="primary" @click="submitForm(ldapForm)">
