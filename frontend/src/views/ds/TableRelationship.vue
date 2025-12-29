@@ -4,6 +4,7 @@ import { datasourceApi } from '@/api/datasource'
 import { useI18n } from 'vue-i18n'
 import { Graph, Cell, Shape } from '@antv/x6'
 import type { AnyColumn } from 'element-plus-secondary/es/components/table-v2/src/common.mjs'
+import { debounce } from 'lodash-es'
 
 const LINE_HEIGHT = 36
 const NODE_WIDTH = 180
@@ -23,7 +24,9 @@ const emits = defineEmits(['getTableName'])
 
 const { t } = useI18n()
 const loading = ref(false)
-
+const tooltipY = ref('-999px')
+const tooltipX = ref('-999px')
+const tooltipContent = ref('')
 const nodeIds = ref<any[]>([])
 
 const cells = ref<Cell[]>([])
@@ -42,6 +45,12 @@ const edgeOPtion = {
   },
 }
 let graph: any
+
+const resetTooltip = () => {
+  tooltipY.value = '-1000px'
+  tooltipX.value = '-1000px'
+  tooltipContent.value = ''
+}
 
 const initGraph = () => {
   Graph.registerPortLayout(
@@ -196,6 +205,34 @@ const initGraph = () => {
     })
   })
 
+  graph.on(
+    'node:port:mouseenter',
+    debounce(({ e, node, port }: any) => {
+      tooltipY.value = e.offsetY + 'px'
+      tooltipX.value = e.offsetX + 'px'
+      tooltipContent.value = node.port.ports.find(
+        (ele: any) => +port === ele.id
+      ).attrs.portNameLabel.text
+    }, 100)
+  )
+
+  graph.on(
+    'cell:mouseover',
+    debounce(({ e, cell }: any) => {
+      if (cell.store.data.shape === 'edge') return
+      tooltipY.value = e.offsetY + 'px'
+      tooltipX.value = e.offsetX + 'px'
+      tooltipContent.value = cell.store.data.attrs?.label?.text
+    }, 100)
+  )
+
+  graph.on(
+    'node:mouseleave',
+    debounce(() => {
+      resetTooltip()
+    }, 100)
+  )
+
   graph.on('node:mouseenter', ({ node }: any) => {
     node.addTools({
       name: 'button',
@@ -224,8 +261,10 @@ const initGraph = () => {
         y: 0,
         offset: { x: 165, y: 28 },
         onClick({ view }: any) {
+          node.removeTools()
           graph.removeNode(view.cell.id)
           nodeIds.value = nodeIds.value.filter((ele) => ele !== view.cell.id)
+          resetTooltip()
           if (!nodeIds.value.length) {
             graph.dispose()
             graph = null
@@ -267,7 +306,7 @@ const getTableData = () => {
           }
         })
         graph.resetCells(cells.value)
-        graph.zoomToFit({ padding: 10, maxScale: 1 })
+        graph.zoomToFit({ padding: 100 })
         emits('getTableName', [...nodeIds.value])
       })
     })
@@ -285,13 +324,18 @@ const dragover = () => {
   // do
 }
 
-const addNode = (node: any) => {
+const addNode = (node: any, tableX: any, tableY: any) => {
   if (!graph) {
     initGraph()
   }
+  const { x, y } = graph.pageToLocal(tableX, tableY)
   graph.addNode(
     graph.createNode({
       ...node,
+      position: {
+        x,
+        y,
+      },
       attrs: {
         label: {
           text: node.label,
@@ -322,10 +366,6 @@ const clickTable = (table: any) => {
         label: table.table_name,
         width: 150,
         height: 24,
-        position: {
-          x: table.x,
-          y: table.y,
-        },
         ports: res.map((ele: any) => {
           return {
             id: ele.id,
@@ -343,7 +383,7 @@ const clickTable = (table: any) => {
       }
       nodeIds.value = [...nodeIds.value, table.id]
       nextTick(() => {
-        addNode(node)
+        addNode(node, table.x, table.y)
       })
       emits('getTableName', [...nodeIds.value])
     })
@@ -355,7 +395,11 @@ const clickTable = (table: any) => {
 const drop = (e: any) => {
   const obj = JSON.parse(e.dataTransfer.getData('table') || '{}')
   if (!obj.id) return
-  clickTable({ ...obj, x: e.layerX, y: e.layerY })
+  clickTable({
+    ...obj,
+    x: e.pageX,
+    y: e.pageY,
+  })
 }
 const save = () => {
   datasourceApi.relationSave(props.id, graph.toJSON().cells).then(() => {
@@ -403,9 +447,31 @@ const save = () => {
       {{ t('common.save') }}
     </el-button>
   </div>
+  <div class="tooltip-content" :style="{ top: tooltipY, left: tooltipX, position: 'absolute' }">
+    {{ tooltipContent }}
+  </div>
 </template>
 
 <style lang="less" scoped>
+.tooltip-content {
+  font-weight: 400;
+  direction: ltr;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  outline: none;
+  border-radius: 4px;
+  padding: 5px 11px;
+  font-size: 12px;
+  line-height: 20px;
+  min-width: 10px;
+  overflow-wrap: break-word;
+  word-break: normal;
+  visibility: visible;
+  color: #fff;
+  background: #303133;
+  border: 1px solid #303133;
+  transform: translate(20px, -15px);
+}
 .save-btn {
   position: absolute;
   right: 16px;
