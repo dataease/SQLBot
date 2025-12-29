@@ -64,9 +64,10 @@ export const routes = [
       },
     ],
   },
-  {
+  /* {
     path: '/ds',
     component: LayoutDsl,
+    name: 'ds-menu',
     redirect: '/ds/index',
     children: [
       {
@@ -76,7 +77,7 @@ export const routes = [
         meta: { title: t('menu.Data Connections'), iconActive: 'ds', iconDeActive: 'noDs' },
       },
     ],
-  },
+  }, */
   {
     path: '/dashboard',
     component: LayoutDsl,
