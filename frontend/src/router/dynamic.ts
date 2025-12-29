@@ -1,4 +1,6 @@
 import LayoutDsl from '@/components/layout/LayoutDsl.vue'
+
+import Datasource from '@/views/ds/Datasource.vue'
 import { i18n } from '@/i18n'
 import { useUserStore } from '@/stores/user'
 import type { Router } from 'vue-router'
@@ -15,7 +17,7 @@ const dynamicRouterList = [
       {
         path: 'index',
         name: 'ds',
-        component: import('@/views/ds/index.vue'),
+        component: Datasource,
         meta: { title: t('menu.Data Connections'), iconActive: 'ds', iconDeActive: 'noDs' },
       },
     ],
