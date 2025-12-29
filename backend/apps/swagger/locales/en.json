@@ -27,6 +27,16 @@
 
   "mcp_api": "MCP Tools(It is not recommended to call via API)",
 
+  "recommended_problem_api": "Recommended Questions",
+  "rp_save": "Save the question",
+  "rp_get": "Get Recommended Questions",
+  "rp_base": "Obtain recommended queries for data sources",
+
+  "audit_api": "Log Audit",
+  "audit_export": "Export Log Audit",
+  "audit_get_log_page": "Pagination for Log Audit",
+  "audit_get_option": "Retrieve audit configuration",
+
   "system": "System Management",
   "system_user_api": "User APIs",
   "system_user_current_user": "Get Current User",

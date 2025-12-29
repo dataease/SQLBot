@@ -27,6 +27,16 @@
 
   "mcp_api": "MCP Tools(不建议api方式调用)",
 
+  "recommended_problem_api": "推荐问题",
+  "rp_save": "保存问题",
+  "rp_get": "获取推荐提问",
+  "rp_base": "获取数据源推荐提问",
+
+  "audit_api": "日志审计",
+  "audit_export": "导出日志审计",
+  "audit_get_log_page": "分页获取日志审计",
+  "audit_get_option": "获取审计配置",
+
   "system": "系统管理",
   "system_user_api": "用户接口",
   "system_user_current_user": "查询当前用户",
