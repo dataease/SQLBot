@@ -375,7 +375,7 @@ defineExpose({
               "
               type="textarea"
               show-word-limit
-              maxlength="50"
+              maxlength="200"
             />
           </el-form-item>
         </el-form>
@@ -413,6 +413,7 @@ defineExpose({
     .right-form {
       width: 470px;
       height: 100%;
+      position: relative;
 
       .theme {
         width: 223px;
@@ -536,7 +537,10 @@ defineExpose({
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-top: 88px;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
       }
     }
   }
