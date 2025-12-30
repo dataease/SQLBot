@@ -556,8 +556,8 @@ const auto2Platform = async () => {
     resObj[item.pkey] = item.pval
   })
   res = parseInt(resObj['login.default_login'] || 0)
-
-  if (res && !adminLogin.value) {
+  const originArray = ['default', 'cas', 'oidc', 'ldap', 'oauth2', 'saml2']
+  if (res && !adminLogin.value && loginCategory.value[originArray[res] as keyof LoginCategory]) {
     if (res === 3) {
       qrStatusChange('ldap')
       updateLoading(false)
