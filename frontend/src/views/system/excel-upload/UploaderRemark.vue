@@ -134,7 +134,7 @@ const onError = (err: Error) => {
   infoMessage.value = msg
   hasError.value = true
   close()
-  showResult()
+  ElMessage.error(err.toString())
 }
 
 const dialogShow = ref<boolean>(false)
@@ -144,7 +144,13 @@ const resultShow = ref(false)
 function showResult() {
   resultShow.value = true
 }
-
+function closeResult() {
+  resultShow.value = false
+}
+function backToUpload() {
+  closeResult()
+  open()
+}
 function open() {
   dialogShow.value = true
   errorFileName.value = ''
@@ -249,6 +255,27 @@ const submitUpload = () => {
           @click="submitUpload"
         >
           {{ t('user.import') }}
+        </el-button>
+      </span>
+    </template>
+  </el-dialog>
+
+  <el-dialog
+    v-model="resultShow"
+    :title="t('user.notes_import_completed')"
+    width="600px"
+    class="user-import-class"
+    @close="closeResult"
+  >
+    <div class="down-template-content">
+      {{ infoMessage }}
+    </div>
+
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="closeResult">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="backToUpload">
+          {{ t('common.continue_to_upload') }}
         </el-button>
       </span>
     </template>
