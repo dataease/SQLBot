@@ -134,7 +134,10 @@ const handleToggleRowSelection = (check: boolean = true) => {
   isIndeterminate.value = !(i === 0 || i === arr.length)
 }
 
-const search = () => {
+const search = ($event: any = {}) => {
+  if ($event?.isComposing) {
+    return
+  }
   searchLoading.value = true
   workspaceUserList(
     keywordsMember.value ? { keyword: keywordsMember.value } : {},
@@ -220,7 +223,7 @@ const handleCurrentChange = (val: number) => {
           style="width: 240px; margin-right: 12px"
           :placeholder="$t('user.name_account_email')"
           clearable
-          @blur="search"
+          @keydown.enter.exact.prevent="search"
         >
           <template #prefix>
             <el-icon>

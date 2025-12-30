@@ -8,7 +8,7 @@
           style="width: 240px; margin-right: 12px"
           :placeholder="$t('user.name_account_email')"
           clearable
-          @blur="handleSearch"
+          @keydown.enter.exact.prevent="handleSearch"
         >
           <template #prefix>
             <el-icon>
@@ -625,7 +625,10 @@ const handleToggleRowSelection = (check: boolean = true) => {
   isIndeterminate.value = !(i === 0 || i === state.tableData.length)
   selectionLoading.value = false
 }
-const handleSearch = () => {
+const handleSearch = ($event: any = {}) => {
+  if ($event?.isComposing) {
+    return
+  }
   state.pageInfo.currentPage = 1
   search()
 }

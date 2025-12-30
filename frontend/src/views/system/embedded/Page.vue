@@ -180,7 +180,10 @@ const refresh = (row: any) => {
     })
 }
 
-const search = () => {
+const search = ($event: any = {}) => {
+  if ($event?.isComposing) {
+    return
+  }
   searchLoading.value = true
   embeddedApi
     .getList(pageInfo.currentPage, pageInfo.pageSize, { keyword: keywords.value })
@@ -332,7 +335,7 @@ const copyCode = (row: any, key: any = 'app_secret') => {
           style="width: 240px; margin-right: 12px"
           :placeholder="$t('dashboard.search')"
           clearable
-          @blur="search"
+          @keydown.enter.exact.prevent="search"
         >
           <template #prefix>
             <el-icon>

@@ -216,7 +216,10 @@ const handleToggleRowSelection = (check: boolean = true) => {
   isIndeterminate.value = !(i === 0 || i === arr.length)
 }
 
-const search = () => {
+const search = ($event: any = {}) => {
+  if ($event?.isComposing) {
+    return
+  }
   searchLoading.value = true
   oldKeywords.value = keywords.value
   trainingApi
@@ -368,7 +371,7 @@ const onRowFormClose = () => {
           style="width: 240px"
           :placeholder="$t('training.search_problem')"
           clearable
-          @blur="search"
+          @keydown.enter.exact.prevent="search"
         >
           <template #prefix>
             <el-icon>

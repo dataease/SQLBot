@@ -230,7 +230,10 @@ const handleAddMember = () => {
 const refresh = () => {
   search()
 }
-const search = () => {
+const search = ($event: any = {}) => {
+  if ($event?.isComposing) {
+    return
+  }
   workspaceUserList(
     { oid: currentTable.value.id, keyword: keywordsMember.value },
     pageInfo.currentPage,
@@ -415,7 +418,7 @@ const handleCurrentChange = (val: number) => {
             clearable
             style="width: 232px"
             :placeholder="$t('workspace.name_username_email')"
-            @blur="search"
+            @keydown.enter.exact.prevent="search"
           >
             <template #prefix>
               <el-icon>

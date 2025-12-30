@@ -228,7 +228,10 @@ const configParams = () => {
   return str
 }
 
-const search = () => {
+const search = ($event: any = {}) => {
+  if ($event?.isComposing) {
+    return
+  }
   searchLoading.value = true
   oldKeywords.value = keywords.value
   professionalApi
@@ -430,7 +433,7 @@ const changeStatus = (id: any, val: any) => {
           style="width: 240px; margin-right: 12px"
           :placeholder="$t('professional.search_term')"
           clearable
-          @blur="search"
+          @keydown.enter.exact.prevent="search"
         >
           <template #prefix>
             <el-icon>
