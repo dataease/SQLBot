@@ -466,6 +466,7 @@
     "import": "导入",
     "change_file": "更换文件",
     "data_import_completed": "数据导入完成",
+    "notes_import_completed": "备注导入完成",
     "imported_100_data": "成功导入数据 {msg} 条",
     "return_to_view": "返回查看",
     "continue_importing": "继续导入",

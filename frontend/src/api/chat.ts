@@ -189,7 +189,9 @@ export class ChatInfo extends Chat {
     ds_type: string,
     datasource_name: string,
     datasource_exists: boolean,
-    records: Array<ChatRecord>
+    records: Array<ChatRecord>,
+    recommended_question?: string | undefined,
+    recommended_generate?: boolean | undefined
   )
   constructor(
     param1?: number | Chat,

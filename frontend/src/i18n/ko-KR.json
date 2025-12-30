@@ -465,6 +465,7 @@
     "import": "가져오기",
     "change_file": "파일 변경",
     "data_import_completed": "데이터 가져오기 완료",
+    "notes_import_completed": "메모 가져오기 완료",
     "imported_100_data": "데이터 {msg}개를 성공적으로 가져왔습니다",
     "return_to_view": "돌아가서 보기",
     "continue_importing": "계속 가져오기",

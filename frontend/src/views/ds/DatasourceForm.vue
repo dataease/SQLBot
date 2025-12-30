@@ -424,7 +424,8 @@ const onSuccess = (response: any) => {
   uploadLoading.value = false
 }
 
-const onError = () => {
+const onError = (e: any) => {
+  ElMessage.error(e.toString())
   uploadLoading.value = false
 }
 

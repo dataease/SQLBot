@@ -465,6 +465,7 @@
     "import": "Import",
     "change_file": "Change file",
     "data_import_completed": "Data import completed",
+    "notes_import_completed": "Import of notes complete",
     "imported_100_data": "Successfully imported {msg} data",
     "return_to_view": "Return to view",
     "continue_importing": "Continue importing",

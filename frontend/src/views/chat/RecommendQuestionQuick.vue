@@ -53,7 +53,7 @@ async function getRecommendQuestions(articles_number: number) {
     if (res.recommended_config === 2) {
       questions.value = res.questions
     } else if (currentChat.value.recommended_generate) {
-      questions.value = currentChat.value.recommended_question
+      questions.value = currentChat.value.recommended_question as string
     } else {
       getRecommendQuestionsLLM(articles_number)
     }

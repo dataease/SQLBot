@@ -107,9 +107,13 @@ const handleCurrentChange = (val: number) => {
 
 const fieldListComputed = computed(() => {
   const { currentPage, pageSize } = pageInfo
-  return fieldList.value
-    .filter((ele: any) => ele.field_name.toLowerCase().includes(fieldName.value.toLowerCase()))
-    .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  return fieldListTotalComputed.value.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+})
+
+const fieldListTotalComputed = computed(() => {
+  return fieldList.value.filter((ele: any) =>
+    ele.field_name.toLowerCase().includes(fieldName.value.toLowerCase())
+  )
 })
 
 const init = (reset = false) => {
@@ -319,7 +323,7 @@ const renderHeader = ({ column }: any) => {
 }
 const fieldNameSearch = debounce(() => {
   pageInfo.currentPage = 1
-  pageInfo.total = fieldListComputed.value.length
+  pageInfo.total = fieldListTotalComputed.value.length
 }, 100)
 const fieldName = ref('')
 const btnSelectClick = (val: any) => {

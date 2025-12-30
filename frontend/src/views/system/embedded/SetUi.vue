@@ -156,12 +156,12 @@ const customColorChange = (val: any) => {
 }
 
 const setPageCustomColor = (val: any) => {
-  const ele = document.querySelector('.ui-main') as HTMLElement
+  const ele = document.querySelector('.left-preview') as HTMLElement
   setCurrentColor(val, ele)
 }
 
 const setPageHeaderFontColor = (val: any) => {
-  const ele = document.getElementsByClassName('ui-main')[0] as HTMLElement
+  const ele = document.getElementsByClassName('left-preview')[0] as HTMLElement
   ele.style.setProperty('--ed-text-color-primary', val)
 }
 const resetSqlBotForm = (reset2Default?: boolean) => {
