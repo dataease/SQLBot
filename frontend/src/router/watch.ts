@@ -34,9 +34,15 @@ export const watchRouter = (router: Router) => {
       next('/login')
       return
     }
+    let isFirstDynamicPath = false
     if (!userStore.getUid) {
       await userStore.info()
       generateDynamicRouters(router)
+      isFirstDynamicPath = to?.path === '/ds/index'
+      if (isFirstDynamicPath) {
+        next({ ...to, replace: true })
+        return
+      }
     }
     if (to.path === '/' || accessCrossPermission(to)) {
       next('/chat')
