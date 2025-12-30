@@ -126,7 +126,7 @@ async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = 
             file.filename = file_name
             if flag_name == 'logo' or flag_name == 'float_icon':
                 try:
-                    SQLBotFileUtils.check_file(file=file, file_types=[".jpg", ".jpeg", ".png", ".svg"],
+                    SQLBotFileUtils.check_file(file=file, file_types=[".jpg", ".png", ".svg"],
                                                limit_file_size=(10 * 1024 * 1024))
                 except ValueError as e:
                     error_msg = str(e)
