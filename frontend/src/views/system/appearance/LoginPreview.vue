@@ -52,7 +52,7 @@
               </div>
             </div>
             <div v-if="isBtnShow(showSlogan)" class="login-welcome">
-              {{ pageSlogan || t('system.available_to_everyone') }}
+              {{ pageSlogan ?? t('common.intelligent_questioning_platform') }}
             </div>
             <div v-else class="login-welcome"></div>
           </div>

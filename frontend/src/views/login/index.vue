@@ -24,7 +24,7 @@
           }}</span>
         </div>
         <div v-if="appearanceStore.getShowSlogan" class="welcome">
-          {{ appearanceStore.slogan || $t('common.intelligent_questioning_platform') }}
+          {{ appearanceStore.slogan ?? $t('common.intelligent_questioning_platform') }}
         </div>
         <div v-else class="welcome" style="height: 0"></div>
         <div class="login-form">
