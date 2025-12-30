@@ -15,6 +15,7 @@ from apps.data_training.curd.data_training import page_data_training, create_tra
     enable_training, get_all_data_training, batch_create_training
 from apps.data_training.models.data_training_model import DataTrainingInfo
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
+from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
@@ -53,12 +54,14 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 
 @router.delete("", summary=f"{PLACEHOLDER_PREFIX}delete_dt")
 @system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.DATA_TRAINING,resource_id_expr='id_list'))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def delete(session: SessionDep, id_list: list[int]):
     delete_training(session, id_list)
 
 
 @router.get("/{id}/enable/{enabled}", summary=f"{PLACEHOLDER_PREFIX}enable_dt")
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.DATA_TRAINING,resource_id_expr='id'))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
     enable_training(session, id, enabled, trans)
 

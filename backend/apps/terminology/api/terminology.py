@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 
 from apps.chat.models.chat_model import AxisObj
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
+from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from apps.terminology.curd.terminology import page_terminology, create_terminology, update_terminology, \
     delete_terminology, enable_terminology, get_all_terminology, batch_create_terminology
 from apps.terminology.models.terminology_model import TerminologyInfo
@@ -52,12 +53,14 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 
 @router.delete("", summary=f"{PLACEHOLDER_PREFIX}delete_term")
 @system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.TERMINOLOGY,resource_id_expr='id_list'))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def delete(session: SessionDep, id_list: list[int]):
     delete_terminology(session, id_list)
 
 
 @router.get("/{id}/enable/{enabled}", summary=f"{PLACEHOLDER_PREFIX}enable_term")
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.TERMINOLOGY,resource_id_expr='id'))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
     enable_terminology(session, id, enabled, trans)
 
