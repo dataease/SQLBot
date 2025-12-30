@@ -125,8 +125,15 @@ async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = 
             file_name, flag_name = SQLBotFileUtils.split_filename_and_flag(origin_file_name)
             file.filename = file_name
             if flag_name == 'logo' or flag_name == 'float_icon':
-                SQLBotFileUtils.check_file(file=file, file_types=[".jpg", ".jpeg", ".png", ".svg"],
-                                           limit_file_size=(10 * 1024 * 1024))
+                try:
+                    SQLBotFileUtils.check_file(file=file, file_types=[".jpg", ".jpeg", ".png", ".svg"],
+                                               limit_file_size=(10 * 1024 * 1024))
+                except ValueError as e:
+                    error_msg = str(e)
+                    if '文件大小超过限制' in error_msg:
+                        raise ValueError(f"文件大小超过限制（最大 10 M）")
+                    else:
+                        raise e
                 if config_obj.get(flag_name):
                     SQLBotFileUtils.delete_file(config_obj.get(flag_name))
                 file_id = await SQLBotFileUtils.upload(file)
