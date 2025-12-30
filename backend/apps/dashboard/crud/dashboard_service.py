@@ -27,7 +27,7 @@ def list_resource(session: SessionDep, dashboard: QueryDashboard, current_user: 
     nodes = [DashboardBaseResponse(**row) for row in result.mappings()]
     tree = build_tree_generic(nodes, root_pid="root")
     return tree
-
+    
 
 def load_resource(session: SessionDep, dashboard: QueryDashboard):
     sql = text("""
@@ -130,7 +130,12 @@ def validate_name(session: SessionDep,user: CurrentUser,  dashboard: QueryDashbo
     return not session.query(query.exists()).scalar()
 
 
-def delete_resource(session: SessionDep, resource_id: str):
+def delete_resource(session: SessionDep, current_user: CurrentUser, resource_id: str):
+    coreDashboard = session.get(CoreDashboard, resource_id)
+    if not coreDashboard:
+        raise ValueError(f"Resource with id {resource_id} does not exist")
+    if coreDashboard.create_by != str(current_user.id):
+        raise ValueError(f"Resource with id {resource_id} not owned by the current user")
     sql = text("DELETE FROM core_dashboard WHERE id = :resource_id")
     result = session.execute(sql, {"resource_id": resource_id})
     session.commit()

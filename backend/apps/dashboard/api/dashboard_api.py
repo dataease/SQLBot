@@ -19,8 +19,15 @@ async def list_resource_api(session: SessionDep, dashboard: QueryDashboard, curr
 
 
 @router.post("/load_resource", summary=f"{PLACEHOLDER_PREFIX}load_resource_api")
-async def load_resource_api(session: SessionDep, dashboard: QueryDashboard):
-    return load_resource(session=session, dashboard=dashboard)
+async def load_resource_api(session: SessionDep, current_user: CurrentUser, dashboard: QueryDashboard):
+    resource_dict = load_resource(session=session, dashboard=dashboard)
+    if resource_dict and resource_dict.get("create_by") != str(current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to access this resource"
+        )
+
+    return resource_dict
 
 
 @router.post("/create_resource", response_model=BaseDashboard, summary=f"{PLACEHOLDER_PREFIX}create_resource_api")
@@ -45,8 +52,8 @@ async def update_resource_api(session: SessionDep, user: CurrentUser, dashboard:
     resource_id_expr="resource_id",
     remark_expr="name"
 ))
-async def delete_resource_api(session: SessionDep, resource_id: str, name: str):
-    return delete_resource(session, resource_id)
+async def delete_resource_api(session: SessionDep, current_user: CurrentUser, resource_id: str, name: str):
+    return delete_resource(session, current_user, resource_id)
 
 
 @router.post("/create_canvas", response_model=BaseDashboard, summary=f"{PLACEHOLDER_PREFIX}create_canvas_api")
