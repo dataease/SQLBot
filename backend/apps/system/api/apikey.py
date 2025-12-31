@@ -20,7 +20,7 @@ async def grid(session: SessionDep, current_user: CurrentUser) -> list[ApikeyGri
 @router.post("")
 @system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.API_KEY,result_id_expr='result.self'))
 async def create(session: SessionDep, current_user: CurrentUser):
-    count = session.exec(select(func.count()).select_from(ApiKeyModel)).one()
+    count = session.exec(select(func.count()).select_from(ApiKeyModel).where(ApiKeyModel.uid == current_user.id)).one()
     if count >= 5:
         raise ValueError("Maximum of 5 API keys allowed")
     access_key = secrets.token_urlsafe(16)

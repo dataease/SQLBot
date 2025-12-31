@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import SuccessFilled from '@/assets/svg/gou_icon.svg'
+import CircleCloseFilled from '@/assets/svg/icon_ban_filled.svg'
 import icon_warning_filled from '@/assets/svg/icon_info_colorful.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import icon_visible_outlined_blod from '@/assets/embedded/icon_visible_outlined_blod.svg'
@@ -146,7 +148,7 @@ onMounted(() => {
         style="width: 100%"
         @sort-change="sortChange"
       >
-        <el-table-column prop="access_key" label="Access Key" width="256">
+        <el-table-column prop="access_key" label="Access Key" width="206">
           <template #default="scope">
             <div class="user-status-container">
               <div :title="scope.row.access_key" class="ellipsis" style="max-width: 208px">
@@ -169,7 +171,7 @@ onMounted(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="secret_key" label="Secret Key" width="256">
+        <el-table-column prop="secret_key" label="Secret Key" width="206">
           <template #default="scope">
             <div class="user-status-container">
               <div
@@ -216,6 +218,19 @@ onMounted(() => {
             </div>
           </template>
         </el-table-column>
+
+        <el-table-column prop="status" width="100" :label="t('datasource.enabled_status')">
+          <template #default="scope">
+            <div class="api-status-container" :class="[scope.row.status ? 'active' : 'disabled']">
+              <el-icon size="16">
+                <SuccessFilled v-if="scope.row.status" />
+                <CircleCloseFilled v-else />
+              </el-icon>
+              <span>{{ $t(`user.${scope.row.status ? 'enabled' : 'disabled'}`) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="create_time" width="180" sortable :label="t('user.creation_time')">
           <template #default="scope">
             <span>{{ formatTimestamp(scope.row.create_time, 'YYYY-MM-DD HH:mm:ss') }}</span>
@@ -332,6 +347,17 @@ onMounted(() => {
         &:hover {
           background-color: #1f23291a;
         }
+      }
+    }
+    .api-status-container {
+      display: flex;
+      align-items: center;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 22px;
+
+      .ed-icon {
+        margin-right: 8px;
       }
     }
     .user-status-container {
