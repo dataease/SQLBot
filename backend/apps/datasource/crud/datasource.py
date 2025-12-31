@@ -7,8 +7,10 @@ from sqlalchemy import and_, text
 from sqlbot_xpack.permissions.models.ds_rules import DsRules
 from sqlmodel import select
 
+from apps.ai_model.model_factory import LLMConfig
 from apps.datasource.crud.permission import get_column_permission_fields, get_row_permission_filters, is_normal_user
 from apps.datasource.embedding.table_embedding import calc_table_embedding
+from apps.datasource.llm_select.table_selection import calc_table_llm_selection
 from apps.datasource.utils.utils import aes_decrypt
 from apps.db.constant import DB
 from apps.db.db import get_tables, get_fields, exec_sql, check_connection
@@ -425,7 +427,8 @@ def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: Core
 
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
-                     embedding: bool = True) -> str:
+                     embedding: bool = True, history_questions: List[str] = None,
+                     config: LLMConfig = None, lang: str = "中文", record_id: int = None) -> str:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -434,7 +437,12 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
     schema_str += f"【DB_ID】 {db_name}\n【Schema】\n"
     tables = []
     all_tables = []  # temp save all tables
+
+    # 构建 table_name -> table_obj 映射，用于 LLM 表选择
+    table_name_to_obj = {}
     for obj in table_objs:
+        table_name_to_obj[obj.table.table_name] = obj
+
         schema_table = ''
         schema_table += f"# Table: {db_name}.{obj.table.table_name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {obj.table.table_name}"
         table_comment = ''
@@ -462,16 +470,36 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         tables.append(t_obj)
         all_tables.append(t_obj)
 
-    # do table embedding
-    if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
-        tables = calc_table_embedding(tables, question)
+    # do table selection
+    used_llm_selection = False  # 标记是否使用了 LLM 表选择
+    if embedding and tables:
+        if settings.TABLE_LLM_SELECTION_ENABLED and config:
+            # 使用 LLM 表选择
+            selected_table_names = calc_table_llm_selection(
+                config=config,
+                table_objs=table_objs,
+                question=question,
+                ds_table_relation=ds.table_relation,
+                history_questions=history_questions,
+                lang=lang,
+                session=session,
+                record_id=record_id
+            )
+            if selected_table_names:
+                # 根据选中的表名筛选 tables
+                selected_table_ids = [table_name_to_obj[name].table.id for name in selected_table_names if name in table_name_to_obj]
+                tables = [t for t in tables if t.get('id') in selected_table_ids]
+                used_llm_selection = True  # LLM 成功选择了表
+        elif settings.TABLE_EMBEDDING_ENABLED:
+            # 使用 RAG 表选择
+            tables = calc_table_embedding(tables, question, history_questions)
     # splice schema
     if tables:
         for s in tables:
             schema_str += s.get('schema_table')
 
-    # field relation
-    if tables and ds.table_relation:
+    # field relation - LLM 表选择模式下不补全关联表，完全信任 LLM 的选择结果
+    if tables and ds.table_relation and not used_llm_selection:
         relations = list(filter(lambda x: x.get('shape') == 'edge', ds.table_relation))
         if relations:
             # Complete the missing table
