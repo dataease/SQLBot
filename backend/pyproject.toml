@@ -74,7 +74,7 @@ explicit = true
 
 [[tool.uv.index]]
 name = "default"
-url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+url = "https://mirrors.hust.edu.cn/pypi/web/simple"
 default = true
 
 [[tool.uv.index]]
