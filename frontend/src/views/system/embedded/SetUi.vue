@@ -125,12 +125,10 @@ const saveHandler = () => {
         'Content-Type': 'multipart/form-data',
       },
     })
-    .then((res) => {
-      if (!res) {
-        ElMessage.success(t('system.setting_successfully'))
-        dialogVisible.value = false
-        emits('refresh')
-      }
+    .then(() => {
+      ElMessage.success(t('system.setting_successfully'))
+      dialogVisible.value = false
+      emits('refresh')
     })
 }
 const buildParam = () => {
