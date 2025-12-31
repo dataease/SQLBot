@@ -63,7 +63,7 @@ const copyCode = (row: any, key: any = 'secret_key') => {
     })
 }
 const deleteHandler = (row: any) => {
-  ElMessageBox.confirm(t('user.del_user', { msg: row.name }), {
+  ElMessageBox.confirm(t('user.del_key', { msg: row.access_key }), {
     confirmButtonType: 'danger',
     confirmButtonText: t('dashboard.delete'),
     cancelButtonText: t('common.cancel'),

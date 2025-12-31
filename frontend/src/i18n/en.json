@@ -456,6 +456,7 @@
     "enabled": "Enabled",
     "edit_user": "Edit User",
     "del_user": "Do you want to delete user: {msg}?",
+    "del_key": "Do you want to delete key: {msg}?",
     "please_first": "Please first",
     "download_the_template": "download the template",
     "required_and_upload": ", fill in as required and upload",

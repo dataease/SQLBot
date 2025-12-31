@@ -457,6 +457,7 @@
     "enabled": "已启用",
     "edit_user": "编辑用户",
     "del_user": "是否删除用户: {msg}?",
+    "del_key": "是否删除key: {msg}?",
     "please_first": "请先",
     "download_the_template": "下载模板",
     "required_and_upload": "，按要求填写后上传",

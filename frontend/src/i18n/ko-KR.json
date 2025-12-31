@@ -456,6 +456,7 @@
     "enabled": "활성화됨",
     "edit_user": "사용자 편집",
     "del_user": "사용자를 삭제하시겠습니까: {msg}?",
+    "del_key": "키를 삭제하시겠습니까?: {msg}?",
     "please_first": "먼저",
     "download_the_template": "템플릿 다운로드",
     "required_and_upload": "하여 요구 사항에 따라 작성한 후 업로드하십시오",
