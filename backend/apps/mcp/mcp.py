@@ -64,7 +64,7 @@ def get_user(session: SessionDep, token: str):
     db_user: UserModel = get_db_user(session=session, user_id=token_data.id)
     session_user = UserInfoDTO.model_validate(db_user.model_dump())
     session_user.isAdmin = session_user.id == 1 and session_user.account == 'admin'
-    session_user.language = 'zh'
+    session_user.language = 'zh-CN'
     if session_user.isAdmin:
         session_user = session_user
     ws_model: UserWsModel = session.exec(
@@ -80,7 +80,7 @@ def get_user(session: SessionDep, token: str):
     return session_user
 
 
-@router.post("/mcp_ds_list", operation_id="mcp_get_datasource_list")
+@router.post("/mcp_ds_list", operation_id="mcp_datasource_list")
 async def datasource_list(session: SessionDep, token: str):
     session_user = get_user(session, token)
     return get_datasource_list(session=session, user=session_user)
