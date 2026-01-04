@@ -13,6 +13,7 @@ from sqlmodel import select
 from apps.chat.api.chat import create_chat, question_answer_inner
 from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion, \
     ChatFinishStep
+from apps.datasource.crud.datasource import get_datasource_list
 from apps.system.crud.user import authenticate
 from apps.system.crud.user import get_db_user
 from apps.system.models.system_model import UserWsModel
@@ -47,9 +48,44 @@ router = APIRouter(tags=["mcp"], prefix="/mcp")
 #     ))
 
 
-# @router.get("/ds_list", operation_id="get_datasource_list")
-# async def datasource_list(session: SessionDep):
-#     return get_datasource_list(session=session)
+def get_user(session: SessionDep, token: str):
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+    except (InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
+    # session_user = await get_user_info(session=session, user_id=token_data.id)
+
+    db_user: UserModel = get_db_user(session=session, user_id=token_data.id)
+    session_user = UserInfoDTO.model_validate(db_user.model_dump())
+    session_user.isAdmin = session_user.id == 1 and session_user.account == 'admin'
+    session_user.language = 'zh'
+    if session_user.isAdmin:
+        session_user = session_user
+    ws_model: UserWsModel = session.exec(
+        select(UserWsModel).where(UserWsModel.uid == session_user.id, UserWsModel.oid == session_user.oid)).first()
+    session_user.weight = ws_model.weight if ws_model else -1
+
+    session_user = UserInfoDTO.model_validate(session_user)
+    if not session_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if session_user.status != 1:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return session_user
+
+
+@router.post("/mcp_ds_list", operation_id="mcp_get_datasource_list")
+async def datasource_list(session: SessionDep, token: str):
+    session_user = get_user(session, token)
+    return get_datasource_list(session=session, user=session_user)
+
+
 #
 #
 # @router.get("/model_list", operation_id="get_model_list")
@@ -76,34 +112,7 @@ async def mcp_start(session: SessionDep, chat: ChatStart):
 
 @router.post("/mcp_question", operation_id="mcp_question")
 async def mcp_question(session: SessionDep, chat: McpQuestion):
-    try:
-        payload = jwt.decode(
-            chat.token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
-        token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
-    # session_user = await get_user_info(session=session, user_id=token_data.id)
-
-    db_user: UserModel = get_db_user(session=session, user_id=token_data.id)
-    session_user = UserInfoDTO.model_validate(db_user.model_dump())
-    session_user.isAdmin = session_user.id == 1 and session_user.account == 'admin'
-    session_user.language = chat.lang
-    if session_user.isAdmin:
-        session_user = session_user
-    ws_model: UserWsModel = session.exec(
-        select(UserWsModel).where(UserWsModel.uid == session_user.id, UserWsModel.oid == session_user.oid)).first()
-    session_user.weight = ws_model.weight if ws_model else -1
-
-    session_user = UserInfoDTO.model_validate(session_user)
-    if not session_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if session_user.status != 1:
-        raise HTTPException(status_code=400, detail="Inactive user")
+    session_user = get_user(session, chat.token)
 
     mcp_chat = ChatMcp(token=chat.token, chat_id=chat.chat_id, question=chat.question)
 
