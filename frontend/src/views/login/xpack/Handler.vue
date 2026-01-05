@@ -1,5 +1,5 @@
 <template>
-  <!-- <div v-if="loginCategory.qrcode" :class="{ 'de-qr-hidden': !qrStatus }">
+  <div v-if="loginCategory.qrcode" :class="{ 'de-qr-hidden': !qrStatus }">
     <QrTab
       v-if="qrStatus"
       :wecom="loginCategory.wecom"
@@ -7,7 +7,7 @@
       :lark="loginCategory.lark"
       :larksuite="loginCategory.larksuite"
     />
-  </div> -->
+  </div>
   <LdapLoginForm v-if="isLdap" />
   <el-divider v-if="anyEnable" class="de-other-login-divider">{{
     t('login.other_login')
@@ -54,13 +54,11 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import QrcodeLdap from './QrcodeLdap.vue'
 import LdapLoginForm from './LdapLoginForm.vue'
-/* import Oidc from './Oidc.vue'
-import Oauth2 from './Oauth2.vue'
-import Saml2 from './Saml2.vue' */
+
 import Oidc from './Oidc.vue'
 import Cas from './Cas.vue'
 import Oauth2 from './Oauth2.vue'
-// import QrTab from './QrTab.vue'
+import QrTab from './QrTab.vue'
 import { request } from '@/utils/request'
 import { useCache } from '@/utils/useCache'
 
@@ -197,6 +195,8 @@ const init = (cb?: () => void) => {
     .then((res) => {
       if (res) {
         const list: any[] = res as any[]
+        /* list.push({ name: 'qrcode', enable: true })
+        list.push({ name: 'wecom', enable: true }) */
         list.forEach((item: { name: keyof LoginCategory; enable: boolean }) => {
           loginCategory.value[item.name] = item.enable
           if (item.enable) {
@@ -416,6 +416,72 @@ const oidcLogin = () => {
       }, 1500)
     })
 }
+const wecomLogin = () => {
+  const urlParams = getUrlParams()
+  request
+    .post('/system/platform/sso/6', urlParams)
+    .then((res: any) => {
+      const token = res.access_token
+      // const platform_info = res.platform_info
+      if (token && isPlatformClient()) {
+        wsCache.set('de-platform-client', true)
+      }
+      userStore.setToken(token)
+      userStore.setExp(res.exp)
+      userStore.setTime(Date.now())
+      userStore.setPlatformInfo({
+        flag: 'wecom',
+        // data: platform_info ? JSON.stringify(platform_info) : '',
+        origin: 6,
+      })
+      const queryRedirectPath = getCurLocation()
+      router.push({ path: queryRedirectPath })
+    })
+    .catch((e: any) => {
+      userStore.setToken('')
+      setTimeout(() => {
+        // logoutHandler(true, true)
+        platformLoginMsg.value = e?.message || e
+        setTimeout(() => {
+          window.location.href =
+            window.location.origin + window.location.pathname + window.location.hash
+        }, 2000)
+      }, 1500)
+    })
+}
+const dingtalkLogin = () => {
+  const urlParams = getUrlParams()
+  request
+    .post('/system/platform/sso/7', urlParams)
+    .then((res: any) => {
+      const token = res.access_token
+      // const platform_info = res.platform_info
+      if (token && isPlatformClient()) {
+        wsCache.set('de-platform-client', true)
+      }
+      userStore.setToken(token)
+      userStore.setExp(res.exp)
+      userStore.setTime(Date.now())
+      userStore.setPlatformInfo({
+        flag: 'dingtalk',
+        // data: platform_info ? JSON.stringify(platform_info) : '',
+        origin: 7,
+      })
+      const queryRedirectPath = getCurLocation()
+      router.push({ path: queryRedirectPath })
+    })
+    .catch((e: any) => {
+      userStore.setToken('')
+      setTimeout(() => {
+        // logoutHandler(true, true)
+        platformLoginMsg.value = e?.message || e
+        setTimeout(() => {
+          window.location.href =
+            window.location.origin + window.location.pathname + window.location.hash
+        }, 2000)
+      }, 1500)
+    })
+}
 /* const platformLogin = (origin: number) => {
   const url = '/system/authentication/sso/cas'
   request
@@ -591,6 +657,10 @@ onMounted(() => {
       oauth2Login()
     } else if (state?.includes('oidc')) {
       oidcLogin()
+    } else if (state?.includes('wecom')) {
+      wecomLogin()
+    } else if (state?.includes('dingtalk')) {
+      dingtalkLogin()
     } else {
       auto2Platform()
     }

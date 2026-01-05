@@ -36,6 +36,8 @@ wlist = [
     "/system/authentication/platform/status",
     "/system/authentication/login/*",
     "/system/authentication/sso/*",
+    "/system/platform/sso/*",
+    "/system/platform/client/*",
     "/system/parameter/login"
 ]
 
