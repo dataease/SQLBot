@@ -67,6 +67,13 @@ class WhitelistChecker:
         prefix = settings.API_V1_STR
         if path.startswith(prefix):
             path = path[len(prefix):]
+            
+        context_prefix = settings.CONTEXT_PATH
+        if context_prefix and path.startswith(context_prefix):
+            path = path[len(context_prefix):]
+        
+        if not path:
+            path = '/'
         if path in self.whitelist:
             return True
             
