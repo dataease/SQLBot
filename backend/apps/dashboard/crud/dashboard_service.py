@@ -33,11 +33,11 @@ def load_resource(session: SessionDep, dashboard: QueryDashboard):
     sql = text("""
                SELECT cd.*,
                       creator.name AS create_name,
-                      updator.name AS update_name
+                      updater.name AS update_name
                FROM core_dashboard cd
                         LEFT JOIN sys_user creator ON cd.create_by = creator.id::varchar
-        LEFT JOIN sys_user updator
-               ON cd.update_by = updator.id:: varchar
+        LEFT JOIN sys_user updater
+               ON cd.update_by = updater.id:: varchar
                WHERE cd.id = :dashboard_id
                """)
     result = session.execute(sql, {"dashboard_id": dashboard.id}).mappings().first()

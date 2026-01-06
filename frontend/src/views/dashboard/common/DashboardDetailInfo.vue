@@ -6,7 +6,7 @@
     <div v-if="dashboardInfo.createName" class="info-content">{{ dashboardInfo.createName }}</div>
     <div class="info-title">{{ t('dashboard.create_time') }}</div>
     <div class="info-content">{{ timestampFormatDate(dashboardInfo.createTime) }}</div>
-    <div v-if="dashboardInfo.updateName" class="info-title">{{ t('dashboard.updator') }}</div>
+    <div v-if="dashboardInfo.updateName" class="info-title">{{ t('dashboard.updater') }}</div>
     <div v-if="dashboardInfo.updateName" class="info-content">{{ dashboardInfo.updateName }}</div>
     <div class="info-title">{{ t('dashboard.update_time') }}</div>
     <div v-if="dashboardInfo.updateTime" class="info-content">
