@@ -75,27 +75,24 @@ export const loadClient = (category: LoginCategory) => {
 }
 
 const dingtalkClientRequest = async (id: string | null) => {
-  const dd = window['dd']
-  if (dd?.requestAuthCode) {
+  if (!id) {
     const clientInfoRes = await queryClientInfo(7)
-    const corpId = id || clientInfoRes['corpid']
-    const client_id = clientInfoRes['client_id']
-    dd.requestAuthCode({
-      corpId: corpId,
-      clientId: client_id,
-      onSuccess: function (result: any) {
-        ElMessage.success(JSON.stringify(result))
-        const code = result.code
+    id = clientInfoRes['corpid']
+  }
+  const dd = window['dd']
+  dd.ready(function () {
+    dd.runtime.permission.requestAuthCode({
+      corpId: id,
+      onSuccess: function (info: any) {
+        const code = info.code
         const state = `fit2cloud-dingtalk-client`
         toUrl(`?code=${code}&state=${state}`)
       },
       onFail: function (err: any) {
-        console.error(err)
+        ElMessage.error(err)
       },
     })
-  } else {
-    ElMessage.error('not success')
-  }
+  })
 }
 
 const larkClientRequest = async () => {
