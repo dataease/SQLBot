@@ -39,7 +39,7 @@ const formatQrResult = (data: any): WecomInfo => {
     state: null,
     redirect_uri: null,
   } as unknown as WecomInfo
-  result.corp_id = data.corp_id
+  result.corp_id = data.corpid
   result.agent_id = data.agent_id
   result.state = data.state || 'fit2cloud-wecom-qr'
   result.redirect_uri = data.redirect_uri || getSQLBotAddr()
