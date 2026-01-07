@@ -1,4 +1,5 @@
 import secrets
+import urllib.parse
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -76,14 +77,15 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn | str:
         if self.SQLBOT_DB_URL:
             return self.SQLBOT_DB_URL
-        return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_SERVER,
-            port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
-        )
+        # return MultiHostUrl.build(
+        #     scheme="postgresql+psycopg",
+        #     username=urllib.parse.quote(self.POSTGRES_USER),
+        #     password=urllib.parse.quote(self.POSTGRES_PASSWORD),
+        #     host=self.POSTGRES_SERVER,
+        #     port=self.POSTGRES_PORT,
+        #     path=self.POSTGRES_DB,
+        # )
+        return f"postgresql+psycopg://{urllib.parse.quote(self.POSTGRES_USER)}:{urllib.parse.quote(self.POSTGRES_PASSWORD)}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     MCP_IMAGE_PATH: str = '/opt/sqlbot/images'
     EXCEL_PATH: str = '/opt/sqlbot/data/excel'
