@@ -756,6 +756,13 @@
     "setting_successfully": "Setting Successfully",
     "customize_theme_color": "Customize theme color"
   },
+  "platform": {
+    "title": "Platform Integration",
+    "status_open": "Enabled",
+    "status_close": "Disabled",
+    "access_in": "Access",
+    "can_enable_it": "Can be enabled after successful test connection"
+  },
   "authentication": {
     "invalid": "Invalid",
     "valid": "Valid",

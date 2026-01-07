@@ -215,7 +215,6 @@
     "chart_selected": "已选{0}"
   },
   "qa": {
-    "recommended_repetitive_tips": "Duplicate questions exist",
     "retrieve_error": "暂无内容",
     "retrieve_again": "重新获取",
     "recently": "最近",
@@ -756,6 +755,13 @@
     "save_and_apply": "保存并应用",
     "setting_successfully": "设置成功",
     "customize_theme_color": "自定义主题色"
+  },
+  "platform": {
+    "title": "平台对接",
+    "status_open": "已开启",
+    "status_close": "已关闭",
+    "access_in": "接入",
+    "can_enable_it": "测试连接有效后，可开启"
   },
   "authentication": {
     "invalid": "无效",

@@ -21,6 +21,7 @@ import Audit from '@/views/system/audit/index.vue'
 import Appearance from '@/views/system/appearance/index.vue'
 import Parameter from '@/views/system/parameter/index.vue'
 import Authentication from '@/views/system/authentication/index.vue'
+import Platform from '@/views/system/platform/index.vue'
 import Permission from '@/views/system/permission/index.vue'
 import User from '@/views/system/user/User.vue'
 import Workspace from '@/views/system/workspace/index.vue'
@@ -211,6 +212,12 @@ export const routes = [
             name: 'authentication',
             component: Authentication,
             meta: { title: t('system.authentication_settings') },
+          },
+          {
+            path: 'platform',
+            name: 'platform',
+            component: Platform,
+            meta: { title: t('platform.title') },
           },
         ],
       },

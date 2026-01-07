@@ -756,6 +756,13 @@
     "setting_successfully": "설정 성공",
     "customize_theme_color": "사용자 정의 테마 색상"
   },
+  "platform": {
+    "title": "플랫폼 연동",
+    "status_open": "활성화됨",
+    "status_close": "비활성화됨",
+    "access_in": "접속",
+    "can_enable_it": "연결 테스트 성공 후 활성화 가능"
+  },
   "authentication": {
     "invalid": "유효하지 않음",
     "valid": "유효함",
