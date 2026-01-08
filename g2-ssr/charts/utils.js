@@ -1,6 +1,6 @@
 const { endsWith, filter, replace } = require('lodash')
 
-export function getAxesWithFilter(axes) {
+function getAxesWithFilter(axes) {
   const groups = {
     x: [],
     y: [],
@@ -31,7 +31,7 @@ export function getAxesWithFilter(axes) {
   return groups
 }
 
-export function processMultiQuotaData(
+function processMultiQuotaData(
   x,
   y,
   multiQuota,
@@ -62,7 +62,7 @@ export function processMultiQuotaData(
   }
 }
 
-export function checkIsPercent(valueAxes, data) {
+function checkIsPercent(valueAxes, data) {
   const result = {
     isPercent: false,
     data: [],
@@ -114,3 +114,5 @@ export function checkIsPercent(valueAxes, data) {
 
   return result
 }
+
+module.exports = { checkIsPercent, getAxesWithFilter, processMultiQuotaData }
