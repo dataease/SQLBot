@@ -8,7 +8,11 @@ import { chatApi, ChatInfo } from '@/api/chat.ts'
 import { datasourceApi } from '@/api/datasource.ts'
 import Card from '@/views/ds/ChatCard.vue'
 import AddDrawer from '@/views/ds/AddDrawer.vue'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
+
+const isWsAdmin = computed(() => userStore.isAdmin || userStore.isSpaceAdmin)
 const props = withDefaults(
   defineProps<{
     hidden?: boolean
@@ -187,7 +191,7 @@ defineExpose({
           img-type="noneWhite"
         />
 
-        <div style="text-align: center; margin-top: -10px">
+        <div v-if="isWsAdmin" style="text-align: center; margin-top: -10px">
           <el-button type="primary" @click="handleAddDatasource">
             <template #icon>
               <icon_add_outlined></icon_add_outlined>
