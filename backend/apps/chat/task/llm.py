@@ -849,14 +849,14 @@ class LLMService:
                     if chart.get('axis').get('series'):
                         chart.get('axis').get('series')['value'] = chart.get('axis').get('series').get('value').lower()
                 if chart.get('axis') and chart['axis'].get('multi-quota'):
-                    muti_quota = chart['axis']['multi-quota']
-                    if muti_quota.get('value'):
-                        if isinstance(muti_quota['value'], list):
+                    multi_quota = chart['axis']['multi-quota']
+                    if multi_quota.get('value'):
+                        if isinstance(multi_quota['value'], list):
                             # 将数组中的每个值转换为小写
-                            muti_quota['value'] = [v.lower() if v else v for v in muti_quota['value']]
-                        elif isinstance(muti_quota['value'], str):
+                            multi_quota['value'] = [v.lower() if v else v for v in multi_quota['value']]
+                        elif isinstance(multi_quota['value'], str):
                             # 如果是字符串，也转换为小写
-                            muti_quota['value'] = muti_quota['value'].lower()
+                            multi_quota['value'] = multi_quota['value'].lower()
             elif data['type'] == 'error':
                 message = data['reason']
                 error = True
@@ -1468,8 +1468,8 @@ def request_picture(chat_id: int, record_id: int, chart: dict, data: dict):
     x = None
     y = None
     series = None
-    muti_quota_fields = []
-    muti_quota_name =None
+    multi_quota_fields = []
+    multi_quota_name =None
 
     if chart.get('axis'):
         axis_data = chart.get('axis')
@@ -1478,8 +1478,8 @@ def request_picture(chat_id: int, record_id: int, chart: dict, data: dict):
         series = axis_data.get('series')
         # 获取multi-quota字段列表
         if axis_data.get('multi-quota') and 'value' in axis_data.get('multi-quota'):
-            muti_quota_fields = axis_data.get('multi-quota').get('value', [])
-            muti_quota_name = axis_data.get('multi-quota').get('name')
+            multi_quota_fields = axis_data.get('multi-quota').get('value', [])
+            multi_quota_name = axis_data.get('multi-quota').get('name')
 
     axis = []
     for v in columns:
@@ -1497,13 +1497,13 @@ def request_picture(chat_id: int, record_id: int, chart: dict, data: dict):
                     'type': 'y'
                 }
                 # 如果是multi-quota字段，添加标志
-                if y_item.get('value') in muti_quota_fields:
+                if y_item.get('value') in multi_quota_fields:
                     y_obj['multi-quota'] = True
                 axis.append(y_obj)
     if series:
         axis.append({'name': series.get('name'), 'value': series.get('value'), 'type': 'series'})
-    if muti_quota_name:
-        axis.append({'name': muti_quota_name, 'value': muti_quota_name, 'type': 'other-info'})
+    if multi_quota_name:
+        axis.append({'name': multi_quota_name, 'value': multi_quota_name, 'type': 'other-info'})
 
     request_obj = {
         "path": os.path.join(settings.MCP_IMAGE_PATH, file_name),
