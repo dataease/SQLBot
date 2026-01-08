@@ -2,7 +2,7 @@ const { checkIsPercent, getAxesWithFilter, processMultiQuotaData } = require('./
 
 function getBarOptions(baseOptions, axis, data) {
 
-  const axes = getAxesWithFilter(this.axis)
+  const axes = getAxesWithFilter(axis)
 
   if (axes.x.length === 0 || axes?.y?.length === 0) {
     return

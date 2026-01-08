@@ -2,7 +2,7 @@ const { checkIsPercent, getAxesWithFilter } = require('./utils')
 
 function getPieOptions(baseOptions, axis, data) {
 
-  const { y, series } = getAxesWithFilter(this.axis)
+  const { y, series } = getAxesWithFilter(axis)
 
   if (series.length === 0 || y.length === 0) {
     return
