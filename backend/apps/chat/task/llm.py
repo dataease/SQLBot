@@ -121,8 +121,16 @@ class LLMService:
                 if not ds:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = (ds.type_name if ds.type != 'excel' else 'PostgreSQL') + get_version(ds)
-                chat_question.db_schema = get_table_schema(session=session, current_user=current_user, ds=ds,
-                                                           question=chat_question.question, embedding=embedding)
+                # 延迟 get_table_schema 调用到 init_record 之后，以便记录 LLM 表选择日志
+                self._pending_schema_params = {
+                    'session': session,
+                    'current_user': current_user,
+                    'ds': ds,
+                    'question': chat_question.question,
+                    'embedding': embedding,
+                    'history_questions': history_questions,
+                    'config': config
+                }
 
         self.generate_sql_logs = list_generate_sql_logs(session=session, chart_id=chat_id)
         self.generate_chart_logs = list_generate_chart_logs(session=session, chart_id=chat_id)
@@ -230,6 +238,22 @@ class LLMService:
 
     def init_record(self, session: Session) -> ChatRecord:
         self.record = save_question(session=session, current_user=self.current_user, question=self.chat_question)
+
+        # 如果有延迟的 schema 获取，现在执行（此时 record 已存在，可以记录 LLM 表选择日志）
+        if hasattr(self, '_pending_schema_params') and self._pending_schema_params:
+            params = self._pending_schema_params
+            self.chat_question.db_schema = get_table_schema(
+                session=params['session'],
+                current_user=params['current_user'],
+                ds=params['ds'],
+                question=params['question'],
+                embedding=params['embedding'],
+                history_questions=params['history_questions'],
+                config=params['config'],
+                record_id=self.record.id
+            )
+            self._pending_schema_params = None
+
         return self.record
 
     def get_record(self):
@@ -355,7 +379,9 @@ class LLMService:
                 session=_session,
                 current_user=self.current_user, ds=self.ds,
                 question=self.chat_question.question,
-                embedding=False)
+                embedding=False,
+                config=self.config,
+                record_id=self.record.id)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemMessage(content=self.chat_question.guess_sys_question(self.articles_number)))
@@ -500,7 +526,9 @@ class LLMService:
                         self.ds)
                     self.chat_question.db_schema = get_table_schema(session=_session,
                                                                     current_user=self.current_user, ds=self.ds,
-                                                                    question=self.chat_question.question)
+                                                                    question=self.chat_question.question,
+                                                                    config=self.config,
+                                                                    record_id=self.record.id)
                     _engine_type = self.chat_question.engine
                     _chat.engine_type = _ds.type_name
                 # save chat
@@ -1003,7 +1031,9 @@ class LLMService:
                     session=_session,
                     current_user=self.current_user,
                     ds=self.ds,
-                    question=self.chat_question.question)
+                    question=self.chat_question.question,
+                    config=self.config,
+                    record_id=self.record.id)
             else:
                 self.validate_history_ds(_session)
 

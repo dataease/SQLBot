@@ -622,6 +622,87 @@ template:
     user: |
       ### sql:
       {sql}
-      
+
       ### 子查询映射表:
       {sub_query}
+  table_selection:
+    system: |
+      ### 请使用语言：{lang} 回答
+
+      ### 说明：
+      你是一个数据库专家，你需要根据用户的提问，从提供的数据库表列表中选择最相关的表，这些表将被用于后续生成SQL查询。
+
+      ### 表列表格式：
+      提供给你的表列表格式为JSON数组：
+      [
+        {{"name": "表名", "comment": "表描述"}},
+        ...
+      ]
+
+      ### 表关系信息：
+      如果存在表关系，会以如下格式提供：
+      <table-relations>
+      表1.字段1 = 表2.字段2
+      ...
+      </table-relations>
+
+      ### 要求：
+      - 仔细分析用户问题，理解其数据查询需求
+      - 用户的问题可能比较模糊，你需要尽可能多地猜测可能需要的表
+      - 选择与用户问题最相关的表，包括：
+        1. 直接包含所需数据的表
+        2. 可能需要用于JOIN关联的表
+        3. 包含筛选条件所需字段的表
+      - 选择所有你认为可能相关的表，不限数量，一般在5张以内
+      - 以JSON格式返回选中的表名列表，格式为：{{"tables": ["表名1", "表名2", ...]}}
+      - 如果无法确定相关的表，返回：{{"tables": [], "message": "无法确定相关的表"}}
+      - 不需要思考过程，请直接返回JSON结果
+
+      ### 示例：
+      <example>
+        <input>
+          表列表: [{{"name": "orders", "comment": "订单表"}}, {{"name": "customers", "comment": "客户表"}}, {{"name": "products", "comment": "产品表"}}, {{"name": "order_items", "comment": "订单明细表"}}, {{"name": "categories", "comment": "产品类别表"}}]
+          表关系: orders.customer_id = customers.id | order_items.order_id = orders.id | order_items.product_id = products.id
+          问题: 查询销售额最高的客户
+        </input>
+        <output>
+          {{"tables": ["orders", "customers"]}}
+        </output>
+      </example>
+      <example>
+        <input>
+          表列表: [{{"name": "users", "comment": "用户表"}}, {{"name": "departments", "comment": "部门表"}}, {{"name": "salaries", "comment": "薪资表"}}, {{"name": "attendance", "comment": "考勤表"}}]
+          表关系: users.dept_id = departments.id | salaries.user_id = users.id
+          问题: 各部门薪资情况
+        </input>
+        <output>
+          {{"tables": ["users", "departments", "salaries"]}}
+        </output>
+      </example>
+      <example>
+        <input>
+          表列表: [{{"name": "sales", "comment": "销售记录"}}, {{"name": "regions", "comment": "区域表"}}, {{"name": "products", "comment": "产品表"}}]
+          表关系: sales.region_id = regions.id | sales.product_id = products.id
+          问题: 销售数据
+        </input>
+        <output>
+          {{"tables": ["sales", "regions", "products"]}}
+        </output>
+        <explanation>问题比较模糊，尽可能选择所有可能相关的表</explanation>
+      </example>
+
+      ### 响应, 请直接返回JSON结果:
+      ```json
+
+    user: |
+      ### 表列表:
+      {table_list}
+
+      ### 表关系:
+      {table_relations}
+
+      ### 历史问题（用于理解上下文）:
+      {history_questions}
+
+      ### 当前问题:
+      {question}

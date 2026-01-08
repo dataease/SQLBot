@@ -115,6 +115,13 @@ class Settings(BaseSettings):
     TABLE_EMBEDDING_COUNT: int = 10
     DS_EMBEDDING_COUNT: int = 10
 
+    # LLM table selection settings
+    TABLE_LLM_SELECTION_ENABLED: bool = True  # 是否启用 LLM 表选择（优先于 RAG）
+
+    # Multi-turn embedding settings
+    MULTI_TURN_EMBEDDING_ENABLED: bool = True
+    MULTI_TURN_HISTORY_COUNT: int = 3
+
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
 
     @field_validator('SQL_DEBUG',
@@ -123,6 +130,8 @@ class Settings(BaseSettings):
                      'PARSE_REASONING_BLOCK_ENABLED',
                      'PG_POOL_PRE_PING',
                      'TABLE_EMBEDDING_ENABLED',
+                     'TABLE_LLM_SELECTION_ENABLED',
+                     'MULTI_TURN_EMBEDDING_ENABLED',
                      mode='before')
     @classmethod
     def lowercase_bool(cls, v: Any) -> Any:
