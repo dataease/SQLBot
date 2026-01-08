@@ -2,28 +2,39 @@
   <p class="router-title">{{ t('platform.title') }}</p>
 
   <div class="sys-setting-p">
-    <div class="container-sys-platform">
-      <wecom-info />
+    <div v-for="card in state.cardList" :key="card.type" class="container-sys-platform">
+      <platform-info :card-info="card" @saved="loadData" />
     </div>
-    <!-- <div class="container-sys-platform not-first">
-      <dingtalk-info />
-    </div> -->
-    <!-- <div class="container-sys-platform not-first">
-      <lark-info />
-    </div>
-    <div class="container-sys-platform not-first">
-      <larksuite-info />
-    </div> -->
   </div>
 </template>
 
 <script lang="ts" setup>
-import WecomInfo from './wecom/WecomInfo.vue'
-/* import DingtalkInfo from './dingtalk/DingtalkInfo.vue' */
-/* import LarkInfo from './lark/LarkInfo.vue'
-import LarksuiteInfo from './larksuite/LarksuiteInfo.vue' */
+import PlatformInfo from './PlatformInfo.vue'
+
 import { useI18n } from 'vue-i18n'
+import { request } from '@/utils/request'
+import { onMounted, reactive } from 'vue'
+import type { PlatformCard } from './common/SettingTemplate'
 const { t } = useI18n()
+
+const state = reactive({
+  cardList: [] as PlatformCard[],
+})
+
+const loadData = () => {
+  const url = '/system/platform'
+  request.get(url).then((res: any) => {
+    state.cardList = res
+      .map((item: any) => {
+        item.config = JSON.parse(item.config)
+        return item
+      })
+      .filter((card: any) => card.type < 7)
+  })
+}
+onMounted(() => {
+  loadData()
+})
 </script>
 <style lang="less" scoped>
 .router-title {
@@ -43,6 +54,9 @@ const { t } = useI18n()
   height: calc(100vh - 136px);
   box-sizing: border-box;
   margin-top: 16px;
+  row-gap: 16px;
+  display: flex;
+  flex-direction: column;
 }
 .container-sys-platform {
   padding: 24px;

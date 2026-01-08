@@ -4,18 +4,18 @@
       <div class="platform-setting-head-left">
         <div class="lead-left-icon">
           <el-icon>
-            <Icon name="logo_lark"><logo_lark class="svg-icon" /></Icon>
+            <Icon name="logo_wechat-work"><component :is="state.cardIcon" class="svg-icon" /></Icon>
           </el-icon>
-          <span>{{ t('system.international_feishu') }}</span>
+          <span>{{ cardTitle }}</span>
         </div>
         <div v-if="existInfo" class="lead-left-status" :class="{ invalid: !info.valid }">
           <span>{{
-            info.valid ? t('datasource.valid') : info.appId ? t('datasource.invalid') : ''
+            info.valid ? t('authentication.valid') : info.corpid ? t('authentication.invalid') : ''
           }}</span>
         </div>
       </div>
       <div v-if="existInfo" class="platform-setting-head-right">
-        <span>{{ info.enable ? t('system.enabled') : t('system.close') }}</span>
+        <span>{{ info.enable ? t('platform.status_open') : t('platform.status_close') }}</span>
         <el-switch
           v-if="info.valid"
           v-model="info.enable"
@@ -38,116 +38,133 @@
         </el-tooltip>
       </div>
       <div v-else class="platform-setting-head-right-btn">
-        <el-button type="primary" @click="edit">{{ t('system.access') }}</el-button>
+        <el-button type="primary" @click="edit">{{ t('platform.access_in') }}</el-button>
       </div>
     </div>
   </div>
   <InfoTemplate
     v-if="existInfo"
     class="platform-setting-main"
-    :copy-list="copyList"
-    setting-key="larksuite"
-    setting-title=""
+    :copy-list="state.copyList"
     :hide-head="true"
-    :setting-data="settingList"
+    :setting-data="state.settingList"
     @edit="edit"
   />
   <div v-if="existInfo" class="platform-foot-container">
     <el-button type="primary" @click="edit">
-      {{ t('commons.edit') }}
+      {{ t('datasource.edit') }}
     </el-button>
-    <el-button
-      secondary
-      :disabled="!info.appId || !info.appSecret || !info.callBack"
-      @click="validate"
-      >{{ t('commons.validate') }}</el-button
-    >
+    <el-button secondary :disabled="!formValid" @click="validate">{{ t('ds.check') }}</el-button>
   </div>
-  <larksuite-edit ref="editor" @saved="search" />
+  <platform-form ref="editor" @saved="search" />
 </template>
 
 <script lang="ts" setup>
-import logo_lark from '@/assets/svg/logo_lark.svg'
-import { ref, reactive } from 'vue'
-import InfoTemplate from '../common/InfoTemplate.vue'
-import LarksuiteEdit from './LarksuiteEdit.vue'
+import { ref, type PropType, watch, reactive } from 'vue'
+import InfoTemplate from './common/InfoTemplate.vue'
+import PlatformForm from './PlatformForm.vue'
 import { request } from '@/utils/request'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus-secondary'
+import { getPlatformCardConfig, type PlatformCard } from './common/SettingTemplate'
 const { t } = useI18n()
+
+const props = defineProps({
+  cardInfo: {
+    type: Object as PropType<PlatformCard>,
+    required: true,
+    default: () =>
+      ({
+        type: 6,
+        name: 'wecom',
+        config: {},
+        enable: false,
+        valid: false,
+      }) as PlatformCard,
+  },
+})
+
+const info = ref({}) as any
+const state = reactive({
+  settingList: [] as any[],
+  copyList: [] as string[],
+  cardIcon: null,
+})
 
 const existInfo = ref(false)
 const editor = ref()
-const copyList = ['APP Key', 'APP Secret']
-const settingList = reactive([
-  {
-    pkey: 'APP Key',
-    pval: 'smtp.exmail.qq.com',
-    type: 'text',
-    sort: 1,
+const origin = ref(6)
+
+const cardTitle = ref('')
+const formValid = ref(false)
+watch(
+  () => props.cardInfo,
+  () => {
+    const configData: any = props.cardInfo.config
+    configData['id'] = props.cardInfo.id
+    configData['enable'] = !!props.cardInfo.enable
+    configData['valid'] = !!props.cardInfo.valid
+    info.value = configData
+    origin.value = props.cardInfo.type
+
+    const platformConfig = getPlatformCardConfig(props.cardInfo.type)
+    const list = [...platformConfig.settingList]
+    list.forEach((item) => {
+      item['pval'] = info.value[item.realKey] || '-'
+      // delete item.realKey
+    })
+    state.settingList = list
+
+    existInfo.value = !!props.cardInfo.id
+    cardTitle.value = t(platformConfig.title)
+
+    state.copyList = platformConfig.copyField
+    state.cardIcon = platformConfig.icon
+
+    formValid.value = list.every((item: any) => !!info.value[item.realKey])
   },
-  {
-    pkey: 'APP Secret',
-    pval: 'smtp.exmail.qq.com',
-    type: 'pwd',
-    sort: 2,
-  },
-  {
-    pkey: t('system.callback_domain_name'),
-    pval: 'https://de.fit2cloud.com',
-    type: 'text',
-    sort: 3,
-  },
-])
-const info = ref({}) as any
-const mappingArray = ['appId', 'appSecret', 'callBack', 'enable']
+  { immediate: true }
+)
+const emits = defineEmits(['saved'])
 const search = () => {
-  const url = '/larksuite/info'
-  request.get(url).then((res) => {
-    info.value = res.data
-    existInfo.value = info.value['appId']
-    for (let index = 0; index < settingList.length; index++) {
-      const element = settingList[index]
-      const key = mappingArray[index]
-      if (index === 3) {
-        element['pval'] = res.data[key] ? t('chart.open') : t('chart.close')
-      } else {
-        element['pval'] = res.data[key] || '-'
-      }
-    }
-  })
+  emits('saved')
 }
 
 const switchEnableApi = (enable: any) => {
-  const url = '/larksuite/switchEnable'
-  const data = { enable }
-  request.post(url, data).catch(() => {
+  const url = '/system/authentication/enable'
+  const data = { id: origin.value, enable }
+  request.patch(url, data).catch(() => {
     info.value.enable = false
   })
 }
 const edit = () => {
-  editor?.value.edit(info.value)
+  const data = { ...{ type: origin.value, title: cardTitle.value }, ...info.value }
+  editor?.value.edit(data)
 }
 const validate = () => {
-  if (info.value?.appId && info.value?.appSecret && info.value?.callBack) {
+  if (info.value?.agent_id && info.value?.corpsecret) {
     validateHandler()
   }
 }
 const validateHandler = () => {
-  const url = '/larksuite/validate'
-  const data = info.value
   request
-    .post(url, data)
-    .then(() => {
-      info.value.valid = true
-      ElMessage.success(t('datasource.validate_success'))
+    .patch('/system/authentication/status', { type: origin.value, name: '', config: '' })
+    .then((res) => {
+      if (res) {
+        info.value.valid = true
+        ElMessage.success(t('ds.connection_success'))
+      } else {
+        ElMessage.error(t('ds.connection_failed'))
+        info.value.enable = false
+        info.value.valid = false
+      }
     })
     .catch(() => {
       info.value.enable = false
       info.value.valid = false
     })
 }
-search()
+// search()
 </script>
 
 <style lang="less" scoped>

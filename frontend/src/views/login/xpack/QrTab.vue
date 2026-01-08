@@ -6,12 +6,8 @@
       name="wecom"
     ></el-tab-pane>
     <el-tab-pane v-if="props.dingtalk" :label="t('user.dingtalk')" name="dingtalk"></el-tab-pane>
-    <el-tab-pane v-if="props.lark" :label="t('user.feishu')" name="lark"></el-tab-pane>
-    <el-tab-pane
-      v-if="props.larksuite"
-      :label="t('system.international_feishu')"
-      name="larksuite"
-    ></el-tab-pane>
+    <el-tab-pane v-if="props.lark" :label="t('user.lark')" name="lark"></el-tab-pane>
+    <el-tab-pane v-if="props.larksuite" :label="t('user.larksuite')" name="larksuite"></el-tab-pane>
   </el-tabs>
   <div v-if="activeName === 'wecom'" class="login-qrcode">
     <div class="title">
@@ -51,7 +47,7 @@
       <el-icon>
         <Icon name="logo_lark"><logo_lark class="svg-icon" /></Icon>
       </el-icon>
-      {{ t('system.international_feishu') }}
+      {{ t('user.larksuite') }}
     </div>
     <div class="qrcode">
       <larksuite-qr v-if="activeName === 'larksuite'" />

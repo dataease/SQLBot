@@ -4,72 +4,50 @@ import { ElMessage, ElLoading } from 'element-plus-secondary'
 import { request } from '@/utils/request'
 import { useI18n } from 'vue-i18n'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
+import { settingMapping } from './common/SettingTemplate'
 const { t } = useI18n()
 const dialogVisible = ref(false)
 const loadingInstance = ref<ReturnType<typeof ElLoading.service> | null>(null)
-const wecomForm = ref<FormInstance>()
-interface WecomkForm {
-  corpid?: string
-  agent_id?: string
-  corpsecret?: string
-}
+const platformForm = ref<FormInstance>()
+
 const state = reactive({
-  form: reactive<WecomkForm>({
-    agent_id: '',
-    corpid: '',
-    corpsecret: '',
-  }),
+  form: reactive<any>({}),
+  settingList: [] as any[],
 })
 const origin = ref(6)
 const id = ref()
-const rule = reactive<FormRules>({
-  agent_id: [
-    {
-      required: true,
-      message: t('common.require'),
-      trigger: 'blur',
-    },
-    {
-      min: 5,
-      max: 20,
-      message: t('common.input_limit', [5, 20]),
-      trigger: 'blur',
-    },
-  ],
-  corpid: [
-    {
-      required: true,
-      message: t('common.require'),
-      trigger: 'blur',
-    },
-    {
-      min: 5,
-      max: 20,
-      message: t('common.input_limit', [5, 20]),
-      trigger: 'blur',
-    },
-  ],
-  corpsecret: [
-    {
-      required: true,
-      message: t('common.require'),
-      trigger: 'blur',
-    },
-    {
-      min: 5,
-      max: 100,
-      message: t('common.input_limit', [5, 100]),
-      trigger: 'blur',
-    },
-  ],
-})
-
+const rule = reactive<FormRules>({})
+const formTitle = ref('')
+const busiMapping = {
+  6: 'wecom',
+  7: 'dingtalk',
+  8: 'lark',
+  9: 'larksuite',
+} as any
+const initForm = (row: any) => {
+  state.settingList.forEach((item: any) => {
+    const key = item.realKey
+    rule[key] = [
+      {
+        required: true,
+        message: t('common.require'),
+        trigger: 'blur',
+      },
+      {
+        min: 5,
+        max: 255,
+        message: t('common.input_limit', [5, 255]),
+        trigger: 'blur',
+      },
+    ]
+    state.form[key] = row[key]
+  })
+}
 const edit = (row: any) => {
-  state.form = {
-    agent_id: row.agent_id,
-    corpid: row.corpid,
-    corpsecret: row.corpsecret,
-  }
+  state.settingList = settingMapping[row.type]
+  initForm(row)
+  origin.value = row.type
+  formTitle.value = row.title
   if (row?.id) {
     id.value = row.id
   }
@@ -86,7 +64,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       const data = {
         id: origin.value,
         type: origin.value,
-        name: 'wecom',
+        name: busiMapping[origin.value],
         config: JSON.stringify(param),
       }
       const method = id.value
@@ -122,10 +100,15 @@ const resetForm = (formEl: FormInstance | undefined) => {
   formEl.resetFields()
   dialogVisible.value = false
   id.value = null
+  origin.value = 6
+  formTitle.value = ''
+  state.settingList = []
+  const keys = Object.keys(rule)
+  keys.forEach((key: string) => delete rule[key])
 }
 
 const reset = () => {
-  resetForm(wecomForm.value)
+  resetForm(platformForm.value)
 }
 
 const showLoading = () => {
@@ -137,28 +120,34 @@ const closeLoading = () => {
   loadingInstance.value?.close()
 }
 
-const validate = () => {
-  const url = '/system/authentication/status'
-  const config_data = state.form
-  const data = {
-    type: origin.value,
-    name: 'wecom',
-    config: JSON.stringify(config_data),
-  }
-  showLoading()
-  request
-    .patch(url, data)
-    .then((res) => {
-      if (res) {
-        ElMessage.success(t('ds.connection_success'))
-      } else {
-        ElMessage.error(t('ds.connection_failed'))
-      }
-    })
-    .finally(() => {
-      closeLoading()
-      emits('saved')
-    })
+const validate = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate((valid) => {
+    if (!valid) {
+      return
+    }
+    const url = '/system/authentication/status'
+    const config_data = state.form
+    const data = {
+      type: origin.value,
+      name: busiMapping[origin.value],
+      config: JSON.stringify(config_data),
+    }
+    showLoading()
+    request
+      .patch(url, data)
+      .then((res) => {
+        if (res) {
+          ElMessage.success(t('ds.connection_success'))
+        } else {
+          ElMessage.error(t('ds.connection_failed'))
+        }
+      })
+      .finally(() => {
+        closeLoading()
+        emits('saved')
+      })
+  })
 }
 
 defineExpose({
@@ -169,46 +158,46 @@ defineExpose({
 <template>
   <el-drawer
     v-model="dialogVisible"
-    :title="t('user.wechat_for_business')"
+    :title="formTitle"
     modal-class="platform-info-drawer"
     size="600px"
     direction="rtl"
   >
     <el-form
-      ref="wecomForm"
+      ref="platformForm"
       require-asterisk-position="right"
       :model="state.form"
       :rules="rule"
       label-width="80px"
       label-position="top"
     >
-      <el-form-item label="Corpid" prop="corpid">
-        <el-input v-model="state.form.corpid" :placeholder="t('common.please_input')" />
-      </el-form-item>
-
-      <el-form-item label="AgentId" prop="agent_id">
-        <el-input v-model="state.form.agent_id" :placeholder="t('common.please_input')" />
-      </el-form-item>
-
-      <el-form-item label="APP Secret" prop="corpsecret">
+      <el-form-item
+        v-for="setting in state.settingList"
+        :key="setting.realKey"
+        :label="setting.pkey"
+        :prop="setting.realKey"
+      >
         <el-input
-          v-model="state.form.corpsecret"
+          v-if="setting.type === 'password'"
+          v-model="state.form[setting.realKey]"
           type="password"
           show-password
+          :placeholder="t('common.please_input')"
+        />
+        <el-input
+          v-else
+          v-model="state.form[setting.realKey]"
           :placeholder="t('common.please_input')"
         />
       </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="resetForm(wecomForm)">{{ t('common.cancel') }}</el-button>
-        <el-button
-          :disabled="!state.form.corpid || !state.form.corpsecret || !state.form.agent_id"
-          @click="validate"
-        >
+        <el-button @click="resetForm(platformForm)">{{ t('common.cancel') }}</el-button>
+        <el-button @click="validate(platformForm)">
           {{ t('ds.check') }}
         </el-button>
-        <el-button type="primary" @click="submitForm(wecomForm)">
+        <el-button type="primary" @click="submitForm(platformForm)">
           {{ t('common.save') }}
         </el-button>
       </span>
