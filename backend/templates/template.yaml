@@ -139,9 +139,6 @@ template:
           若涉及多表查询，则生成的SQL内，不论查询的表字段是否有重名，表字段前必须加上对应的表名
         </rule>
         <rule>
-          我们目前的情况适用于单指标、多分类的场景（展示table除外）
-        </rule>
-        <rule>
           是否生成对话标题在<change-title>内，如果为True需要生成，否则不需要生成，生成的对话标题要求在20字以内
         </rule>
       </Rules>
@@ -323,24 +320,59 @@ template:
           必须从 SQL 查询列中提取“columns”
         </rule>
         <rule>
-          如果需要柱状图，JSON格式应为（如果有分类则在JSON中返回series）：
-          {{"type":"column", "title": "标题", "axis": {{"x": {{"name":"x轴的{lang}名称", "value": "SQL 查询 x 轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "y": {{"name":"y轴的{lang}名称","value": "SQL 查询 y 轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
-          柱状图使用一个分类字段（series），一个X轴字段（x）和一个Y轴数值字段（y），其中必须从SQL查询列中提取"x"、"y"与"series"。
+          <strong>字段类型定义：</strong>
+          <strong>- 分类字段(series)：用于分组数据的离散值字段，如国家、产品类别、用户类型等（非时间、非数值的离散字段）</strong>
+          <strong>- 指标字段(数值字段/y轴)：需要计算或展示的数值字段，通常是数值类型</strong>
+          <strong>- 维度字段(维度轴/x轴)：用于X轴的分类或时间字段，如日期、产品名称、地区等</strong>
         </rule>
         <rule>
-          如果需要条形图，JSON格式应为（如果有分类则在JSON中返回series），条形图相当于是旋转后的柱状图，因此 x 轴仍为维度轴，y 轴仍为指标轴：
-          {{"type":"bar", "title": "标题", "axis": {{"x": {{"name":"x轴的{lang}名称", "value": "SQL 查询 x 轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "y": {{"name":"y轴的{lang}名称","value": "SQL 查询 y 轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
-          条形图使用一个分类字段（series），一个X轴字段（x）和一个Y轴数值字段（y），其中必须从SQL查询列中提取"x"和"y"与"series"。
+          <strong>图表配置决策流程：</strong>
+          <strong>1. 先判断SQL查询结果中是否存在分类字段（非时间、非数值的离散字段）</strong>
+          <strong>2. 如果存在分类字段 → 必须使用series配置，此时y轴只能有一个指标字段</strong>
+          <strong>3. 如果不存在分类字段，但存在多个指标字段 → 必须使用multi-quota配置</strong>
+          <strong>4. 如果只有一个指标字段且无分类字段 → 直接配置y轴，不使用series和multi-quota</strong>
         </rule>
         <rule>
-          如果需要折线图，JSON格式应为（如果有分类则在JSON中返回series）：
-          {{"type":"line", "title": "标题", "axis": {{"x": {{"name":"x轴的{lang}名称","value": "SQL 查询 x 轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "y": {{"name":"y轴的{lang}名称","value": "SQL 查询 y 轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
-          折线图使用一个分类字段（series），一个X轴字段（x）和一个Y轴数值字段（y），其中必须从SQL查询列中提取"x"、"y"与"series"。
+          如果需要柱状图，JSON格式应为<strong>（series为可选字段，仅当有分类字段时使用）</strong>：
+          {{"type":"column", "title": "标题", "axis": {{"x": {{"name":"维度轴的{lang}名称", "value": "SQL 查询维度轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "y": [{{"name":"数值轴的{lang}名称","value": "SQL 查询数值轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}], "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
+          <strong>柱状图配置说明：</strong>
+          <strong>1. x轴：维度轴，通常放置分类或时间字段（如日期、产品类别）</strong>
+          <strong>2. y轴：数值轴，放置需要展示的数值指标</strong>
+          <strong>3. series：当需要对数据进一步分组时使用（如不同产品系列在不同日期的销售额）</strong>
+          柱状图使用一个分类字段（series），一个<strong>维度轴</strong>字段（x）和一个<strong>数值轴</strong>字段（y），其中必须从SQL查询列中提取"x"、"y"与"series"。
+          <strong>如果SQL中没有分类列，那么JSON内的series字段不需要出现</strong>
+        </rule>
+        <rule>
+          如果需要条形图，JSON格式应为<strong>（series为可选字段，仅当有分类字段时使用）</strong>：
+          <strong>⚠️ 重要：条形图是柱状图的视觉旋转，但数据映射逻辑保持不变！</strong>
+          <strong>必须遵循：x轴 = 维度轴（分类），y轴 = 数值轴（指标）</strong>
+          <strong>不要将条形图的横向展示误解为x轴是数值！</strong>
+          {{"type":"bar", "title": "标题", "axis": {{"x": {{"name":"维度轴的{lang}名称", "value": "SQL 查询维度轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "y": [{{"name":"数值轴的{lang}名称","value": "SQL 查询数值轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}], "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
+          <strong>条形图配置原则：</strong>
+          <strong>1. 条形图只是视觉展示不同，数据逻辑与柱状图相同</strong>
+          <strong>2. x轴必须是维度字段（分类、时间等）</strong>
+          <strong>3. y轴必须是数值字段（指标、度量等）</strong>
+          <strong>4. 如果存在分类字段（如不同产品系列），使用series分组</strong>
+          条形图使用一个分类字段（series），一个<strong>维度轴</strong>字段（x）和一个<strong>数值轴</strong>字段（y），其中必须从SQL查询列中提取"x"和"y"与"series"。
+          <strong>如果SQL中没有分类列，那么JSON内的series字段不需要出现</strong>
+        </rule>
+        <rule>
+          如果需要折线图，JSON格式应为<strong>（series为可选字段，仅当有分类字段时使用）</strong>：
+          {{"type":"line", "title": "标题", "axis": {{"x": {{"name":"维度轴的{lang}名称","value": "SQL 查询维度轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "y": [{{"name":"数值轴的{lang}名称","value": "SQL 查询数值轴的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}], "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
+          <strong>折线图配置说明：</strong>
+          <strong>1. x轴：维度轴，通常放置时间字段（如日期、月份）</strong>
+          <strong>2. y轴：数值轴，放置需要展示趋势的数值指标</strong>
+          <strong>3. series：当需要对比多个分类的趋势时使用（如不同产品的销售趋势）</strong>
+          折线图使用一个分类字段（series），一个<strong>维度轴</strong>字段（x）和一个<strong>数值轴</strong>字段（y），其中必须从SQL查询列中提取"x"、"y"与"series"。
+          <strong>如果SQL中没有分类列，那么JSON内的series字段不需要出现</strong>
         </rule>
         <rule>
           如果需要饼图，JSON格式应为：
-          {{"type":"pie", "title": "标题", "axis": {{"y": {{"name":"值轴的{lang}名称","value":"SQL 查询数值的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
-          饼图使用一个分类字段（series）和一个数值字段（y），其中必须从SQL查询列中提取"y"与"series"。
+          {{"type":"pie", "title": "标题", "axis": {{"y": {{"name":"数值轴的{lang}名称","value":"SQL 查询数值的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}, "series": {{"name":"分类的{lang}名称","value":"SQL 查询分类的列(有别名用别名,去掉外层的反引号、双引号、方括号)"}}}}}}
+          <strong>饼图配置说明：</strong>
+          <strong>1. y轴：数值字段，表示各部分的大小</strong>
+          <strong>2. series：分类字段，表示各部分的名称</strong>
+          饼图使用一个分类字段（series）和一个<strong>数值</strong>字段（y），其中必须从SQL查询列中提取"y"与"series"。
         </rule>
         <rule>
           如果SQL中没有分类列，那么JSON内的series字段不需要出现
@@ -349,7 +381,11 @@ template:
           如果SQL查询结果中存在可用于数据分类的字段（如国家、产品类型等），则必须提供series配置。如果不存在，则无需在JSON中包含series字段。
         </rule>
         <rule>
-          我们目前的情况适用于单指标、多分类的场景（展示table除外），若SQL中包含多指标列，请选择一个最符合提问情况的指标作为值轴
+          对于柱状图/条形图/折线图：
+          1. 如果SQL查询中存在多个指标字段（如"收入"、"支出"、"利润"等数值字段）且不存在分类字段，则必须提供multi-quota配置，形如："multi-quota":{{"name":"指标类型","value":["指标字段1","指标字段2",...]}}
+          2. 如果SQL查询中存在多个指标字段且同时存在分类字段，则以分类字段为主，选取多指标字段中的其中一个作为指标即可，不需要multi-quota配置
+          3. 如果只有一个指标字段，无论是否存在分类字段，都不需要multi-quota配置
+          <strong>重要提醒：multi-quota和series是互斥的配置，一个图表配置中只能使用其中之一，不能同时存在</strong>
         </rule>
         <rule>
           如果你无法根据提供的内容生成合适的JSON配置，则返回：{{"type":"error", "reason": "抱歉，我无法生成合适的图表配置"}}
@@ -379,6 +415,17 @@ template:
             </input>
             <output>
               {{"type":"pie","title":"组织人数统计","axis":{{"y":{{"name":"人数","value":"user_count"}},"series":{{"name":"组织名称","value":"org_name"}}}}}}
+            </output>
+          </example>
+          <example>
+            <input>
+              <sql>SELECT `s`.`date` AS `date`, `s`.`income` AS `income`, `s`.`expense` AS `expense` FROM `financial_data` `s` ORDER BY `date` ASC LIMIT 1000</sql>
+              <user-question>展示每月的收入与支出</user-question>
+              <chart-type> line </chart-type>
+            </input>
+            <output>
+              // 无分类字段，但有多个指标字段的情况
+              {{"type":"line","title":"财务指标趋势","axis":{{"x":{{"name":"日期","value":"date"}},"y":[{{"name":"收入","value":"income"}}, {{"name":"支出","value":"expense"}}], "multi-quota":{{"name":"财务指标","value":["income","expense"]}}}}}}
             </output>
           </example>
         </chat-examples>

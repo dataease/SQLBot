@@ -13,6 +13,7 @@ const params = withDefaults(
     x?: Array<ChartAxis>
     y?: Array<ChartAxis>
     series?: Array<ChartAxis>
+    multiQuotaName?: string | undefined
   }>(),
   {
     data: () => [],
@@ -20,6 +21,7 @@ const params = withDefaults(
     x: () => [],
     y: () => [],
     series: () => [],
+    multiQuotaName: undefined,
   }
 )
 
@@ -36,11 +38,19 @@ const axis = computed(() => {
     _list.push({ name: column.name, value: column.value, type: 'x' })
   })
   params.y.forEach((column) => {
-    _list.push({ name: column.name, value: column.value, type: 'y' })
+    _list.push({
+      name: column.name,
+      value: column.value,
+      type: 'y',
+      'multi-quota': column['multi-quota'],
+    })
   })
   params.series.forEach((column) => {
     _list.push({ name: column.name, value: column.value, type: 'series' })
   })
+  if (params.multiQuotaName) {
+    _list.push({ name: params.multiQuotaName, value: params.multiQuotaName, type: 'other-info' })
+  }
   return _list
 })
 
@@ -52,7 +62,6 @@ function renderChart() {
     chartInstance.init(axis.value, params.data)
     chartInstance.render()
   }
-  console.debug(chartInstance)
 }
 
 function destroyChart() {

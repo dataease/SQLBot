@@ -166,6 +166,7 @@ defineExpose({
         :y="viewInfo.chart?.yAxis"
         :series="viewInfo.chart?.series"
         :data="viewInfo.data?.data"
+        :multi-quota-name="viewInfo.chart?.multiQuotaName"
       />
     </div>
     <el-dialog

@@ -1,7 +1,7 @@
 import { BaseG2Chart } from '@/views/chat/component/BaseG2Chart.ts'
 import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
-import { checkIsPercent } from '@/views/chat/component/charts/utils.ts'
+import { checkIsPercent, getAxesWithFilter } from '@/views/chat/component/charts/utils.ts'
 
 export class Pie extends BaseG2Chart {
   constructor(id: string) {
@@ -10,15 +10,16 @@ export class Pie extends BaseG2Chart {
 
   init(axis: Array<ChartAxis>, data: Array<ChartData>) {
     super.init(axis, data)
-    const y = this.axis.filter((item) => item.type === 'y')
-    const series = this.axis.filter((item) => item.type === 'series')
+    const { y, series } = getAxesWithFilter(this.axis)
 
     if (series.length == 0 || y.length == 0) {
+      console.debug({ instance: this })
       return
     }
 
-    // %
-    const _data = checkIsPercent(y[0], data)
+    const _data = checkIsPercent(y, data)
+
+    console.debug({ 'render-info': { y: y, series: series, data: _data }, instance: this })
 
     const options: G2Spec = {
       ...this.chart.options(),

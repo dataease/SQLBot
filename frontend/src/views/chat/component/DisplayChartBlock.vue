@@ -20,8 +20,12 @@ const chartObject = computed<{
   title: string
   axis: {
     x: { name: string; value: string }
-    y: { name: string; value: string }
+    y: { name: string; value: string } | Array<{ name: string; value: string }>
     series: { name: string; value: string }
+    'multi-quota': {
+      name: string
+      value: Array<string>
+    }
   }
   columns: Array<{ name: string; value: string }>
 }>(() => {
@@ -32,22 +36,40 @@ const chartObject = computed<{
 })
 
 const xAxis = computed(() => {
-  if (chartObject.value?.axis?.x) {
-    return [chartObject.value.axis.x]
+  const axis = chartObject.value?.axis
+  if (axis?.x) {
+    return [axis.x]
   }
   return []
 })
 const yAxis = computed(() => {
-  if (chartObject.value?.axis?.y) {
-    return [chartObject.value.axis.y]
+  const axis = chartObject.value?.axis
+  if (!axis?.y) {
+    return []
+  }
+
+  const y = axis.y
+  const multiQuotaValues = axis['multi-quota']?.value || []
+
+  // 统一处理为数组
+  const yArray = Array.isArray(y) ? [...y] : [{ ...y }]
+
+  // 标记 multi-quota
+  return yArray.map((item) => ({
+    ...item,
+    'multi-quota': multiQuotaValues.includes(item.value),
+  }))
+})
+const series = computed(() => {
+  const axis = chartObject.value?.axis
+  if (axis?.series) {
+    return [axis.series]
   }
   return []
 })
-const series = computed(() => {
-  if (chartObject.value?.axis?.series) {
-    return [chartObject.value.axis.series]
-  }
-  return []
+
+const multiQuotaName = computed(() => {
+  return chartObject.value?.axis?.['multi-quota']?.name
 })
 
 const chartRef = ref()
@@ -94,6 +116,7 @@ defineExpose({
       :y="yAxis"
       :series="series"
       :data="data"
+      :multi-quota-name="multiQuotaName"
     />
     <el-empty v-else :description="loadingData ? t('chat.loading_data') : t('chat.no_data')" />
   </div>

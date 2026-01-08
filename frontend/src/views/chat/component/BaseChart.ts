@@ -1,7 +1,8 @@
 export interface ChartAxis {
   name: string
   value: string
-  type?: 'x' | 'y' | 'series'
+  type?: 'x' | 'y' | 'series' | 'other-info'
+  'multi-quota'?: boolean
 }
 
 export interface ChartData {
