@@ -891,3 +891,36 @@ def get_old_questions(session: SessionDep, datasource: int):
     for r in result:
         records.append(r.question)
     return records
+
+
+def get_chat_history_questions(session: SessionDep, chat_id: int, limit: int = 3) -> List[str]:
+    """
+    获取当前chat的历史问题列表（按时间正序，最旧的在前）
+
+    Args:
+        session: 数据库会话
+        chat_id: 当前对话ID
+        limit: 获取的历史问题数量
+
+    Returns:
+        历史问题列表，按时间正序排列
+    """
+    stmt = (
+        select(ChatRecord.question)
+        .where(
+            and_(
+                ChatRecord.chat_id == chat_id,
+                ChatRecord.question.isnot(None),
+                ChatRecord.question != '',
+                ChatRecord.error.is_(None)
+            )
+        )
+        .order_by(ChatRecord.create_time.desc())
+        .limit(limit)
+    )
+
+    result = session.execute(stmt)
+    questions = [row.question for row in result if row.question and row.question.strip()]
+
+    # 反转列表，使最旧的在前
+    return list(reversed(questions))
