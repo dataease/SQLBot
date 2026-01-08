@@ -40,6 +40,7 @@ class OperationEnum(Enum):
     GENERATE_SQL_WITH_PERMISSIONS = '5'
     CHOOSE_DATASOURCE = '6'
     GENERATE_DYNAMIC_SQL = '7'
+    SELECT_TABLE = '8'  # LLM 表选择
 
 
 class ChatFinishStep(Enum):
@@ -115,6 +116,7 @@ class ChatRecord(SQLModel, table=True):
     recommended_question_answer: str = Field(sa_column=Column(Text, nullable=True))
     recommended_question: str = Field(sa_column=Column(Text, nullable=True))
     datasource_select_answer: str = Field(sa_column=Column(Text, nullable=True))
+    table_select_answer: str = Field(sa_column=Column(Text, nullable=True))
     finish: bool = Field(sa_column=Column(Boolean, nullable=True, default=False))
     error: str = Field(sa_column=Column(Text, nullable=True))
     analysis_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
@@ -140,6 +142,7 @@ class ChatRecordResult(BaseModel):
     predict_data: Optional[str] = None
     recommended_question: Optional[str] = None
     datasource_select_answer: Optional[str] = None
+    table_select_answer: Optional[str] = None
     finish: Optional[bool] = None
     error: Optional[str] = None
     analysis_record_id: Optional[int] = None
