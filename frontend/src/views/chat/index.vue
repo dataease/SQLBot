@@ -1014,7 +1014,7 @@ function stop(func?: (...p: any[]) => void, ...param: any[]) {
   }
 }
 const showFloatPopover = () => {
-  if (!isCompletePage.value && !floatPopoverVisible.value) {
+  if ((!isCompletePage.value || isPhone.value) && !floatPopoverVisible.value) {
     floatPopoverVisible.value = true
   }
 }
@@ -1324,6 +1324,7 @@ onMounted(() => {
     max-width: 800px;
     display: flex;
     gap: 16px;
+    padding: 0 16px;
     align-items: center;
     flex-direction: column;
 

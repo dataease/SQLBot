@@ -26,6 +26,8 @@ import Permission from '@/views/system/permission/index.vue'
 import User from '@/views/system/user/User.vue'
 import Workspace from '@/views/system/workspace/index.vue'
 import Page401 from '@/views/error/index.vue'
+import ChatPreview from '@/views/chat/preview.vue'
+
 import { i18n } from '@/i18n'
 import { watchRouter } from './watch'
 
@@ -244,6 +246,11 @@ export const routes = [
     path: '/assistantTest',
     name: 'assistantTest',
     component: assistantTest,
+  },
+  {
+    path: '/chatPreview',
+    name: 'chatPreview',
+    component: ChatPreview,
   },
   {
     path: '/admin-login',
