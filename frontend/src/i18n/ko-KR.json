@@ -668,7 +668,8 @@
     "welcome_description": "환영 메시지 설명",
     "data_analysis_now": "저는 데이터 조회, 차트 생성, 데이터 이상 감지, 데이터 예측 등을 할 수 있습니다. 빨리 스마트 데이터 조회를 시작하세요~",
     "window_entrance_icon": "플로팅 윈도우 입구 아이콘",
-    "preview_error": "현재 페이지는 Iframe 임베딩을 허용하지 않습니다!"
+    "preview_error": "현재 페이지는 Iframe 임베딩을 허용하지 않습니다!",
+    "assistant_app": "어시스턴트 앱"
   },
   "chat": {
     "type": "차트 유형",

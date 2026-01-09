@@ -1,6 +1,7 @@
 import LayoutDsl from '@/components/layout/LayoutDsl.vue'
 
 import Datasource from '@/views/ds/Datasource.vue'
+import SetAssistant from '@/views/system/embedded/iframe.vue'
 import { i18n } from '@/i18n'
 import { useUserStore } from '@/stores/user'
 import type { Router } from 'vue-router'
@@ -21,6 +22,13 @@ const dynamicRouterList = [
         meta: { title: t('menu.Data Connections'), iconActive: 'ds', iconDeActive: 'noDs' },
       },
     ],
+  },
+  {
+    parent: 'set',
+    path: '/set/assistant',
+    name: 'setAssistant',
+    component: SetAssistant,
+    meta: { title: t('embedded.assistant_app') },
   },
 ] as any[]
 
@@ -71,7 +79,17 @@ const reduceRouters = (router: Router, invalid_router_name_list: string[]) => {
 
 export const generateDynamicRouters = (router: Router) => {
   if (userStore.isAdmin || userStore.isSpaceAdmin) {
-    dynamicRouterList.forEach((item: any) => router.addRoute(item))
+    dynamicRouterList.forEach((item: any) => {
+      if (!item.parent) {
+        router.addRoute(item)
+      } else {
+        router.addRoute(item.parent, item)
+        const parentRoute: any = router.getRoutes().find((r: any) => r.name === item.parent)
+        if (parentRoute?.children) {
+          parentRoute.children.push(item)
+        }
+      }
+    })
   } else {
     const router_name_list = [] as string[]
     const stack = [...dynamicRouterList]

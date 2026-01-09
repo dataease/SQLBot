@@ -1,5 +1,6 @@
 
 
+from typing import Optional
 from fastapi import FastAPI, Request
 from sqlmodel import Session, select
 from starlette.middleware.cors import CORSMiddleware
@@ -32,9 +33,10 @@ def dynamic_upgrade_cors(request: Request, session: Session):
         cors_middleware.kwargs['allow_origins'] = updated_origins
 
 
-async def save(request: Request, session: Session, creator: AssistantBase):
+async def save(request: Request, session: Session, creator: AssistantBase, oid: Optional[int] = 1):
     db_model = AssistantModel.model_validate(creator)
     db_model.create_time = get_timestamp()
+    db_model.oid = oid
     session.add(db_model)
     session.commit()
     dynamic_upgrade_cors(request=request, session=session)

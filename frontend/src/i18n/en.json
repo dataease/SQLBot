@@ -668,7 +668,8 @@
     "welcome_description": "Welcome Description",
     "data_analysis_now": "I can query data, generate charts, detect data anomalies, predict data, and more! Enable Smart Data Analysis now!",
     "window_entrance_icon": "Floating window entrance icon",
-    "preview_error": "The current page prohibits embedding using Iframe!"
+    "preview_error": "The current page prohibits embedding using Iframe!",
+    "assistant_app": "Assistant App"
   },
   "chat": {
     "type": "Chart Type",

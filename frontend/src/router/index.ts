@@ -9,7 +9,10 @@ import DashboardEditor from '@/views/dashboard/editor/index.vue'
 import DashboardPreview from '@//views/dashboard/preview/SQPreviewSingle.vue'
 import Dashboard from '@/views/dashboard/index.vue'
 import Model from '@/views/system/model/Model.vue'
-import Embedded from '@/views/system/embedded/index.vue'
+// import Embedded from '@/views/system/embedded/index.vue'
+// import SetAssistant from '@/views/system/embedded/iframe.vue'
+import SystemEmbedded from '@/views/system/embedded/Page.vue'
+
 import assistantTest from '@/views/system/embedded/Test.vue'
 import assistant from '@/views/embedded/index.vue'
 import EmbeddedPage from '@/views/embedded/page.vue'
@@ -116,6 +119,12 @@ export const routes = [
         component: Permission,
         meta: { title: t('workspace.permission_configuration') },
       },
+      /* {
+        path: '/set/assistant',
+        name: 'setAssistant',
+        component: SetAssistant,
+        meta: { title: t('embedded.assistant_app') },
+      }, */
       {
         path: '/set/professional',
         name: 'professional',
@@ -184,7 +193,7 @@ export const routes = [
       {
         path: 'embedded',
         name: 'embedded',
-        component: Embedded,
+        component: SystemEmbedded,
         meta: {
           title: t('embedded.embedded_management'),
           iconActive: 'embedded',

@@ -31,7 +31,7 @@ interface Form {
   description?: string | null
 }
 
-const emits = defineEmits(['btnSelectChange'])
+// const emits = defineEmits(['btnSelectChange'])
 const { t } = useI18n()
 const multipleSelectionAll = ref<any[]>([])
 const keywords = ref('')
@@ -313,7 +313,8 @@ const copyCode = (row: any, key: any = 'app_secret') => {
 <template>
   <div v-loading="searchLoading" class="embedded-page">
     <div class="tool-left">
-      <div class="btn-select">
+      <span class="page-title">{{ t('embedded.embedded_management') }}</span>
+      <!-- <div class="btn-select">
         <el-button
           :class="[btnSelect === 'd' && 'is-active']"
           text
@@ -328,7 +329,7 @@ const copyCode = (row: any, key: any = 'app_secret') => {
         >
           {{ t('embedded.embedded_page') }}
         </el-button>
-      </div>
+      </div> -->
       <div>
         <el-input
           v-model="keywords"
@@ -642,7 +643,11 @@ const copyCode = (row: any, key: any = 'app_secret') => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
-
+    .page-title {
+      font-weight: 500;
+      font-size: 20px;
+      line-height: 28px;
+    }
     .btn-select {
       height: 32px;
       padding-left: 4px;

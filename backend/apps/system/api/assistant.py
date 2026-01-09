@@ -15,7 +15,7 @@ from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.system_schema import AssistantBase, AssistantDTO, AssistantUiSchema, AssistantValidator
 from common.core.config import settings
-from common.core.deps import SessionDep, Trans
+from common.core.deps import SessionDep, Trans, CurrentUser
 from common.core.security import create_access_token
 from common.core.sqlbot_cache import clear_cache
 from common.utils.utils import get_origin_from_referer, origin_match_domain
@@ -165,8 +165,8 @@ async def clear_ui_cache(id: int):
 
 
 @router.get("", response_model=list[AssistantModel], summary=f"{PLACEHOLDER_PREFIX}assistant_grid_api", description=f"{PLACEHOLDER_PREFIX}assistant_grid_api")
-async def query(session: SessionDep):
-    list_result = session.exec(select(AssistantModel).where(AssistantModel.type != 4).order_by(AssistantModel.name,
+async def query(session: SessionDep, current_user: CurrentUser):
+    list_result = session.exec(select(AssistantModel).where(AssistantModel.oid == current_user.oid, AssistantModel.type != 4).order_by(AssistantModel.name,
                                                                                                AssistantModel.create_time)).all()
     return list_result
 
@@ -180,8 +180,9 @@ async def query_advanced_application(session: SessionDep):
 
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}assistant_create_api", description=f"{PLACEHOLDER_PREFIX}assistant_create_api")
 @system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.APPLICATION, result_id_expr="id"))
-async def add(request: Request, session: SessionDep, creator: AssistantBase):
-    return await save(request, session, creator)
+async def add(request: Request, session: SessionDep, current_user: CurrentUser, creator: AssistantBase):
+    oid = current_user.oid if creator.type != 4 else 1
+    return await save(request, session, creator, oid)
 
 
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}assistant_update_api", description=f"{PLACEHOLDER_PREFIX}assistant_update_api")

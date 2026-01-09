@@ -19,7 +19,9 @@ import DsCard from './DsCard.vue'
 import { getList, updateAssistant, saveAssistant, delOne, dsApi } from '@/api/embedded'
 import { useI18n } from 'vue-i18n'
 import { cloneDeep } from 'lodash-es'
+import { useUserStore } from '@/stores/user.ts'
 
+const userStore = useUserStore()
 defineProps({
   btnSelect: {
     type: String,
@@ -27,7 +29,7 @@ defineProps({
   },
 })
 
-const emits = defineEmits(['btnSelectChange'])
+// const emits = defineEmits(['btnSelectChange'])
 
 const { t } = useI18n()
 const { copy } = useClipboard({ legacy: true })
@@ -49,7 +51,6 @@ const activeMode = ref('full')
 const embeddedList = ref<any[]>([])
 const systemCredentials = ['localStorage', 'custom', 'cookie', 'sessionStorage']
 const credentials = ['header', 'cookie', 'param']
-const workspaces = ref<any[]>([])
 
 const defaultEmbedded = {
   id: '',
@@ -112,11 +113,7 @@ const userTypeList = [
     value: 1,
   },
 ]
-const initWorkspace = () => {
-  workspaceList().then((res) => {
-    workspaces.value = res
-  })
-}
+
 const handleAddEmbedded = (val: any) => {
   Object.assign(currentEmbedded, cloneDeep(defaultEmbedded))
   Object.keys(dsForm).forEach((ele) => {
@@ -132,11 +129,7 @@ const handleAddEmbedded = (val: any) => {
     handleAdvancedEmbedded(null)
   }
 }
-const wsChanged = (val: any) => {
-  dsForm.public_list = []
-  dsForm.oid = val
-  getDsList()
-}
+
 const getDsList = () => {
   dsApi(dsForm.oid).then((res: any) => {
     dsListOptions.value = res || []
@@ -144,9 +137,10 @@ const getDsList = () => {
 }
 const handleBaseEmbedded = (row: any) => {
   advancedApplication.value = false
-  initWorkspace()
   if (row) {
     Object.assign(dsForm, JSON.parse(row.configuration))
+  } else {
+    Object.assign(dsForm, { oid: userStore.getOid })
   }
   getDsList()
   ruleConfigvVisible.value = true
@@ -557,7 +551,8 @@ const saveHandler = () => {
 <template>
   <div v-loading="searchLoading" class="embedded-index no-padding">
     <div class="tool-left">
-      <div class="btn-select">
+      <span class="page-title">{{ t('embedded.assistant_app') }}</span>
+      <!-- <div class="btn-select">
         <el-button
           :class="[btnSelect === 'd' && 'is-active']"
           text
@@ -572,7 +567,7 @@ const saveHandler = () => {
         >
           {{ t('embedded.embedded_page') }}
         </el-button>
-      </div>
+      </div> -->
       <div>
         <el-input
           v-model="keywords"
@@ -922,7 +917,7 @@ const saveHandler = () => {
               class="form-content_error"
               @submit.prevent
             >
-              <el-form-item prop="oid" :label="t('user.workspace')">
+              <!-- <el-form-item prop="oid" :label="t('user.workspace')">
                 <el-select
                   v-model="dsForm.oid"
                   filterable
@@ -938,7 +933,7 @@ const saveHandler = () => {
                     :value="item.id"
                   />
                 </el-select>
-              </el-form-item>
+              </el-form-item> -->
 
               <el-form-item class="private-list_form">
                 <template #label>
@@ -1166,6 +1161,11 @@ const saveHandler = () => {
     margin-bottom: 16px;
     padding: 0 24px 0 24px;
 
+    .page-title {
+      font-weight: 500;
+      font-size: 20px;
+      line-height: 28px;
+    }
     .title {
       font-weight: 500;
       font-size: 20px;

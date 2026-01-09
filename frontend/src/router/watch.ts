@@ -39,7 +39,7 @@ export const watchRouter = (router: Router) => {
     if (!userStore.getUid) {
       await userStore.info()
       generateDynamicRouters(router)
-      isFirstDynamicPath = to?.path === '/ds/index'
+      isFirstDynamicPath = to?.path && ['/ds/index', '/set/assistant'].includes(to.path)
       if (isFirstDynamicPath) {
         next({ ...to, replace: true })
         return
