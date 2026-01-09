@@ -1,6 +1,8 @@
 <template>
   <div v-loading="divLoading" class="sqlbot-embedded-assistant-page">
+    <error-page v-if="inIframe" :title="t('embedded.preview_error')" />
     <chat-component
+      v-else
       :welcome="customSet.welcome"
       :welcome-desc="customSet.welcome_desc"
       :logo-assistant="logo"
@@ -11,9 +13,10 @@
 </template>
 <script setup lang="ts">
 import ChatComponent from '@/views/chat/index.vue'
-import { nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-
+import ErrorPage from '@/views/error/index.vue'
+import { isInIframe } from '@/utils/utils'
 const { t } = useI18n()
 //const chatRef = ref()
 
@@ -25,8 +28,9 @@ const customSet = reactive({
   header_font_color: '#1F2329',
 }) as { [key: string]: any }
 const logo = ref()
-
 const divLoading = ref(true)
+
+const inIframe = computed(() => isInIframe())
 
 onMounted(() => {
   nextTick(() => {

@@ -18,6 +18,7 @@ import Apikey from './Apikey.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { userApi } from '@/api/auth'
+import { toLoginPage } from '@/utils/utils'
 
 const router = useRouter()
 const appearanceStore = useAppearanceStoreWithOut()
@@ -37,7 +38,7 @@ const isLocalUser = computed(() => !userStore.getOrigin)
 
 const platFlag = computed(() => {
   const platformInfo = userStore.getPlatformInfo
-  return platformInfo?.flag || 0
+  return platformInfo?.origin || 0
 })
 const dialogVisible = ref(false)
 const apikeyDialogVisible = ref(false)
@@ -95,7 +96,8 @@ const savePwdHandler = () => {
 }
 const logout = async () => {
   if (!(await userStore.logout())) {
-    router.push('/login')
+    router.push(toLoginPage(router?.currentRoute?.value?.fullPath || ''))
+    // router.push('/login')
   }
 }
 </script>

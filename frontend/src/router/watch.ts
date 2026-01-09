@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/user'
 import { request } from '@/utils/request'
 import type { Router } from 'vue-router'
 import { generateDynamicRouters } from './dynamic'
+import { toLoginPage } from '@/utils/utils'
 
 const appearanceStore = useAppearanceStoreWithOut()
 const userStore = useUserStore()
@@ -17,7 +18,7 @@ export const watchRouter = (router: Router) => {
     await appearanceStore.setAppearance()
     LicenseGenerator.generateRouters(router)
     if (to.path.startsWith('/login') && userStore.getUid) {
-      next('/')
+      next(to?.query?.redirect || '/')
       return
     }
     if (assistantWhiteList.includes(to.path)) {
@@ -31,7 +32,7 @@ export const watchRouter = (router: Router) => {
     }
     if (!token) {
       // ElMessage.error('Please login first')
-      next('/login')
+      next(toLoginPage(to.fullPath))
       return
     }
     let isFirstDynamicPath = false
