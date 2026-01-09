@@ -24,10 +24,22 @@ const dynamicRouterList = [
     ],
   },
   {
-    parent: 'set',
-    path: '/set/assistant',
-    name: 'setAssistant',
-    component: SetAssistant,
+    path: '/as',
+    component: LayoutDsl,
+    name: 'as-menu',
+    redirect: '/as/index',
+    children: [
+      {
+        path: 'index',
+        name: 'as',
+        component: SetAssistant,
+        meta: {
+          title: t('embedded.assistant_app'),
+          iconActive: 'embedded',
+          iconDeActive: 'noEmbedded',
+        },
+      },
+    ],
     meta: { title: t('embedded.assistant_app') },
   },
 ] as any[]
