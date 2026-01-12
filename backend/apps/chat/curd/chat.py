@@ -694,6 +694,26 @@ def save_select_datasource_answer(session: SessionDep, record_id: int, answer: s
     return result
 
 
+def save_table_select_answer(session: SessionDep, record_id: int, answer: str) -> ChatRecord:
+    """保存 LLM 表选择的结果到 ChatRecord"""
+    if not record_id:
+        raise Exception("Record id cannot be None")
+    record = get_chat_record_by_id(session, record_id)
+
+    record.table_select_answer = answer
+
+    result = ChatRecord(**record.model_dump())
+
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record.id)).values(
+        table_select_answer=record.table_select_answer,
+    )
+
+    session.execute(stmt)
+    session.commit()
+
+    return result
+
+
 def save_recommend_question_answer(session: SessionDep, record_id: int,
                                    answer: dict = None, articles_number: Optional[int] = 4) -> ChatRecord:
     if not record_id:
