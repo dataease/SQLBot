@@ -130,7 +130,8 @@ class AssistantOutDs:
                 cookies[item['key']] = item['value']
             if item['target'] == 'param':
                 param[item['key']] = item['value']
-        res = requests.get(url=endpoint, params=param, headers=header, cookies=cookies, timeout=10)
+        timeout = int(config.get('timeout')) if config.get('timeout') else 10
+        res = requests.get(url=endpoint, params=param, headers=header, cookies=cookies, timeout=timeout)
         if res.status_code == 200:
             result_json: dict[any] = json.loads(res.text)
             if result_json.get('code') == 0 or result_json.get('code') == 200:
