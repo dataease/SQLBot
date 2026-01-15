@@ -84,6 +84,7 @@ const certificateForm = reactive(cloneDeep(defaultCertificateForm))
 
 const defaultUrlForm = {
   endpoint: '',
+  timeout: 10,
   encrypt: false,
   aes_key: '',
   aes_iv: '',
@@ -342,12 +343,27 @@ const validateCertificate = (_: any, value: any, callback: any) => {
   }
 }
 
+const validateTimeout = (_: any, value: any, callback: any) => {
+  if (value === null) {
+    callback(new Error(t('datasource.please_enter') + t('common.empty') + t('ds.form.timeout')))
+  } else {
+    callback()
+  }
+}
+
 const urlRules = {
   endpoint: [
     {
       required: true,
       validator: validatePass,
       trigger: 'blur',
+    },
+  ],
+  timeout: [
+    {
+      required: true,
+      validator: validateTimeout,
+      trigger: 'change',
     },
   ],
   certificate: [
@@ -797,6 +813,15 @@ const saveHandler = () => {
                     $t('embedded.interface_url')
                   "
                   autocomplete="off"
+                />
+              </el-form-item>
+              <el-form-item :label="t('ds.form.timeout')" prop="timeout">
+                <el-input-number
+                  v-model="urlForm.timeout"
+                  clearable
+                  :min="0"
+                  :max="300"
+                  controls-position="right"
                 />
               </el-form-item>
               <el-form-item prop="AES" class="custom-require">
