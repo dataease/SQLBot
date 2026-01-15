@@ -819,7 +819,8 @@
     "platform_disable": "{0}设置未开启！",
     "input_account": "请输入账号",
     "redirect_2_auth": "正在跳转至 {0} 认证，{1} 秒...",
-    "redirect_immediately": "立即跳转"
+    "redirect_immediately": "立即跳转",
+    "permission_invalid": "认证无效【当前账号权限不够】"
   },
   "supplier": {
     "alibaba_cloud_bailian": "阿里云百炼",

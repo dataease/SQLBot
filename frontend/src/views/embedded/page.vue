@@ -24,7 +24,8 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useI18n } from 'vue-i18n'
 import { request } from '@/utils/request'
 import { setCurrentColor } from '@/utils/utils'
-
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
 const { t } = useI18n()
 const chatRef = ref()
 const appearanceStore = useAppearanceStoreWithOut()
@@ -64,6 +65,7 @@ const communicationCb = async (event: any) => {
       if (type === 4) {
         assistantStore.setToken(certificate)
         assistantStore.setAssistant(true)
+        await userStore.info()
         loading.value = false
         return
       }

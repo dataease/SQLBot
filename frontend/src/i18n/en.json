@@ -819,7 +819,8 @@
     "platform_disable": "{0} settings are not enabled!",
     "input_account": "Please enter account",
     "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds...",
-    "redirect_immediately": "Redirecting immediately"
+    "redirect_immediately": "Redirecting immediately",
+    "permission_invalid": "Authentication invalid [Current account has insufficient permissions]"
   },
   "supplier": {
     "alibaba_cloud_bailian": "Alibaba Cloud Bailian",

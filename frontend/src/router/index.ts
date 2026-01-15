@@ -16,6 +16,7 @@ import SystemEmbedded from '@/views/system/embedded/Page.vue'
 import assistantTest from '@/views/system/embedded/Test.vue'
 import assistant from '@/views/embedded/index.vue'
 import EmbeddedPage from '@/views/embedded/page.vue'
+import EmbeddedCommon from '@/views/embedded/common.vue'
 import Member from '@/views/system/member/index.vue'
 import Professional from '@/views/system/professional/index.vue'
 import Training from '@/views/system/training/index.vue'
@@ -250,6 +251,11 @@ export const routes = [
     path: '/embeddedPage',
     name: 'embeddedPage',
     component: EmbeddedPage,
+  },
+  {
+    path: '/embeddedCommon',
+    name: 'embeddedCommon',
+    component: EmbeddedCommon,
   },
   {
     path: '/assistantTest',

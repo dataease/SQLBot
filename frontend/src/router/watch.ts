@@ -11,7 +11,7 @@ const appearanceStore = useAppearanceStoreWithOut()
 const userStore = useUserStore()
 const { wsCache } = useCache()
 const whiteList = ['/login', '/admin-login']
-const assistantWhiteList = ['/assistant', '/embeddedPage', '/401']
+const assistantWhiteList = ['/assistant', '/embeddedPage', '/embeddedCommon', '/401']
 export const watchRouter = (router: Router) => {
   router.beforeEach(async (to: any, from: any, next: any) => {
     await loadXpackStatic()
