@@ -175,15 +175,14 @@ onBeforeMount(async () => {
     messageId: assistantId,
   }
   window.parent.postMessage(readyData, '*')
-  assistantApi.query(assistantId as any).then((res) => {
+
+  request.get(`/system/assistant/${assistantId}`).then((res) => {
     if (res.name) {
       appName.value = res.name
     }
-  })
-
-  request.get(`/system/assistant/${assistantId}`).then((res) => {
     if (res?.configuration) {
       const rawData = JSON.parse(res?.configuration)
+      assistantStore.setAutoDs(rawData?.auto_ds)
       if (rawData.logo) {
         logo.value = baseUrl + rawData.logo
       }

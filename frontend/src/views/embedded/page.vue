@@ -180,6 +180,7 @@ onBeforeMount(async () => {
   request.get(`/system/assistant/${assistantId}`).then((res) => {
     if (res?.configuration) {
       const rawData = JSON.parse(res?.configuration)
+      assistantStore.setAutoDs(rawData?.auto_ds)
       if (rawData.logo) {
         logo.value = baseUrl + rawData.logo
       }

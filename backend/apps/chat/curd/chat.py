@@ -11,7 +11,9 @@ from apps.chat.models.chat_model import Chat, ChatRecord, CreateChat, ChatInfo, 
     TypeEnum, OperationEnum, ChatRecordResult
 from apps.datasource.crud.recommended_problem import get_datasource_recommended_chart
 from apps.datasource.models.datasource import CoreDatasource
-from apps.system.crud.assistant import AssistantOutDsFactory
+from apps.db.constant import DB
+from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory
+from apps.system.schemas.system_schema import AssistantOutDsSchema
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.utils import extract_nested_json
 
@@ -447,7 +449,7 @@ def list_generate_chart_logs(session: SessionDep, chart_id: int) -> List[ChatLog
 
 
 def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj: CreateChat,
-                require_datasource: bool = True) -> ChatInfo:
+                require_datasource: bool = True, current_assistant: CurrentAssistant = None) -> ChatInfo:
     if not create_chat_obj.datasource and require_datasource:
         raise Exception("Datasource cannot be None")
 
@@ -459,10 +461,15 @@ def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj:
                 oid=current_user.oid if current_user.oid is not None else 1,
                 brief=create_chat_obj.question.strip()[:20],
                 origin=create_chat_obj.origin if create_chat_obj.origin is not None else 0)
-    ds: CoreDatasource | None = None
+    ds: CoreDatasource | AssistantOutDsSchema | None = None
     if create_chat_obj.datasource:
         chat.datasource = create_chat_obj.datasource
-        ds = session.get(CoreDatasource, create_chat_obj.datasource)
+        if current_assistant and current_assistant.type == 1:
+            out_ds_instance: AssistantOutDs = AssistantOutDsFactory.get_instance(current_assistant)
+            ds = out_ds_instance.get_ds(chat.datasource)
+            ds.type_name = DB.get_db(ds.type)
+        else:
+            ds = session.get(CoreDatasource, create_chat_obj.datasource)
 
         if not ds:
             raise Exception(f"Datasource with id {create_chat_obj.datasource} not found")
@@ -494,7 +501,7 @@ def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj:
         record.finish = True
         record.create_time = datetime.datetime.now()
         record.create_by = current_user.id
-        if ds.recommended_config == 2:
+        if isinstance(ds, CoreDatasource) and ds.recommended_config == 2:
             questions = get_datasource_recommended_chart(session, ds.id)
             record.recommended_question = orjson.dumps(questions).decode()
             record.recommended_question_answer = orjson.dumps({

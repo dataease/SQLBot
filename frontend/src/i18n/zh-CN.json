@@ -669,7 +669,8 @@
     "data_analysis_now": "我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～",
     "window_entrance_icon": "浮窗入口图标",
     "preview_error": "当前页面禁止使用 Iframe 嵌入！",
-    "assistant_app": "小助手应用"
+    "assistant_app": "小助手应用",
+    "auto_select_ds": "自动选择数据源"
   },
   "chat": {
     "type": "图表类型",

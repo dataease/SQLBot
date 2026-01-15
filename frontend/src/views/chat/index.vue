@@ -147,7 +147,7 @@
             </div>
 
             <el-button
-              v-if="isCompletePage && currentChatId === undefined"
+              v-if="(isCompletePage || selectAssistantDs) && currentChatId === undefined"
               size="large"
               type="primary"
               class="greeting-btn"
@@ -360,9 +360,12 @@
           </div>
         </el-scrollbar>
       </el-main>
-      <el-footer v-if="computedMessages.length > 0 || !isCompletePage" class="chat-footer">
+      <el-footer
+        v-if="computedMessages.length > 0 || (!isCompletePage && !selectAssistantDs)"
+        class="chat-footer"
+      >
         <div class="input-wrapper" @click="clickInput">
-          <div v-if="isCompletePage" class="datasource">
+          <div v-if="isCompletePage || selectAssistantDs" class="datasource">
             <template v-if="currentChat.datasource && currentChat.datasource_name">
               {{ t('qa.selected_datasource') }}:
               <img
@@ -397,7 +400,7 @@
             :disabled="isTyping"
             clearable
             class="input-area"
-            :class="!isCompletePage && 'is-assistant'"
+            :class="!isCompletePage && !selectAssistantDs && 'is-assistant'"
             type="textarea"
             :autosize="{ minRows: 1, maxRows: 8.583 }"
             :placeholder="t('qa.question_placeholder')"
@@ -420,7 +423,11 @@
       </el-footer>
     </el-container>
 
-    <ChatCreator v-if="isCompletePage" ref="chatCreatorRef" @on-chat-created="onChatCreatedQuick" />
+    <ChatCreator
+      v-if="isCompletePage || selectAssistantDs"
+      ref="chatCreatorRef"
+      @on-chat-created="onChatCreatedQuick"
+    />
     <ChatCreator ref="hiddenChatCreatorRef" hidden @on-chat-created="onChatCreatedQuick" />
   </el-container>
 </template>
@@ -482,6 +489,10 @@ const isCompletePage = computed(() => !assistantStore.getAssistant || assistantS
 const embeddedHistoryHidden = computed(
   () => assistantStore.getAssistant && !assistantStore.getHistory
 )
+// const autoDs = computed(() => assistantStore.getAssistant && assistantStore.getAutoDs)
+const selectAssistantDs = computed(() => {
+  return assistantStore.getAssistant && !assistantStore.getAutoDs
+})
 const customName = computed(() => {
   if (!isCompletePage.value && props.pageEmbedded) return props.appName
   return ''
@@ -634,7 +645,7 @@ const createNewChat = async () => {
     return
   }
   goEmpty()
-  if (!isCompletePage.value) {
+  if (!isCompletePage.value && !selectAssistantDs.value) {
     currentChat.value = new ChatInfo()
     currentChatId.value = undefined
     return
@@ -764,6 +775,7 @@ function onChatStop() {
 const assistantPrepareSend = async () => {
   if (
     !isCompletePage.value &&
+    !selectAssistantDs.value &&
     (currentChatId.value == null || typeof currentChatId.value == 'undefined')
   ) {
     const assistantChat = await assistantStore.setChat()

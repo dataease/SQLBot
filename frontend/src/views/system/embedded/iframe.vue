@@ -67,6 +67,7 @@ const defaultForm = {
   oid: 1,
   public_list: [],
   private_list: [],
+  auto_ds: false,
 }
 
 const dsForm = reactive<{ [key: string]: any }>(cloneDeep(defaultForm))
@@ -87,6 +88,7 @@ const defaultUrlForm = {
   aes_key: '',
   aes_iv: '',
   certificate: [] as any,
+  auto_ds: false,
 }
 const urlForm = reactive(cloneDeep(defaultUrlForm))
 
@@ -821,20 +823,7 @@ const saveHandler = () => {
                   autocomplete="off"
                 />
               </el-form-item>
-              <!-- <el-form-item v-if="urlForm.encrypt" prop="aes_iv" label="AES IV">
-            <el-input
-              v-model="urlForm.aes_iv"
-              clearable
-              :placeholder="
-                $t('datasource.please_enter') +
-                $t('common.empty') +
-                ' 16 ' +
-                $t('embedded.bit') +
-                ' AES IV'
-              "
-              autocomplete="off"
-            />
-          </el-form-item> -->
+
               <el-form-item class="certificate-table_form" prop="certificate">
                 <template #label>
                   <div class="title-content">
@@ -896,6 +885,10 @@ const saveHandler = () => {
                     </el-table-column>
                   </el-table>
                 </div>
+              </el-form-item>
+
+              <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
+                <el-switch v-model="urlForm.auto_ds" />
               </el-form-item>
             </el-form>
           </div>
@@ -961,6 +954,10 @@ const saveHandler = () => {
                     @public="handlePublic(ele)"
                   ></DsCard>
                 </div>
+              </el-form-item>
+
+              <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
+                <el-switch v-model="dsForm.auto_ds" />
               </el-form-item>
             </el-form>
           </div>

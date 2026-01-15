@@ -8,14 +8,16 @@ from fastapi.responses import StreamingResponse
 from sqlbot_xpack.file_utils import SQLBotFileUtils
 from sqlmodel import select
 
+from apps.datasource.models.datasource import CoreDatasource
+from apps.db.constant import DB
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
-from apps.system.crud.assistant import get_assistant_info
+from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_info
 from apps.system.crud.assistant_manage import dynamic_upgrade_cors, save
 from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.system_schema import AssistantBase, AssistantDTO, AssistantUiSchema, AssistantValidator
 from common.core.config import settings
-from common.core.deps import SessionDep, Trans, CurrentUser
+from common.core.deps import CurrentAssistant, SessionDep, Trans, CurrentUser
 from common.core.security import create_access_token
 from common.core.sqlbot_cache import clear_cache
 from common.utils.utils import get_origin_from_referer, origin_match_domain
@@ -163,6 +165,56 @@ async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = 
 async def clear_ui_cache(id: int):
     pass
 
+@router.get("/ds", include_in_schema=False, response_model=list[dict])
+async def ds(session: SessionDep, current_assistant: CurrentAssistant):
+    if current_assistant.type == 0:
+        online = current_assistant.online
+        configuration = current_assistant.configuration
+        config: dict[any] = json.loads(configuration)
+        oid: int = int(config['oid'])
+        stmt = select(CoreDatasource.id, CoreDatasource.name, CoreDatasource.description, CoreDatasource.type, CoreDatasource.type_name, CoreDatasource.num).where(
+            CoreDatasource.oid == oid)
+        if not online:
+            public_list: list[int] = config.get('public_list') or None
+            if public_list:
+                stmt = stmt.where(CoreDatasource.id.in_(public_list))
+            else:
+                return []
+        db_ds_list = session.exec(stmt)
+        return [
+            {
+                "id": ds.id,
+                "name": ds.name,
+                "description": ds.description,
+                "type": ds.type,
+                "type_name": ds.type_name,
+                "num": ds.num,
+            }
+            for ds in db_ds_list]
+    if current_assistant.type == 1:
+        out_ds_instance: AssistantOutDs = AssistantOutDsFactory.get_instance(current_assistant)
+        return [
+            {
+                "id": ds.id,
+                "name": ds.name,
+                "description": ds.description or ds.comment,
+                "type": ds.type,
+                "type_name": get_db_type(ds.type),
+                "num": len(ds.tables) if ds.tables else 0,
+            }
+            for ds in out_ds_instance.ds_list
+            if get_db_type(ds.type)
+        ]
+        
+    return None
+
+def get_db_type(type):
+    try:
+        db = DB.get_db(type)
+        return db.db_name
+    except Exception:
+        return None
+
 
 @router.get("", response_model=list[AssistantModel], summary=f"{PLACEHOLDER_PREFIX}assistant_grid_api", description=f"{PLACEHOLDER_PREFIX}assistant_grid_api")
 async def query(session: SessionDep, current_user: CurrentUser):
@@ -219,3 +271,4 @@ async def delete(request: Request, session: SessionDep, id: int = Path(descripti
     session.delete(db_model)
     session.commit()
     dynamic_upgrade_cors(request=request, session=session)
+

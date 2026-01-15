@@ -172,9 +172,9 @@ async def start_chat(session: SessionDep, current_user: CurrentUser, create_chat
     module=OperationModules.CHAT,
     result_id_expr="id"
 ))
-async def start_chat(session: SessionDep, current_user: CurrentUser):
+async def start_chat(session: SessionDep, current_user: CurrentUser, current_assistant: CurrentAssistant, create_chat_obj: CreateChat = CreateChat(origin=2)):
     try:
-        return create_chat(session, current_user, CreateChat(origin=2), False)
+        return create_chat(session, current_user, create_chat_obj, create_chat_obj and create_chat_obj.datasource, current_assistant)
     except Exception as e:
         raise HTTPException(
             status_code=500,
