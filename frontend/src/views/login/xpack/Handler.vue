@@ -325,7 +325,7 @@ const casLogin = () => {
     .then((res: any) => {
       const token = res.access_token
       if (token && isPlatformClient()) {
-        wsCache.set('de-platform-client', true)
+        wsCache.set('sqlbot-platform-client', true)
       }
       userStore.setToken(token)
       userStore.setExp(res.exp)
@@ -358,7 +358,7 @@ const oauth2Login = () => {
       const token = res.access_token
       const platform_info = res.platform_info
       if (token && isPlatformClient()) {
-        wsCache.set('de-platform-client', true)
+        wsCache.set('sqlbot-platform-client', true)
       }
       userStore.setToken(token)
       userStore.setExp(res.exp)
@@ -391,7 +391,7 @@ const oidcLogin = () => {
       const token = res.access_token
       const platform_info = res.platform_info
       if (token && isPlatformClient()) {
-        wsCache.set('de-platform-client', true)
+        wsCache.set('sqlbot-platform-client', true)
       }
       userStore.setToken(token)
       userStore.setExp(res.exp)
@@ -424,7 +424,7 @@ const wecomLogin = () => {
       const token = res.access_token
       // const platform_info = res.platform_info
       if (token && isPlatformClient()) {
-        wsCache.set('de-platform-client', true)
+        wsCache.set('sqlbot-platform-client', true)
       }
       userStore.setToken(token)
       userStore.setExp(res.exp)
@@ -457,7 +457,7 @@ const dingtalkLogin = () => {
       const token = res.access_token
       // const platform_info = res.platform_info
       if (token && isPlatformClient()) {
-        wsCache.set('de-platform-client', true)
+        wsCache.set('sqlbot-platform-client', true)
       }
       userStore.setToken(token)
       userStore.setExp(res.exp)
@@ -495,7 +495,7 @@ const dingtalkLogin = () => {
       }
       const token = res.token
       if (token && isPlatformClient()) {
-        wsCache.set('de-platform-client', true)
+        wsCache.set('sqlbot-platform-client', true)
       }
       userStore.setToken(token)
       userStore.setExp(res.exp)
@@ -647,7 +647,7 @@ onMounted(() => {
     updateLoading(false, 100)
     return
   }
-  wsCache.delete('de-platform-client')
+  wsCache.delete('sqlbot-platform-client')
   init(async () => {
     const state = callBackType()
     if (state?.includes('cas') && getQueryString('ticket')) {

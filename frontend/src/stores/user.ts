@@ -4,7 +4,7 @@ import { AuthApi } from '@/api/login'
 import { useCache } from '@/utils/useCache'
 import { i18n } from '@/i18n'
 import { store } from './index'
-import { getCurrentRouter, getQueryString } from '@/utils/utils'
+import { getCurrentRouter, getQueryString, isPlatform } from '@/utils/utils'
 
 const { wsCache } = useCache()
 
@@ -98,7 +98,10 @@ export const UserStore = defineStore('user', {
         window.open(res, '_self')
         return res
       }
-      if (getQueryString('code') && getQueryString('state')?.includes('oauth2_state')) {
+      if (
+        (getQueryString('code') && getQueryString('state')?.includes('oauth2_state')) ||
+        isPlatform()
+      ) {
         const currentPath = getCurrentRouter()
         let logout_url = location.origin + location.pathname + '#/login'
         if (currentPath) {
