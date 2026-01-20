@@ -19,7 +19,7 @@ from common.core.config import settings
 from common.core.db import engine
 from common.core.sqlbot_cache import cache
 from common.utils.aes_crypto import simple_aes_decrypt
-from common.utils.utils import equals_ignore_case, get_domain_list, string_to_numeric_hash
+from common.utils.utils import SQLBotLogUtil, equals_ignore_case, get_domain_list, string_to_numeric_hash
 from common.core.deps import Trans
 
 
@@ -145,7 +145,8 @@ class AssistantOutDs:
             else:
                 raise Exception(f"Failed to get datasource list from {endpoint}, error: {result_json.get('message')}")
         else:
-            raise Exception(f"Failed to get datasource list from {endpoint}, status code: {res.status_code}")
+            SQLBotLogUtil.error(f"Failed to get datasource list from {endpoint}, response: {res}")
+            raise Exception(f"Failed to get datasource list from {endpoint}, response: {res}")
 
     def get_first_element(self, text: str):
         parts = re.split(r'[,;]', text.strip())
