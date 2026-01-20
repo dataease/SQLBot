@@ -126,23 +126,41 @@ def get_chart_config(session: SessionDep, chart_record_id: int):
     return {}
 
 
-def format_chart_fields(chart_info: dict):
+def _format_column(column: dict) -> str:
+    """格式化单个column字段"""
+    value = column.get('value', '')
+    name = column.get('name', '')
+    if value != name and name:
+        return f"{value}({name})"
+    return value
+
+
+def format_chart_fields(chart_info: dict) -> list:
     fields = []
-    if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
-        for column in chart_info.get('columns'):
-            column_str = column.get('value')
-            if column.get('value') != column.get('name'):
-                column_str = column_str + '(' + column.get('name') + ')'
-            fields.append(column_str)
-    if chart_info.get('axis'):
-        for _type in ['x', 'y', 'series']:
-            if chart_info.get('axis').get(_type):
-                column = chart_info.get('axis').get(_type)
-                column_str = column.get('value')
-                if column.get('value') != column.get('name'):
-                    column_str = column_str + '(' + column.get('name') + ')'
-                fields.append(column_str)
-    return fields
+
+    # 处理 columns
+    for column in chart_info.get('columns') or []:
+        fields.append(_format_column(column))
+
+    # 处理 axis
+    if axis := chart_info.get('axis'):
+        # 处理 x 轴
+        if x_axis := axis.get('x'):
+            fields.append(_format_column(x_axis))
+
+        # 处理 y 轴
+        if y_axis := axis.get('y'):
+            if isinstance(y_axis, list):
+                for column in y_axis:
+                    fields.append(_format_column(column))
+            else:
+                fields.append(_format_column(y_axis))
+
+        # 处理 series
+        if series := axis.get('series'):
+            fields.append(_format_column(series))
+
+    return [field for field in fields if field]  # 过滤空字符串
 
 
 def get_last_execute_sql_error(session: SessionDep, chart_id: int):
@@ -410,6 +428,11 @@ def format_record(record: ChatRecordResult):
             _dict['sql'] = sqlparse.format(record.sql, reindent=True)
         except Exception:
             pass
+    # 去除返回前端多余的字段
+    _dict.pop('sql_reasoning_content', None)
+    _dict.pop('chart_reasoning_content', None)
+    _dict.pop('analysis_reasoning_content', None)
+    _dict.pop('predict_reasoning_content', None)
 
     return _dict
 
