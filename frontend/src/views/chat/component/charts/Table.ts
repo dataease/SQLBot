@@ -7,7 +7,7 @@ import {
   type S2DataConfig,
   type S2MountContainer,
 } from '@antv/s2'
-import { debounce } from 'lodash-es'
+import { debounce, filter } from 'lodash-es'
 import { i18n } from '@/i18n'
 
 const { t } = i18n.global
@@ -43,7 +43,10 @@ export class Table extends BaseChart {
   }
 
   init(axis: Array<ChartAxis>, data: Array<ChartData>) {
-    super.init(axis, data)
+    super.init(
+      filter(axis, (a) => !a.hidden), //隐藏多指标的other-info列
+      data
+    )
 
     const s2DataConfig: S2DataConfig = {
       fields: {

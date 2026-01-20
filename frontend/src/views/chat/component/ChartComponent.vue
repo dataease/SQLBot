@@ -49,7 +49,12 @@ const axis = computed(() => {
     _list.push({ name: column.name, value: column.value, type: 'series' })
   })
   if (params.multiQuotaName) {
-    _list.push({ name: params.multiQuotaName, value: params.multiQuotaName, type: 'other-info' })
+    _list.push({
+      name: params.multiQuotaName,
+      value: params.multiQuotaName,
+      type: 'other-info',
+      hidden: true,
+    })
   }
   return _list
 })

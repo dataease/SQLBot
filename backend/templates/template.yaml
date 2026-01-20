@@ -97,6 +97,9 @@ template:
           若用户提问中提供了参考SQL，你需要判断该SQL是否是查询语句
         </rule>
         <rule>
+          你只需要根据提供给你的信息生成的SQL，不需要你实际去数据库进行查询
+        </rule>
+        <rule>
           请使用JSON格式返回你的回答:
           若能生成，则返回格式如：{{"success":true,"sql":"你生成的SQL语句","tables":["该SQL用到的表名1","该SQL用到的表名2",...],"chart-type":"table","brief":"如何需要生成对话标题，在这里填写你生成的对话标题，否则不需要这个字段"}}
           若不能生成，则返回格式如：{{"success":false,"message":"说明无法生成SQL的原因"}}
@@ -140,6 +143,17 @@ template:
         </rule>
         <rule>
           是否生成对话标题在<change-title>内，如果为True需要生成，否则不需要生成，生成的对话标题要求在20字以内
+        </rule>
+        <rule priority="critical" id="no-additional-info">
+          <title>禁止要求额外信息</title>
+          <requirements>
+            <requirement>禁止在回答中向用户询问或要求任何额外信息</requirement>
+            <requirement>只基于表结构和问题生成SQL，不考虑业务逻辑</requirement>
+            <requirement>即使查询条件不完整（如无时间范围），也必须生成可行的SQL</requirement>
+          </requirements>
+        </rule>
+        <rule>
+          不论上下文是否有回答相同的问题，都需要检查生成的SQL是否匹配<m-schema>内的定义
         </rule>
       </Rules>
       
@@ -466,8 +480,7 @@ template:
       []
       - 若你的给出的JSON不是{lang}的，则必须翻译为{lang}
       
-      ### 响应, 请直接返回JSON结果:
-      ```json
+      ### 响应, 请直接返回JSON结果（不要包含任何其他文本）：
 
     user: |
       ### 表结构:
