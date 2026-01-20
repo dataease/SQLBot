@@ -912,9 +912,9 @@ const saveHandler = () => {
                 </div>
               </el-form-item>
 
-              <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
+              <!-- <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
                 <el-switch v-model="urlForm.auto_ds" />
-              </el-form-item>
+              </el-form-item> -->
             </el-form>
           </div>
         </el-scrollbar>
@@ -981,9 +981,9 @@ const saveHandler = () => {
                 </div>
               </el-form-item>
 
-              <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
+              <!-- <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
                 <el-switch v-model="dsForm.auto_ds" />
-              </el-form-item>
+              </el-form-item> -->
             </el-form>
           </div>
         </el-scrollbar>
