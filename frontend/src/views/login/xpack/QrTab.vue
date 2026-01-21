@@ -36,7 +36,7 @@
       <el-icon>
         <Icon name="logo_lark"><logo_lark class="svg-icon" /></Icon>
       </el-icon>
-      {{ t('threshold.lark') }}
+      {{ t('user.lark') }}
     </div>
     <div class="qrcode">
       <lark-qr v-if="activeName === 'lark'" />
@@ -60,8 +60,8 @@ import logo_wechatWork from '@/assets/svg/logo_wechat-work.svg'
 import logo_dingtalk from '@/assets/svg/logo_dingtalk.svg'
 import logo_lark from '@/assets/svg/logo_lark.svg'
 import { ref } from 'vue'
-/* import LarkQr from './LarkQr.vue'
-import LarksuiteQr from './LarksuiteQr.vue' */
+import LarkQr from './LarkQr.vue'
+/* import LarksuiteQr from './LarksuiteQr.vue' */
 import DingtalkQr from './DingtalkQr.vue'
 import WecomQr from './WecomQr.vue'
 import { propTypes } from '@/utils/propTypes'

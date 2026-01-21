@@ -101,14 +101,14 @@ const larkClientRequest = async () => {
     return
   }
   const res = await queryClientInfo(8)
-  if (!res?.appId) {
-    ElMessage.error('get appId error')
+  if (!res?.client_id) {
+    ElMessage.error('get client_id error')
     return
   }
-  const appId = res.data.appId
+  const clientId = res.client_id
   const callRequestAuthCode = () => {
     window['tt'].requestAuthCode({
-      appId: appId,
+      appId: clientId,
       success: (res: any) => {
         const { code } = res
         const state = `fit2cloud-lark-client`
@@ -122,7 +122,7 @@ const larkClientRequest = async () => {
   }
   if (window['tt'].requestAccess) {
     window['tt'].requestAccess({
-      appID: appId,
+      appID: clientId,
       scopeList: [],
       success: (res: any) => {
         const { code } = res
@@ -149,15 +149,15 @@ const larksuiteClientRequest = async () => {
     return
   }
   const res = await queryClientInfo(9)
-  if (!res?.data?.appId) {
-    ElMessage.error('get appId error')
+  if (!res?.client_id) {
+    ElMessage.error('get client_id error')
     return
   }
-  const appId = res.data.appId
+  const clientId = res.client_id
 
   window['h5sdk'].ready(() => {
     window['tt'].requestAuthCode({
-      appId: appId,
+      appId: clientId,
       success(res: any) {
         const code = res?.code || res
         const state = `fit2cloud-larksuite-client`

@@ -449,6 +449,40 @@ const wecomLogin = () => {
       }, 1500)
     })
 }
+const larkLogin = () => {
+  const urlParams = getUrlParams()
+  urlParams['redirect_uri'] = encodeURIComponent(window.location.origin + window.location.pathname)
+  request
+    .post('/system/platform/sso/8', urlParams)
+    .then((res: any) => {
+      const token = res.access_token
+      // const platform_info = res.platform_info
+      if (token && isPlatformClient()) {
+        wsCache.set('sqlbot-platform-client', true)
+      }
+      userStore.setToken(token)
+      userStore.setExp(res.exp)
+      userStore.setTime(Date.now())
+      userStore.setPlatformInfo({
+        flag: 'lark',
+        // data: platform_info ? JSON.stringify(platform_info) : '',
+        origin: 8,
+      })
+      const queryRedirectPath = getCurLocation()
+      router.push({ path: queryRedirectPath })
+    })
+    .catch((e: any) => {
+      userStore.setToken('')
+      setTimeout(() => {
+        // logoutHandler(true, true)
+        platformLoginMsg.value = e?.message || e
+        setTimeout(() => {
+          window.location.href =
+            window.location.origin + window.location.pathname + window.location.hash
+        }, 2000)
+      }, 1500)
+    })
+}
 const dingtalkLogin = () => {
   const urlParams = getUrlParams()
   request
@@ -661,6 +695,8 @@ onMounted(() => {
       wecomLogin()
     } else if (state?.includes('dingtalk')) {
       dingtalkLogin()
+    } else if (state?.includes('lark')) {
+      larkLogin()
     } else {
       auto2Platform()
     }
