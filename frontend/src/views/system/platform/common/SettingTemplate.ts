@@ -71,48 +71,34 @@ export const settingMapping = {
   ],
   8: [
     {
-      realKey: 'corpid',
-      pkey: 'CorpId',
-      pval: '',
-      type: 'text',
-      sort: 1,
-    },
-    {
       realKey: 'client_id',
       pkey: 'APP Key',
       pval: '',
       type: 'text',
-      sort: 2,
+      sort: 1,
     },
     {
       realKey: 'client_secret',
       pkey: 'APP Secret',
       pval: '',
       type: 'pwd',
-      sort: 3,
+      sort: 2,
     },
   ],
   9: [
     {
-      realKey: 'corpid',
-      pkey: 'CorpId',
-      pval: '',
-      type: 'text',
-      sort: 1,
-    },
-    {
       realKey: 'client_id',
       pkey: 'APP Key',
       pval: '',
       type: 'text',
-      sort: 2,
+      sort: 1,
     },
     {
       realKey: 'client_secret',
       pkey: 'APP Secret',
       pval: '',
       type: 'pwd',
-      sort: 3,
+      sort: 2,
     },
   ],
 } as any
@@ -134,13 +120,13 @@ export const cardMapping = {
     title: 'user.lark',
     icon: logo_lark,
     settingList: settingMapping[8],
-    copyField: ['CorpId', 'APP Secret'],
+    copyField: ['APP Key', 'APP Secret'],
   },
   9: {
     title: 'user.larksuite',
     icon: logo_lark,
     settingList: settingMapping[9],
-    copyField: ['CorpId', 'APP Secret'],
+    copyField: ['APP Key', 'APP Secret'],
   },
 } as any
 

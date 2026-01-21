@@ -29,7 +29,7 @@ const loadData = () => {
         item.config = JSON.parse(item.config)
         return item
       })
-      .filter((card: any) => card.type < 8)
+      .filter((card: any) => card.type < 9)
   })
 }
 onMounted(() => {
