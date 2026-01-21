@@ -107,6 +107,19 @@ class LLMService:
         if not chat:
             raise SingleMessageError(f"Chat with id {chat_id} not found")
         ds: CoreDatasource | AssistantOutDsSchema | None = None
+        if not chat.datasource and chat_question.datasource_id:
+            _ds = session.get(CoreDatasource, chat_question.datasource_id)
+            if _ds:
+                if _ds.oid != current_user.oid:
+                    raise SingleMessageError(f"Datasource with id {chat_question.datasource_id} does not belong to current workspace")
+                chat.datasource = _ds.id
+                chat.engine_type = _ds.type_name
+                # save chat
+                session.add(chat)
+                session.flush()
+                session.refresh(chat)
+                session.commit()
+
         if chat.datasource:
             # Get available datasource
             if current_assistant and current_assistant.type in dynamic_ds_types:

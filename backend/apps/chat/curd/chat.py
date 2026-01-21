@@ -493,6 +493,8 @@ def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj:
             ds.type_name = DB.get_db(ds.type)
         else:
             ds = session.get(CoreDatasource, create_chat_obj.datasource)
+            if ds.oid != current_user.oid:
+                raise Exception(f"Datasource with id {create_chat_obj.datasource} does not belong to current workspace")
 
         if not ds:
             raise Exception(f"Datasource with id {create_chat_obj.datasource} not found")
