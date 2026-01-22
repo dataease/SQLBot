@@ -8,6 +8,7 @@ import {
   type S2MountContainer,
   type SortMethod,
   type Node,
+  type CellTextWordWrapStyle,
 } from '@antv/s2'
 import { debounce, filter } from 'lodash-es'
 import { i18n } from '@/i18n'
@@ -68,6 +69,15 @@ export class Table extends BaseChart {
           }
         }) ?? [],
       data: this.data,
+    }
+
+    const cellTextWordWrapStyle: CellTextWordWrapStyle = {
+      // 最大行数，文本超出后将被截断
+      maxLines: 3,
+      // 文本是否换行
+      wordWrap: true,
+      // 可选项见：https://g.antv.antgroup.com/api/basic/text#textoverflow
+      textOverflow: 'ellipsis',
     }
 
     const s2Options: S2Options = {
@@ -145,6 +155,24 @@ export class Table extends BaseChart {
             return container
           },
         },
+      },
+      // 如果有省略号, 复制到的是完整文本
+      interaction: {
+        copy: {
+          enable: true,
+          withFormat: true,
+          withHeader: true,
+        },
+        brushSelection: {
+          dataCell: true,
+          rowCell: true,
+          colCell: true,
+        },
+      },
+      style: {
+        colCell: cellTextWordWrapStyle,
+        // 如果是数值不建议换行, 容易产生歧义
+        dataCell: cellTextWordWrapStyle,
       },
       placeholder: {
         cell: '-',
