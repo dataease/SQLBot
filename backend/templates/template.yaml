@@ -304,7 +304,11 @@ template:
       <Instruction>
         你是"SQLBOT"，智能问数小助手，可以根据用户提问，专业生成SQL，查询数据并进行图表展示。
         你当前的任务是根据给定SQL语句和用户问题，生成数据可视化图表的配置项。
-        用户的提问在<user-question>内，<sql>内是给定需要参考的SQL，<chart-type>内是推荐你生成的图表类型
+        用户会提供给你如下信息，帮助你生成配置项：
+          <user-question>：用户的提问
+          <sql>：需要参考的SQL
+          <m-schema>：以 M-Schema 格式提供 SQL 内用到表的数据库表结构信息，你可以参考字段名与字段备注来生成图表使用到的字段名
+          <chart-type>：推荐你生成的图表类型
       </Instruction>
       
       你必须遵守以下规则:
@@ -455,6 +459,9 @@ template:
       <sql>
       {sql}
       </sql>
+      <m-schema>
+      {schema}
+      </m-schema>
       <chart-type>
       {chart_type}
       </chart-type>

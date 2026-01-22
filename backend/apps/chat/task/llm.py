@@ -111,7 +111,8 @@ class LLMService:
             _ds = session.get(CoreDatasource, chat_question.datasource_id)
             if _ds:
                 if _ds.oid != current_user.oid:
-                    raise SingleMessageError(f"Datasource with id {chat_question.datasource_id} does not belong to current workspace")
+                    raise SingleMessageError(
+                        f"Datasource with id {chat_question.datasource_id} does not belong to current workspace")
                 chat.datasource = _ds.id
                 chat.engine_type = _ds.type_name
                 # save chat
@@ -410,7 +411,8 @@ class LLMService:
                                                                                   reasoning_content=full_thinking_text,
                                                                                   token_usage=token_usage)
         self.record = save_recommend_question_answer(session=_session, record_id=self.record.id,
-                                                     answer={'content': full_guess_text}, articles_number=self.articles_number)
+                                                     answer={'content': full_guess_text},
+                                                     articles_number=self.articles_number)
 
         yield {'recommended_question': self.record.recommended_question}
 
@@ -716,9 +718,9 @@ class LLMService:
             return None
         return self.build_table_filter(session=_session, sql=sql, filters=filters)
 
-    def generate_chart(self, _session: Session, chart_type: Optional[str] = ''):
+    def generate_chart(self, _session: Session, chart_type: Optional[str] = '', schema: Optional[str] = ''):
         # append current question
-        self.chart_message.append(HumanMessage(self.chat_question.chart_user_question(chart_type)))
+        self.chart_message.append(HumanMessage(self.chat_question.chart_user_question(chart_type, schema)))
 
         self.current_logs[OperationEnum.GENERATE_CHART] = start_log(session=_session,
                                                                     ai_modal_id=self.chat_question.ai_modal_id,
@@ -1079,9 +1081,9 @@ class LLMService:
             sqlbot_temp_sql_text = None
             assistant_dynamic_sql = None
             # row permission
+            sql, tables = self.check_sql(res=full_sql_text)
             if ((not self.current_assistant or is_page_embedded) and is_normal_user(
                     self.current_user)) or use_dynamic_ds:
-                sql, tables = self.check_sql(res=full_sql_text)
                 sql_result = None
 
                 if use_dynamic_ds:
@@ -1167,7 +1169,16 @@ class LLMService:
                 return
 
             # generate chart
-            chart_res = self.generate_chart(_session, chart_type)
+            used_tables_schema = self.out_ds_instance.get_db_schema(
+                self.ds.id, self.chat_question.question, embedding=False,
+                table_list=tables) if self.out_ds_instance else get_table_schema(
+                session=_session,
+                current_user=self.current_user,
+                ds=self.ds,
+                question=self.chat_question.question,
+                embedding=False, table_list=tables)
+            SQLBotLogUtil.info('used_tables_schema: \n' + used_tables_schema)
+            chart_res = self.generate_chart(_session, chart_type, used_tables_schema)
             full_chart_text = ''
             for chunk in chart_res:
                 full_chart_text += chunk.get('content')
@@ -1482,7 +1493,7 @@ def request_picture(chat_id: int, record_id: int, chart: dict, data: dict):
     y = None
     series = None
     multi_quota_fields = []
-    multi_quota_name =None
+    multi_quota_name = None
 
     if chart.get('axis'):
         axis_data = chart.get('axis')

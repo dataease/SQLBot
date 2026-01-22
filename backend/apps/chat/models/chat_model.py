@@ -175,8 +175,8 @@ class ChatInfo(BaseModel):
     ds_type: str = ''
     datasource_name: str = ''
     datasource_exists: bool = True
-    recommended_question: Optional[str]  = None
-    recommended_generate: Optional[bool]  = False
+    recommended_question: Optional[str] = None
+    recommended_generate: Optional[bool] = False
     records: List[ChatRecord | dict] = []
 
 
@@ -237,9 +237,9 @@ class AiModelQuestion(BaseModel):
     def chart_sys_question(self):
         return get_chart_template()['system'].format(sql=self.sql, question=self.question, lang=self.lang)
 
-    def chart_user_question(self, chart_type: Optional[str] = None):
+    def chart_user_question(self, chart_type: Optional[str] = '', schema: Optional[str] = ''):
         return get_chart_template()['user'].format(sql=self.sql, question=self.question, rule=self.rule,
-                                                   chart_type=chart_type)
+                                                   chart_type=chart_type, schema=schema)
 
     def analysis_sys_question(self):
         return get_analysis_template()['system'].format(lang=self.lang, terminologies=self.terminologies,

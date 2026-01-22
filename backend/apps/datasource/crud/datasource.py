@@ -425,7 +425,7 @@ def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: Core
 
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
-                     embedding: bool = True) -> str:
+                     embedding: bool = True, table_list: list[str] = None) -> str:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -435,6 +435,10 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
     tables = []
     all_tables = []  # temp save all tables
     for obj in table_objs:
+        # 如果传入了table_list，则只处理在列表中的表
+        if table_list is not None and obj.table.table_name not in table_list:
+            continue
+
         schema_table = ''
         schema_table += f"# Table: {db_name}.{obj.table.table_name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {obj.table.table_name}"
         table_comment = ''
@@ -461,6 +465,10 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         t_obj = {"id": obj.table.id, "schema_table": schema_table, "embedding": obj.table.embedding}
         tables.append(t_obj)
         all_tables.append(t_obj)
+
+    # 如果没有符合过滤条件的表，直接返回
+    if not tables:
+        return schema_str
 
     # do table embedding
     if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
