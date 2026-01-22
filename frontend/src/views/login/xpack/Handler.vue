@@ -64,7 +64,7 @@ import { useCache } from '@/utils/useCache'
 
 import router from '@/router'
 import { useUserStore } from '@/stores/user.ts'
-import { getQueryString, getUrlParams, isPlatformClient } from '@/utils/utils'
+import { getQueryString, getSQLBotAddr, getUrlParams, isPlatformClient } from '@/utils/utils'
 import { loadClient, type LoginCategory } from './PlatformClient'
 // import MfaStep from './MfaStep.vue'
 // import { logoutHandler } from '@/utils/logout'
@@ -344,8 +344,7 @@ const casLogin = () => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
         setTimeout(() => {
-          window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+          window.location.href = getSQLBotAddr() + window.location.hash
         }, 2000)
       }, 1500)
     })
@@ -377,8 +376,7 @@ const oauth2Login = () => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
         setTimeout(() => {
-          window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+          window.location.href = getSQLBotAddr() + window.location.hash
         }, 2000)
       }, 1500)
     })
@@ -410,8 +408,7 @@ const oidcLogin = () => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
         setTimeout(() => {
-          window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+          window.location.href = getSQLBotAddr() + window.location.hash
         }, 2000)
       }, 1500)
     })
@@ -443,15 +440,14 @@ const wecomLogin = () => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
         setTimeout(() => {
-          window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+          window.location.href = getSQLBotAddr() + window.location.hash
         }, 2000)
       }, 1500)
     })
 }
 const larkLogin = () => {
   const urlParams = getUrlParams()
-  urlParams['redirect_uri'] = encodeURIComponent(window.location.origin + window.location.pathname)
+  urlParams['redirect_uri'] = encodeURIComponent(getSQLBotAddr())
   request
     .post('/system/platform/sso/8', urlParams)
     .then((res: any) => {
@@ -477,8 +473,7 @@ const larkLogin = () => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
         setTimeout(() => {
-          window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+          window.location.href = getSQLBotAddr() + window.location.hash
         }, 2000)
       }, 1500)
     })
@@ -510,8 +505,7 @@ const dingtalkLogin = () => {
         // logoutHandler(true, true)
         platformLoginMsg.value = e?.message || e
         setTimeout(() => {
-          window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+          window.location.href = getSQLBotAddr() + window.location.hash
         }, 2000)
       }, 1500)
     })
@@ -536,7 +530,7 @@ const dingtalkLogin = () => {
       userStore.setTime(Date.now())
       if (origin === 10 || isLarkPlatform()) {
         window.location.href =
-          window.location.origin + window.location.pathname + window.location.hash
+          getSQLBotAddr() + window.location.hash
       } else {
         const queryRedirectPath = getCurLocation()
         router.push({ path: queryRedirectPath })
@@ -547,7 +541,7 @@ const dingtalkLogin = () => {
       if (isLarkPlatform()) {
         setTimeout(() => {
           window.location.href =
-            window.location.origin + window.location.pathname + window.location.hash
+            getSQLBotAddr() + window.location.hash
         }, 2000)
       } else {
         setTimeout(() => {
@@ -613,7 +607,7 @@ const oauth2Token = (cb) => {
     .catch(() => {
       setTimeout(() => {
         window.location.href =
-          window.location.origin + window.location.pathname + window.location.hash
+          getSQLBotAddr() + window.location.hash
       }, 2000)
     })
 }

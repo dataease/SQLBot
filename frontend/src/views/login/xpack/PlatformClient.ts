@@ -1,5 +1,5 @@
 import { loadScript } from '@/utils/RemoteJs'
-import { getQueryString } from '@/utils/utils'
+import { getCurrentRouter, getQueryString } from '@/utils/utils'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
 
 // import { useI18n } from 'vue-i18n'
@@ -35,7 +35,7 @@ export const loadClient = (category: LoginCategory) => {
   const type = getQueryString('client')
   const corpid = getQueryString('corpid')
   if (type && !category[type as keyof LoginCategory]) {
-    ElMessageBox.confirm(t('login.platform_disable', [t(`threshold.${type}`)]), {
+    ElMessageBox.confirm(t('login.platform_disable', [t(`user.${type}`)]), {
       confirmButtonType: 'danger',
       type: 'warning',
       showCancelButton: false,
@@ -173,5 +173,7 @@ const larksuiteClientRequest = async () => {
 
 const toUrl = (url: string) => {
   const { origin, pathname } = window.location
-  window.location.href = origin + pathname + url
+  const redirect = getCurrentRouter()
+  window.location.href =
+    origin + pathname + url + (redirect?.includes('chatPreview') ? `#${redirect}` : '')
 }
