@@ -558,6 +558,8 @@ let scrollTime: any
 let scrollingTime: any
 let scrollTopVal = 0
 let scrolling = false
+let userScrolledAway = false // 用户是否主动滚动离开底部
+
 const scrollBottom = () => {
   if (scrolling) return
   if (!isTyping.value && !getRecommendQuestionsLoading.value) {
@@ -577,22 +579,25 @@ const handleScroll = (val: any) => {
   scrollingTime = setTimeout(() => {
     scrolling = false
   }, 400)
-  if (
-    scrollTopVal + 200 <
-    innerRef.value!.clientHeight - (document.querySelector('.chat-record-list')!.clientHeight - 20)
-  ) {
+
+  const threshold =
+    innerRef.value!.clientHeight -
+    (document.querySelector('.chat-record-list')!.clientHeight - 20)
+  const isNearBottom = scrollTopVal + 50 >= threshold
+
+  // 用户滚动离开底部时，标记并停止自动滚动
+  if (!isNearBottom) {
+    userScrolledAway = true
     clearInterval(scrollTime)
     scrollTime = null
     return
   }
 
-  if (
-    !scrollTime &&
-    isTyping.value &&
-    scrollTopVal + 30 <
-      innerRef.value!.clientHeight -
-        (document.querySelector('.chat-record-list')!.clientHeight - 20)
-  ) {
+  // 用户滚回底部时，重置标记
+  userScrolledAway = false
+
+  // 只有用户在底部、没有主动滚走、且正在输入时才启动自动滚动
+  if (!scrollTime && isTyping.value && !userScrolledAway) {
     scrollTime = setInterval(() => {
       scrollBottom()
     }, 300)
