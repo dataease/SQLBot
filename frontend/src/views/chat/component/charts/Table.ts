@@ -6,6 +6,8 @@ import {
   type S2Options,
   type S2DataConfig,
   type S2MountContainer,
+  type SortMethod,
+  type Node,
 } from '@antv/s2'
 import { debounce, filter } from 'lodash-es'
 import { i18n } from '@/i18n'
@@ -49,6 +51,12 @@ export class Table extends BaseChart {
     )
 
     const s2DataConfig: S2DataConfig = {
+      sortParams:
+        this.axis?.map((a) => {
+          return {
+            sortFieldId: a.value,
+          }
+        }) ?? [],
       fields: {
         columns: this.axis?.map((a) => a.value) ?? [],
       },
@@ -65,6 +73,79 @@ export class Table extends BaseChart {
     const s2Options: S2Options = {
       width: 600,
       height: 360,
+      showDefaultHeaderActionIcon: true,
+      tooltip: {
+        enable: true,
+        operation: {
+          // 开启组内排序
+          sort: true,
+        },
+        colCell: {
+          content: (cell) => {
+            const meta = cell.getMeta()
+            const { spreadsheet: s2 } = meta
+
+            if (!meta.isLeaf) {
+              return null
+            }
+
+            // 创建类似Element Plus下拉菜单的结构
+            const container = document.createElement('div')
+            container.className = 'el-dropdown'
+            container.style.padding = '8px 0'
+            container.style.minWidth = '100px'
+
+            const menuItems = [
+              { label: '降序', method: 'desc' as SortMethod, icon: 'el-icon-sort-down' },
+              { label: '升序', method: 'asc' as SortMethod, icon: 'el-icon-sort-up' },
+              { label: '不排序', method: 'none' as SortMethod, icon: 'el-icon-close' },
+            ]
+
+            menuItems.forEach((item) => {
+              const itemEl = document.createElement('div')
+              itemEl.className = 'el-dropdown-menu__item'
+              itemEl.style.display = 'flex'
+              itemEl.style.alignItems = 'center'
+              itemEl.style.padding = '8px 16px'
+              itemEl.style.cursor = 'pointer'
+              itemEl.style.color = '#606266'
+              itemEl.style.fontSize = '14px'
+
+              // 鼠标悬停效果
+              itemEl.addEventListener('mouseenter', () => {
+                itemEl.style.backgroundColor = '#f5f7fa'
+                itemEl.style.color = '#409eff'
+              })
+              itemEl.addEventListener('mouseleave', () => {
+                itemEl.style.backgroundColor = 'transparent'
+                itemEl.style.color = '#606266'
+              })
+
+              // 添加图标（如果需要）
+              if (item.icon) {
+                const icon = document.createElement('i')
+                icon.className = item.icon
+                icon.style.marginRight = '8px'
+                icon.style.fontSize = '16px'
+                itemEl.appendChild(icon)
+              }
+
+              const text = document.createTextNode(item.label)
+              itemEl.appendChild(text)
+
+              itemEl.addEventListener('click', (e) => {
+                e.stopPropagation()
+                s2.groupSortByMethod(item.method, meta as Node)
+                // 可以在这里添加关闭tooltip的逻辑
+              })
+
+              container.appendChild(itemEl)
+            })
+
+            return container
+          },
+        },
+      },
       placeholder: {
         cell: '-',
         empty: {
@@ -76,6 +157,7 @@ export class Table extends BaseChart {
 
     if (this.container) {
       this.table = new TableSheet(this.container, s2DataConfig, s2Options)
+      console.log(this.table)
       // right click
       this.table.on(S2Event.GLOBAL_COPIED, (data) => {
         ElMessage.success(t('qa.copied'))
@@ -85,6 +167,9 @@ export class Table extends BaseChart {
         event.preventDefault()
       })
       this.table.on(S2Event.GLOBAL_CONTEXT_MENU, (event) => copyData(event, this.table))
+      // this.table.on(S2Event.RANGE_SORT, (sortParams) => {
+      //   console.log('sortParams:', sortParams)
+      // })
     }
   }
 

@@ -618,6 +618,8 @@ watch(
   padding: 16px;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 10;
 
   border: 1px solid rgba(222, 224, 227, 1);
   border-radius: 12px;
