@@ -66,6 +66,8 @@ onMounted(() => {
 
   border-radius: 12px;
   border: 1px solid #dee0e3;
+  min-height: fit-content;
+  height: auto;
 }
 .not-first {
   margin-top: 16px;
