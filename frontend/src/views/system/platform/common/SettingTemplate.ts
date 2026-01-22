@@ -105,14 +105,14 @@ export const settingMapping = {
 
 export const cardMapping = {
   6: {
-    title: 'user.wechat_for_business',
-    icon: logo_dingtalk,
+    title: 'user.wecom',
+    icon: logo_wechatWork,
     settingList: settingMapping[6],
     copyField: ['CorpId', 'APP Secret'],
   },
   7: {
     title: 'user.dingtalk',
-    icon: logo_wechatWork,
+    icon: logo_dingtalk,
     settingList: settingMapping[7],
     copyField: ['CorpId', 'APP Secret'],
   },

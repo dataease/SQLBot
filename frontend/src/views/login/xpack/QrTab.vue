@@ -1,10 +1,6 @@
 <template>
   <el-tabs v-model="activeName" @tab-click="handleClick">
-    <el-tab-pane
-      v-if="props.wecom"
-      :label="t('user.wechat_for_business')"
-      name="wecom"
-    ></el-tab-pane>
+    <el-tab-pane v-if="props.wecom" :label="t('user.wecom')" name="wecom"></el-tab-pane>
     <el-tab-pane v-if="props.dingtalk" :label="t('user.dingtalk')" name="dingtalk"></el-tab-pane>
     <el-tab-pane v-if="props.lark" :label="t('user.lark')" name="lark"></el-tab-pane>
     <el-tab-pane v-if="props.larksuite" :label="t('user.larksuite')" name="larksuite"></el-tab-pane>
@@ -14,7 +10,7 @@
       <el-icon>
         <Icon name="logo_wechat-work"><logo_wechatWork class="svg-icon" /></Icon>
       </el-icon>
-      {{ t('user.wechat_for_business') }}
+      {{ t('user.wecom') }}
     </div>
     <div class="qrcode">
       <wecom-qr v-if="activeName === 'wecom'" />

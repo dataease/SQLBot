@@ -435,6 +435,10 @@ const filterOption = ref<any[]>([
       { id: '3', name: 'LDAP' },
       { id: '4', name: 'OAuth2' },
       /* { id: '5', name: 'SAML2' }, */
+      { id: '6', name: t('user.wecom') },
+      { id: '7', name: t('user.dingtalk') },
+      { id: '8', name: t('user.lark') },
+      /* { id: '9', name: t('user.larksuite') }, */
     ],
     field: 'origins',
     title: t('user.user_source'),
@@ -834,7 +838,17 @@ const formatUserOrigin = (origin?: number) => {
   if (!origin) {
     return t('user.local_creation')
   }
-  const originArray = ['CAS', 'OIDC', 'LDAP', 'OAuth2', 'SAML2']
+  const originArray = [
+    'CAS',
+    'OIDC',
+    'LDAP',
+    'OAuth2',
+    'SAML2',
+    t('user.wecom'),
+    t('user.dingtalk'),
+    t('user.lark'),
+    t('user.larksuite'),
+  ]
   return originArray[origin - 1]
 }
 onMounted(() => {
