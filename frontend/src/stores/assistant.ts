@@ -22,6 +22,7 @@ interface AssistantState {
   pageEmbedded?: boolean
   history: boolean
   hostOrigin: string
+  autoDs?: boolean
   requestPromiseMap: Map<string, PendingRequest>
 }
 
@@ -38,6 +39,7 @@ export const AssistantStore = defineStore('assistant', {
       pageEmbedded: false,
       history: true,
       hostOrigin: '',
+      autoDs: false,
       requestPromiseMap: new Map<string, PendingRequest>(),
     }
   },
@@ -74,6 +76,9 @@ export const AssistantStore = defineStore('assistant', {
     },
     getHostOrigin(): string {
       return this.hostOrigin
+    },
+    getAutoDs(): boolean {
+      return !!this.autoDs
     },
   },
   actions: {
@@ -145,6 +150,9 @@ export const AssistantStore = defineStore('assistant', {
     },
     setHostOrigin(origin: string) {
       this.hostOrigin = origin
+    },
+    setAutoDs(autoDs?: boolean) {
+      this.autoDs = !!autoDs
     },
     async setChat() {
       if (!this.assistant) {

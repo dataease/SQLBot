@@ -330,8 +330,8 @@ export const chatApi = {
   startChat: (data: any): Promise<ChatInfo> => {
     return request.post('/chat/start', data)
   },
-  startAssistantChat: (): Promise<ChatInfo> => {
-    return request.post('/chat/assistant/start')
+  startAssistantChat: (data?: any): Promise<ChatInfo> => {
+    return request.post('/chat/assistant/start', Object.assign({ origin: 2 }, data))
   },
   renameChat: (chat_id: number | undefined, brief: string): Promise<string> => {
     return request.post('/chat/rename', { id: chat_id, brief: brief })

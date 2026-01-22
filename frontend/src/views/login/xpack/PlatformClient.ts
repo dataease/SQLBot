@@ -1,9 +1,10 @@
 import { loadScript } from '@/utils/RemoteJs'
 import { getQueryString } from '@/utils/utils'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
-import { request } from '@/utils/request'
+
 // import { useI18n } from 'vue-i18n'
 import { i18n } from '@/i18n'
+import { queryClientInfo } from './platformUtils'
 declare global {
   interface Window {
     tt: any
@@ -26,7 +27,7 @@ export interface LoginCategory {
 const t = i18n.global.t
 const flagArray = ['dingtalk', 'lark', 'larksuite']
 const urlArray = [
-  'https://g.alicdn.com/dingding/dingtalk-jsapi/3.0.25/dingtalk.open.js',
+  'https://g.alicdn.com/dingding/dingtalk-jsapi/3.1.0/dingtalk.open.js',
   'https://lf1-cdn-tos.bytegoofy.com/goofy/lark/op/h5-js-sdk-1.5.26.js',
   'https://lf1-cdn-tos.bytegoofy.com/goofy/lark/op/h5-js-sdk-1.5.16.js',
 ]
@@ -49,12 +50,7 @@ export const loadClient = (category: LoginCategory) => {
       .catch(() => {})
     return false
   }
-  if (
-    !type ||
-    !flagArray.includes(type) ||
-    !category[type as keyof LoginCategory] ||
-    (type === 'dingtalk' && !corpid)
-  ) {
+  if (!type || !flagArray.includes(type) || !category[type as keyof LoginCategory]) {
     return false
   }
   const index = flagArray.indexOf(type)
@@ -62,7 +58,7 @@ export const loadClient = (category: LoginCategory) => {
   const awaitMethod = loadScript(urlArray[index], jsId)
   awaitMethod
     .then(() => {
-      if (index === 0 && corpid) {
+      if (index === 0) {
         dingtalkClientRequest(corpid)
       }
       if (index === 1) {
@@ -78,23 +74,25 @@ export const loadClient = (category: LoginCategory) => {
   return true
 }
 
-const dingtalkClientRequest = (id?: string) => {
+const dingtalkClientRequest = async (id: string | null) => {
+  if (!id) {
+    const clientInfoRes = await queryClientInfo(7)
+    id = clientInfoRes['corpid']
+  }
   const dd = window['dd']
-  if (id && dd?.runtime?.permission?.requestAuthCode) {
+  dd.ready(function () {
     dd.runtime.permission.requestAuthCode({
       corpId: id,
-      onSuccess: function (result: any) {
-        const code = result.code
+      onSuccess: function (info: any) {
+        const code = info.code
         const state = `fit2cloud-dingtalk-client`
         toUrl(`?code=${code}&state=${state}`)
       },
       onFail: function (err: any) {
-        console.error(err)
+        ElMessage.error(err)
       },
     })
-  } else {
-    ElMessage.error('not success')
-  }
+  })
 }
 
 const larkClientRequest = async () => {
@@ -102,15 +100,15 @@ const larkClientRequest = async () => {
     ElMessage.error('load remote lark js error')
     return
   }
-  const res = await queryAppid('lark')
-  if (!res?.data?.appId) {
-    ElMessage.error('get appId error')
+  const res = await queryClientInfo(8)
+  if (!res?.client_id) {
+    ElMessage.error('get client_id error')
     return
   }
-  const appId = res.data.appId
+  const clientId = res.client_id
   const callRequestAuthCode = () => {
     window['tt'].requestAuthCode({
-      appId: appId,
+      appId: clientId,
       success: (res: any) => {
         const { code } = res
         const state = `fit2cloud-lark-client`
@@ -124,7 +122,7 @@ const larkClientRequest = async () => {
   }
   if (window['tt'].requestAccess) {
     window['tt'].requestAccess({
-      appID: appId,
+      appID: clientId,
       scopeList: [],
       success: (res: any) => {
         const { code } = res
@@ -150,16 +148,16 @@ const larksuiteClientRequest = async () => {
     ElMessage.error('load remote lark js error')
     return
   }
-  const res = await queryAppid('larksuite')
-  if (!res?.data?.appId) {
-    ElMessage.error('get appId error')
+  const res = await queryClientInfo(9)
+  if (!res?.client_id) {
+    ElMessage.error('get client_id error')
     return
   }
-  const appId = res.data.appId
+  const clientId = res.client_id
 
   window['h5sdk'].ready(() => {
     window['tt'].requestAuthCode({
-      appId: appId,
+      appId: clientId,
       success(res: any) {
         const code = res?.code || res
         const state = `fit2cloud-larksuite-client`
@@ -171,11 +169,6 @@ const larksuiteClientRequest = async () => {
       },
     })
   })
-}
-
-const queryAppid = (type: string) => {
-  const url = `/${type}/qrinfo`
-  return request.get(url)
 }
 
 const toUrl = (url: string) => {

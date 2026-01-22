@@ -194,7 +194,7 @@
     "creator": "创建人",
     "dashboard_id": "仪表板ID",
     "create_time": "创建时间",
-    "updator": "更新人",
+    "updater": "更新人",
     "update_time": "更新时间",
     "edit": "编辑",
     "edit_title": "编辑标题",
@@ -215,7 +215,6 @@
     "chart_selected": "已选{0}"
   },
   "qa": {
-    "recommended_repetitive_tips": "Duplicate questions exist",
     "retrieve_error": "暂无内容",
     "retrieve_again": "重新获取",
     "recently": "最近",
@@ -448,9 +447,10 @@
     "enable": "启用",
     "disable": "禁用",
     "local_creation": "本地创建",
-    "feishu": "飞书",
+    "lark": "飞书",
+    "larksuite": "国际飞书",
     "dingtalk": "钉钉",
-    "wechat_for_business": "企业微信",
+    "wecom": "企业微信",
     "1240_results": "{msg} 个结果 ",
     "clear_conditions": "清空条件",
     "disabled": "已禁用",
@@ -667,7 +667,10 @@
     "right": "右",
     "welcome_description": "欢迎语描述",
     "data_analysis_now": "我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～",
-    "window_entrance_icon": "浮窗入口图标"
+    "window_entrance_icon": "浮窗入口图标",
+    "preview_error": "当前页面禁止使用 Iframe 嵌入！",
+    "assistant_app": "小助手应用",
+    "auto_select_ds": "自动选择数据源"
   },
   "chat": {
     "type": "图表类型",
@@ -757,6 +760,13 @@
     "setting_successfully": "设置成功",
     "customize_theme_color": "自定义主题色"
   },
+  "platform": {
+    "title": "平台对接",
+    "status_open": "已开启",
+    "status_close": "已关闭",
+    "access_in": "接入",
+    "can_enable_it": "测试连接有效后，可开启"
+  },
   "authentication": {
     "invalid": "无效",
     "valid": "有效",
@@ -809,7 +819,8 @@
     "platform_disable": "{0}设置未开启！",
     "input_account": "请输入账号",
     "redirect_2_auth": "正在跳转至 {0} 认证，{1} 秒...",
-    "redirect_immediately": "立即跳转"
+    "redirect_immediately": "立即跳转",
+    "permission_invalid": "认证无效【当前账号权限不够】"
   },
   "supplier": {
     "alibaba_cloud_bailian": "阿里云百炼",

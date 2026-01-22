@@ -14,12 +14,14 @@ import icon_copy_outlined from '@/assets/embedded/icon_copy_outlined.svg'
 import { useClipboard } from '@vueuse/core'
 import SetUi from './SetUi.vue'
 import Card from './Card.vue'
-import { workspaceList } from '@/api/workspace'
+// import { workspaceList } from '@/api/workspace'
 import DsCard from './DsCard.vue'
 import { getList, updateAssistant, saveAssistant, delOne, dsApi } from '@/api/embedded'
 import { useI18n } from 'vue-i18n'
 import { cloneDeep } from 'lodash-es'
+import { useUserStore } from '@/stores/user.ts'
 
+const userStore = useUserStore()
 defineProps({
   btnSelect: {
     type: String,
@@ -27,7 +29,7 @@ defineProps({
   },
 })
 
-const emits = defineEmits(['btnSelectChange'])
+// const emits = defineEmits(['btnSelectChange'])
 
 const { t } = useI18n()
 const { copy } = useClipboard({ legacy: true })
@@ -49,7 +51,6 @@ const activeMode = ref('full')
 const embeddedList = ref<any[]>([])
 const systemCredentials = ['localStorage', 'custom', 'cookie', 'sessionStorage']
 const credentials = ['header', 'cookie', 'param']
-const workspaces = ref<any[]>([])
 
 const defaultEmbedded = {
   id: '',
@@ -66,6 +67,7 @@ const defaultForm = {
   oid: 1,
   public_list: [],
   private_list: [],
+  auto_ds: false,
 }
 
 const dsForm = reactive<{ [key: string]: any }>(cloneDeep(defaultForm))
@@ -82,10 +84,12 @@ const certificateForm = reactive(cloneDeep(defaultCertificateForm))
 
 const defaultUrlForm = {
   endpoint: '',
+  timeout: 10,
   encrypt: false,
   aes_key: '',
   aes_iv: '',
   certificate: [] as any,
+  auto_ds: false,
 }
 const urlForm = reactive(cloneDeep(defaultUrlForm))
 
@@ -112,11 +116,7 @@ const userTypeList = [
     value: 1,
   },
 ]
-const initWorkspace = () => {
-  workspaceList().then((res) => {
-    workspaces.value = res
-  })
-}
+
 const handleAddEmbedded = (val: any) => {
   Object.assign(currentEmbedded, cloneDeep(defaultEmbedded))
   Object.keys(dsForm).forEach((ele) => {
@@ -132,11 +132,7 @@ const handleAddEmbedded = (val: any) => {
     handleAdvancedEmbedded(null)
   }
 }
-const wsChanged = (val: any) => {
-  dsForm.public_list = []
-  dsForm.oid = val
-  getDsList()
-}
+
 const getDsList = () => {
   dsApi(dsForm.oid).then((res: any) => {
     dsListOptions.value = res || []
@@ -144,9 +140,10 @@ const getDsList = () => {
 }
 const handleBaseEmbedded = (row: any) => {
   advancedApplication.value = false
-  initWorkspace()
   if (row) {
     Object.assign(dsForm, JSON.parse(row.configuration))
+  } else {
+    Object.assign(dsForm, { oid: userStore.getOid })
   }
   getDsList()
   ruleConfigvVisible.value = true
@@ -346,12 +343,27 @@ const validateCertificate = (_: any, value: any, callback: any) => {
   }
 }
 
+const validateTimeout = (_: any, value: any, callback: any) => {
+  if (value === null) {
+    callback(new Error(t('datasource.please_enter') + t('common.empty') + t('ds.form.timeout')))
+  } else {
+    callback()
+  }
+}
+
 const urlRules = {
   endpoint: [
     {
       required: true,
       validator: validatePass,
       trigger: 'blur',
+    },
+  ],
+  timeout: [
+    {
+      required: true,
+      validator: validateTimeout,
+      trigger: 'change',
     },
   ],
   certificate: [
@@ -557,7 +569,8 @@ const saveHandler = () => {
 <template>
   <div v-loading="searchLoading" class="embedded-index no-padding">
     <div class="tool-left">
-      <div class="btn-select">
+      <span class="page-title">{{ t('embedded.assistant_app') }}</span>
+      <!-- <div class="btn-select">
         <el-button
           :class="[btnSelect === 'd' && 'is-active']"
           text
@@ -572,7 +585,7 @@ const saveHandler = () => {
         >
           {{ t('embedded.embedded_page') }}
         </el-button>
-      </div>
+      </div> -->
       <div>
         <el-input
           v-model="keywords"
@@ -802,6 +815,15 @@ const saveHandler = () => {
                   autocomplete="off"
                 />
               </el-form-item>
+              <el-form-item :label="t('ds.form.timeout')" prop="timeout">
+                <el-input-number
+                  v-model="urlForm.timeout"
+                  clearable
+                  :min="0"
+                  :max="300"
+                  controls-position="right"
+                />
+              </el-form-item>
               <el-form-item prop="AES" class="custom-require">
                 <template #label>
                   <span class="custom-require_danger">{{ t('embedded.aes_enable') }}</span>
@@ -826,20 +848,7 @@ const saveHandler = () => {
                   autocomplete="off"
                 />
               </el-form-item>
-              <!-- <el-form-item v-if="urlForm.encrypt" prop="aes_iv" label="AES IV">
-            <el-input
-              v-model="urlForm.aes_iv"
-              clearable
-              :placeholder="
-                $t('datasource.please_enter') +
-                $t('common.empty') +
-                ' 16 ' +
-                $t('embedded.bit') +
-                ' AES IV'
-              "
-              autocomplete="off"
-            />
-          </el-form-item> -->
+
               <el-form-item class="certificate-table_form" prop="certificate">
                 <template #label>
                   <div class="title-content">
@@ -902,6 +911,10 @@ const saveHandler = () => {
                   </el-table>
                 </div>
               </el-form-item>
+
+              <!-- <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
+                <el-switch v-model="urlForm.auto_ds" />
+              </el-form-item> -->
             </el-form>
           </div>
         </el-scrollbar>
@@ -922,7 +935,7 @@ const saveHandler = () => {
               class="form-content_error"
               @submit.prevent
             >
-              <el-form-item prop="oid" :label="t('user.workspace')">
+              <!-- <el-form-item prop="oid" :label="t('user.workspace')">
                 <el-select
                   v-model="dsForm.oid"
                   filterable
@@ -938,7 +951,7 @@ const saveHandler = () => {
                     :value="item.id"
                   />
                 </el-select>
-              </el-form-item>
+              </el-form-item> -->
 
               <el-form-item class="private-list_form">
                 <template #label>
@@ -967,6 +980,10 @@ const saveHandler = () => {
                   ></DsCard>
                 </div>
               </el-form-item>
+
+              <!-- <el-form-item prop="auto_ds" :label="t('embedded.auto_select_ds')">
+                <el-switch v-model="dsForm.auto_ds" />
+              </el-form-item> -->
             </el-form>
           </div>
         </el-scrollbar>
@@ -1166,6 +1183,11 @@ const saveHandler = () => {
     margin-bottom: 16px;
     padding: 0 24px 0 24px;
 
+    .page-title {
+      font-weight: 500;
+      font-size: 20px;
+      line-height: 28px;
+    }
     .title {
       font-weight: 500;
       font-size: 20px;

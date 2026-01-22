@@ -24,7 +24,8 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useI18n } from 'vue-i18n'
 import { request } from '@/utils/request'
 import { setCurrentColor } from '@/utils/utils'
-
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
 const { t } = useI18n()
 const chatRef = ref()
 const appearanceStore = useAppearanceStoreWithOut()
@@ -64,6 +65,7 @@ const communicationCb = async (event: any) => {
       if (type === 4) {
         assistantStore.setToken(certificate)
         assistantStore.setAssistant(true)
+        await userStore.info()
         loading.value = false
         return
       }
@@ -180,6 +182,7 @@ onBeforeMount(async () => {
   request.get(`/system/assistant/${assistantId}`).then((res) => {
     if (res?.configuration) {
       const rawData = JSON.parse(res?.configuration)
+      assistantStore.setAutoDs(rawData?.auto_ds)
       if (rawData.logo) {
         logo.value = baseUrl + rawData.logo
       }

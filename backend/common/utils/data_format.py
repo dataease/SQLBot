@@ -89,7 +89,17 @@ class DataFormat:
             if chart.get('axis').get('x'):
                 _fields[chart.get('axis').get('x').get('value')] = chart.get('axis').get('x').get('name')
             if chart.get('axis').get('y'):
-                _fields[chart.get('axis').get('y').get('value')] = chart.get('axis').get('y').get('name')
+                # _fields[chart.get('axis').get('y').get('value')] = chart.get('axis').get('y').get('name')
+                y_axis = chart.get('axis').get('y')
+                if isinstance(y_axis, list):
+                    # y轴是数组的情况（多指标字段）
+                    for y_item in y_axis:
+                        if isinstance(y_item, dict) and 'value' in y_item and 'name' in y_item:
+                            _fields[y_item.get('value')] = y_item.get('name')
+                elif isinstance(y_axis, dict):
+                    # y轴是对象的情况（单指标字段）
+                    if 'value' in y_axis and 'name' in y_axis:
+                        _fields[y_axis.get('value')] = y_axis.get('name')
             if chart.get('axis').get('series'):
                 _fields[chart.get('axis').get('series').get('value')] = chart.get('axis').get('series').get(
                     'name')

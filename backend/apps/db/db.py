@@ -4,6 +4,7 @@ import os
 import platform
 import urllib.parse
 from decimal import Decimal
+from datetime import timedelta
 from typing import Optional
 
 import oracledb
@@ -447,6 +448,19 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
             return res_list
 
 
+def convert_value(value):
+    """转换值为JSON可序列化的类型"""
+    if isinstance(value, timedelta):
+        # 将 timedelta 转换为秒数（整数）或字符串
+        return str(value)  # 或 value.total_seconds()
+    elif isinstance(value, Decimal):
+        return float(value)
+    elif hasattr(value, 'isoformat'):  # 处理 datetime/date/time
+        return value.isoformat()
+    else:
+        return value
+
+
 def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=False):
     while sql.endswith(';'):
         sql = sql[:-1]
@@ -459,9 +473,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     columns = result.keys()._keys if origin_column else [item.lower() for item in result.keys()._keys]
                     res = result.fetchall()
                     result_list = [
-                        {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
-                         enumerate(tuple_item)}
-                        for tuple_item in res
+                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                        res
                     ]
                     return {"fields": columns, "data": result_list,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
@@ -480,9 +493,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                                                                                                 field in
                                                                                                 cursor.description]
                     result_list = [
-                        {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
-                         enumerate(tuple_item)}
-                        for tuple_item in res
+                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                        res
                     ]
                     return {"fields": columns, "data": result_list,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
@@ -499,9 +511,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                                                                                                 field in
                                                                                                 cursor.description]
                     result_list = [
-                        {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
-                         enumerate(tuple_item)}
-                        for tuple_item in res
+                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                        res
                     ]
                     return {"fields": columns, "data": result_list,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
@@ -518,9 +529,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                                                                                                 field in
                                                                                                 cursor.description]
                     result_list = [
-                        {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
-                         enumerate(tuple_item)}
-                        for tuple_item in res
+                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                        res
                     ]
                     return {"fields": columns, "data": result_list,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
@@ -538,9 +548,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                                                                                                 field in
                                                                                                 cursor.description]
                     result_list = [
-                        {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
-                         enumerate(tuple_item)}
-                        for tuple_item in res
+                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                        res
                     ]
                     return {"fields": columns, "data": result_list,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
@@ -553,9 +562,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                                                                                           field in
                                                                                           columns]
                 result_list = [
-                    {str(columns[i]): float(value) if isinstance(value, Decimal) else value for i, value in
-                     enumerate(tuple(tuple_item))}
-                    for tuple_item in res
+                    {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                    res
                 ]
                 return {"fields": columns, "data": result_list,
                         "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}

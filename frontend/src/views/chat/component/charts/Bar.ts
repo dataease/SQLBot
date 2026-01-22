@@ -1,7 +1,11 @@
 import { BaseG2Chart } from '@/views/chat/component/BaseG2Chart.ts'
 import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
-import { checkIsPercent } from '@/views/chat/component/charts/utils.ts'
+import {
+  checkIsPercent,
+  getAxesWithFilter,
+  processMultiQuotaData,
+} from '@/views/chat/component/charts/utils.ts'
 
 export class Bar extends BaseG2Chart {
   constructor(id: string) {
@@ -11,15 +15,35 @@ export class Bar extends BaseG2Chart {
   init(axis: Array<ChartAxis>, data: Array<ChartData>) {
     super.init(axis, data)
 
-    const x = this.axis.filter((item) => item.type === 'x')
-    const y = this.axis.filter((item) => item.type === 'y')
-    const series = this.axis.filter((item) => item.type === 'series')
+    const axes = getAxesWithFilter(this.axis)
 
-    if (x.length == 0 || y.length == 0) {
+    if (axes.x.length == 0 || axes.y.length == 0) {
+      console.debug({ instance: this })
       return
     }
 
-    const _data = checkIsPercent(y[0], data)
+    let config = {
+      data: data,
+      y: axes.y,
+      series: axes.series,
+    }
+    if (axes.multiQuota.length > 0) {
+      config = processMultiQuotaData(
+        axes.x,
+        config.y,
+        axes.multiQuota,
+        axes.multiQuotaName,
+        config.data
+      )
+    }
+
+    const x = axes.x
+    const y = config.y
+    const series = config.series
+
+    const _data = checkIsPercent(y, config.data)
+
+    console.debug({ 'render-info': { x: x, y: y, series: series, data: _data }, instance: this })
 
     const options: G2Spec = {
       ...this.chart.options(),
@@ -59,7 +83,7 @@ export class Bar extends BaseG2Chart {
       },
       axis: {
         x: {
-          title: x[0].name,
+          title: false, // x[0].name,
           labelFontSize: 12,
           labelAutoHide: {
             type: 'hide',
@@ -71,7 +95,7 @@ export class Bar extends BaseG2Chart {
           labelAutoEllipsis: true,
         },
         y: {
-          title: y[0].name,
+          title: false, // y[0].name,
           labelFontSize: 12,
           labelAutoHide: {
             type: 'hide',
@@ -105,28 +129,6 @@ export class Bar extends BaseG2Chart {
           return { name: y[0].name, value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}` }
         }
       },
-      // labels: [
-      //   {
-      //     text: (data: any) => {
-      //       const value = data[y[0].value]
-      //       if (value === undefined || value === null) {
-      //         return ''
-      //       }
-      //       return `${value}${_data.isPercent ? '%' : ''}`
-      //     },
-      //     position: (data: any) => {
-      //       if (data[y[0].value] < 0) {
-      //         return 'left'
-      //       }
-      //       return 'right'
-      //     },
-      //     transform: [
-      //       { type: 'contrastReverse' },
-      //       { type: 'exceedAdjust' },
-      //       { type: 'overlapHide' },
-      //     ],
-      //   },
-      // ],
     } as G2Spec
 
     if (series.length > 0) {

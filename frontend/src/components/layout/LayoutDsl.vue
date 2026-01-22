@@ -11,7 +11,12 @@ import icon_side_expand_outlined from '@/assets/svg/icon_side-expand_outlined.sv
 import { useRoute, useRouter } from 'vue-router'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useEmitt } from '@/utils/useEmitt'
+import { isMobile } from '@/utils/utils'
+import { onBeforeMount } from 'vue'
 
+const isPhone = computed(() => {
+  return isMobile()
+})
 const router = useRouter()
 const collapse = ref(false)
 const collapseCopy = ref(false)
@@ -52,6 +57,12 @@ const toUserIndex = () => {
 const route = useRoute()
 const showSysmenu = computed(() => {
   return route.path.includes('/system')
+})
+onBeforeMount(() => {
+  if (isPhone.value) {
+    collapse.value = true
+    collapseCopy.value = true
+  }
 })
 </script>
 

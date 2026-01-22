@@ -1,4 +1,5 @@
 import secrets
+import urllib.parse
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -28,7 +29,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     PROJECT_NAME: str = "SQLBot"
-    API_V1_STR: str = "/api/v1"
+    #CONTEXT_PATH: str = "/sqlbot"
+    CONTEXT_PATH: str = ""
+    API_V1_STR: str = CONTEXT_PATH + "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
@@ -74,14 +77,15 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn | str:
         if self.SQLBOT_DB_URL:
             return self.SQLBOT_DB_URL
-        return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_SERVER,
-            port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
-        )
+        # return MultiHostUrl.build(
+        #     scheme="postgresql+psycopg",
+        #     username=urllib.parse.quote(self.POSTGRES_USER),
+        #     password=urllib.parse.quote(self.POSTGRES_PASSWORD),
+        #     host=self.POSTGRES_SERVER,
+        #     port=self.POSTGRES_PORT,
+        #     path=self.POSTGRES_DB,
+        # )
+        return f"postgresql+psycopg://{urllib.parse.quote(self.POSTGRES_USER)}:{urllib.parse.quote(self.POSTGRES_PASSWORD)}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     MCP_IMAGE_PATH: str = '/opt/sqlbot/images'
     EXCEL_PATH: str = '/opt/sqlbot/data/excel'

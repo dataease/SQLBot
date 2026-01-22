@@ -11,7 +11,9 @@ from apps.chat.models.chat_model import Chat, ChatRecord, CreateChat, ChatInfo, 
     TypeEnum, OperationEnum, ChatRecordResult
 from apps.datasource.crud.recommended_problem import get_datasource_recommended_chart
 from apps.datasource.models.datasource import CoreDatasource
-from apps.system.crud.assistant import AssistantOutDsFactory
+from apps.db.constant import DB
+from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory
+from apps.system.schemas.system_schema import AssistantOutDsSchema
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.utils import extract_nested_json
 
@@ -124,23 +126,41 @@ def get_chart_config(session: SessionDep, chart_record_id: int):
     return {}
 
 
-def format_chart_fields(chart_info: dict):
+def _format_column(column: dict) -> str:
+    """格式化单个column字段"""
+    value = column.get('value', '')
+    name = column.get('name', '')
+    if value != name and name:
+        return f"{value}({name})"
+    return value
+
+
+def format_chart_fields(chart_info: dict) -> list:
     fields = []
-    if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
-        for column in chart_info.get('columns'):
-            column_str = column.get('value')
-            if column.get('value') != column.get('name'):
-                column_str = column_str + '(' + column.get('name') + ')'
-            fields.append(column_str)
-    if chart_info.get('axis'):
-        for _type in ['x', 'y', 'series']:
-            if chart_info.get('axis').get(_type):
-                column = chart_info.get('axis').get(_type)
-                column_str = column.get('value')
-                if column.get('value') != column.get('name'):
-                    column_str = column_str + '(' + column.get('name') + ')'
-                fields.append(column_str)
-    return fields
+
+    # 处理 columns
+    for column in chart_info.get('columns') or []:
+        fields.append(_format_column(column))
+
+    # 处理 axis
+    if axis := chart_info.get('axis'):
+        # 处理 x 轴
+        if x_axis := axis.get('x'):
+            fields.append(_format_column(x_axis))
+
+        # 处理 y 轴
+        if y_axis := axis.get('y'):
+            if isinstance(y_axis, list):
+                for column in y_axis:
+                    fields.append(_format_column(column))
+            else:
+                fields.append(_format_column(y_axis))
+
+        # 处理 series
+        if series := axis.get('series'):
+            fields.append(_format_column(series))
+
+    return [field for field in fields if field]  # 过滤空字符串
 
 
 def get_last_execute_sql_error(session: SessionDep, chart_id: int):
@@ -408,6 +428,11 @@ def format_record(record: ChatRecordResult):
             _dict['sql'] = sqlparse.format(record.sql, reindent=True)
         except Exception:
             pass
+    # 去除返回前端多余的字段
+    _dict.pop('sql_reasoning_content', None)
+    _dict.pop('chart_reasoning_content', None)
+    _dict.pop('analysis_reasoning_content', None)
+    _dict.pop('predict_reasoning_content', None)
 
     return _dict
 
@@ -447,7 +472,7 @@ def list_generate_chart_logs(session: SessionDep, chart_id: int) -> List[ChatLog
 
 
 def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj: CreateChat,
-                require_datasource: bool = True) -> ChatInfo:
+                require_datasource: bool = True, current_assistant: CurrentAssistant = None) -> ChatInfo:
     if not create_chat_obj.datasource and require_datasource:
         raise Exception("Datasource cannot be None")
 
@@ -459,10 +484,17 @@ def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj:
                 oid=current_user.oid if current_user.oid is not None else 1,
                 brief=create_chat_obj.question.strip()[:20],
                 origin=create_chat_obj.origin if create_chat_obj.origin is not None else 0)
-    ds: CoreDatasource | None = None
+    ds: CoreDatasource | AssistantOutDsSchema | None = None
     if create_chat_obj.datasource:
         chat.datasource = create_chat_obj.datasource
-        ds = session.get(CoreDatasource, create_chat_obj.datasource)
+        if current_assistant and current_assistant.type == 1:
+            out_ds_instance: AssistantOutDs = AssistantOutDsFactory.get_instance(current_assistant)
+            ds = out_ds_instance.get_ds(chat.datasource)
+            ds.type_name = DB.get_db(ds.type)
+        else:
+            ds = session.get(CoreDatasource, create_chat_obj.datasource)
+            if ds.oid != current_user.oid:
+                raise Exception(f"Datasource with id {create_chat_obj.datasource} does not belong to current workspace")
 
         if not ds:
             raise Exception(f"Datasource with id {create_chat_obj.datasource} not found")
@@ -494,7 +526,7 @@ def create_chat(session: SessionDep, current_user: CurrentUser, create_chat_obj:
         record.finish = True
         record.create_time = datetime.datetime.now()
         record.create_by = current_user.id
-        if ds.recommended_config == 2:
+        if isinstance(ds, CoreDatasource) and ds.recommended_config == 2:
             questions = get_datasource_recommended_chart(session, ds.id)
             record.recommended_question = orjson.dumps(questions).decode()
             record.recommended_question_answer = orjson.dumps({

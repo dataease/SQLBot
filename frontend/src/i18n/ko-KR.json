@@ -194,7 +194,7 @@
     "creator": "생성자",
     "dashboard_id": "대시보드 ID",
     "create_time": "생성 시간",
-    "updator": "업데이트자",
+    "updater": "업데이트자",
     "update_time": "업데이트 시간",
     "edit": "편집",
     "edit_title": "제목 편집",
@@ -447,9 +447,10 @@
     "enable": "활성화",
     "disable": "비활성화",
     "local_creation": "로컬 생성",
-    "feishu": "페이슈",
+    "lark": "페이슈",
+    "larksuite": "페이수 (Pei-su)",
     "dingtalk": "딩톡",
-    "wechat_for_business": "기업용 위챗",
+    "wecom": "기업용 위챗",
     "1240_results": "{msg}개 결과 ",
     "clear_conditions": "조건 지우기",
     "disabled": "비활성화됨",
@@ -666,7 +667,10 @@
     "right": "오른쪽",
     "welcome_description": "환영 메시지 설명",
     "data_analysis_now": "저는 데이터 조회, 차트 생성, 데이터 이상 감지, 데이터 예측 등을 할 수 있습니다. 빨리 스마트 데이터 조회를 시작하세요~",
-    "window_entrance_icon": "플로팅 윈도우 입구 아이콘"
+    "window_entrance_icon": "플로팅 윈도우 입구 아이콘",
+    "preview_error": "현재 페이지는 Iframe 임베딩을 허용하지 않습니다!",
+    "assistant_app": "어시스턴트 앱",
+    "auto_select_ds": "자동 데이터 소스 선택"
   },
   "chat": {
     "type": "차트 유형",
@@ -756,6 +760,13 @@
     "setting_successfully": "설정 성공",
     "customize_theme_color": "사용자 정의 테마 색상"
   },
+  "platform": {
+    "title": "플랫폼 연동",
+    "status_open": "활성화됨",
+    "status_close": "비활성화됨",
+    "access_in": "접속",
+    "can_enable_it": "연결 테스트 성공 후 활성화 가능"
+  },
   "authentication": {
     "invalid": "유효하지 않음",
     "valid": "유효함",
@@ -808,7 +819,8 @@
     "platform_disable": "{0} 설정이 활성화되지 않았습니다!",
     "input_account": "계정을 입력해 주세요",
     "redirect_2_auth": "{0} 인증으로 리디렉션 중입니다, {1}초...",
-    "redirect_immediately": "지금 이동"
+    "redirect_immediately": "지금 이동",
+    "permission_invalid": "인증 무효 [현재 계정의 권한이 부족합니다]"
   },
   "supplier": {
     "alibaba_cloud_bailian": "알리바바 클라우드 바이리엔",

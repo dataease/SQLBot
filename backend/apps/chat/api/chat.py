@@ -10,9 +10,11 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, select
 from starlette.responses import JSONResponse
 
-from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user, get_chat_predict_data_with_user, list_chats, get_chat_with_records, create_chat, rename_chat, \
+from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user, get_chat_predict_data_with_user, \
+    list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
-    format_json_data, format_json_list_data, get_chart_config, list_recent_questions,get_chat as get_chat_exec, rename_chat_with_user
+    format_json_data, format_json_list_data, get_chart_config, list_recent_questions, get_chat as get_chat_exec, \
+    rename_chat_with_user
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
     ChatInfo, Chat, ChatFinishStep
 from apps.chat.task.llm import LLMService
@@ -69,6 +71,7 @@ async def chat_predict_data(session: SessionDep, chat_record_id: int):
 
     return await asyncio.to_thread(inner) """
 
+
 @router.get("/record/{chat_record_id}/data", summary=f"{PLACEHOLDER_PREFIX}get_chart_data")
 async def chat_record_data(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
     def inner():
@@ -81,7 +84,8 @@ async def chat_record_data(session: SessionDep, current_user: CurrentUser, chat_
 @router.get("/record/{chat_record_id}/predict_data", summary=f"{PLACEHOLDER_PREFIX}get_chart_predict_data")
 async def chat_predict_data(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
     def inner():
-        data = get_chat_predict_data_with_user(chat_record_id=chat_record_id, session=session, current_user=current_user)
+        data = get_chat_predict_data_with_user(chat_record_id=chat_record_id, session=session,
+                                               current_user=current_user)
         return format_json_list_data(data)
 
     return await asyncio.to_thread(inner)
@@ -102,6 +106,7 @@ async def rename(session: SessionDep, chat: RenameChat):
             detail=str(e)
         ) """
 
+
 @router.post("/rename", response_model=str, summary=f"{PLACEHOLDER_PREFIX}rename_chat")
 @system_log(LogConfig(
     operation_type=OperationType.UPDATE,
@@ -116,6 +121,7 @@ async def rename(session: SessionDep, current_user: CurrentUser, chat: RenameCha
             status_code=500,
             detail=str(e)
         )
+
 
 """ @router.delete("/{chart_id}/{brief}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
 @system_log(LogConfig(
@@ -133,6 +139,7 @@ async def delete(session: SessionDep, chart_id: int, brief: str):
             detail=str(e)
         ) """
 
+
 @router.delete("/{chart_id}/{brief}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
 @system_log(LogConfig(
     operation_type=OperationType.DELETE,
@@ -148,6 +155,7 @@ async def delete(session: SessionDep, current_user: CurrentUser, chart_id: int, 
             status_code=500,
             detail=str(e)
         )
+
 
 @router.post("/start", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}start_chat")
 @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="create_chat_obj.datasource"))
@@ -172,9 +180,11 @@ async def start_chat(session: SessionDep, current_user: CurrentUser, create_chat
     module=OperationModules.CHAT,
     result_id_expr="id"
 ))
-async def start_chat(session: SessionDep, current_user: CurrentUser):
+async def start_chat(session: SessionDep, current_user: CurrentUser, current_assistant: CurrentAssistant,
+                     create_chat_obj: CreateChat = CreateChat(origin=2)):
     try:
-        return create_chat(session, current_user, CreateChat(origin=2), False)
+        return create_chat(session, current_user, create_chat_obj, create_chat_obj and create_chat_obj.datasource,
+                           current_assistant)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -213,7 +223,7 @@ async def ask_recommend_questions(session: SessionDep, current_user: CurrentUser
 
 @router.get("/recent_questions/{datasource_id}", response_model=List[str],
             summary=f"{PLACEHOLDER_PREFIX}get_recommend_questions")
-#@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="datasource_id"))
+# @require_permissions(permission=SqlbotPermission(type='ds', keyExpression="datasource_id"))
 async def recommend_questions(session: SessionDep, current_user: CurrentUser,
                               datasource_id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     return list_recent_questions(session=session, current_user=current_user, datasource_id=datasource_id)
@@ -442,8 +452,8 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
 
 
 @router.get("/record/{chat_record_id}/excel/export/{chat_id}", summary=f"{PLACEHOLDER_PREFIX}export_chart_data")
-@system_log(LogConfig(operation_type=OperationType.EXPORT,module=OperationModules.CHAT,resource_id_expr="chat_id",))
-async def export_excel(session: SessionDep, current_user: CurrentUser, chat_record_id: int,chat_id: int,  trans: Trans):
+@system_log(LogConfig(operation_type=OperationType.EXPORT, module=OperationModules.CHAT, resource_id_expr="chat_id", ))
+async def export_excel(session: SessionDep, current_user: CurrentUser, chat_record_id: int, chat_id: int, trans: Trans):
     chat_record = session.get(ChatRecord, chat_record_id)
     if not chat_record:
         raise HTTPException(
@@ -476,11 +486,26 @@ async def export_excel(session: SessionDep, current_user: CurrentUser, chat_reco
     if chart_info.get('columns') and len(chart_info.get('columns')) > 0:
         for column in chart_info.get('columns'):
             fields.append(AxisObj(name=column.get('name'), value=column.get('value')))
-    if chart_info.get('axis'):
-        for _type in ['x', 'y', 'series']:
-            if chart_info.get('axis').get(_type):
-                column = chart_info.get('axis').get(_type)
-                fields.append(AxisObj(name=column.get('name'), value=column.get('value')))
+    # 处理 axis
+    if axis := chart_info.get('axis'):
+        # 处理 x 轴
+        if x_axis := axis.get('x'):
+            if 'name' in x_axis or 'value' in x_axis:
+                fields.append(AxisObj(name=x_axis.get('name'), value=x_axis.get('value')))
+
+        # 处理 y 轴 - 兼容数组和对象格式
+        if y_axis := axis.get('y'):
+            if isinstance(y_axis, list):
+                for column in y_axis:
+                    if 'name' in column or 'value' in column:
+                        fields.append(AxisObj(name=column.get('name'), value=column.get('value')))
+            elif isinstance(y_axis, dict) and ('name' in y_axis or 'value' in y_axis):
+                fields.append(AxisObj(name=y_axis.get('name'), value=y_axis.get('value')))
+
+        # 处理 series
+        if series := axis.get('series'):
+            if 'name' in series or 'value' in series:
+                fields.append(AxisObj(name=series.get('name'), value=series.get('value')))
 
     _predict_data = []
     if is_predict_data:
