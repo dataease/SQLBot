@@ -172,7 +172,8 @@ class AssistantOutDs:
         else:
             raise Exception("Datasource list is not found.")
 
-    def get_db_schema(self, ds_id: int, question: str, embedding: bool = True) -> str:
+    def get_db_schema(self, ds_id: int, question: str = '', embedding: bool = True,
+                      table_list: list[str] = None) -> str:
         ds = self.get_ds(ds_id)
         schema_str = ""
         db_name = ds.db_schema if ds.db_schema is not None and ds.db_schema != "" else ds.dataBase
@@ -180,6 +181,10 @@ class AssistantOutDs:
         tables = []
         i = 0
         for table in ds.tables:
+            # 如果传入了 table_list，则只处理在列表中的表
+            if table_list is not None and table.name not in table_list:
+                continue
+
             i += 1
             schema_table = ''
             schema_table += f"# Table: {db_name}.{table.name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {table.name}"
