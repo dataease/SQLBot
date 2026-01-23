@@ -142,7 +142,7 @@ const edit = () => {
   editor?.value.edit(data)
 }
 const validate = () => {
-  if (info.value?.agent_id && info.value?.corpsecret) {
+  if (info.value) {
     validateHandler()
   }
 }

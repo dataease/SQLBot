@@ -445,6 +445,39 @@ const wecomLogin = () => {
       }, 1500)
     })
 }
+const larksuiteLogin = () => {
+  const urlParams = getUrlParams()
+  urlParams['redirect_uri'] = encodeURIComponent(getSQLBotAddr())
+  request
+    .post('/system/platform/sso/9', urlParams)
+    .then((res: any) => {
+      const token = res.access_token
+      // const platform_info = res.platform_info
+      if (token && isPlatformClient()) {
+        wsCache.set('sqlbot-platform-client', true)
+      }
+      userStore.setToken(token)
+      userStore.setExp(res.exp)
+      userStore.setTime(Date.now())
+      userStore.setPlatformInfo({
+        flag: 'larksuite',
+        // data: platform_info ? JSON.stringify(platform_info) : '',
+        origin: 9,
+      })
+      const queryRedirectPath = getCurLocation()
+      router.push({ path: queryRedirectPath })
+    })
+    .catch((e: any) => {
+      userStore.setToken('')
+      setTimeout(() => {
+        // logoutHandler(true, true)
+        platformLoginMsg.value = e?.message || e
+        setTimeout(() => {
+          window.location.href = getSQLBotAddr() + window.location.hash
+        }, 2000)
+      }, 1500)
+    })
+}
 const larkLogin = () => {
   const urlParams = getUrlParams()
   urlParams['redirect_uri'] = encodeURIComponent(getSQLBotAddr())
@@ -689,6 +722,8 @@ onMounted(() => {
       wecomLogin()
     } else if (state?.includes('dingtalk')) {
       dingtalkLogin()
+    } else if (state?.includes('larksuite')) {
+      larksuiteLogin()
     } else if (state?.includes('lark')) {
       larkLogin()
     } else {
