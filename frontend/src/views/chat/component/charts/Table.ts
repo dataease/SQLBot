@@ -1,17 +1,17 @@
 import { BaseChart, type ChartAxis, type ChartData } from '@/views/chat/component/BaseChart.ts'
 import {
-  TableSheet,
-  S2Event,
   copyToClipboard,
-  type S2Options,
-  type S2DataConfig,
-  type S2MountContainer,
-  type SortMethod,
   type Node,
-  type CellTextWordWrapStyle,
+  type S2DataConfig,
+  S2Event,
+  type S2MountContainer,
+  type S2Options,
+  type SortMethod,
+  TableSheet,
 } from '@antv/s2'
 import { debounce, filter } from 'lodash-es'
 import { i18n } from '@/i18n'
+import '@antv/s2/dist/s2.min.css'
 
 const { t } = i18n.global
 
@@ -71,30 +71,42 @@ export class Table extends BaseChart {
       data: this.data,
     }
 
-    const cellTextWordWrapStyle: CellTextWordWrapStyle = {
-      // 最大行数，文本超出后将被截断
-      maxLines: 3,
-      // 文本是否换行
-      wordWrap: true,
-      // 可选项见：https://g.antv.antgroup.com/api/basic/text#textoverflow
-      textOverflow: 'ellipsis',
-    }
-
     const s2Options: S2Options = {
       width: 600,
       height: 360,
       showDefaultHeaderActionIcon: true,
       tooltip: {
-        enable: true,
         operation: {
           // 开启组内排序
           sort: true,
         },
+        dataCell: {
+          enable: true,
+          content: (cell) => {
+            const meta = cell.getMeta()
+            const container = document.createElement('div')
+            container.style.padding = '8px 0'
+            container.style.minWidth = '100px'
+            container.style.maxWidth = '400px'
+            container.style.display = 'flex'
+            container.style.alignItems = 'center'
+            container.style.padding = '8px 16px'
+            container.style.cursor = 'pointer'
+            container.style.color = '#606266'
+            container.style.fontSize = '14px'
+            container.style.whiteSpace = 'pre-wrap'
+
+            const text = document.createTextNode(meta.fieldValue)
+            container.appendChild(text)
+
+            return container
+          },
+        },
         colCell: {
+          enable: true,
           content: (cell) => {
             const meta = cell.getMeta()
             const { spreadsheet: s2 } = meta
-
             if (!meta.isLeaf) {
               return null
             }
@@ -169,11 +181,6 @@ export class Table extends BaseChart {
           colCell: true,
         },
       },
-      style: {
-        colCell: cellTextWordWrapStyle,
-        // 如果是数值不建议换行, 容易产生歧义
-        dataCell: cellTextWordWrapStyle,
-      },
       placeholder: {
         cell: '-',
         empty: {
@@ -185,7 +192,6 @@ export class Table extends BaseChart {
 
     if (this.container) {
       this.table = new TableSheet(this.container, s2DataConfig, s2Options)
-      console.log(this.table)
       // right click
       this.table.on(S2Event.GLOBAL_COPIED, (data) => {
         ElMessage.success(t('qa.copied'))
