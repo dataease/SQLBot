@@ -91,7 +91,7 @@ const submitForm = () => {
 
 .login-btn {
   width: 100%;
-  height: 45px;
+  height: 40px;
   font-size: 16px;
   border-radius: 4px;
 }

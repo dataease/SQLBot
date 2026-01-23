@@ -177,3 +177,15 @@ const toUrl = (url: string) => {
   window.location.href =
     origin + pathname + url + (redirect?.includes('chatPreview') ? `#${redirect}` : '')
 }
+
+export const origin_mapping: { [key: number]: string } = {
+  1: 'cas',
+  2: 'oidc',
+  3: 'ldap',
+  4: 'oauth2',
+  5: 'saml2',
+  6: 'wecom',
+  7: 'dingtalk',
+  8: 'lark',
+  9: 'larksuite',
+}
