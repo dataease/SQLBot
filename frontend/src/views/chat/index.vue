@@ -1176,6 +1176,8 @@ onMounted(() => {
     min-height: calc(120px + 16px);
     max-height: calc(300px + 16px);
     height: fit-content;
+    position: relative;
+    z-index: 1;
 
     padding-bottom: 16px;
 
