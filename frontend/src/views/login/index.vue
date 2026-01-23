@@ -63,7 +63,6 @@
             </el-form>
           </div>
           <Handler
-            ref="xpackLoginHandler"
             v-model:loading="showLoading"
             jsname="L2NvbXBvbmVudC9sb2dpbi9IYW5kbGVy"
             @switch-tab="switchTab"
@@ -92,7 +91,6 @@ const router = useRouter()
 const userStore = useUserStore()
 const appearanceStore = useAppearanceStoreWithOut()
 const { t } = useI18n()
-const xpackLoginHandler = ref<any>(null)
 const loginForm = ref({
   username: '',
   password: '',
@@ -202,7 +200,7 @@ const switchTab = (name: string) => {
 
         .login-btn {
           width: 100%;
-          height: 45px;
+          height: 40px;
           font-size: 16px;
           border-radius: 4px;
         }

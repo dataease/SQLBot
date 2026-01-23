@@ -1,5 +1,7 @@
 <template>
-  <div id="de2-dingtalk-qr" :class="{ 'de2-dingtalk-qr': !isBind }" />
+  <div class="dingtalk-qr-div">
+    <div id="de2-dingtalk-qr" :class="{ 'de2-dingtalk-qr': !isBind }" />
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -46,8 +48,6 @@ const loadQr = (client_id: string, STATE: string, REDIRECT_URI: string) => {
   window.DTFrameLogin(
     {
       id: 'de2-dingtalk-qr',
-      width: 280,
-      height: 300,
     },
     {
       redirect_uri: encodeURIComponent(REDIRECT_URI),
@@ -73,7 +73,16 @@ const loadQr = (client_id: string, STATE: string, REDIRECT_URI: string) => {
 init()
 </script>
 <style lang="less" scoped>
-.de2-dingtalk-qr {
-  margin-top: -36px;
+.dingtalk-qr-div {
+  // margin-top: -36px;
+  width: 234px;
+  height: 234px;
+  .de2-dingtalk-qr {
+    transform: scale(1.3);
+    transform-origin: top left;
+    width: 234px;
+    height: 234px;
+    margin: -80px;
+  }
 }
 </style>

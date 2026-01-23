@@ -820,7 +820,8 @@
     "input_account": "Please enter account",
     "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds...",
     "redirect_immediately": "Redirecting immediately",
-    "permission_invalid": "Authentication invalid [Current account has insufficient permissions]"
+    "permission_invalid": "Authentication invalid [Current account has insufficient permissions]",
+    "scan_qr_login": " Scan QR Code"
   },
   "supplier": {
     "alibaba_cloud_bailian": "Alibaba Cloud Bailian",
