@@ -681,6 +681,9 @@
       "line": "Line",
       "pie": "Pie"
     },
+    "sort_asc": "Ascending",
+    "sort_desc": "Descending",
+    "sort_none": "No Sort",
     "show_sql": "View SQL",
     "export_to": "Export As",
     "excel": "Excel",

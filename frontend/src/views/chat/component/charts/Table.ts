@@ -118,9 +118,13 @@ export class Table extends BaseChart {
             container.style.minWidth = '100px'
 
             const menuItems = [
-              { label: '降序', method: 'desc' as SortMethod, icon: 'el-icon-sort-down' },
-              { label: '升序', method: 'asc' as SortMethod, icon: 'el-icon-sort-up' },
-              { label: '不排序', method: 'none' as SortMethod, icon: 'el-icon-close' },
+              {
+                label: t('chat.sort_desc'),
+                method: 'desc' as SortMethod,
+                icon: 'el-icon-sort-down',
+              },
+              { label: t('chat.sort_asc'), method: 'asc' as SortMethod, icon: 'el-icon-sort-up' },
+              { label: t('chat.sort_none'), method: 'none' as SortMethod, icon: 'el-icon-close' },
             ]
 
             menuItems.forEach((item) => {

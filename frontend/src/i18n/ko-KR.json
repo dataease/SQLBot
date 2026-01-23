@@ -681,6 +681,9 @@
       "line": "선 차트",
       "pie": "원형 차트"
     },
+    "sort_asc": "오름차순",
+    "sort_desc": "내림차순",
+    "sort_none": "정렬 안 함",
     "show_sql": "SQL 보기",
     "export_to": "다음으로 내보내기",
     "excel": "Excel",

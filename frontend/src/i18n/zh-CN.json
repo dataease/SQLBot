@@ -681,6 +681,9 @@
       "line": "折线图",
       "pie": "饼图"
     },
+    "sort_asc": "升序",
+    "sort_desc": "降序",
+    "sort_none": "不排序",
     "show_sql": "查看SQL",
     "export_to": "导出为",
     "excel": "Excel",
