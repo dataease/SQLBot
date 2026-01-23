@@ -221,14 +221,36 @@ function addToDashboard() {
   }
   // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
   const chartBaseInfo = JSON.parse(props.message?.record?.chart)
-  recordeInfo['chart'] = {
-    type: currentChartType.value,
-    title: chartBaseInfo.title,
-    columns: chartBaseInfo.columns,
-    xAxis: chartBaseInfo.axis?.x ? [chartBaseInfo.axis.x] : [],
-    yAxis: chartBaseInfo.axis?.y ? [chartBaseInfo.axis.y] : [],
-    series: chartBaseInfo.axis?.series ? [chartBaseInfo.axis.series] : [],
+  if (chartBaseInfo) {
+    let yAxis = []
+    const axis = chartBaseInfo?.axis
+    if (!axis?.y) {
+      yAxis = []
+    } else {
+      const y = axis.y
+      const multiQuotaValues = axis['multi-quota']?.value || []
+
+      // 统一处理为数组
+      const yArray = Array.isArray(y) ? [...y] : [{ ...y }]
+
+      // 标记 multi-quota
+      yAxis = yArray.map((item) => ({
+        ...item,
+        'multi-quota': multiQuotaValues.includes(item.value),
+      }))
+    }
+
+    recordeInfo['chart'] = {
+      type: chartBaseInfo?.type,
+      title: chartBaseInfo?.title,
+      columns: chartBaseInfo?.columns,
+      xAxis: axis?.x ? [axis?.x] : [],
+      yAxis: yAxis,
+      series: axis?.series ? [axis?.series] : [],
+      multiQuotaName: axis?.['multi-quota']?.name,
+    }
   }
+
   // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
   addViewRef.value?.optInit(recordeInfo)
 }
