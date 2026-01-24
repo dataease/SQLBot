@@ -240,10 +240,13 @@ class AssistantOutDs:
                     except Exception as e:
                         raise Exception(
                             f"Failed to encrypt {attr} for datasource {ds_dict.get('name')}, error: {str(e)}")
-        for attr in attr_list:
-            if attr in ds_dict:
-                id_marker += str(ds_dict.get(attr, '')) + '--sqlbot--'
-        id = string_to_numeric_hash(id_marker)
+        
+        id = ds_dict.get('id', None)
+        if not id:
+            for attr in attr_list:
+                if attr in ds_dict:
+                    id_marker += str(ds_dict.get(attr, '')) + '--sqlbot--'
+            id = string_to_numeric_hash(id_marker)
         db_schema = ds_dict.get('schema', ds_dict.get('db_schema', ''))
         ds_dict.pop("schema", None)
         return AssistantOutDsSchema(**{**ds_dict, "id": id, "db_schema": db_schema})
