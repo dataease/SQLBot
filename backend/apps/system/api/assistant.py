@@ -195,7 +195,7 @@ async def ds(session: SessionDep, current_assistant: CurrentAssistant):
         out_ds_instance: AssistantOutDs = AssistantOutDsFactory.get_instance(current_assistant)
         return [
             {
-                "id": ds.id,
+                "id": str(ds.id),
                 "name": ds.name,
                 "description": ds.description or ds.comment,
                 "type": ds.type,

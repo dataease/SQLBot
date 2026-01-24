@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref, computed, shallowRef } from 'vue'
+import { onMounted, ref, computed, shallowRef, onBeforeUnmount, onBeforeMount } from 'vue'
 import icon_close_outlined from '@/assets/svg/operate/ope-close.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
@@ -123,10 +123,24 @@ function createChat(datasource: number) {
     })
 }
 
+const drawerHeight = ref(0)
+const setHeight = () => {
+  drawerHeight.value = document.body.clientHeight - 100
+  console.log(drawerHeight.value)
+}
+
 onMounted(() => {
   if (props.hidden) {
     return
   }
+})
+
+onBeforeMount(() => {
+  setHeight()
+  window.addEventListener('resize', setHeight)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', setHeight)
 })
 
 const handleAddDatasource = () => {
@@ -145,7 +159,7 @@ defineExpose({
     <el-drawer
       v-model="datasourceConfigVisible"
       :close-on-click-modal="false"
-      size="calc(100% - 100px)"
+      :size="drawerHeight"
       modal-class="datasource-drawer-chat"
       direction="btt"
       :before-close="beforeClose"

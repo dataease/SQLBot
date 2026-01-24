@@ -235,6 +235,6 @@ onBeforeUnmount(() => {
   background: #f7f8fa;
   box-sizing: border-box;
   overflow: auto;
-  padding-bottom: 48px;
+  //padding-bottom: 48px;
 }
 </style>
