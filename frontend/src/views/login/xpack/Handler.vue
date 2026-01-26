@@ -308,7 +308,7 @@ const third_party_authentication = (state?: string) => {
     return null
   }
   const urlParams = getUrlParams()
-  const urlFlag = findKey && findKey > 6 ? 'platform' : 'authentication'
+  const urlFlag = findKey && findKey > 5 ? 'platform' : 'authentication'
   const ssoUrl = `/system/${urlFlag}/sso/${findKey}`
   if (!urlParams?.redirect_uri) {
     urlParams['redirect_uri'] = encodeURIComponent(getSQLBotAddr())
