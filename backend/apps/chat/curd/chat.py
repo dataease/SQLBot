@@ -52,7 +52,8 @@ def list_recent_questions(session: SessionDep, current_user: CurrentUser, dataso
         .join(Chat, ChatRecord.chat_id == Chat.id)  # 关联Chat表
         .filter(
             Chat.datasource == datasource_id,  # 使用Chat表的datasource字段
-            ChatRecord.question.isnot(None)
+            ChatRecord.question.isnot(None),
+            ChatRecord.create_by == current_user.id
         )
         .group_by(ChatRecord.question)
         .order_by(desc(func.max(ChatRecord.create_time)))
