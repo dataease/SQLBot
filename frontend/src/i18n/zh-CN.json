@@ -23,6 +23,23 @@
     "continue_syncing": "继续同步",
     "return_to_view": "返回查看"
   },
+  "variables": {
+    "system_variables": "系统变量",
+    "system": "系统",
+    "search_variables": "搜索变量",
+    "add_variable": "添加变量",
+    "variable_name": "变量名称",
+    "variable_type": "变量类型",
+    "variable_value": "变量值",
+    "edit_variable": "编辑变量",
+    "no_variables_yet": "暂无变量",
+    "please_enter_value": "请输入数值",
+    "date": "日期",
+    "start_date": "开始日期",
+    "end_date": "结束日期",
+    "enter_variable_name": "请输入变量名称",
+    "enter_variable_value": "请输入变量值"
+  },
   "parameter": {
     "execution_details": "执行详情",
     "overview": "概览",

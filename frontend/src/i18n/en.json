@@ -7,6 +7,23 @@
     "AI Model Configuration": "AI Model Config",
     "Details": "Details"
   },
+  "variables": {
+    "system_variables": "System Variables",
+    "system": "System",
+    "search_variables": "Search Variables",
+    "add_variable": "Add Variable",
+    "variable_name": "Variable Name",
+    "variable_type": "Variable Type",
+    "variable_value": "Variable Value",
+    "edit_variable": "Edit Variable",
+    "no_variables_yet": "No Variables Yet",
+    "please_enter_value": "Please Enter Value",
+    "date": "Date",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "enter_variable_name": "Please Enter Variable Name",
+    "enter_variable_value": "Please Enter Variable Value"
+  },
   "sync": {
     "integration": "Platform integration needs to be enabled.",
     "the_existing_user": "If the user already exists, overwrite the existing user.",
