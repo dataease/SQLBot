@@ -12,6 +12,7 @@ import Model from '@/views/system/model/Model.vue'
 // import Embedded from '@/views/system/embedded/index.vue'
 // import SetAssistant from '@/views/system/embedded/iframe.vue'
 import SystemEmbedded from '@/views/system/embedded/Page.vue'
+import Variables from '@/views/system/variables/index.vue'
 
 import assistantTest from '@/views/system/embedded/Test.vue'
 import assistant from '@/views/embedded/index.vue'
@@ -218,6 +219,12 @@ export const routes = [
             name: 'parameter',
             component: Parameter,
             meta: { title: t('parameter.parameter_configuration') },
+          },
+          {
+            path: 'variables',
+            name: 'variables',
+            component: Variables,
+            meta: { title: t('variables.system_variables') },
           },
           {
             path: 'authentication',

@@ -149,7 +149,7 @@ const props = withDefaults(
     cursor: pointer;
     margin-left: 8px;
     &:hover {
-      color: #189e7a;
+      color: var(--ed-color-primary-15-d, #189e7a);
       background: #1f23291a;
     }
   }

@@ -7,6 +7,23 @@
     "AI Model Configuration": "모델 구성",
     "Details": "세부"
   },
+  "variables": {
+    "system_variables": "시스템 변수",
+    "system": "체계",
+    "search_variables": "변수 검색",
+    "add_variable": "변수 추가",
+    "variable_name": "변수 이름",
+    "variable_type": "변수 유형",
+    "variable_value": "변수 값",
+    "edit_variable": "변수 편집",
+    "no_variables_yet": "아직 변수가 없습니다",
+    "please_enter_value": "값을 입력하세요",
+    "date": "날짜",
+    "start_date": "시작일",
+    "end_date": "종료일",
+    "enter_variable_name": "변수 이름을 입력하세요",
+    "enter_variable_value": "변수 값을 입력하세요"
+  },
   "parameter": {
     "export_notes": "수출 참고사항",
     "import_notes": "수입 참고사항",
