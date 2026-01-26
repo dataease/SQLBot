@@ -178,7 +178,7 @@ defineExpose({
         :prop="setting.realKey"
       >
         <el-input
-          v-if="setting.type === 'password'"
+          v-if="setting.type === 'pwd'"
           v-model="state.form[setting.realKey]"
           type="password"
           show-password

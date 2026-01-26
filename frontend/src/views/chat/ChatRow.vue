@@ -30,8 +30,8 @@ const appearanceStore = useAppearanceStoreWithOut()
           height="28"
         />
         <el-icon v-else-if="!hideAvatar">
-          <custom_small v-if="appearanceStore.themeColor === 'custom'"></custom_small>
-          <logo_fold v-else />
+          <logo_fold v-if="appearanceStore.themeColor === 'default'" />
+          <custom_small v-else></custom_small>
         </el-icon>
       </div>
       <div :class="{ 'row-full': msg.role === 'assistant', 'width-auto': msg.role === 'user' }">
