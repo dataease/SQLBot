@@ -54,8 +54,6 @@ from common.utils.utils import SQLBotLogUtil, extract_nested_json, prepare_for_o
 
 warnings.filterwarnings("ignore")
 
-base_message_count_limit = 6
-
 executor = ThreadPoolExecutor(max_workers=200)
 
 dynamic_ds_types = [1, 3]
@@ -95,6 +93,7 @@ class LLMService:
     articles_number: int = 4
 
     enable_sql_row_limit: bool = settings.GENERATE_SQL_QUERY_LIMIT_ENABLED
+    base_message_round_count_limit: int = settings.GENERATE_SQL_QUERY_HISTORY_ROUND_COUNT
 
     def __init__(self, session: Session, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
@@ -185,6 +184,14 @@ class LLMService:
                     instance.enable_sql_row_limit = True
                 else:
                     instance.enable_sql_row_limit = False
+            if config.pkey == 'chat.context_record_count':
+                count_value = config.pval
+                if count_value is None:
+                    count_value = settings.GENERATE_SQL_QUERY_HISTORY_ROUND_COUNT
+                count_value = int(count_value)
+                if count_value < 0:
+                    count_value = 0
+                instance.base_message_round_count_limit = count_value
         return instance
 
     def is_running(self, timeout=0.5):
@@ -206,22 +213,23 @@ class LLMService:
                 filter(lambda obj: obj.pid == self.chat_question.regenerate_record_id, self.generate_sql_logs), None)
             last_sql_messages: List[dict[str, Any]] = _temp_log.messages if _temp_log else []
 
-        # todo maybe can configure
-        count_limit = 0 - base_message_count_limit
+        count_limit = self.base_message_round_count_limit
 
         self.sql_message = []
         # add sys prompt
         self.sql_message.append(SystemMessage(
             content=self.chat_question.sql_sys_question(self.ds.type, self.enable_sql_row_limit)))
         if last_sql_messages is not None and len(last_sql_messages) > 0:
-            # limit count
-            for last_sql_message in last_sql_messages[count_limit:]:
+            # 获取最后3轮对话
+            last_rounds = get_last_conversation_rounds(last_sql_messages, rounds=count_limit)
+
+            for _msg_dict in last_rounds:
                 _msg: BaseMessage
-                if last_sql_message['type'] == 'human':
-                    _msg = HumanMessage(content=last_sql_message['content'])
+                if _msg_dict.get('type') == 'human':
+                    _msg = HumanMessage(content=_msg_dict.get('content'))
                     self.sql_message.append(_msg)
-                elif last_sql_message['type'] == 'ai':
-                    _msg = AIMessage(content=last_sql_message['content'])
+                elif _msg_dict.get('type') == 'ai':
+                    _msg = AIMessage(content=_msg_dict.get('content'))
                     self.sql_message.append(_msg)
 
         last_chart_messages: List[dict[str, Any]] = self.generate_chart_logs[-1].messages if len(
@@ -1666,3 +1674,29 @@ def get_lang_name(lang: str):
     if normalized.startswith('ko'):
         return '韩语'
     return '简体中文'
+
+
+def get_last_conversation_rounds(messages, rounds=settings.GENERATE_SQL_QUERY_HISTORY_ROUND_COUNT):
+    """获取最后N轮对话，处理不完整对话的情况"""
+    if not messages or rounds <= 0:
+        return []
+
+    # 找到所有用户消息的位置
+    human_indices = []
+    for index, msg in enumerate(messages):
+        if msg.get('type') == 'human':
+            human_indices.append(index)
+
+    # 如果没有用户消息，返回空
+    if not human_indices:
+        return []
+
+    # 计算从哪个索引开始
+    if len(human_indices) <= rounds:
+        # 如果用户消息数少于等于需要的轮数，从第一个用户消息开始
+        start_index = human_indices[0]
+    else:
+        # 否则，从倒数第N个用户消息开始
+        start_index = human_indices[-rounds]
+
+    return messages[start_index:]
