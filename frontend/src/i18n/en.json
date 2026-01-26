@@ -13,6 +13,8 @@
     "memo": "Memo update rules: Match table name and field name. If a match is found, update the table memo and field memo; otherwise, leave the memo unchanged.",
     "parameter_configuration": "Parameter Config",
     "question_count_settings": "Question Count Settings",
+    "context_record_count": "Context Record Count",
+    "context_record_count_hint": "Number of user question rounds",
     "model_thinking_process": "Expand Model Thinking Process",
     "rows_of_data": "Limit 1000 Rows of Data",
     "third_party_platform_settings": "Third-Party Platform Settings",

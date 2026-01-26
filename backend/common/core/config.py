@@ -109,6 +109,7 @@ class Settings(BaseSettings):
 
     # 是否启用SQL查询行数限制，默认值，可被参数配置覆盖
     GENERATE_SQL_QUERY_LIMIT_ENABLED: bool = True
+    GENERATE_SQL_QUERY_HISTORY_ROUND_COUNT: int = 3
 
     PARSE_REASONING_BLOCK_ENABLED: bool = True
     DEFAULT_REASONING_CONTENT_START: str = '<think>'

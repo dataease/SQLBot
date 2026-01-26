@@ -13,6 +13,8 @@
     "memo": "备注更新规则：根据表名和字段名匹配，如果匹配则更新表备注和字段备注；如果匹配不上，备注保持不变。",
     "parameter_configuration": "参数配置",
     "question_count_settings": "问数设置",
+    "context_record_count": "上下文记录数",
+    "context_record_count_hint": "用户提问轮数",
     "model_thinking_process": "展开模型思考过程",
     "rows_of_data": "限制 1000 行数据",
     "third_party_platform_settings": "第三方平台设置",

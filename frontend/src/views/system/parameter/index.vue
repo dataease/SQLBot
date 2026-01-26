@@ -31,6 +31,13 @@ const loadData = () => {
   })
 }
 
+const onContextRecordCountChange = (count: number) => {
+  if (count < 0) {
+    state.parameterForm['chat.context_record_count'] = 0
+  }
+  state.parameterForm['chat.context_record_count'] = Math.floor(count)
+}
+
 const beforeChange = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (!state.parameterForm['chat.rows_of_data']) {
@@ -88,41 +95,66 @@ onMounted(() => {
         <div class="card-title">
           {{ t('parameter.question_count_settings') }}
         </div>
-        <div class="card-item">
-          <div class="label">
-            {{ t('parameter.model_thinking_process') }}
+        <el-row>
+          <div class="card-item">
+            <div class="label">
+              {{ t('parameter.model_thinking_process') }}
 
-            <el-tooltip effect="dark" :content="t('parameter.closed_by_default')" placement="top">
-              <el-icon size="16">
-                <icon_info_outlined_1></icon_info_outlined_1>
-              </el-icon>
-            </el-tooltip>
+              <el-tooltip effect="dark" :content="t('parameter.closed_by_default')" placement="top">
+                <el-icon size="16">
+                  <icon_info_outlined_1></icon_info_outlined_1>
+                </el-icon>
+              </el-tooltip>
+            </div>
+            <div class="value">
+              <el-switch v-model="state.parameterForm['chat.expand_thinking_block']" />
+            </div>
           </div>
-          <div class="value">
-            <el-switch v-model="state.parameterForm['chat.expand_thinking_block']" />
+          <div class="card-item" style="margin-left: 16px">
+            <div class="label">
+              {{ t('parameter.rows_of_data') }}
+              <el-tooltip
+                effect="dark"
+                :content="t('parameter.excessive_data_volume')"
+                placement="top"
+              >
+                <el-icon size="16">
+                  <icon_info_outlined_1></icon_info_outlined_1>
+                </el-icon>
+              </el-tooltip>
+            </div>
+            <div class="value">
+              <el-switch
+                v-model="state.parameterForm['chat.limit_rows']"
+                :before-change="beforeChange"
+              />
+            </div>
           </div>
-        </div>
-
-        <div class="card-item" style="margin-left: 16px">
-          <div class="label">
-            {{ t('parameter.rows_of_data') }}
-            <el-tooltip
-              effect="dark"
-              :content="t('parameter.excessive_data_volume')"
-              placement="top"
-            >
-              <el-icon size="16">
-                <icon_info_outlined_1></icon_info_outlined_1>
-              </el-icon>
-            </el-tooltip>
+        </el-row>
+        <el-row>
+          <div class="card-item">
+            <div class="label">
+              {{ t('parameter.context_record_count') }}
+              <el-tooltip
+                effect="dark"
+                :content="t('parameter.context_record_count_hint')"
+                placement="top"
+              >
+                <el-icon size="16">
+                  <icon_info_outlined_1></icon_info_outlined_1>
+                </el-icon>
+              </el-tooltip>
+            </div>
+            <div class="value">
+              <el-input-number
+                v-model.number="state.parameterForm['chat.context_record_count']"
+                min="0"
+                step="1"
+                @change="onContextRecordCountChange"
+              />
+            </div>
           </div>
-          <div class="value">
-            <el-switch
-              v-model="state.parameterForm['chat.limit_rows']"
-              :before-change="beforeChange"
-            />
-          </div>
-        </div>
+        </el-row>
       </div>
 
       <platform-param />
@@ -152,7 +184,6 @@ onMounted(() => {
   }
   .title {
     font-weight: 500;
-    font-style: Medium;
     font-size: 20px;
     line-height: 28px;
     margin-bottom: 16px;
@@ -164,12 +195,11 @@ onMounted(() => {
       padding: 16px;
       border: 1px solid #dee0e3;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       margin-top: 16px;
 
       .card-title {
         font-weight: 500;
-        font-style: Medium;
         font-size: 16px;
         line-height: 24px;
         width: 100%;
