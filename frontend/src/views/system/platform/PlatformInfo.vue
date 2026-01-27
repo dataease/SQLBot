@@ -9,9 +9,7 @@
           <span>{{ cardTitle }}</span>
         </div>
         <div v-if="existInfo" class="lead-left-status" :class="{ invalid: !info.valid }">
-          <span>{{
-            info.valid ? t('authentication.valid') : info.corpid ? t('authentication.invalid') : ''
-          }}</span>
+          <span>{{ info.valid ? t('authentication.valid') : t('authentication.invalid') }}</span>
         </div>
       </div>
       <div v-if="existInfo" class="platform-setting-head-right">
