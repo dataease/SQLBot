@@ -73,7 +73,7 @@
       </div>
       <div class="value">
         <el-radio-group v-model="formData['login.default_login']">
-          <el-radio v-for="item in loginTypeOptions" :key="item.value" :label="item.value">{{
+          <el-radio v-for="item in loginTypeOptions" :key="item.value" :value="item.value">{{
             item.label
           }}</el-radio>
         </el-radio-group>

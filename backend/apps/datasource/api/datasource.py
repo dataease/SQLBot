@@ -36,9 +36,8 @@ path = settings.EXCEL_PATH
 
 
 @router.get("/ws/{oid}", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def query_by_oid(session: SessionDep, user: CurrentUser, oid: int) -> List[CoreDatasource]:
-    if not user.isAdmin:
-        raise Exception("no permission to execute")
     return get_datasource_list(session=session, user=user, oid=oid)
 
 
