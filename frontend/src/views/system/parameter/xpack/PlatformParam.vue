@@ -145,7 +145,7 @@ onMounted(async () => {
   organizations.value = wsRes
   const platformStatusRes: any = await queryCategoryStatus()
   platformStatusRes.forEach((item: any) => {
-    if (item.enable) {
+    if (item.enable && platformMapping[item.name]) {
       loginTypeOptions.value.push(platformMapping[item.name])
       anyPlatformEnable.value = true
     }
