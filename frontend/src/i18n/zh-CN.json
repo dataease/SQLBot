@@ -24,7 +24,11 @@
     "return_to_view": "返回查看"
   },
   "variables": {
+    "​​cannot_be_empty": "变量值不能为空",
+    "1_to_100": "{name}数值范围 {min}～{max}",
+    "1_to_100_de": "{name}日期范围 {min}～{max}",
     "system_variables": "系统变量",
+    "variables": "变量",
     "system": "系统",
     "search_variables": "搜索变量",
     "add_variable": "添加变量",

@@ -355,6 +355,108 @@
           </el-option>
         </el-select>
       </el-form-item>
+      <el-form-item>
+        <template #label>
+          <div style="display: flex; align-items: center; height: 22px">
+            <span>{{ t('variables.system_variables') }}</span>
+            <span
+              class="btn"
+              @click="
+                state.form.system_variables.push({
+                  variableId: '',
+                  variableValues: [],
+                  variableValue: '',
+                })
+              "
+            >
+              <el-icon style="margin-right: 4px" size="16">
+                <icon_add_outlined></icon_add_outlined>
+              </el-icon>
+              {{ $t('model.add') }}
+            </span>
+          </div>
+        </template>
+        <div v-if="!!state.form.system_variables.length" class="value-list">
+          <div class="title">
+            <span style="width: calc(48% - 2px)">{{ t('variables.variables') }}</span>
+            <span>{{ t('variables.variable_value') }}</span>
+          </div>
+          <div v-for="(_, index) in state.form.system_variables" class="item">
+            <el-select
+              v-model="state.form.system_variables[index].variableId"
+              style="width: 236px"
+              :placeholder="$t('datasource.Please_select')"
+            >
+              <el-option
+                v-for="item in variables"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              >
+              </el-option>
+            </el-select>
+            <el-select
+              v-if="!state.form.system_variables[index].variableId"
+              v-model="state.form.system_variables[index].variableValues"
+              multiple
+              style="width: 236px"
+              :placeholder="$t('datasource.Please_select')"
+            >
+              <el-option v-for="item in []" :key="item" :label="item" :value="item"> </el-option>
+            </el-select>
+            <el-select
+              v-else-if="
+                variableValueMap[state.form.system_variables[index].variableId].var_type === 'text'
+              "
+              v-model="state.form.system_variables[index].variableValues"
+              multiple
+              style="width: 236px"
+              :placeholder="$t('datasource.Please_select')"
+            >
+              <el-option
+                v-for="item in variableValueMap[state.form.system_variables[index].variableId]
+                  .value"
+                :key="item"
+                :label="item"
+                :value="item"
+              >
+              </el-option>
+            </el-select>
+            <el-input
+              v-else-if="
+                variableValueMap[state.form.system_variables[index].variableId].var_type ===
+                'number'
+              "
+              v-model.number="state.form.system_variables[index].variableValue"
+              style="width: 236px"
+              :placeholder="$t('variables.please_enter_value')"
+              autocomplete="off"
+              maxlength="50"
+              clearable
+            />
+            <el-date-picker
+              v-else
+              v-model="state.form.system_variables[index].variableValues"
+              type="daterange"
+              style="max-width: 236px"
+              value-format="YYYY-MM-DD"
+              range-separator=""
+              :start-placeholder="$t('variables.start_date')"
+              :end-placeholder="$t('variables.end_date')"
+            />
+            <el-tooltip
+              :offset="14"
+              effect="dark"
+              :content="$t('dashboard.delete')"
+              placement="top"
+            >
+              <el-icon class="action-btn" size="16" @click="deleteValues(index as number)">
+                <IconOpeDelete></IconOpeDelete>
+              </el-icon>
+            </el-tooltip>
+          </div>
+        </div>
+      </el-form-item>
       <el-form-item :label="$t('user.user_status')">
         <el-switch v-model="state.form.status" :active-value="1" :inactive-value="0" />
       </el-form-item>
@@ -423,7 +525,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, unref, reactive, onMounted, nextTick, h } from 'vue'
+import { ref, unref, reactive, onMounted, nextTick, h, shallowRef } from 'vue'
 import UserImport from './UserImport.vue'
 import SuccessFilled from '@/assets/svg/gou_icon.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
@@ -444,6 +546,7 @@ import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import { userApi } from '@/api/user'
 import { request } from '@/utils/request'
 import { workspaceList } from '@/api/workspace'
+import { variablesApi } from '@/api/variables'
 import { formatTimestamp } from '@/utils/date'
 import { ClickOutside as vClickOutside } from 'element-plus-secondary'
 import icon_warning_filled from '@/assets/svg/icon_warning_filled.svg'
@@ -511,8 +614,11 @@ const defaultForm = {
   status: 1,
   phoneNumber: '',
   oid_list: [],
+  system_variables: [],
 }
 const options = ref<any[]>([])
+const variables = shallowRef<any[]>([])
+const variableValueMap = shallowRef<any>({})
 const state = reactive<any>({
   tableData: [],
   filterTexts: [],
@@ -662,6 +768,10 @@ const handleClosePassword = () => {
   dialogVisiblePassword.value = false
 }
 
+const deleteValues = (index: number) => {
+  state.form.system_variables.splice(index, 1)
+}
+
 const handleEditPassword = (id: any) => {
   userApi.pwd(id).then(() => {
     ElMessage({
@@ -753,9 +863,27 @@ const drawerMainClose = () => {
   drawerMainRef.value.close()
 }
 const editHandler = (row: any) => {
-  if (row) {
-    state.form = { ...row }
-  }
+  variablesApi.listAll().then((res: any) => {
+    variables.value = res.filter((ele: any) => ele.type === 'custom')
+    variableValueMap.value = variables.value.reduce((pre, next) => {
+      pre[next.id] = {
+        value: next.value,
+        var_type: next.var_type,
+        name: next.name,
+      }
+      return pre
+    }, {})
+
+    if (row) {
+      state.form = {
+        ...row,
+        system_variables: (row.system_variables || []).map((ele: any) => ({
+          ...ele,
+          variableValue: ele.variableValues[0],
+        })),
+      }
+    }
+  })
   dialogFormVisible.value = true
   dialogTitle.value = row?.id ? t('user.edit_user') : t('user.add_users')
 }
@@ -855,22 +983,48 @@ const search = () => {
       })
     })
 }
+
+const formatVariableValues = () => {
+  if (!state.form.system_variables?.length) return []
+  return state.form.system_variables.map((ele: any) => ({
+    variableId: ele.variableId,
+    variableValues:
+      variableValueMap.value[ele.variableId].var_type === 'number'
+        ? [ele.variableValue]
+        : ele.variableValues,
+  }))
+}
+
 const addTerm = () => {
   const { account, email, name, oid, status, oid_list } = state.form
-  userApi.add({ account, email, name, oid, status, oid_list }).then(() => {
-    onFormClose()
-    search()
-    ElMessage({
-      type: 'success',
-      message: t('common.save_success'),
+  userApi
+    .add({ account, email, name, oid, status, oid_list, system_variables: formatVariableValues() })
+    .then(() => {
+      onFormClose()
+      search()
+      ElMessage({
+        type: 'success',
+        message: t('common.save_success'),
+      })
     })
-  })
 }
 const editTerm = () => {
   const { account, id, create_time, email, language, name, oid, oid_list, origin, status } =
     state.form
   userApi
-    .edit({ account, id, create_time, email, language, name, oid, oid_list, origin, status })
+    .edit({
+      account,
+      id,
+      create_time,
+      email,
+      language,
+      name,
+      oid,
+      oid_list,
+      origin,
+      status,
+      system_variables: formatVariableValues(),
+    })
     .then(() => {
       onFormClose()
       search()
@@ -889,9 +1043,58 @@ const duplicateName = () => {
   }
 }
 
+const validateSystemVariables = () => {
+  const { system_variables = [] } = state.form
+  if (system_variables?.length) {
+    return system_variables.some((ele: any) => {
+      const obj = variableValueMap.value[ele.variableId]
+      if (obj.var_type !== 'number' && !ele.variableValues.length) {
+        ElMessage.error(t('variables.​​cannot_be_empty'))
+        return true
+      }
+
+      if (obj.var_type === 'number' && !ele.variableValue) {
+        ElMessage.error(t('variables.​​cannot_be_empty'))
+        return true
+      }
+
+      if (obj.var_type === 'number') {
+        const [min, max] = obj.value
+        if (ele.variableValue > max || ele.variableValue < min) {
+          ElMessage.error(t('variables.1_to_100', { name: obj.name, min, max }))
+          return true
+        }
+      }
+
+      if (obj.var_type === 'datetime') {
+        const [min, max] = obj.value
+        const [minVal, maxVal] = ele.variableValues
+        if (
+          +new Date(minVal) > +new Date(max) ||
+          +new Date(maxVal) < +new Date(min) ||
+          +new Date(maxVal) > +new Date(max) ||
+          +new Date(minVal) < +new Date(min)
+        ) {
+          ElMessage.error(
+            t('variables.1_to_100_de', {
+              name: obj.name,
+              min,
+              max,
+            })
+          )
+          return true
+        }
+      }
+    })
+  }
+
+  return false
+}
+
 const saveHandler = () => {
   termFormRef.value.validate((res: any) => {
     if (res) {
+      if (validateSystemVariables()) return
       duplicateName()
     }
   })
@@ -1288,6 +1491,61 @@ const showTips = (successCount: any, errorCount: any, dataKey: any) => {
   }
 }
 .user-add-class {
+  .ed-form-item__label:has(.btn) {
+    padding-right: 0;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .value-list {
+    width: 100%;
+    padding: 16px;
+    border-radius: 6px;
+    background-color: #f5f6f7;
+    .title {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 22px;
+      margin-bottom: 8px;
+      display: flex;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+
+      &:not(:last-child) {
+        margin-bottom: 8px;
+      }
+
+      .action-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #646a73;
+
+        &:hover {
+          background-color: #1f23291a;
+        }
+      }
+    }
+  }
+  .btn {
+    margin-left: auto;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border-radius: 6px;
+    margin-right: -4px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #1f23291a;
+    }
+  }
   .down-template {
     display: flex;
     width: 100%;
