@@ -152,8 +152,8 @@ template:
             <requirement>即使查询条件不完整（如无时间范围），也必须生成可行的SQL</requirement>
           </requirements>
         </rule>
-        <rule>
-          不论上下文是否有回答相同的问题，都需要检查生成的SQL是否匹配<m-schema>内的定义
+        <rule priority="critical">
+          不论之前是否有回答相同的问题，都必须检查生成的SQL中使用的表名和字段名是否在<m-schema>内有定义
         </rule>
       </Rules>
       
