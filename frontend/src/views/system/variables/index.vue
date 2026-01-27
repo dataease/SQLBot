@@ -79,6 +79,8 @@ const deleteBatchUser = () => {
   })
 }
 const deleteHandler = (row: any) => {
+  if (row.type === 'system') return
+
   ElMessageBox.confirm(t('embedded.delete', { msg: row.name }), {
     confirmButtonType: 'danger',
     confirmButtonText: t('dashboard.delete'),
@@ -145,7 +147,10 @@ const search = ($event: any = {}) => {
     .listPage(pageInfo.currentPage, pageInfo.pageSize, data)
     .then((res) => {
       toggleRowLoading.value = true
-      fieldList.value = res.items
+      fieldList.value = res.items.map((ele: any) => ({
+        ...ele,
+        value: ele.type === 'system' ? t('variables.built_in') : ele.value,
+      }))
       pageInfo.total = res.total
       searchLoading.value = false
       nextTick(() => {
@@ -234,6 +239,7 @@ const saveHandler = () => {
 const editHandler = (row: any) => {
   pageForm.value.id = null
   if (row) {
+    if (row.type === 'system') return
     const { id, name, var_type, value } = row
     pageForm.value.id = id
     pageForm.value.name = name
@@ -340,7 +346,12 @@ const handleCurrentChange = (val: number) => {
                   :content="$t('datasource.edit')"
                   placement="top"
                 >
-                  <el-icon class="action-btn" size="16" @click="editHandler(scope.row)">
+                  <el-icon
+                    class="action-btn"
+                    :class="scope.row.type === 'system' && 'not-allow'"
+                    size="16"
+                    @click="editHandler(scope.row)"
+                  >
                     <IconOpeEdit></IconOpeEdit>
                   </el-icon>
                 </el-tooltip>
@@ -350,7 +361,12 @@ const handleCurrentChange = (val: number) => {
                   :content="$t('dashboard.delete')"
                   placement="top"
                 >
-                  <el-icon class="action-btn" size="16" @click="deleteHandler(scope.row)">
+                  <el-icon
+                    class="action-btn"
+                    :class="scope.row.type === 'system' && 'not-allow'"
+                    size="16"
+                    @click="deleteHandler(scope.row)"
+                  >
                     <IconOpeDelete></IconOpeDelete>
                   </el-icon>
                 </el-tooltip>
@@ -643,6 +659,7 @@ const handleCurrentChange = (val: number) => {
 
           &.not-allow {
             cursor: not-allowed;
+            color: #bbbfc4;
           }
         }
         .ed-icon + .ed-icon {
