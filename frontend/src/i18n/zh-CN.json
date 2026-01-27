@@ -24,6 +24,7 @@
     "return_to_view": "返回查看"
   },
   "variables": {
+    "normal_value": "常规值",
     "​​cannot_be_empty": "变量值不能为空",
     "1_to_100": "{name}数值范围 {min}～{max}",
     "1_to_100_de": "{name}日期范围 {min}～{max}",
