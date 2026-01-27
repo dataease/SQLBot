@@ -190,5 +190,11 @@
   "delete_resource_api": "Delete Resource",
   "create_canvas_api": "Create Dashboard",
   "update_canvas_api": "Update Dashboard",
-  "check_name_api": "Name Validation"
+  "check_name_api": "Name Validation",
+
+  "variable_api": "System Variable",
+  "variable_save": "Save",
+  "variable_delete": "Delete",
+  "variable_list": "List",
+  "variable_page": "Pager"
 }

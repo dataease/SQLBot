@@ -187,5 +187,11 @@
     "update_status": "更新状态",
     "update_table_relation": "变更表关系"
   },
-  "i18n_table_not_exist": "当前表不存在"
+  "i18n_table_not_exist": "当前表不存在",
+  "i18n_variable": {
+    "name_exist": "变量名称已存在",
+    "name": "姓名",
+    "account": "账号",
+    "email": "邮箱"
+  }
 }

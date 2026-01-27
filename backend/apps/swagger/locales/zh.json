@@ -190,5 +190,11 @@
   "delete_resource_api": "删除资源",
   "create_canvas_api": "新建仪表板",
   "update_canvas_api": "更新仪表板",
-  "check_name_api": "名称校验"
+  "check_name_api": "名称校验",
+
+  "variable_api": "系统变量",
+  "variable_save": "保存变量",
+  "variable_delete": "删除变量",
+  "variable_list": "获取变量",
+  "variable_page": "获取变量分页"
 }

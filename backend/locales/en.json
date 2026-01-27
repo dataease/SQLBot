@@ -187,5 +187,11 @@
     "update_status": "Update Status",
     "update_table_relation": "Change Table Relation"
   },
-  "i18n_table_not_exist": "Table not exist"
+  "i18n_table_not_exist": "Table not exist",
+  "i18n_variable": {
+    "name_exist": "Name exist",
+    "name": "Name",
+    "account": "Account",
+    "email": "Email"
+  }
 }

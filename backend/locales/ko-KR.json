@@ -187,5 +187,11 @@
     "update_status": "상태 업데이트",
     "update_table_relation": "테이블 관계 변경"
   },
-  "i18n_table_not_exist": "현재 테이블이 존재하지 않습니다"
+  "i18n_table_not_exist": "현재 테이블이 존재하지 않습니다",
+  "i18n_variable": {
+    "name_exist": "변수 이름이 이미 존재합니다",
+    "name": "이름",
+    "account": "계정",
+    "email": "이메일"
+  }
 }

@@ -107,6 +107,10 @@ tags_metadata = [
     {
         "name": "Audit",
         "description": f"{PLACEHOLDER_PREFIX}audit_api"
+    },
+    {
+        "name": "System_variable",
+        "description": f"{PLACEHOLDER_PREFIX}variable_api"
     }
 ]
 
