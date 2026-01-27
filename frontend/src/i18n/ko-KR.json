@@ -8,7 +8,11 @@
     "Details": "세부"
   },
   "variables": {
+    "​​cannot_be_empty": "변수 값은 비어 있을 수 없습니다.",
+    "1_to_100": "{name}, 숫자 범위는 {min}부터 {max}까지입니다.",
+    "1_to_100_de": "{name}, 날짜 범위는 {min}부터 {max}까지입니다.",
     "system_variables": "시스템 변수",
+    "variables": "변수",
     "system": "체계",
     "search_variables": "변수 검색",
     "add_variable": "변수 추가",

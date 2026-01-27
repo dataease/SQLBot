@@ -8,7 +8,11 @@
     "Details": "Details"
   },
   "variables": {
+    "​​cannot_be_empty": "Variable values ​​cannot be empty.",
+    "1_to_100": "{name}, the numerical range is {min} to {max}.",
+    "1_to_100_de": "{name}, the date range is {min} to {max}.",
     "system_variables": "System Variables",
+    "variables": "Variables",
     "system": "System",
     "search_variables": "Search Variables",
     "add_variable": "Add Variable",
