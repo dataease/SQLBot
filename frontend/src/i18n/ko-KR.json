@@ -8,6 +8,7 @@
     "Details": "세부"
   },
   "variables": {
+    "normal_value": "정상값",
     "​​cannot_be_empty": "변수 값은 비어 있을 수 없습니다.",
     "1_to_100": "{name}, 숫자 범위는 {min}부터 {max}까지입니다.",
     "1_to_100_de": "{name}, 날짜 범위는 {min}부터 {max}까지입니다.",
