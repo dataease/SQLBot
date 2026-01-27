@@ -162,6 +162,7 @@ defineExpose({
     modal-class="platform-info-drawer"
     size="600px"
     direction="rtl"
+    @close="resetForm(platformForm)"
   >
     <el-form
       ref="platformForm"
