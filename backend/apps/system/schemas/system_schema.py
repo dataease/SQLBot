@@ -109,6 +109,7 @@ class AssistantBase(BaseModel):
     type: int = Field(default=0, description=f"{PLACEHOLDER_PREFIX}assistant_type")  # 0普通小助手 1高级 4页面嵌入
     configuration: Optional[str] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}assistant_configuration")
     description: Optional[str] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}assistant_description")
+    oid: Optional[int] = Field(default=1, description=f"{PLACEHOLDER_PREFIX}oid")
 
 
 class AssistantDTO(AssistantBase, BaseCreatorDTO):
