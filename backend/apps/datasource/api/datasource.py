@@ -75,10 +75,21 @@ async def check_by_id(session: SessionDep, trans: Trans,
 @system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.DATASOURCE, result_id_expr="id"))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def add(session: SessionDep, trans: Trans, user: CurrentUser, ds: CreateDatasource):
-    def inner():
+    """ def inner():
         return create_ds(session, trans, user, ds)
 
-    return await asyncio.to_thread(inner)
+    return await asyncio.to_thread(inner) """
+    loop = asyncio.get_event_loop()
+    
+    def sync_wrapper():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(create_ds(session, trans, user, ds))
+        finally:
+            loop.close()
+    
+    return await loop.run_in_executor(None, sync_wrapper)
 
 
 @router.post("/chooseTables/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_choose_tables")
@@ -107,7 +118,7 @@ async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreD
 @system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.DATASOURCE, resource_id_expr="id",
                       ))
 async def delete(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"), name: str = None):
-    return delete_ds(session, id)
+    return await delete_ds(session, id)
 
 
 @router.post("/getTables/{id}", response_model=List[TableSchemaResponse], summary=f"{PLACEHOLDER_PREFIX}ds_get_tables")

@@ -17,6 +17,7 @@ class CacheName(Enum):
     ASSISTANT_INFO = "assistant:info"
     ASSISTANT_DS = "assistant:ds"
     ASK_INFO = "ask:info"
+    DS_ID_LIST = "ds:id:list"
     def __str__(self):
         return self.value
     

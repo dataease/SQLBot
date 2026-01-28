@@ -26,6 +26,7 @@ router = APIRouter(tags=["Terminology"], prefix="/system/terminology")
 
 
 @router.get("/page/{current_page}/{page_size}", summary=f"{PLACEHOLDER_PREFIX}get_term_page")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def pager(session: SessionDep, current_user: CurrentUser, current_page: int, page_size: int,
                 word: Optional[str] = Query(None, description="搜索术语(可选)"),
                 dslist: Optional[list[int]] = Query(None, description="数据集ID集合(可选)")):
@@ -42,6 +43,7 @@ async def pager(session: SessionDep, current_user: CurrentUser, current_page: in
 
 
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}create_or_update_term")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="info.datasource_ids"))
 @system_log(LogConfig(operation_type=OperationType.CREATE_OR_UPDATE, module=OperationModules.TERMINOLOGY,resource_id_expr='info.id', result_id_expr="result_self"))
 async def create_or_update(session: SessionDep, current_user: CurrentUser, trans: Trans, info: TerminologyInfo):
     oid = current_user.oid

@@ -27,6 +27,7 @@ router = APIRouter(tags=["SQL Examples"], prefix="/system/data-training")
 
 
 @router.get("/page/{current_page}/{page_size}", summary=f"{PLACEHOLDER_PREFIX}get_dt_page")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def pager(session: SessionDep, current_user: CurrentUser, current_page: int, page_size: int,
                 question: Optional[str] = Query(None, description="搜索问题(可选)")):
     current_page, page_size, total_count, total_pages, _list = page_data_training(session, current_page, page_size,
@@ -43,6 +44,7 @@ async def pager(session: SessionDep, current_user: CurrentUser, current_page: in
 
 
 @router.put("", response_model=int, summary=f"{PLACEHOLDER_PREFIX}create_or_update_dt")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="info.datasource"))
 @system_log(LogConfig(operation_type=OperationType.CREATE_OR_UPDATE, module=OperationModules.DATA_TRAINING,resource_id_expr='info.id', result_id_expr="result_self"))
 async def create_or_update(session: SessionDep, current_user: CurrentUser, trans: Trans, info: DataTrainingInfo):
     oid = current_user.oid
