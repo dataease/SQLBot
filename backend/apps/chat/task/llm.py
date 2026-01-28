@@ -268,11 +268,18 @@ class LLMService:
         return format_chart_fields(chart_info)
 
     def filter_terminology_template(self, _session: Session, oid: int = None, ds_id: int = None):
+        calculate_oid = oid
+        calculate_ds_id = ds_id
+        if self.current_assistant:
+            calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
+            if self.current_assistant.type == 1:
+                calculate_ds_id = None
         self.current_logs[OperationEnum.FILTER_TERMS] = start_log(session=_session,
                                                                   operate=OperationEnum.FILTER_TERMS,
                                                                   record_id=self.record.id, local_operation=True)
+        
         self.chat_question.terminologies, term_list = get_terminology_template(_session, self.chat_question.question,
-                                                                               oid, ds_id)
+                                                                               calculate_oid, calculate_ds_id)
         self.current_logs[OperationEnum.FILTER_TERMS] = end_log(session=_session,
                                                                 log=self.current_logs[OperationEnum.FILTER_TERMS],
                                                                 full_message=term_list)
@@ -280,12 +287,18 @@ class LLMService:
     def filter_custom_prompts(self, _session: Session, custom_prompt_type: CustomPromptTypeEnum, oid: int = None,
                               ds_id: int = None):
         if SQLBotLicenseUtil.valid():
+            calculate_oid = oid
+            calculate_ds_id = ds_id
+            if self.current_assistant:
+                calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
+                if self.current_assistant.type == 1:
+                    calculate_ds_id = None
             self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = start_log(session=_session,
                                                                               operate=OperationEnum.FILTER_CUSTOM_PROMPT,
                                                                               record_id=self.record.id,
                                                                               local_operation=True)
-            self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session, custom_prompt_type, oid,
-                                                                                ds_id)
+            self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session, custom_prompt_type, calculate_oid,
+                                                                                calculate_ds_id)
             self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = end_log(session=_session,
                                                                             log=self.current_logs[
                                                                                 OperationEnum.FILTER_CUSTOM_PROMPT],
@@ -296,14 +309,20 @@ class LLMService:
                                                                         operate=OperationEnum.FILTER_SQL_EXAMPLE,
                                                                         record_id=self.record.id,
                                                                         local_operation=True)
+        calculate_oid = oid
+        calculate_ds_id = ds_id
+        if self.current_assistant:
+            calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
+            if self.current_assistant.type == 1:
+                calculate_ds_id = None
         if self.current_assistant and self.current_assistant.type == 1:
             self.chat_question.data_training, example_list = get_training_template(_session,
-                                                                                   self.chat_question.question, oid,
+                                                                                   self.chat_question.question, calculate_oid,
                                                                                    None, self.current_assistant.id)
         else:
             self.chat_question.data_training, example_list = get_training_template(_session,
-                                                                                   self.chat_question.question, oid,
-                                                                                   ds_id)
+                                                                                   self.chat_question.question, calculate_oid,
+                                                                                   calculate_ds_id)
         self.current_logs[OperationEnum.FILTER_SQL_EXAMPLE] = end_log(session=_session,
                                                                       log=self.current_logs[
                                                                           OperationEnum.FILTER_SQL_EXAMPLE],
