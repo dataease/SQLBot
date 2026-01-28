@@ -356,6 +356,7 @@ def get_chat_with_records(session: SessionDep, chart_id: int, current_user: Curr
             and_(
                 ChatLog.pid.in_(record_ids),
                 ChatLog.local_operation == False,
+                ChatLog.operate != OperationEnum.GENERATE_RECOMMENDED_QUESTIONS,
                 ChatLog.token_usage.is_not(None)  # 排除token_usage为空的记录
             )
         )
