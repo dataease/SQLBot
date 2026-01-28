@@ -606,7 +606,7 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
     if chat_record.create_time and chat_record.finish_time:
         try:
             time_diff = chat_record.finish_time - chat_record.create_time
-            total_duration = time_diff.total_seconds()
+            total_duration = round(time_diff.total_seconds(), 2)
         except Exception:
             total_duration = None
 
