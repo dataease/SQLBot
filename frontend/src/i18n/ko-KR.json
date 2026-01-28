@@ -8,6 +8,10 @@
     "Details": "세부"
   },
   "parameter": {
+    "execution_details": "실행 세부 정보",
+    "overview": "개요",
+    "tokens_required": "필요한 토큰 수",
+    "time_execution": "실행 시간",
     "export_notes": "수출 참고사항",
     "import_notes": "수입 참고사항",
     "memo": "메모 업데이트 규칙: 테이블 이름과 필드 이름이 일치하는지 확인합니다. 일치하는 항목이 있으면 테이블 메모와 필드 메모를 업데이트하고, 그렇지 않으면 메모를 변경하지 않고 그대로 둡니다.",

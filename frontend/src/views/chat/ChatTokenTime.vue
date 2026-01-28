@@ -1,63 +1,54 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { chatApi, type ChatLogHistory } from '@/api/chat.ts'
-
+import { ref } from 'vue'
+import icon_logs_outlined from '@/assets/svg/icon_logs_outlined.svg'
+import ExecutionDetails from './ExecutionDetails.vue'
 const props = defineProps<{
   recordId?: number
   duration?: number | undefined
   totalTokens?: number | undefined
 }>()
 
-const logHistory = ref<ChatLogHistory>()
-
+const executionDetailsRef = ref()
 function getLogList() {
-  chatApi.get_chart_log_history(props.recordId).then((res) => {
-    logHistory.value = chatApi.toChatLogHistory(res)
-    console.log(logHistory.value)
-  })
+  executionDetailsRef.value.getLogList(props.recordId)
 }
-
-onMounted(() => {})
 </script>
 
 <template>
   <div v-if="recordId && (duration || totalTokens)" class="tool-container">
-    <span>token: {{ totalTokens }}</span>
-    <span>duration: {{ duration }}</span>
-    <el-button @click="getLogList">log</el-button>
+    <span>{{ $t('parameter.tokens_required') }} {{ totalTokens }}</span>
+    <span style="margin-left: 12px">{{ $t('parameter.time_execution') }} {{ duration }} s</span>
+
+    <div @click="getLogList" class="detail">
+      <el-icon style="margin-right: 4px" size="16">
+        <icon_logs_outlined></icon_logs_outlined>
+      </el-icon>
+      {{ $t('parameter.execution_details') }}
+    </div>
   </div>
+  <ExecutionDetails ref="executionDetailsRef"></ExecutionDetails>
 </template>
 
 <style scoped lang="less">
 .tool-container {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  height: 38px;
+  margin: 12px 0;
+  background: #f5f6f7;
+  border-radius: 6px;
+  padding: 0 12px;
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  color: #646a73;
 
-  row-gap: 8px;
-
-  min-height: 22px;
-
-  margin-top: 12px;
-  margin-bottom: 12px;
-
-  .tool-times {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 22px;
-    color: rgba(100, 106, 115, 1);
-
+  .detail {
+    cursor: pointer;
+    margin-left: auto;
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-
-    .time {
-      white-space: nowrap;
-    }
   }
 }
 </style>

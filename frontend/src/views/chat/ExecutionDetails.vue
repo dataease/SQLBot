@@ -1,0 +1,150 @@
+<script lang="ts" setup>
+import { ref } from 'vue'
+import gou_icon from '@/assets/svg/gou_icon.svg'
+import icon_error from '@/assets/svg/icon_error.svg'
+import icon_database_colorful from '@/assets/svg/icon_database_colorful.svg'
+import icon_alarm_clock_colorful from '@/assets/svg/icon_alarm-clock_colorful.svg'
+import { chatApi, type ChatLogHistory } from '@/api/chat.ts'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+const logHistory = ref<ChatLogHistory>({})
+const dialogFormVisible = ref(false)
+
+function getLogList(recordId: any) {
+  chatApi.get_chart_log_history(recordId).then((res) => {
+    logHistory.value = chatApi.toChatLogHistory(res) as ChatLogHistory
+    dialogFormVisible.value = true
+  })
+}
+
+defineExpose({
+  getLogList,
+})
+</script>
+
+<template>
+  <el-drawer
+    v-model="dialogFormVisible"
+    :title="t('parameter.execution_details')"
+    destroy-on-close
+    modal-class="execution-details"
+    size="600px"
+  >
+    <div class="title">{{ t('parameter.overview') }}</div>
+    <div class="overview">
+      <div class="item">
+        <el-icon size="40">
+          <icon_database_colorful></icon_database_colorful>
+        </el-icon>
+        <div class="name">{{ t('parameter.tokens_required') }}</div>
+        <div class="value">{{ logHistory.total_tokens }}</div>
+      </div>
+      <div class="item">
+        <el-icon size="40">
+          <icon_alarm_clock_colorful></icon_alarm_clock_colorful>
+        </el-icon>
+        <div class="name">{{ t('parameter.time_execution') }}</div>
+        <div class="value">{{ logHistory.duration }}s</div>
+      </div>
+    </div>
+    <div class="title">{{ t('parameter.execution_details') }}</div>
+
+    <div class="list">
+      <div class="list-item" :key="ele.duration" v-for="ele in logHistory.steps">
+        <div class="name">{{ ele.operate }}</div>
+        <div class="status">
+          <div class="time">{{ ele.duration }}s</div>
+          <el-icon size="16">
+            <gou_icon v-if="true"></gou_icon>
+            <icon_error v-else></icon_error>
+          </el-icon>
+        </div>
+      </div>
+    </div>
+  </el-drawer>
+</template>
+
+<style lang="less">
+.execution-details {
+  .title {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    margin-bottom: 16px;
+  }
+
+  .overview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    .item {
+      width: 268px;
+      height: 86px;
+      border-radius: 12px;
+      border: 1px solid #dee0e3;
+      padding: 16px;
+
+      .ed-icon {
+        float: left;
+        margin: 8px 12px 0 0;
+      }
+
+      .name {
+        float: left;
+        color: #646a73;
+        font-family: PingFang SC;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 22px;
+        width: 180px;
+      }
+
+      .value {
+        float: left;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 28px;
+        color: #1f2329;
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .list {
+    .list-item {
+      width: 552px;
+      height: 54px;
+      border-radius: 12px;
+      border: 1px solid #dee0e3;
+      padding: 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+
+      .status {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+      }
+      .name {
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 22px;
+      }
+
+      .time {
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 22px;
+        color: #646a73;
+      }
+
+      .ed-icon {
+        margin-left: 12px;
+      }
+    }
+  }
+}
+</style>

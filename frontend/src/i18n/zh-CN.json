@@ -8,6 +8,10 @@
     "Details": "详情"
   },
   "parameter": {
+    "execution_details": "执行详情",
+    "overview": "概览",
+    "tokens_required": "消耗 Tokens",
+    "time_execution": "耗时",
     "export_notes": "导出备注",
     "import_notes": "导入备注",
     "memo": "备注更新规则：根据表名和字段名匹配，如果匹配则更新表备注和字段备注；如果匹配不上，备注保持不变。",
