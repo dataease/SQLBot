@@ -128,14 +128,11 @@ class LLMService:
                 if not ds:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = ds.type + get_version(ds)
-                chat_question.db_schema = self.out_ds_instance.get_db_schema(ds.id, chat_question.question)
             else:
                 ds = session.get(CoreDatasource, chat.datasource)
                 if not ds:
                     raise SingleMessageError("No available datasource configuration found")
                 chat_question.engine = (ds.type_name if ds.type != 'excel' else 'PostgreSQL') + get_version(ds)
-                chat_question.db_schema = get_table_schema(session=session, current_user=current_user, ds=ds,
-                                                           question=chat_question.question, embedding=embedding)
 
         self.generate_sql_logs = list_generate_sql_logs(session=session, chart_id=chat_id)
         self.generate_chart_logs = list_generate_chart_logs(session=session, chart_id=chat_id)
@@ -204,7 +201,10 @@ class LLMService:
         except Exception as e:
             return True
 
-    def init_messages(self):
+    def init_messages(self, session: Session):
+
+        self.choose_table_schema(session)
+
         last_sql_messages: List[dict[str, Any]] = self.generate_sql_logs[-1].messages if len(
             self.generate_sql_logs) > 0 else []
         if self.chat_question.regenerate_record_id:
@@ -267,6 +267,64 @@ class LLMService:
         chart_info = get_chart_config(_session, self.record.id)
         return format_chart_fields(chart_info)
 
+    def filter_terminology_template(self, _session: Session, oid: int = None, ds_id: int = None):
+        self.current_logs[OperationEnum.FILTER_TERMS] = start_log(session=_session,
+                                                                  operate=OperationEnum.FILTER_TERMS,
+                                                                  record_id=self.record.id, local_operation=True)
+        self.chat_question.terminologies, term_list = get_terminology_template(_session, self.chat_question.question,
+                                                                               oid, ds_id)
+        self.current_logs[OperationEnum.FILTER_TERMS] = end_log(session=_session,
+                                                                log=self.current_logs[OperationEnum.FILTER_TERMS],
+                                                                full_message=term_list)
+
+    def filter_custom_prompts(self, _session: Session, custom_prompt_type: CustomPromptTypeEnum, oid: int = None,
+                              ds_id: int = None):
+        if SQLBotLicenseUtil.valid():
+            self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = start_log(session=_session,
+                                                                              operate=OperationEnum.FILTER_CUSTOM_PROMPT,
+                                                                              record_id=self.record.id,
+                                                                              local_operation=True)
+            self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session, custom_prompt_type, oid,
+                                                                                ds_id)
+            self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = end_log(session=_session,
+                                                                            log=self.current_logs[
+                                                                                OperationEnum.FILTER_CUSTOM_PROMPT],
+                                                                            full_message=prompt_list)
+
+    def filter_training_template(self, _session: Session, oid: int = None, ds_id: int = None):
+        self.current_logs[OperationEnum.FILTER_SQL_EXAMPLE] = start_log(session=_session,
+                                                                        operate=OperationEnum.FILTER_SQL_EXAMPLE,
+                                                                        record_id=self.record.id,
+                                                                        local_operation=True)
+        if self.current_assistant and self.current_assistant.type == 1:
+            self.chat_question.data_training, example_list = get_training_template(_session,
+                                                                                   self.chat_question.question, oid,
+                                                                                   None, self.current_assistant.id)
+        else:
+            self.chat_question.data_training, example_list = get_training_template(_session,
+                                                                                   self.chat_question.question, oid,
+                                                                                   ds_id)
+        self.current_logs[OperationEnum.FILTER_SQL_EXAMPLE] = end_log(session=_session,
+                                                                      log=self.current_logs[
+                                                                          OperationEnum.FILTER_SQL_EXAMPLE],
+                                                                      full_message=example_list)
+
+    def choose_table_schema(self, _session: Session):
+        self.current_logs[OperationEnum.CHOOSE_TABLE] = start_log(session=_session,
+                                                                  operate=OperationEnum.CHOOSE_TABLE,
+                                                                  record_id=self.record.id,
+                                                                  local_operation=True)
+        self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
+            self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
+            session=_session,
+            current_user=self.current_user,
+            ds=self.ds,
+            question=self.chat_question.question)
+
+        self.current_logs[OperationEnum.CHOOSE_TABLE] = end_log(session=_session,
+                                                                log=self.current_logs[OperationEnum.CHOOSE_TABLE],
+                                                                full_message=self.chat_question.db_schema)
+
     def generate_analysis(self, _session: Session):
         fields = self.get_fields_from_chart(_session)
         self.chat_question.fields = orjson.dumps(fields).decode()
@@ -275,11 +333,10 @@ class LLMService:
         analysis_msg: List[Union[BaseMessage, dict[str, Any]]] = []
 
         ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-        self.chat_question.terminologies = get_terminology_template(_session, self.chat_question.question,
-                                                                    self.current_user.oid, ds_id)
-        if SQLBotLicenseUtil.valid():
-            self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS,
-                                                                   self.current_user.oid, ds_id)
+
+        self.filter_terminology_template(_session, self.current_user.oid, ds_id)
+
+        self.filter_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS, self.current_user.oid, ds_id)
 
         analysis_msg.append(SystemMessage(content=self.chat_question.analysis_sys_question()))
         analysis_msg.append(HumanMessage(content=self.chat_question.analysis_user_question()))
@@ -325,10 +382,8 @@ class LLMService:
         data = get_chat_chart_data(_session, self.record.id)
         self.chat_question.data = orjson.dumps(data.get('data')).decode()
 
-        if SQLBotLicenseUtil.valid():
-            ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-            self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.PREDICT_DATA,
-                                                                   self.current_user.oid, ds_id)
+        ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+        self.filter_custom_prompts(_session, CustomPromptTypeEnum.PREDICT_DATA, self.current_user.oid, ds_id)
 
         predict_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         predict_msg.append(SystemMessage(content=self.chat_question.predict_sys_question()))
@@ -509,8 +564,7 @@ class LLMService:
                     _ds = self.out_ds_instance.get_ds(data['id'])
                     self.ds = _ds
                     self.chat_question.engine = _ds.type + get_version(self.ds)
-                    self.chat_question.db_schema = self.out_ds_instance.get_db_schema(self.ds.id,
-                                                                                      self.chat_question.question)
+
                     _engine_type = self.chat_question.engine
                     _chat.engine_type = _ds.type
                 else:
@@ -521,9 +575,7 @@ class LLMService:
                     self.ds = CoreDatasource(**_ds.model_dump())
                     self.chat_question.engine = (_ds.type_name if _ds.type != 'excel' else 'PostgreSQL') + get_version(
                         self.ds)
-                    self.chat_question.db_schema = get_table_schema(session=_session,
-                                                                    current_user=self.current_user, ds=self.ds,
-                                                                    question=self.chat_question.question)
+
                     _engine_type = self.chat_question.engine
                     _chat.engine_type = _ds.type_name
                 # save chat
@@ -555,19 +607,13 @@ class LLMService:
             oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
-            self.chat_question.terminologies = get_terminology_template(_session, self.chat_question.question, oid,
-                                                                        ds_id)
-            if self.current_assistant and self.current_assistant.type == 1:
-                self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
-                                                                         oid, None, self.current_assistant.id)
-            else:
-                self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
-                                                                         oid, ds_id)
-            if SQLBotLicenseUtil.valid():
-                self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.GENERATE_SQL,
-                                                                       oid, ds_id)
+            self.filter_terminology_template(_session, oid, ds_id)
 
-            self.init_messages()
+            self.filter_training_template(_session, oid, ds_id)
+
+            self.filter_custom_prompts(_session, CustomPromptTypeEnum.GENERATE_SQL, oid, ds_id)
+
+            self.init_messages(_session)
 
         if _error:
             raise _error
@@ -994,19 +1040,14 @@ class LLMService:
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-                self.chat_question.terminologies = get_terminology_template(_session, self.chat_question.question,
-                                                                            oid, ds_id)
-                if self.current_assistant and self.current_assistant.type == 1:
-                    self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
-                                                                             oid, None, self.current_assistant.id)
-                else:
-                    self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
-                                                                             oid, ds_id)
-                if SQLBotLicenseUtil.valid():
-                    self.chat_question.custom_prompt = find_custom_prompts(_session,
-                                                                           CustomPromptTypeEnum.GENERATE_SQL,
-                                                                           oid, ds_id)
-                self.init_messages()
+
+                self.filter_terminology_template(_session, oid, ds_id)
+
+                self.filter_training_template(_session, oid, ds_id)
+
+                self.filter_custom_prompts(_session, CustomPromptTypeEnum.GENERATE_SQL, oid, ds_id)
+
+                self.init_messages(_session)
 
             # return id
             if in_chat:
@@ -1038,12 +1079,6 @@ class LLMService:
                                                   'engine_type': self.ds.type_name or self.ds.type,
                                                   'type': 'datasource'}).decode() + '\n\n'
 
-                self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
-                    self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
-                    session=_session,
-                    current_user=self.current_user,
-                    ds=self.ds,
-                    question=self.chat_question.question)
             else:
                 self.validate_history_ds(_session)
 
@@ -1140,7 +1175,14 @@ class LLMService:
                     yield json_result
                 return
 
+            self.current_logs[OperationEnum.EXECUTE_SQL] = start_log(session=_session,
+                                                                     operate=OperationEnum.EXECUTE_SQL,
+                                                                     record_id=self.record.id, local_operation=True)
             result = self.execute_sql(sql=real_execute_sql)
+            self.current_logs[OperationEnum.EXECUTE_SQL] = end_log(session=_session,
+                                                                   log=self.current_logs[OperationEnum.EXECUTE_SQL],
+                                                                   full_message={'sql': real_execute_sql,
+                                                                                 'count': len(result.get('data'))})
 
             _data = DataFormat.convert_large_numbers_in_object_array(result.get('data'))
             result["data"] = _data
@@ -1229,6 +1271,10 @@ class LLMService:
                 try:
                     if chart.get('type') != 'table':
                         # yield '### generated chart picture\n\n'
+                        self.current_logs[OperationEnum.GENERATE_PICTURE] = start_log(session=_session,
+                                                                                      operate=OperationEnum.GENERATE_PICTURE,
+                                                                                      record_id=self.record.id,
+                                                                                      local_operation=True)
                         image_url, error = request_picture(self.record.chat_id, self.record.id, chart,
                                                            format_json_data(result))
                         SQLBotLogUtil.info(image_url)
@@ -1238,6 +1284,11 @@ class LLMService:
                             json_result['image_url'] = image_url
                         if error is not None:
                             raise error
+
+                        self.current_logs[OperationEnum.GENERATE_PICTURE] = end_log(session=_session,
+                                                                                    log=self.current_logs[
+                                                                                        OperationEnum.GENERATE_PICTURE],
+                                                                                    full_message=image_url)
                 except Exception as e:
                     if stream:
                         if chart.get('type') != 'table':

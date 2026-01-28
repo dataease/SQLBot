@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import orjson
 import sqlparse
@@ -62,6 +62,7 @@ def list_recent_questions(session: SessionDep, current_user: CurrentUser, dataso
     )
     return [record[0] for record in chat_records] if chat_records else []
 
+
 def rename_chat_with_user(session: SessionDep, current_user: CurrentUser, rename_object: RenameChat) -> str:
     chat = session.get(Chat, rename_object.id)
     if not chat:
@@ -77,6 +78,7 @@ def rename_chat_with_user(session: SessionDep, current_user: CurrentUser, rename
     brief = chat.brief
     session.commit()
     return brief
+
 
 def rename_chat(session: SessionDep, rename_object: RenameChat) -> str:
     chat = session.get(Chat, rename_object.id)
@@ -103,6 +105,7 @@ def delete_chat(session, chart_id) -> str:
     session.commit()
 
     return f'Chat with id {chart_id} has been deleted'
+
 
 def delete_chat_with_user(session, current_user: CurrentUser, chart_id) -> str:
     chat = session.query(Chat).filter(Chat.id == chart_id).first()
@@ -220,6 +223,7 @@ def get_chat_chart_config(session: SessionDep, chat_record_id: int):
             pass
     return {}
 
+
 def get_chart_data_with_user(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
     stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chat_record_id, ChatRecord.create_by == current_user.id))
     res = session.execute(stmt)
@@ -229,6 +233,7 @@ def get_chart_data_with_user(session: SessionDep, current_user: CurrentUser, cha
         except Exception:
             pass
     return {}
+
 
 def get_chat_chart_data(session: SessionDep, chat_record_id: int):
     stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chat_record_id))
@@ -240,8 +245,10 @@ def get_chat_chart_data(session: SessionDep, chat_record_id: int):
             pass
     return {}
 
+
 def get_chat_predict_data_with_user(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
-    stmt = select(ChatRecord.predict_data).where(and_(ChatRecord.id == chat_record_id, ChatRecord.create_by == current_user.id))
+    stmt = select(ChatRecord.predict_data).where(
+        and_(ChatRecord.id == chat_record_id, ChatRecord.create_by == current_user.id))
     res = session.execute(stmt)
     for row in res:
         try:
@@ -249,6 +256,7 @@ def get_chat_predict_data_with_user(session: SessionDep, current_user: CurrentUs
         except Exception:
             pass
     return {}
+
 
 def get_chat_predict_data(session: SessionDep, chat_record_id: int):
     stmt = select(ChatRecord.predict_data).where(and_(ChatRecord.id == chat_record_id))
@@ -607,10 +615,11 @@ def save_analysis_predict_record(session: SessionDep, base_record: ChatRecord, a
     return result
 
 
-def start_log(session: SessionDep, ai_modal_id: int, ai_modal_name: str, operate: OperationEnum, record_id: int,
-              full_message: list[dict]) -> ChatLog:
+def start_log(session: SessionDep, ai_modal_id: int = None, ai_modal_name: str = None, operate: OperationEnum = None,
+              record_id: int = None, full_message: Union[list[dict], dict] = None,
+              local_operation: bool = False) -> ChatLog:
     log = ChatLog(type=TypeEnum.CHAT, operate=operate, pid=record_id, ai_modal_id=ai_modal_id, base_modal=ai_modal_name,
-                  messages=full_message, start_time=datetime.datetime.now())
+                  messages=full_message, start_time=datetime.datetime.now(), local_operation=local_operation)
 
     result = ChatLog(**log.model_dump())
 
@@ -623,7 +632,8 @@ def start_log(session: SessionDep, ai_modal_id: int, ai_modal_name: str, operate
     return result
 
 
-def end_log(session: SessionDep, log: ChatLog, full_message: list[dict], reasoning_content: str = None,
+def end_log(session: SessionDep, log: ChatLog, full_message: Union[list[dict], dict, str],
+            reasoning_content: str = None,
             token_usage=None) -> ChatLog:
     if token_usage is None:
         token_usage = {}
@@ -866,6 +876,8 @@ def save_error_message(session: SessionDep, record_id: int, message: str) -> Cha
     session.execute(stmt)
 
     session.commit()
+
+    # todo log error finish
 
     return result
 
