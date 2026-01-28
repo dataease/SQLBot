@@ -359,19 +359,38 @@ const queryCategoryStatus = () => {
 const callBackType = () => {
   return getQueryString('state')
 }
+const loginTypeParam = (): number | null => {
+  let login_type = getQueryString('login_type')
+  if (!login_type) {
+    return null
+  }
+  const mappingArray = ['default', 'cas', 'oidc', 'ldap', 'oauth2', 'saml2']
+  const index = mappingArray.indexOf(login_type.toLocaleLowerCase())
+  if (index === -1) {
+    if (/^[0-5]$/.test(login_type)) {
+      return parseInt(login_type)
+    }
+    return null
+  }
+  return index
+}
 
 const auto2Platform = async () => {
   if (adminLogin.value) {
     updateLoading(false, 100)
     return
   }
-  const resData = await request.get('/system/parameter/login')
-  let res = 0
-  const resObj = {} as any
-  resData.forEach((item: any) => {
-    resObj[item.pkey] = item.pval
-  })
-  res = parseInt(resObj['login.default_login'] || 0)
+  let res: number | null = loginTypeParam()
+  if (res === null) {
+    const resData = await request.get('/system/parameter/login')
+
+    const resObj = {} as any
+    resData.forEach((item: any) => {
+      resObj[item.pkey] = item.pval
+    })
+    res = parseInt(resObj['login.default_login'] || 0)
+  }
+
   const originArray = ['default', 'cas', 'oidc', 'ldap', 'oauth2', 'saml2']
   if (res && !adminLogin.value && loginCategory.value[originArray[res] as keyof LoginCategory]) {
     if (res === 3) {
