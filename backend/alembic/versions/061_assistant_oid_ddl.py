@@ -31,7 +31,9 @@ def upgrade():
         try:
             config = json.loads(row.configuration) if isinstance(row.configuration, str) else row.configuration
             oid_value = config.get('oid', 1) if isinstance(config, dict) else 1
-            if isinstance(oid_value, int) and oid_value != 1:
+            if oid_value != 1:
+                if not isinstance(oid_value, int):
+                    oid_value = int(oid_value)
                 conn.execute(
                     sa.text("UPDATE sys_assistant SET oid = :oid WHERE id = :id"),
                     {"oid": oid_value, "id": row.id}
