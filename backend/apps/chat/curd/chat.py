@@ -8,7 +8,7 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import aliased
 
 from apps.chat.models.chat_model import Chat, ChatRecord, CreateChat, ChatInfo, RenameChat, ChatQuestion, ChatLog, \
-    TypeEnum, OperationEnum, ChatRecordResult
+    TypeEnum, OperationEnum, ChatRecordResult, ChatLogHistory, ChatLogHistoryItem
 from apps.datasource.crud.recommended_problem import get_datasource_recommended_chart
 from apps.datasource.models.datasource import CoreDatasource
 from apps.db.constant import DB
@@ -345,11 +345,60 @@ def get_chat_with_records(session: SessionDep, chart_id: int, current_user: Curr
 
     result = session.execute(stmt).all()
     record_list: list[ChatRecordResult] = []
+
+    # 批量获取所有ChatRecord的token消耗
+    record_ids = [row.id for row in result]
+    token_usage_map = {}
+
+    if record_ids:
+        # 查询所有相关ChatLog的token_usage
+        log_stmt = select(ChatLog.pid, ChatLog.token_usage).where(
+            and_(
+                ChatLog.pid.in_(record_ids),
+                ChatLog.local_operation == False,
+                ChatLog.token_usage.is_not(None)  # 排除token_usage为空的记录
+            )
+        )
+        log_results = session.execute(log_stmt).all()
+
+        # 按pid分组计算total_tokens总和
+        for pid, token_usage in log_results:
+            if pid and token_usage is not None:
+                tokens_to_add = 0
+
+                if isinstance(token_usage, dict):
+                    # 处理字典类型: {"input_tokens": 961, "total_tokens": 1006, "output_tokens": 45}
+                    if token_usage:  # 非空字典
+                        if "total_tokens" in token_usage:
+                            token_value = token_usage["total_tokens"]
+                            if isinstance(token_value, (int, float)):
+                                tokens_to_add = int(token_value)
+                elif isinstance(token_usage, (int, float)):
+                    tokens_to_add = int(token_usage)
+                if tokens_to_add > 0:
+                    if pid not in token_usage_map:
+                        token_usage_map[pid] = 0
+                    token_usage_map[pid] += tokens_to_add
+
     for row in result:
+        # 计算耗时
+        duration = None
+        if row.create_time and row.finish_time:
+            try:
+                time_diff = row.finish_time - row.create_time
+                duration = time_diff.total_seconds()  # 转换为秒
+            except Exception:
+                duration = None
+
+        # 获取token总消耗
+        total_tokens = token_usage_map.get(row.id, 0)
+
         if not with_data:
             record_list.append(
                 ChatRecordResult(id=row.id, chat_id=row.chat_id, create_time=row.create_time,
                                  finish_time=row.finish_time,
+                                 duration=duration,
+                                 total_tokens=total_tokens,
                                  question=row.question, sql_answer=row.sql_answer, sql=row.sql,
                                  chart_answer=row.chart_answer, chart=row.chart,
                                  analysis=row.analysis, predict=row.predict,
@@ -367,6 +416,8 @@ def get_chat_with_records(session: SessionDep, chart_id: int, current_user: Curr
             record_list.append(
                 ChatRecordResult(id=row.id, chat_id=row.chat_id, create_time=row.create_time,
                                  finish_time=row.finish_time,
+                                 duration=duration,
+                                 total_tokens=total_tokens,
                                  question=row.question, sql_answer=row.sql_answer, sql=row.sql,
                                  chart_answer=row.chart_answer, chart=row.chart,
                                  analysis=row.analysis, predict=row.predict,
@@ -437,6 +488,23 @@ def format_record(record: ChatRecordResult):
             _dict['sql'] = sqlparse.format(record.sql, reindent=True)
         except Exception:
             pass
+
+    # 格式化duration字段，保留2位小数
+    if 'duration' in _dict and _dict['duration'] is not None:
+        try:
+            # 可以格式化为更易读的形式
+            _dict['duration'] = round(_dict['duration'], 2)  # 保留2位小数
+        except Exception:
+            pass
+
+    # 格式化total_tokens字段
+    if 'total_tokens' in _dict and _dict['total_tokens'] is not None:
+        try:
+            # 确保是整数类型
+            _dict['total_tokens'] = int(_dict['total_tokens']) if _dict['total_tokens'] else 0
+        except Exception:
+            _dict['total_tokens'] = 0
+
     # 去除返回前端多余的字段
     _dict.pop('sql_reasoning_content', None)
     _dict.pop('chart_reasoning_content', None)
@@ -445,6 +513,90 @@ def format_record(record: ChatRecordResult):
 
     return _dict
 
+
+def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user: CurrentUser) -> ChatLogHistory:
+    """
+    获取ChatRecord的详细历史记录
+
+    Args:
+        session: 数据库会话
+        chat_record_id: ChatRecord的ID
+        current_user: 当前用户
+
+    Returns:
+        ChatLogHistory: 包含历史步骤和时间信息的对象
+    """
+    # 1. 首先验证ChatRecord存在且属于当前用户
+    chat_record = session.get(ChatRecord, chat_record_id)
+    if not chat_record:
+        raise Exception(f"ChatRecord with id {chat_record_id} not found")
+
+    if chat_record.create_by != current_user.id:
+        raise Exception(f"ChatRecord with id {chat_record_id} not owned by the current user")
+
+    # 2. 查询与该ChatRecord相关的所有ChatLog记录
+    chat_logs = session.query(ChatLog).filter(
+        ChatLog.pid == chat_record_id
+    ).order_by(ChatLog.start_time).all()
+
+    # 3. 计算总的时间和token信息
+    total_tokens = 0
+    steps = []
+
+    for log in chat_logs:
+        # 计算单条记录的耗时
+        duration = None
+        if log.start_time and log.finish_time:
+            try:
+                time_diff = log.finish_time - log.start_time
+                duration = time_diff.total_seconds()
+            except Exception:
+                duration = None
+
+        # 计算单条记录的token消耗
+        log_tokens = 0
+        if log.token_usage is not None:
+            if isinstance(log.token_usage, dict):
+                if log.token_usage and "total_tokens" in log.token_usage:
+                    token_value = log.token_usage["total_tokens"]
+                    if isinstance(token_value, (int, float)):
+                        log_tokens = int(token_value)
+            elif isinstance(log.token_usage, (int, float)):
+                log_tokens = log.token_usage
+
+        # 累加到总token消耗
+        total_tokens += log_tokens
+
+        # 创建ChatLogHistoryItem
+        history_item = ChatLogHistoryItem(
+            start_time=log.start_time,
+            finish_time=log.finish_time,
+            duration=duration,
+            total_tokens=log_tokens,
+            operate=log.operate,
+            local_operation=log.local_operation
+        )
+        steps.append(history_item)
+
+    # 4. 计算总耗时（使用ChatRecord的时间）
+    total_duration = None
+    if chat_record.create_time and chat_record.finish_time:
+        try:
+            time_diff = chat_record.finish_time - chat_record.create_time
+            total_duration = time_diff.total_seconds()
+        except Exception:
+            total_duration = None
+
+    # 5. 创建并返回ChatLogHistory对象
+    chat_log_history = ChatLogHistory(
+        start_time=chat_record.create_time,  # 使用ChatRecord的create_time
+        finish_time=chat_record.finish_time,  # 使用ChatRecord的finish_time
+        duration=total_duration,
+        total_tokens=total_tokens,
+        steps=steps
+    )
+
+    return chat_log_history
 
 def get_chat_brief_generate(session: SessionDep, chat_id: int):
     chat = get_chat(session=session, chat_id=chat_id)
@@ -877,7 +1029,12 @@ def save_error_message(session: SessionDep, record_id: int, message: str) -> Cha
 
     session.commit()
 
-    # todo log error finish
+    # log error finish
+    stmt = update(ChatLog).where(and_(ChatLog.pid == record.id, ChatLog.finish_time.is_(None))).values(
+        finish_time=record.finish_time
+    )
+    session.execute(stmt)
+    session.commit()
 
     return result
 

@@ -141,6 +141,7 @@
   "get_chat_with_data": "获取对话详情(带数据)",
   "get_chart_data": "获取图表数据",
   "get_chart_predict_data": "获取图表预测数据",
+  "get_record_log": "获取对话日志",
   "rename_chat": "重命名对话",
   "delete_chat": "删除对话",
   "start_chat": "创建对话",

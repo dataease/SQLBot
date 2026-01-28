@@ -155,6 +155,8 @@ class ChatRecordResult(BaseModel):
     chart_reasoning_content: Optional[str] = None
     analysis_reasoning_content: Optional[str] = None
     predict_reasoning_content: Optional[str] = None
+    duration: Optional[float] = None  # 耗时字段（单位：秒）
+    total_tokens: Optional[int] = None  # token总消耗
 
 
 class CreateChat(BaseModel):
@@ -184,6 +186,22 @@ class ChatInfo(BaseModel):
     recommended_question: Optional[str] = None
     recommended_generate: Optional[bool] = False
     records: List[ChatRecord | dict] = []
+
+
+class ChatLogHistoryItem(BaseModel):
+    start_time: Optional[datetime] = None
+    finish_time: Optional[datetime] = None
+    duration: Optional[float] = None  # 耗时字段（单位：秒）
+    total_tokens: Optional[int] = None  # token总消耗
+    operate: Optional[OperationEnum] = None
+    local_operation: Optional[bool] = False
+
+class ChatLogHistory(BaseModel):
+    start_time: Optional[datetime] = None
+    finish_time: Optional[datetime] = None
+    duration: Optional[float] = None  # 耗时字段（单位：秒）
+    total_tokens: Optional[int] = None  # token总消耗
+    steps: List[ChatLogHistoryItem | dict] = []
 
 
 class AiModelQuestion(BaseModel):

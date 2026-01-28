@@ -52,6 +52,8 @@ export class ChatRecord {
   analysis_record_id?: number
   predict_record_id?: number
   regenerate_record_id?: number
+  duration?: number
+  total_tokens?: number
 
   constructor()
   constructor(
@@ -77,7 +79,9 @@ export class ChatRecord {
     recommended_question: string | undefined,
     analysis_record_id: number | undefined,
     predict_record_id: number | undefined,
-    regenerate_record_id: number | undefined
+    regenerate_record_id: number | undefined,
+    duration: number | undefined,
+    total_tokens: number | undefined
   )
   constructor(
     id?: number,
@@ -102,7 +106,9 @@ export class ChatRecord {
     recommended_question?: string,
     analysis_record_id?: number,
     predict_record_id?: number,
-    regenerate_record_id?: number
+    regenerate_record_id?: number,
+    duration?: number,
+    total_tokens?: number
   ) {
     this.id = id
     this.chat_id = chat_id
@@ -127,6 +133,8 @@ export class ChatRecord {
     this.analysis_record_id = analysis_record_id
     this.predict_record_id = predict_record_id
     this.regenerate_record_id = regenerate_record_id
+    this.duration = duration
+    this.total_tokens = total_tokens
   }
 }
 
@@ -267,13 +275,104 @@ const toChatRecord = (data?: any): ChatRecord | undefined => {
     data.recommended_question,
     data.analysis_record_id,
     data.predict_record_id,
-    data.regenerate_record_id
+    data.regenerate_record_id,
+    data.duration,
+    data.total_tokens
   )
 }
 const toChatRecordList = (list: any = []): ChatRecord[] => {
   const records: Array<ChatRecord> = []
   for (let i = 0; i < list.length; i++) {
     const record = toChatRecord(list[i])
+    if (record) {
+      records.push(record)
+    }
+  }
+  return records
+}
+
+export class ChatLogHistoryItem {
+  start_time?: Date | string
+  finish_time?: Date | string
+  duration?: number | undefined
+  total_tokens?: number | undefined
+  operate?: string | undefined
+  local_operation?: boolean | undefined
+
+  constructor()
+  constructor(
+    start_time: Date | string,
+    finish_time: Date | string,
+    duration: number | undefined,
+    total_tokens: number | undefined,
+    operate: string | undefined,
+    local_operation: boolean | undefined
+  )
+  constructor(
+    start_time?: Date | string,
+    finish_time?: Date | string,
+    duration?: number | undefined,
+    total_tokens?: number | undefined,
+    operate?: string | undefined,
+    local_operation?: boolean | undefined
+  ) {
+    this.start_time = getDate(start_time)
+    this.finish_time = getDate(finish_time)
+    this.duration = duration
+    this.total_tokens = total_tokens
+    this.operate = operate
+    this.local_operation = !!local_operation
+  }
+}
+
+export class ChatLogHistory {
+  start_time?: Date | string
+  finish_time?: Date | string
+  duration?: number | undefined
+  total_tokens?: number | undefined
+  steps?: Array<ChatLogHistoryItem> | undefined
+
+  constructor()
+  constructor(
+    start_time: Date | string,
+    finish_time: Date | string,
+    duration: number | undefined,
+    total_tokens: number | undefined,
+    steps: Array<ChatLogHistoryItem> | undefined
+  )
+  constructor(
+    start_time?: Date | string,
+    finish_time?: Date | string,
+    duration?: number | undefined,
+    total_tokens?: number | undefined,
+    steps?: Array<ChatLogHistoryItem> | undefined
+  ) {
+    this.start_time = getDate(start_time)
+    this.finish_time = getDate(finish_time)
+    this.duration = duration
+    this.total_tokens = total_tokens
+    this.steps = steps ? steps : []
+  }
+}
+
+const toChatLogHistoryItem = (data?: any): any | undefined => {
+  if (!data) {
+    return undefined
+  }
+  return new ChatLogHistoryItem(
+    data.start_time,
+    data.finish_time,
+    data.duration,
+    data.total_tokens,
+    data.operate,
+    data.local_operation
+  )
+}
+
+const toChatLogHistoryItemList = (list: any = []): ChatLogHistoryItem[] => {
+  const records: Array<ChatLogHistoryItem> = []
+  for (let i = 0; i < list.length; i++) {
+    const record = toChatLogHistoryItem(list[i])
     if (record) {
       records.push(record)
     }
@@ -312,6 +411,18 @@ export const chatApi = {
     }
     return infos
   },
+  toChatLogHistory: (data?: any): ChatLogHistory | undefined => {
+    if (!data) {
+      return undefined
+    }
+    return new ChatLogHistory(
+      data.start_time,
+      data.finish_time,
+      data.duration,
+      data.total_tokens,
+      toChatLogHistoryItemList(data.steps)
+    )
+  },
   list: (): Promise<Array<ChatInfo>> => {
     return request.get('/chat/list')
   },
@@ -326,6 +437,9 @@ export const chatApi = {
   },
   get_chart_predict_data: (record_id?: number): Promise<any> => {
     return request.get(`/chat/record/${record_id}/predict_data`)
+  },
+  get_chart_log_history: (record_id?: number): Promise<any> => {
+    return request.get(`/chat/record/${record_id}/log`)
   },
   startChat: (data: any): Promise<ChatInfo> => {
     return request.post('/chat/start', data)
