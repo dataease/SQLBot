@@ -774,6 +774,7 @@ async function onChartAnswerFinish(id: number) {
   getRecommendQuestionsLoading.value = true
   loading.value = false
   isTyping.value = false
+  getRecordUsage(id)
   getRecommendQuestions(id)
 }
 
@@ -781,10 +782,10 @@ const loadingOver = () => {
   getRecommendQuestionsLoading.value = false
 }
 
-function onChartAnswerError() {
+function onChartAnswerError(id: number) {
   loading.value = false
   isTyping.value = false
-  console.debug('onChartAnswerError')
+  getRecordUsage(id)
 }
 
 function onChatStop() {
@@ -864,12 +865,13 @@ const analysisAnswerRef = ref()
 async function onAnalysisAnswerFinish(id: number) {
   loading.value = false
   isTyping.value = false
-  console.debug(id)
+  getRecordUsage(id)
   //await getRecommendQuestions(id)
 }
-function onAnalysisAnswerError() {
+function onAnalysisAnswerError(id: number) {
   loading.value = false
   isTyping.value = false
+  getRecordUsage(id)
 }
 
 function askAgain(message: ChatMessage) {
@@ -931,17 +933,34 @@ async function clickAnalysis(id?: number) {
   return
 }
 
+function getRecordUsage(recordId: any) {
+  chatApi.get_chart_usage(recordId).then((res) => {
+    const logHistory = chatApi.toChatLogHistory(res)
+    if (logHistory) {
+      currentChat.value.records.forEach((record) => {
+        if (record.id === recordId) {
+          record.duration = logHistory.duration
+          record.finish_time = logHistory.finish_time
+          record.total_tokens = logHistory.total_tokens
+        }
+      })
+    }
+  })
+}
+
 const predictAnswerRef = ref()
 
 async function onPredictAnswerFinish(id: number) {
   loading.value = false
   isTyping.value = false
-  console.debug('onPredictAnswerFinish: ', id)
+  // console.debug('onPredictAnswerFinish: ', id)
+  getRecordUsage(id)
   //await getRecommendQuestions(id)
 }
-function onPredictAnswerError() {
+function onPredictAnswerError(id: number) {
   loading.value = false
   isTyping.value = false
+  getRecordUsage(id)
 }
 
 async function clickPredict(id?: number) {

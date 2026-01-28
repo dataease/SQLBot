@@ -709,7 +709,22 @@
     "exec-sql-err": "Execute SQL failed",
     "no_data": "No Data",
     "loading_data": "Loading ...",
-    "show_error_detail": "Show error info"
+    "show_error_detail": "Show error info",
+    "log": {
+      "GENERATE_SQL": "Generate SQL",
+      "GENERATE_CHART": "Generate Chart Structure",
+      "ANALYSIS": "Analyze",
+      "PREDICT_DATA": "Predict",
+      "GENERATE_SQL_WITH_PERMISSIONS": "Apply Row Permissions to SQL",
+      "CHOOSE_DATASOURCE": "Match Datasource",
+      "GENERATE_DYNAMIC_SQL": "Generate Dynamic SQL",
+      "CHOOSE_TABLE": "Match Data Table (Schema)",
+      "FILTER_TERMS": "Match Terms",
+      "FILTER_SQL_EXAMPLE": "Match SQL Examples",
+      "FILTER_CUSTOM_PROMPT": "Match Custom Prompts",
+      "EXECUTE_SQL": "Execute SQL",
+      "GENERATE_PICTURE": "Generate Picture"
+    }
   },
   "about": {
     "title": "About",

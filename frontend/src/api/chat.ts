@@ -1,5 +1,8 @@
 import { request } from '@/utils/request'
 import { getDate } from '@/utils/utils.ts'
+import { i18n } from '@/i18n'
+
+const { t } = i18n.global
 
 export const questionApi = {
   pager: (pageNumber: number, pageSize: number) =>
@@ -320,7 +323,7 @@ export class ChatLogHistoryItem {
     this.finish_time = getDate(finish_time)
     this.duration = duration
     this.total_tokens = total_tokens
-    this.operate = operate
+    this.operate = t('chat.log.' + operate)
     this.local_operation = !!local_operation
   }
 }
@@ -440,6 +443,9 @@ export const chatApi = {
   },
   get_chart_log_history: (record_id?: number): Promise<any> => {
     return request.get(`/chat/record/${record_id}/log`)
+  },
+  get_chart_usage: (record_id?: number): Promise<any> => {
+    return request.get(`/chat/record/${record_id}/usage`)
   },
   startChat: (data: any): Promise<ChatInfo> => {
     return request.post('/chat/start', data)
