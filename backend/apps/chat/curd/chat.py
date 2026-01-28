@@ -514,7 +514,7 @@ def format_record(record: ChatRecordResult):
     return _dict
 
 
-def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user: CurrentUser) -> ChatLogHistory:
+def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user: CurrentUser, without_steps: bool = False) -> ChatLogHistory:
     """
     获取ChatRecord的详细历史记录
 
@@ -522,6 +522,7 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
         session: 数据库会话
         chat_record_id: ChatRecord的ID
         current_user: 当前用户
+        without_steps
 
     Returns:
         ChatLogHistory: 包含历史步骤和时间信息的对象
@@ -536,7 +537,8 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
 
     # 2. 查询与该ChatRecord相关的所有ChatLog记录
     chat_logs = session.query(ChatLog).filter(
-        ChatLog.pid == chat_record_id
+        ChatLog.pid == chat_record_id,
+        ChatLog.operate != OperationEnum.GENERATE_RECOMMENDED_QUESTIONS
     ).order_by(ChatLog.start_time).all()
 
     # 3. 计算总的时间和token信息
@@ -544,15 +546,6 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
     steps = []
 
     for log in chat_logs:
-        # 计算单条记录的耗时
-        duration = None
-        if log.start_time and log.finish_time:
-            try:
-                time_diff = log.finish_time - log.start_time
-                duration = time_diff.total_seconds()
-            except Exception:
-                duration = None
-
         # 计算单条记录的token消耗
         log_tokens = 0
         if log.token_usage is not None:
@@ -567,16 +560,46 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
         # 累加到总token消耗
         total_tokens += log_tokens
 
-        # 创建ChatLogHistoryItem
-        history_item = ChatLogHistoryItem(
-            start_time=log.start_time,
-            finish_time=log.finish_time,
-            duration=duration,
-            total_tokens=log_tokens,
-            operate=log.operate,
-            local_operation=log.local_operation
-        )
-        steps.append(history_item)
+        if not without_steps:
+            # 计算单条记录的耗时
+            duration = None
+            if log.start_time and log.finish_time:
+                try:
+                    time_diff = log.finish_time - log.start_time
+                    duration = round(time_diff.total_seconds(), 2)
+                except Exception:
+                    duration = None
+
+            # 获取操作类型的枚举名称
+            operate_name = None
+            if log.operate:
+                # 如果是OperationEnum枚举实例
+                if isinstance(log.operate, OperationEnum):
+                    operate_name = log.operate.name
+                # 如果是字符串，尝试从枚举值获取名称
+                elif isinstance(log.operate, str):
+                    try:
+                        # 通过枚举值找到对应的枚举实例
+                        for enum_item in OperationEnum:
+                            if enum_item.value == log.operate:
+                                operate_name = enum_item.name
+                                break
+                    except Exception:
+                        operate_name = log.operate
+                else:
+                    operate_name = str(log.operate)
+
+            # 创建ChatLogHistoryItem
+            history_item = ChatLogHistoryItem(
+                start_time=log.start_time,
+                finish_time=log.finish_time,
+                duration=duration,
+                total_tokens=log_tokens,
+                operate=operate_name,
+                local_operation=log.local_operation
+            )
+
+            steps.append(history_item)
 
     # 4. 计算总耗时（使用ChatRecord的时间）
     total_duration = None

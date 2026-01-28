@@ -162,7 +162,7 @@ const sendMessage = async () => {
                 break
               case 'error':
                 currentRecord.error = data.content
-                emits('error')
+                emits('error', currentRecord.id)
                 break
               case 'predict-result':
                 predict_answer += data.reasoning_content
@@ -171,7 +171,7 @@ const sendMessage = async () => {
                 _currentChat.value.records[index.value].predict_content = predict_content
                 break
               case 'predict-failed':
-                emits('error')
+                emits('error', currentRecord.id)
                 break
               case 'predict-success':
                 //currentChat.value.records[_index].predict_data = data.content

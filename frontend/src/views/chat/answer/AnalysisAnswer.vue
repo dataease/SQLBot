@@ -158,7 +158,7 @@ const sendMessage = async () => {
                 break
               case 'error':
                 currentRecord.error = data.content
-                emits('error')
+                emits('error', currentRecord.id)
                 break
               case 'analysis-result':
                 analysis_answer += data.content

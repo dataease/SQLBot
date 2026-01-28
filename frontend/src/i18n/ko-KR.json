@@ -709,7 +709,22 @@
     "exec-sql-err": "SQL 실행 실패",
     "no_data": "데이터가 없습니다",
     "loading_data": "로딩 중 ...",
-    "show_error_detail": "구체적인 정보 보기"
+    "show_error_detail": "구체적인 정보 보기",
+    "log": {
+      "GENERATE_SQL": "SQL 생성",
+      "GENERATE_CHART": "차트 구조 생성",
+      "ANALYSIS": "분석",
+      "PREDICT_DATA": "예측",
+      "GENERATE_SQL_WITH_PERMISSIONS": "SQL에 행 권한 적용",
+      "CHOOSE_DATASOURCE": "데이터 소스 매칭",
+      "GENERATE_DYNAMIC_SQL": "동적 SQL 생성",
+      "CHOOSE_TABLE": "데이터 테이블 매칭 (스키마)",
+      "FILTER_TERMS": "용어 매칭",
+      "FILTER_SQL_EXAMPLE": "SQL 예시 매칭",
+      "FILTER_CUSTOM_PROMPT": "사용자 정의 프롬프트 매칭",
+      "EXECUTE_SQL": "SQL 실행",
+      "GENERATE_PICTURE": "이미지 생성"
+    }
   },
   "about": {
     "title": "정보",

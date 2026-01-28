@@ -98,6 +98,13 @@ async def chat_record_log(session: SessionDep, current_user: CurrentUser, chat_r
 
     return await asyncio.to_thread(inner)
 
+@router.get("/record/{chat_record_id}/usage", summary=f"{PLACEHOLDER_PREFIX}get_record_usage")
+async def chat_record_usage(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
+    def inner():
+        return get_chat_log_history(session, chat_record_id, current_user, True)
+
+    return await asyncio.to_thread(inner)
+
 
 """ @router.post("/rename", response_model=str, summary=f"{PLACEHOLDER_PREFIX}rename_chat")
 @system_log(LogConfig(

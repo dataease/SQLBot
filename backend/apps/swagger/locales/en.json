@@ -142,6 +142,7 @@
   "get_chart_data": "Get Chart Data",
   "get_chart_predict_data": "Get Chart Prediction Data",
   "get_record_log": "Get Chart Record Log",
+  "get_record_usage": "Get Chart Record Token Usage & Duration",
   "rename_chat": "Rename Chat",
   "delete_chat": "Delete Chat",
   "start_chat": "Create Chat",

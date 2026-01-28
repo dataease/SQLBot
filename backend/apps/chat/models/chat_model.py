@@ -193,7 +193,7 @@ class ChatLogHistoryItem(BaseModel):
     finish_time: Optional[datetime] = None
     duration: Optional[float] = None  # 耗时字段（单位：秒）
     total_tokens: Optional[int] = None  # token总消耗
-    operate: Optional[OperationEnum] = None
+    operate: Optional[str] = None
     local_operation: Optional[bool] = False
 
 class ChatLogHistory(BaseModel):
