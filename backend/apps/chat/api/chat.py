@@ -21,6 +21,7 @@ from apps.chat.task.llm import LLMService
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
+from common.core.config import settings
 from common.utils.command_utils import parse_quick_command
 from common.utils.data_format import DataFormat
 from common.audit.models.log_model import OperationType, OperationModules
@@ -197,6 +198,9 @@ async def ask_recommend_questions(session: SessionDep, current_user: CurrentUser
                                   current_assistant: CurrentAssistant, articles_number: Optional[int] = 4):
     def _return_empty():
         yield 'data:' + orjson.dumps({'content': '[]', 'type': 'recommended_question'}).decode() + '\n\n'
+
+    if not settings.RECOMMENDED_QUESTIONS_ENABLED:
+        return StreamingResponse(_return_empty(), media_type="text/event-stream")
 
     try:
         record = get_chat_record_by_id(session, chat_record_id)
