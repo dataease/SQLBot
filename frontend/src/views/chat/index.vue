@@ -239,6 +239,11 @@
                   >
                     <ErrorInfo :error="message.record?.error" class="error-container" />
                     <template #tool>
+                      <ChatTokenTime
+                        :record-id="message.record?.id"
+                        :duration="message.record?.duration"
+                        :total-tokens="message.record?.total_tokens"
+                      />
                       <ChatToolBar v-if="!message.isTyping" :message="message">
                         <div class="tool-btns">
                           <el-tooltip
@@ -329,6 +334,11 @@
                   >
                     <ErrorInfo :error="message.record?.error" class="error-container" />
                     <template #tool>
+                      <ChatTokenTime
+                        :record-id="message.record?.id"
+                        :duration="message.record?.duration"
+                        :total-tokens="message.record?.total_tokens"
+                      />
                       <ChatToolBar v-if="!message.isTyping" :message="message" />
                     </template>
                   </AnalysisAnswer>
@@ -351,6 +361,11 @@
                   >
                     <ErrorInfo :error="message.record?.error" class="error-container" />
                     <template #tool>
+                      <ChatTokenTime
+                        :record-id="message.record?.id"
+                        :duration="message.record?.duration"
+                        :total-tokens="message.record?.total_tokens"
+                      />
                       <ChatToolBar v-if="!message.isTyping" :message="message" />
                     </template>
                   </PredictAnswer>
@@ -443,6 +458,7 @@ import UserChat from './chat-block/UserChat.vue'
 import RecommendQuestion from './RecommendQuestion.vue'
 import ChatListContainer from './ChatListContainer.vue'
 import ChatCreator from '@/views/chat/ChatCreator.vue'
+import ChatTokenTime from '@/views/chat/ChatTokenTime.vue'
 import ErrorInfo from './ErrorInfo.vue'
 import ChatToolBar from './ChatToolBar.vue'
 import { dsTypeWithImg } from '@/views/ds/js/ds-type'
@@ -592,8 +608,7 @@ const handleScroll = (val: any) => {
   }, 400)
 
   const threshold =
-    innerRef.value!.clientHeight -
-    (document.querySelector('.chat-record-list')!.clientHeight - 20)
+    innerRef.value!.clientHeight - (document.querySelector('.chat-record-list')!.clientHeight - 20)
   const isNearBottom = scrollTopVal + 50 >= threshold
 
   // 用户滚动离开底部时，标记并停止自动滚动

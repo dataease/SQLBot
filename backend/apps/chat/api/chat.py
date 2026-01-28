@@ -14,7 +14,7 @@ from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user,
     list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
     format_json_data, format_json_list_data, get_chart_config, list_recent_questions, get_chat as get_chat_exec, \
-    rename_chat_with_user
+    rename_chat_with_user, get_chat_log_history
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
     ChatInfo, Chat, ChatFinishStep
 from apps.chat.task.llm import LLMService
@@ -87,6 +87,14 @@ async def chat_predict_data(session: SessionDep, current_user: CurrentUser, chat
         data = get_chat_predict_data_with_user(chat_record_id=chat_record_id, session=session,
                                                current_user=current_user)
         return format_json_list_data(data)
+
+    return await asyncio.to_thread(inner)
+
+
+@router.get("/record/{chat_record_id}/log", summary=f"{PLACEHOLDER_PREFIX}get_record_log")
+async def chat_record_log(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
+    def inner():
+        return get_chat_log_history(session, chat_record_id, current_user)
 
     return await asyncio.to_thread(inner)
 
