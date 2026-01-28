@@ -846,13 +846,13 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'terminologies') -> str:
 
 
 def get_terminology_template(session: SessionDep, question: str, oid: Optional[int] = 1,
-                             datasource: Optional[int] = None) -> str:
+                             datasource: Optional[int] = None) -> tuple[str, list[dict]]:
     if not oid:
         oid = 1
     _results = select_terminology_by_word(session, question, oid, datasource)
     if _results and len(_results) > 0:
         terminology = to_xml_string(_results)
         template = get_base_terminology_template().format(terminologies=terminology)
-        return template
+        return template, _results
     else:
-        return ''
+        return '', []

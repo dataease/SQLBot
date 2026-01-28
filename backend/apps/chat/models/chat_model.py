@@ -40,7 +40,12 @@ class OperationEnum(Enum):
     GENERATE_SQL_WITH_PERMISSIONS = '5'
     CHOOSE_DATASOURCE = '6'
     GENERATE_DYNAMIC_SQL = '7'
-
+    CHOOSE_TABLE = '8'
+    FILTER_TERMS = '9'
+    FILTER_SQL_EXAMPLE = '10'
+    FILTER_CUSTOM_PROMPT = '11'
+    EXECUTE_SQL = '12'
+    GENERATE_PICTURE = '13'
 
 class ChatFinishStep(Enum):
     GENERATE_SQL = 1
@@ -71,6 +76,7 @@ class ChatLog(SQLModel, table=True):
     start_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     finish_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     token_usage: Optional[dict | None | int] = Field(sa_column=Column(JSONB))
+    local_operation: bool = Field(default=False)
 
 
 class Chat(SQLModel, table=True):

@@ -610,15 +610,15 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'sql-examples') -> str:
 
 
 def get_training_template(session: SessionDep, question: str, oid: Optional[int] = 1, datasource: Optional[int] = None,
-                          advanced_application_id: Optional[int] = None) -> str:
+                          advanced_application_id: Optional[int] = None) -> tuple[str, list[dict]]:
     if not oid:
         oid = 1
     if not datasource and not advanced_application_id:
-        return ''
+        return '', []
     _results = select_training_by_question(session, question, oid, datasource, advanced_application_id)
     if _results and len(_results) > 0:
         data_training = to_xml_string(_results)
         template = get_base_data_training_template().format(data_training=data_training)
-        return template
+        return template, _results
     else:
-        return ''
+        return '', []
