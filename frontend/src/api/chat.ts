@@ -301,6 +301,7 @@ export class ChatLogHistoryItem {
   total_tokens?: number | undefined
   operate?: string | undefined
   local_operation?: boolean | undefined
+  error?: boolean | undefined
 
   constructor()
   constructor(
@@ -309,7 +310,8 @@ export class ChatLogHistoryItem {
     duration: number | undefined,
     total_tokens: number | undefined,
     operate: string | undefined,
-    local_operation: boolean | undefined
+    local_operation: boolean | undefined,
+    error: boolean | undefined
   )
   constructor(
     start_time?: Date | string,
@@ -317,7 +319,8 @@ export class ChatLogHistoryItem {
     duration?: number | undefined,
     total_tokens?: number | undefined,
     operate?: string | undefined,
-    local_operation?: boolean | undefined
+    local_operation?: boolean | undefined,
+    error?: boolean | undefined
   ) {
     this.start_time = getDate(start_time)
     this.finish_time = getDate(finish_time)
@@ -325,6 +328,7 @@ export class ChatLogHistoryItem {
     this.total_tokens = total_tokens
     this.operate = t('chat.log.' + operate)
     this.local_operation = !!local_operation
+    this.error = !!error
   }
 }
 
@@ -368,7 +372,8 @@ const toChatLogHistoryItem = (data?: any): any | undefined => {
     data.duration,
     data.total_tokens,
     data.operate,
-    data.local_operation
+    data.local_operation,
+    data.error
   )
 }
 
