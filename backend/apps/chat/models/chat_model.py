@@ -197,7 +197,7 @@ class ChatLogHistoryItem(BaseModel):
     total_tokens: Optional[int] = None  # token总消耗
     operate: Optional[str] = None
     local_operation: Optional[bool] = False
-    message: Optional[str | dict | list[dict]] = None
+    message: Optional[str | dict | list] = None
     error: Optional[bool] = False
 
 
