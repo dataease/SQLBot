@@ -15,7 +15,7 @@ const getRecommendQuestions = () => {
 
 const questions = '[]'
 const retrieveQuestions = () => {
-  recommendQuestionRef.value.getRecommendQuestions(10)
+  recommendQuestionRef.value.getRecommendQuestions(10, true)
   recentQuestionRef.value.getRecentQuestions()
 }
 const quickAsk = (question: string) => {

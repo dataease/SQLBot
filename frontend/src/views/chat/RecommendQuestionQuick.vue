@@ -48,11 +48,11 @@ function clickQuestion(question: string): void {
 
 const stopFlag = ref(false)
 
-async function getRecommendQuestions(articles_number: number) {
+async function getRecommendQuestions(articles_number: number, isRetrieve: false) {
   recommendedApi.get_datasource_recommended_base(props.datasource).then((res) => {
     if (res.recommended_config === 2) {
       questions.value = res.questions
-    } else if (currentChat.value.recommended_generate) {
+    } else if (currentChat.value.recommended_generate && !isRetrieve) {
       questions.value = currentChat.value.recommended_question as string
     } else {
       getRecommendQuestionsLLM(articles_number)
