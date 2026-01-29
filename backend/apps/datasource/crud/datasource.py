@@ -135,7 +135,7 @@ async def delete_ds(session: SessionDep, id: int):
     delete_table_by_ds_id(session, id)
     delete_field_by_ds_id(session, id)
     if term:
-        await clear_ws_resource_cache(term.oid)
+        await clear_ws_ds_cache(term.oid)
     return {
         "message": f"Datasource with ID {id} deleted successfully."
     }
