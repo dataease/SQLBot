@@ -468,7 +468,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
     while sql.endswith(';'):
         sql = sql[:-1]
     # check execute sql only contain read operations
-    if not check_sql_read(sql):
+    if not check_sql_read(sql, ds):
         raise ValueError(f"SQL can only contain read operations")
 
     db = DB.get_db(ds.type)
