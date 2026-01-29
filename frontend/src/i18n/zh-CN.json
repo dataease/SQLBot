@@ -7,6 +7,20 @@
     "AI Model Configuration": "模型配置",
     "Details": "详情"
   },
+  "sync": {
+    "sync_users": "同步用户",
+    "sync_wechat_users": "同步企业微信用户",
+    "sync_dingtalk_users": "同步钉钉用户",
+    "sync_lark_users": "同步飞书用户",
+    "sync_complete": "同步完成",
+    "synced_10_users": "成功同步 {num} 个用户",
+    "failed_3_users": "成功同步 {success} 个用户，同步失败 {failed} 个用户，",
+    "download_failure_list": "下载失败列表",
+    "sync_failed": "同步失败",
+    "failed_10_users": "同步失败 {num} 个用户，",
+    "continue_syncing": "继续同步",
+    "return_to_view": "返回查看"
+  },
   "parameter": {
     "execution_details": "执行详情",
     "overview": "概览",
