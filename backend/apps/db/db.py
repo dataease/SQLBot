@@ -577,10 +577,11 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                 raise Exception(str(ex))
 
 
-def check_sql_read(sql: str, dialect=None):
+def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
     try:
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
-        sql = ansi_escape.sub('', sql)
+        dialect = None
+        if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks":
+            dialect = 'mysql'
 
         statements = sqlglot.parse(sql, dialect=dialect)
 
