@@ -59,9 +59,8 @@ onMounted(() => {
   flex-direction: column;
 }
 .container-sys-platform {
-  padding: 24px;
+  padding: 16px;
   overflow: hidden;
-  //border-radius: 4px;
   background: var(--ContentBG, #ffffff);
 
   border-radius: 12px;

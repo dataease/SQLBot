@@ -183,11 +183,14 @@ init(true)
     .authentication-card {
       width: calc(25% - 12px);
       min-width: 230px;
-      height: 116px;
-      padding: 24px;
+      height: 100px;
+      padding: 16px;
       border-radius: 12px;
       background-color: #fff;
       border: 1px solid #dee0e3;
+      &:hover {
+        box-shadow: 0px 6px 24px 0px #1f232914;
+      }
       .inner-card {
         position: relative;
         .inner-card-info {
@@ -196,6 +199,8 @@ init(true)
           align-items: center;
           .card-info-left {
             width: calc(100% - 40px);
+            display: flex;
+            align-items: center;
             .card-span {
               font-family: var(--de-custom_font, 'PingFang');
               font-size: 16px;
@@ -212,12 +217,12 @@ init(true)
             }
             .card-status {
               margin-left: 8px;
-              padding: 1px 6px;
-              border-radius: 2px;
+              padding: 0 4px;
+              border-radius: 4px;
               background-color: #f54a4533;
               color: #d03f3b;
-              line-height: 22px;
-              font-size: 14px;
+              line-height: 20px;
+              font-size: 12px;
               font-weight: 400;
             }
           }
