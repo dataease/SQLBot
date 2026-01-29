@@ -47,6 +47,7 @@ class OperationEnum(Enum):
     EXECUTE_SQL = '12'
     GENERATE_PICTURE = '13'
 
+
 class ChatFinishStep(Enum):
     GENERATE_SQL = 1
     QUERY_DATA = 2
@@ -77,6 +78,7 @@ class ChatLog(SQLModel, table=True):
     finish_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     token_usage: Optional[dict | None | int] = Field(sa_column=Column(JSONB))
     local_operation: bool = Field(default=False)
+    error: bool = Field(default=False)
 
 
 class Chat(SQLModel, table=True):
@@ -195,6 +197,9 @@ class ChatLogHistoryItem(BaseModel):
     total_tokens: Optional[int] = None  # token总消耗
     operate: Optional[str] = None
     local_operation: Optional[bool] = False
+    message: Optional[str | dict | list[dict]] = None
+    error: Optional[bool] = False
+
 
 class ChatLogHistory(BaseModel):
     start_time: Optional[datetime] = None

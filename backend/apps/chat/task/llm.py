@@ -220,7 +220,6 @@ class LLMService:
         self.sql_message.append(SystemMessage(
             content=self.chat_question.sql_sys_question(self.ds.type, self.enable_sql_row_limit)))
         if last_sql_messages is not None and len(last_sql_messages) > 0:
-            # 获取最后3轮对话
             last_rounds = get_last_conversation_rounds(last_sql_messages, rounds=count_limit)
 
             for _msg_dict in last_rounds:
@@ -234,20 +233,27 @@ class LLMService:
 
         last_chart_messages: List[dict[str, Any]] = self.generate_chart_logs[-1].messages if len(
             self.generate_chart_logs) > 0 else []
+        if self.chat_question.regenerate_record_id:
+            # filter record before regenerate_record_id
+            _temp_log = next(
+                filter(lambda obj: obj.pid == self.chat_question.regenerate_record_id, self.generate_chart_logs), None)
+            last_chart_messages: List[dict[str, Any]] = _temp_log.messages if _temp_log else []
+
+        count_chart_limit = self.base_message_round_count_limit
 
         self.chart_message = []
         # add sys prompt
         self.chart_message.append(SystemMessage(content=self.chat_question.chart_sys_question()))
-
         if last_chart_messages is not None and len(last_chart_messages) > 0:
-            # limit count
-            for last_chart_message in last_chart_messages:
+            last_rounds = get_last_conversation_rounds(last_chart_messages, rounds=count_chart_limit)
+
+            for _msg_dict in last_rounds:
                 _msg: BaseMessage
-                if last_chart_message.get('type') == 'human':
-                    _msg = HumanMessage(content=last_chart_message.get('content'))
+                if _msg_dict.get('type') == 'human':
+                    _msg = HumanMessage(content=_msg_dict.get('content'))
                     self.chart_message.append(_msg)
-                elif last_chart_message.get('type') == 'ai':
-                    _msg = AIMessage(content=last_chart_message.get('content'))
+                elif _msg_dict.get('type') == 'ai':
+                    _msg = AIMessage(content=_msg_dict.get('content'))
                     self.chart_message.append(_msg)
 
     def init_record(self, session: Session) -> ChatRecord:

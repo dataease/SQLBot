@@ -51,13 +51,22 @@ defineExpose({
     <div class="title">{{ t('parameter.execution_details') }}</div>
 
     <div class="list">
-      <div class="list-item" :key="ele.duration" v-for="ele in logHistory.steps">
-        <div class="name">{{ ele.operate }}</div>
+      <div v-for="ele in logHistory.steps" :key="ele.duration" class="list-item">
+        <div class="name">
+          {{ ele.operate }}
+        </div>
         <div class="status">
+          <div
+            v-if="ele.total_tokens && ele.total_tokens > 0"
+            class="time"
+            style="margin-right: 12px"
+          >
+            {{ ele.total_tokens }} tokens
+          </div>
           <div class="time">{{ ele.duration }}s</div>
           <el-icon size="16">
-            <gou_icon v-if="true"></gou_icon>
-            <icon_error v-else></icon_error>
+            <icon_error v-if="ele.error"></icon_error>
+            <gou_icon v-else></gou_icon>
           </el-icon>
         </div>
       </div>
@@ -94,7 +103,6 @@ defineExpose({
       .name {
         float: left;
         color: #646a73;
-        font-family: PingFang SC;
         font-weight: 400;
         font-size: 14px;
         line-height: 22px;
@@ -132,6 +140,9 @@ defineExpose({
         font-weight: 500;
         font-size: 14px;
         line-height: 22px;
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
       }
 
       .time {

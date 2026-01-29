@@ -515,7 +515,8 @@ def format_record(record: ChatRecordResult):
     return _dict
 
 
-def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user: CurrentUser, without_steps: bool = False) -> ChatLogHistory:
+def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user: CurrentUser,
+                         without_steps: bool = False) -> ChatLogHistory:
     """
     获取ChatRecord的详细历史记录
 
@@ -573,6 +574,7 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
 
             # 获取操作类型的枚举名称
             operate_name = None
+            message = None
             if log.operate:
                 # 如果是OperationEnum枚举实例
                 if isinstance(log.operate, OperationEnum):
@@ -590,6 +592,14 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
                 else:
                     operate_name = str(log.operate)
 
+                if log.messages is not None:
+                    message = log.messages
+                    if not log.operate == OperationEnum.CHOOSE_TABLE:
+                        try:
+                            message = orjson.loads(log.messages)
+                        except Exception:
+                            pass
+
             # 创建ChatLogHistoryItem
             history_item = ChatLogHistoryItem(
                 start_time=log.start_time,
@@ -597,7 +607,9 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
                 duration=duration,
                 total_tokens=log_tokens,
                 operate=operate_name,
-                local_operation=log.local_operation
+                local_operation=log.local_operation,
+                error=log.error,
+                message=message,
             )
 
             steps.append(history_item)
@@ -621,6 +633,7 @@ def get_chat_log_history(session: SessionDep, chat_record_id: int, current_user:
     )
 
     return chat_log_history
+
 
 def get_chat_brief_generate(session: SessionDep, chat_id: int):
     chat = get_chat(session=session, chat_id=chat_id)
@@ -1055,7 +1068,8 @@ def save_error_message(session: SessionDep, record_id: int, message: str) -> Cha
 
     # log error finish
     stmt = update(ChatLog).where(and_(ChatLog.pid == record.id, ChatLog.finish_time.is_(None))).values(
-        finish_time=record.finish_time
+        finish_time=record.finish_time,
+        error=True
     )
     session.execute(stmt)
     session.commit()
