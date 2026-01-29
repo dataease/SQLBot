@@ -10,6 +10,7 @@ from typing import Optional
 import oracledb
 import psycopg2
 import pymssql
+import re
 
 from apps.db.db_sql import get_table_sql, get_field_sql, get_version_sql
 from common.error import ParseSQLResultError
@@ -578,6 +579,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
 
 def check_sql_read(sql: str, dialect=None):
     try:
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        sql = ansi_escape.sub('', sql)
 
         statements = sqlglot.parse(sql, dialect=dialect)
 
