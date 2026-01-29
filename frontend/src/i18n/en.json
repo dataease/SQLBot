@@ -7,6 +7,20 @@
     "AI Model Configuration": "AI Model Config",
     "Details": "Details"
   },
+  "sync": {
+    "sync_users": "Sync Users",
+    "sync_wechat_users": "Sync WeChat Users",
+    "sync_dingtalk_users": "Sync DingTalk Users",
+    "sync_lark_users": "Sync Lark Users",
+    "sync_complete": "Sync Complete",
+    "synced_10_users": "Successfully synced {num} users",
+    "failed_3_users": "Successfully synced {success} users, sync failed {failed} users",
+    "download_failure_list": "Download Failure List",
+    "sync_failed": "Sync Failed",
+    "failed_10_users": "Sync failed {num} users",
+    "continue_syncing": "Continue Syncing",
+    "return_to_view": "Return to View"
+  },
   "parameter": {
     "execution_details": "Execution Details",
     "overview": "Overview",

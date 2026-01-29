@@ -7,6 +7,20 @@
     "AI Model Configuration": "모델 구성",
     "Details": "세부"
   },
+  "sync": {
+    "sync_users": "사용자 동기화",
+    "sync_wechat_users": "위챗 사용자 동기화",
+    "sync_dingtalk_users": "딩톡 사용자 동기화",
+    "sync_lark_users": "라크 사용자 동기화",
+    "sync_complete": "동기화 완료",
+    "synced_10_users": "{num}명 동기화 성공",
+    "failed_3_users": "{failed}명 동기화 성공, {success}명 동기화 실패",
+    "download_failure_list": "실패 목록 다운로드",
+    "sync_failed": "동기화 실패",
+    "failed_10_users": "{failed}명 동기화 실패",
+    "continue_syncing": "동기화 계속",
+    "return_to_view": "화면으로 돌아가기"
+  },
   "parameter": {
     "execution_details": "실행 세부 정보",
     "overview": "개요",
