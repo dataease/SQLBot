@@ -10,8 +10,10 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const logHistory = ref<ChatLogHistory>({})
 const dialogFormVisible = ref(false)
+const drawerSize = ref('600px')
 
 function getLogList(recordId: any) {
+  drawerSize.value = window.innerWidth < 500 ? '460px' : '600px'
   chatApi.get_chart_log_history(recordId).then((res) => {
     logHistory.value = chatApi.toChatLogHistory(res) as ChatLogHistory
     dialogFormVisible.value = true
@@ -29,7 +31,7 @@ defineExpose({
     :title="t('parameter.execution_details')"
     destroy-on-close
     modal-class="execution-details"
-    size="600px"
+    :size="drawerSize"
   >
     <div class="title">{{ t('parameter.overview') }}</div>
     <div class="overview">
@@ -89,7 +91,7 @@ defineExpose({
     justify-content: space-between;
     margin-bottom: 24px;
     .item {
-      width: 268px;
+      width: calc(50% - 8px);
       height: 86px;
       border-radius: 12px;
       border: 1px solid #dee0e3;
@@ -106,7 +108,7 @@ defineExpose({
         font-weight: 400;
         font-size: 14px;
         line-height: 22px;
-        width: 180px;
+        width: 64%;
       }
 
       .value {
@@ -122,7 +124,7 @@ defineExpose({
 
   .list {
     .list-item {
-      width: 552px;
+      width: 100%;
       height: 54px;
       border-radius: 12px;
       border: 1px solid #dee0e3;
