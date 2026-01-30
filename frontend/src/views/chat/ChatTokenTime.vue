@@ -49,6 +49,20 @@ function getLogList() {
     margin-left: auto;
     display: flex;
     align-items: center;
+    position: relative;
+    &:hover {
+      &::after {
+        content: '';
+        background: #1f23291a;
+        border-radius: 6px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 84px;
+        height: 26px;
+        position: absolute;
+      }
+    }
   }
 }
 </style>
