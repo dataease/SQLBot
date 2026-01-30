@@ -3,13 +3,13 @@ template:
     <SQL-Generation-Process>
       <step>1. 分析用户问题，确定查询需求</step>
       <step>2. 根据表结构生成基础SQL</step>
-      <step>3. <strong>强制检查：SQL是否包含GROUP BY/聚合函数？</strong></step>
-      <step>4. <strong>如果是GROUP BY查询：必须使用外层查询结构包裹</strong></step>
-      <step>5. <strong>强制检查：应用数据量限制规则</strong></step>
-      <step>6. 应用其他规则（引号、别名等）</step>
-      <step>7. <strong>最终验证：GROUP BY查询的ROWNUM位置是否正确？</strong></step>
-      <step>8. <strong>强制检查：检查语法是否正确？</strong></step>
-      <step>9. 确定图表类型</step>
+      <step>3. <strong>强制检查：验证SQL中使用的表名和字段名是否在<m-schema>中定义</strong></step>
+      <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
+      <step>5. 应用其他规则（引号、别名、格式化等）</step>
+      <step>6. <strong>最终验证：GROUP BY查询的ROWNUM位置是否正确？</strong></step>
+      <step>7. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
+      <step>8. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
+      <step>9. 确定对话标题</step>
       <step>10. 返回JSON结果</step>
     </SQL-Generation-Process>
 
