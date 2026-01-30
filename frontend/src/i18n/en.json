@@ -8,6 +8,7 @@
     "Details": "Details"
   },
   "sync": {
+    "the_existing_user": "If the user already exists, overwrite the existing user.",
     "sync_users": "Sync Users",
     "sync_wechat_users": "Sync WeChat Users",
     "sync_dingtalk_users": "Sync DingTalk Users",

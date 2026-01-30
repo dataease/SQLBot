@@ -95,6 +95,9 @@
     </div>
 
     <template #footer>
+      <el-checkbox style="float: left" v-model="existingUser">
+        {{ $t('sync.the_existing_user') }}
+      </el-checkbox>
       <el-button secondary @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
@@ -118,6 +121,7 @@ import Search from '@/assets/svg/icon_search-outline_outlined.svg'
 import type { CheckboxValueType } from 'element-plus-secondary'
 import type { FilterNodeMethodFunction } from 'element-plus-secondary'
 const checkAll = ref(false)
+const existingUser = ref(false)
 const isIndeterminate = ref(false)
 const checkedWorkspace = ref<any[]>([])
 const workspace = ref<any[]>([])

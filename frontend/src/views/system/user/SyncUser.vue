@@ -102,6 +102,9 @@
     </div>
 
     <template #footer>
+      <el-checkbox style="float: left" v-model="existingUser">
+        {{ $t('sync.the_existing_user') }}
+      </el-checkbox>
       <el-button secondary @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
@@ -123,6 +126,7 @@ import Close from '@/assets/svg/icon_close_outlined_w.svg'
 import Search from '@/assets/svg/icon_search-outline_outlined.svg'
 import type { CheckboxValueType } from 'element-plus-secondary'
 const checkAll = ref(false)
+const existingUser = ref(false)
 const isIndeterminate = ref(false)
 const checkedWorkspace = ref<any[]>([])
 const workspace = ref<any[]>([])
@@ -130,7 +134,7 @@ const search = ref('')
 const dialogTitle = ref('')
 
 const loading = ref(false)
-const centerDialogVisible = ref(false)
+const centerDialogVisible = ref(true)
 const checkTableList = ref([] as any[])
 
 const workspaceWithKeywords = computed(() => {
