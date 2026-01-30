@@ -8,6 +8,7 @@
     "Details": "세부"
   },
   "sync": {
+    "the_existing_user": "해당 사용자가 이미 존재하는 경우 기존 사용자를 덮어씁니다.",
     "sync_users": "사용자 동기화",
     "sync_wechat_users": "위챗 사용자 동기화",
     "sync_dingtalk_users": "딩톡 사용자 동기화",
