@@ -1175,6 +1175,8 @@ onMounted(() => {
     border-radius: 0 12px 12px 0;
 
     .no-horizontal.ed-scrollbar {
+      position: relative;
+      z-index: 10;
       .ed-scrollbar__bar.is-horizontal {
         display: none;
       }
@@ -1195,8 +1197,6 @@ onMounted(() => {
     align-items: center;
     padding-left: 56px;
     padding-right: 56px;
-    position: relative;
-    z-index: 10;
 
     &.no-sidebar {
       padding-left: 96px;
