@@ -843,6 +843,17 @@ def end_log(session: SessionDep, log: ChatLog, full_message: Union[list[dict], d
     return log
 
 
+def trigger_log_error(session: SessionDep, log: ChatLog) -> ChatLog:
+    log.error = True
+    stmt = update(ChatLog).where(and_(ChatLog.id == log.id)).values(
+        error=True
+    )
+    session.execute(stmt)
+    session.commit()
+
+    return log
+
+
 def save_sql_answer(session: SessionDep, record_id: int, answer: str) -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")

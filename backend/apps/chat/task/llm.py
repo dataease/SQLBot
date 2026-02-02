@@ -31,7 +31,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
     get_last_execute_sql_error, format_json_data, format_chart_fields, get_chat_brief_generate, get_chat_predict_data, \
-    get_chat_chart_config
+    get_chat_chart_config, trigger_log_error
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj
 from apps.data_training.curd.data_training import get_training_template
@@ -283,7 +283,7 @@ class LLMService:
         self.current_logs[OperationEnum.FILTER_TERMS] = start_log(session=_session,
                                                                   operate=OperationEnum.FILTER_TERMS,
                                                                   record_id=self.record.id, local_operation=True)
-        
+
         self.chat_question.terminologies, term_list = get_terminology_template(_session, self.chat_question.question,
                                                                                calculate_oid, calculate_ds_id)
         self.current_logs[OperationEnum.FILTER_TERMS] = end_log(session=_session,
@@ -303,7 +303,8 @@ class LLMService:
                                                                               operate=OperationEnum.FILTER_CUSTOM_PROMPT,
                                                                               record_id=self.record.id,
                                                                               local_operation=True)
-            self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session, custom_prompt_type, calculate_oid,
+            self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session, custom_prompt_type,
+                                                                                calculate_oid,
                                                                                 calculate_ds_id)
             self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = end_log(session=_session,
                                                                             log=self.current_logs[
@@ -323,11 +324,13 @@ class LLMService:
                 calculate_ds_id = None
         if self.current_assistant and self.current_assistant.type == 1:
             self.chat_question.data_training, example_list = get_training_template(_session,
-                                                                                   self.chat_question.question, calculate_oid,
+                                                                                   self.chat_question.question,
+                                                                                   calculate_oid,
                                                                                    None, self.current_assistant.id)
         else:
             self.chat_question.data_training, example_list = get_training_template(_session,
-                                                                                   self.chat_question.question, calculate_oid,
+                                                                                   self.chat_question.question,
+                                                                                   calculate_oid,
                                                                                    calculate_ds_id)
         self.current_logs[OperationEnum.FILTER_SQL_EXAMPLE] = end_log(session=_session,
                                                                       log=self.current_logs[
@@ -833,12 +836,15 @@ class LLMService:
                                                                   reasoning_content=full_thinking_text,
                                                                   token_usage=token_usage)
 
-    @staticmethod
-    def check_sql(res: str) -> tuple[str, Optional[list]]:
+    def check_sql(self, session: Session, res: str, operate: OperationEnum) -> tuple[str, Optional[list]]:
         json_str = extract_nested_json(res)
+
+        log = self.current_logs[operate]
+
         if json_str is None:
-            raise SingleMessageError(orjson.dumps({'message': 'Cannot parse sql from answer',
-                                                   'traceback': "Cannot parse sql from answer:\n" + res}).decode())
+            trigger_log_error(session, log)
+            raise SingleMessageError(orjson.dumps({'message': 'SQL answer is not a valid json object',
+                                                   'traceback': "SQL answer is not a valid json object:\n" + res}).decode())
         sql: str
         data: dict
         try:
@@ -850,12 +856,15 @@ class LLMService:
                 message = data['message']
                 raise SingleMessageError(message)
         except SingleMessageError as e:
+            trigger_log_error(session, log)
             raise e
         except Exception:
+            trigger_log_error(session, log)
             raise SingleMessageError(orjson.dumps({'message': 'Cannot parse sql from answer',
                                                    'traceback': "Cannot parse sql from answer:\n" + res}).decode())
 
         if sql.strip() == '':
+            trigger_log_error(session, log)
             raise SingleMessageError("SQL query is empty")
         return sql, data.get('tables')
 
@@ -899,8 +908,8 @@ class LLMService:
 
         return brief
 
-    def check_save_sql(self, session: Session, res: str) -> str:
-        sql, *_ = self.check_sql(res=res)
+    def check_save_sql(self, session: Session, res: str, operate: OperationEnum) -> str:
+        sql, *_ = self.check_sql(session=session, res=res, operate=operate)
         save_sql(session=session, sql=sql, record_id=self.record.id)
 
         self.chat_question.sql = sql
@@ -1149,7 +1158,9 @@ class LLMService:
             sqlbot_temp_sql_text = None
             assistant_dynamic_sql = None
             # row permission
-            sql, tables = self.check_sql(res=full_sql_text)
+
+            sql_operate = OperationEnum.GENERATE_SQL
+            sql, tables = self.check_sql(session=_session, res=full_sql_text, operate=sql_operate)
             if ((not self.current_assistant or is_page_embedded) and is_normal_user(
                     self.current_user)) or use_dynamic_ds:
                 sql_result = None
@@ -1158,19 +1169,21 @@ class LLMService:
                     dynamic_sql_result = self.generate_assistant_dynamic_sql(_session, sql, tables)
                     sqlbot_temp_sql_text = dynamic_sql_result.get(
                         'sqlbot_temp_sql_text') if dynamic_sql_result else None
-                    # sql_result = self.generate_assistant_filter(sql, tables)
                 else:
                     sql_result = self.generate_filter(_session, sql, tables)  # maybe no sql and tables
 
                 if sql_result:
                     SQLBotLogUtil.info(sql_result)
-                    sql = self.check_save_sql(session=_session, res=sql_result)
+                    sql_operate = OperationEnum.GENERATE_SQL_WITH_PERMISSIONS
+                    sql = self.check_save_sql(session=_session, res=sql_result, operate=sql_operate)
                 elif dynamic_sql_result and sqlbot_temp_sql_text:
-                    assistant_dynamic_sql = self.check_save_sql(session=_session, res=sqlbot_temp_sql_text)
+                    sql_operate = OperationEnum.GENERATE_DYNAMIC_SQL
+                    assistant_dynamic_sql = self.check_save_sql(session=_session, res=sqlbot_temp_sql_text,
+                                                                operate=sql_operate)
                 else:
-                    sql = self.check_save_sql(session=_session, res=full_sql_text)
+                    sql = self.check_save_sql(session=_session, res=full_sql_text, operate=sql_operate)
             else:
-                sql = self.check_save_sql(session=_session, res=full_sql_text)
+                sql = self.check_save_sql(session=_session, res=full_sql_text, operate=sql_operate)
 
             SQLBotLogUtil.info('sql: ' + sql)
 
