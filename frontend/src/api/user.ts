@@ -21,6 +21,7 @@ export const userApi = {
   add: (data: any) => request.post('/user', data),
   edit: (data: any) => request.put('/user', data),
   clearErrorApi: (key: string) => request.get(`/user/clearErrorRecord/${key}`),
+  errorRecord: (key: string) => request.get(`/user/errorRecord/${key}`),
   delete: (key: string) => request.delete(`/user/${key}`),
   deleteBatch: (data: any) => request.delete(`/user`, { data }),
   get: (key: string) => request.get(`/user/${key}`),
