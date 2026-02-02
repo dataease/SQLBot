@@ -1,6 +1,7 @@
 <template>
   <div class="sqlbot-assistant-container">
     <div class="header" :style="{ color: customSet.header_font_color }">
+      <el-icon v-if="!embeddedHistoryHidden" size="20"> </el-icon>
       <el-icon v-if="!logo" class="logo" size="30">
         <LOGO></LOGO>
       </el-icon>
@@ -30,7 +31,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onBeforeMount, nextTick, onBeforeUnmount, ref, onMounted, reactive } from 'vue'
+import { onBeforeMount, nextTick, onBeforeUnmount, ref, onMounted, reactive, computed } from 'vue'
 import ChatComponent from '@/views/chat/index.vue'
 import { request } from '@/utils/request'
 import LOGO from '@/assets/svg/logo-custom_small.svg'
@@ -47,6 +48,10 @@ const assistantStore = useAssistantStore()
 const appearanceStore = useAppearanceStoreWithOut()
 const route = useRoute()
 const chatRef = ref()
+
+const embeddedHistoryHidden = computed(
+  () => assistantStore.getAssistant && !assistantStore.getHistory
+)
 
 const createChat = () => {
   chatRef.value?.createNewChat()
