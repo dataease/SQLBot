@@ -1,7 +1,6 @@
 <template>
   <div class="sqlbot-assistant-container">
     <div class="header" :style="{ color: customSet.header_font_color }">
-      <el-icon size="20"> </el-icon>
       <el-icon v-if="!logo" class="logo" size="30">
         <LOGO></LOGO>
       </el-icon>
