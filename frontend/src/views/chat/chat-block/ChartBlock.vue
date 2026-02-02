@@ -561,6 +561,7 @@ watch(
 
 .chart-fullscreen-dialog-body {
   padding: 0;
+  height: 100%;
 }
 
 .chart-sql-drawer-body {
@@ -647,6 +648,7 @@ watch(
     border: unset;
     border-radius: unset;
     padding: 0;
+    height: 100%;
 
     .header-bar {
       border-bottom: 1px solid rgba(31, 35, 41, 0.15);
@@ -657,8 +659,7 @@ watch(
     .chart-block {
       margin: unset;
       padding: 16px;
-
-      height: calc(100vh - 56px);
+      height: calc(100% - 56px);
     }
   }
 
