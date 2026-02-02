@@ -348,7 +348,8 @@
         "failed": "连接失败"
       },
       "timeout": "查询超时(秒)",
-      "address": "地址"
+      "address": "地址",
+      "low_version": "兼容低版本"
     },
     "sync_fields": "同步表结构"
   },

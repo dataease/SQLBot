@@ -108,16 +108,28 @@ def get_extra_config(conf: DatasourceConf):
 def get_origin_connect(type: str, conf: DatasourceConf):
     extra_config_dict = get_extra_config(conf)
     if equals_ignore_case(type, "sqlServer"):
-        return pymssql.connect(
-            server=conf.host,
-            port=str(conf.port),
-            user=conf.username,
-            password=conf.password,
-            database=conf.database,
-            timeout=conf.timeout,
-            tds_version='7.0',  # options: '4.2', '7.0', '8.0' ...,
-            **extra_config_dict
-        )
+        # none or true, set tds_version = 7.0
+        if conf.lowVersion is None or conf.lowVersion:
+            return pymssql.connect(
+                server=conf.host,
+                port=str(conf.port),
+                user=conf.username,
+                password=conf.password,
+                database=conf.database,
+                timeout=conf.timeout,
+                tds_version='7.0',  # options: '4.2', '7.0', '8.0' ...,
+                **extra_config_dict
+            )
+        else:
+            return pymssql.connect(
+                server=conf.host,
+                port=str(conf.port),
+                user=conf.username,
+                password=conf.password,
+                database=conf.database,
+                timeout=conf.timeout,
+                **extra_config_dict
+            )
 
 
 # use sqlalchemy
