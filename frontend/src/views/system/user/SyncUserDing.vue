@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="centerDialogVisible"
-    :title="$t('sync.sync_dingtalk_users')"
+    :title="$t(dialogTitle)"
     modal-class="sync-user_ding"
     width="840"
   >
@@ -101,7 +101,7 @@
       <el-button secondary @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
-      <el-button v-if="!checkedWorkspace.length" disabled type="info">{{
+      <el-button v-if="!checkTableList.length" disabled type="info">{{
         $t('common.confirm2')
       }}</el-button>
       <el-button v-else type="primary" @click="handleConfirm">
@@ -113,7 +113,8 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { workspaceOptionUserList, workspaceUwsCreate } from '@/api/workspace'
+import { modelApi } from '@/api/system'
+import { ElLoading } from 'element-plus-secondary'
 import avatar_personal from '@/assets/svg/avatar_personal.svg'
 import avatar_organize from '@/assets/svg/avatar_organize.svg'
 import Close from '@/assets/svg/icon_close_outlined_w.svg'
@@ -126,6 +127,7 @@ const isIndeterminate = ref(false)
 const checkedWorkspace = ref<any[]>([])
 const workspace = ref<any[]>([])
 const search = ref('')
+const dialogTitle = ref('')
 const organizationUserRef = ref()
 const defaultCheckedKeys = ref<any[]>([])
 const defaultProps = {
@@ -157,15 +159,6 @@ const filterNode: FilterNodeMethodFunction = (value: string, data: any) => {
   return data.name.includes(value)
 }
 
-watch(search, () => {
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
-  checkedWorkspace.value = checkTableList.value.filter((ele: any) =>
-    tableNameArr.includes(ele.name)
-  )
-  const checkedCount = checkedWorkspace.value.length
-  checkAll.value = checkedCount === workspaceWithKeywords.value.length
-  isIndeterminate.value = checkedCount > 0 && checkedCount < workspaceWithKeywords.value.length
-})
 function isLeafNode(node: any) {
   return !node.children || node.children.length === 0
 }
@@ -192,12 +185,12 @@ const handleCheckedWorkspaceChange = (value: CheckboxValueType[]) => {
       ...value,
     ]),
   ]
-
   organizationUserRef.value.setCheckedKeys(checkTableList.value.map((ele: any) => ele.id))
 }
 let oid: any = null
 
-const open = async (id: any) => {
+const open = async (id: any, title: any) => {
+  dialogTitle.value = title
   loading.value = true
   search.value = ''
   oid = id
@@ -205,23 +198,30 @@ const open = async (id: any) => {
   checkTableList.value = []
   checkAll.value = false
   isIndeterminate.value = false
-  const systemWorkspaceList = await workspaceOptionUserList({ oid }, 1, 1000)
-  workspace.value = JSON.parse(
-    JSON.stringify(systemWorkspaceList.items.filter((ele: any) => +ele.id !== 1) as any)
-  )
+  const loadingInstance = ElLoading.service({ fullscreen: true })
+  const systemWorkspaceList = await modelApi.platform(id)
+  organizationUserList.value = systemWorkspaceList.tree || []
+  loadingInstance?.close()
+  nextTick(() => {
+    nextTick(() => {
+      handleCheckedWorkspaceChange(systemWorkspaceList.checked_list)
+    })
+  })
   loading.value = false
   centerDialogVisible.value = true
 }
 const emits = defineEmits(['refresh'])
 const handleConfirm = () => {
-  workspaceUwsCreate({
-    uid_list: checkTableList.value.map((ele: any) => ele.id),
-    oid,
-    weight: 0,
-  }).then(() => {
-    centerDialogVisible.value = false
-    emits('refresh')
-  })
+  modelApi
+    .userSync({
+      user_list: checkTableList.value.map((ele: any) => ({ id: ele.id, name: ele.name })),
+      origin: oid,
+      cover: existingUser.value,
+    })
+    .then((res: any) => {
+      centerDialogVisible.value = false
+      emits('refresh', res)
+    })
 }
 
 const clearWorkspace = (val: any) => {
@@ -232,6 +232,7 @@ const clearWorkspace = (val: any) => {
 
 const clearWorkspaceAll = () => {
   checkedWorkspace.value = []
+  checkTableList.value = []
   handleCheckedWorkspaceChange([])
 }
 

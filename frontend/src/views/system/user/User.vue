@@ -35,7 +35,12 @@
           >
           <div class="popover">
             <div class="popover-content">
-              <div v-for="ele in platformType" :key="ele.name" class="popover-item">
+              <div
+                @click="handleSyncUser(ele)"
+                v-for="ele in platformType"
+                :key="ele.name"
+                class="popover-item"
+              >
                 <img height="24" width="24" :src="ele.icon" />
                 <div class="model-name">{{ $t(ele.name) }}</div>
               </div>
@@ -396,7 +401,7 @@
     :filter-options="filterOption"
     @trigger-filter="searchCondition"
   />
-  <SyncUserDing ref="syncUserDingRef" />
+  <SyncUserDing @refresh="refresh" ref="syncUserRef"></SyncUserDing>
 </template>
 
 <script setup lang="ts">
@@ -409,8 +414,7 @@ import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlin
 import { useI18n } from 'vue-i18n'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { convertFilterText, FilterText } from '@/components/filter-text'
-// import SyncUserDing from './SyncUserDing.vue'
-import SyncUserDing from './SyncUser.vue'
+import SyncUserDing from './SyncUserDing.vue'
 import IconLock from '@/assets/svg/icon-key_outlined.svg'
 import IconOpeEdit from '@/assets/svg/icon_edit_outlined.svg'
 import IconOpeDelete from '@/assets/svg/icon_delete.svg'
@@ -420,6 +424,7 @@ import logo_lark from '@/assets/img/lark.png'
 import logo_wechat_work from '@/assets/img/wechat.png'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import { userApi } from '@/api/user'
+import { request } from '@/utils/request'
 import { workspaceList } from '@/api/workspace'
 import { formatTimestamp } from '@/utils/date'
 import { ClickOutside as vClickOutside } from 'element-plus-secondary'
@@ -438,7 +443,7 @@ const dialogVisiblePassword = ref(false)
 const isIndeterminate = ref(true)
 const drawerMainRef = ref()
 const userImportRef = ref()
-const syncUserDingRef = ref()
+const syncUserRef = ref()
 const selectionLoading = ref(false)
 const filterOption = ref<any[]>([
   {
@@ -501,6 +506,8 @@ const state = reactive<any>({
     total: 0,
   },
 })
+
+const currentPlatform = ref<any>({})
 const rules = {
   name: [
     {
@@ -534,20 +541,32 @@ const rules = {
 const platformType = ref<any[]>([
   {
     icon: logo_wechat_work,
-    value: 'wechat',
+    value: 6,
     name: 'sync.sync_wechat_users',
   },
   {
     icon: logo_dingtalk,
-    value: 'dingtalk',
+    value: 7,
     name: 'sync.sync_dingtalk_users',
   },
   {
     icon: logo_lark,
-    value: 'lark',
+    value: 8,
     name: 'sync.sync_lark_users',
   },
 ])
+
+const refresh = (res: any) => {
+  showTips(res.successCount, res.errorCount, res.dataKey)
+  if (res.successCount) {
+    search()
+  }
+}
+
+const handleSyncUser = (ele: any) => {
+  currentPlatform.value = ele
+  syncUserRef.value.open(ele.value, ele.name)
+}
 
 const passwordRules = {
   new: [
@@ -572,6 +591,14 @@ const closeResetInfo = (row: any) => {
 }
 const setPopoverRef = (el: any, row: any) => {
   row.popoverRef = el
+}
+
+const loadData = () => {
+  const url = '/system/platform'
+  request.get(url).then((res: any) => {
+    const idArr = res.filter((card: any) => card.valid && card.enable).map((ele: any) => ele.id)
+    platformType.value = platformType.value.filter((card: any) => idArr.includes(card.value))
+  })
 }
 
 const copyText = () => {
@@ -895,6 +922,7 @@ const formatUserOrigin = (origin?: number) => {
   return originArray[origin - 1]
 }
 onMounted(() => {
+  loadData()
   workspaceList().then((res) => {
     options.value = res || []
     filterOption.value[2].option = [...options.value]
@@ -902,31 +930,22 @@ onMounted(() => {
   search()
   loadDefaultPwd()
 })
-const downErrorExcel = () => {
-  // if (errorFileKey.value) {
-  //   showLoading()
-  //   userImportApi
-  //     .downErrorRecordApi(errorFileKey.value)
-  //     .then((res) => {
-  //       const blob = new Blob([res], {
-  //         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  //       })
-  //       const link = document.createElement('a')
-  //       link.style.display = 'none'
-  //       link.href = URL.createObjectURL(blob)
-  //       link.download = 'error.xlsx'
-  //       document.body.appendChild(link)
-  //       link.click()
-  //       document.body.removeChild(link)
-  //       closeLoading()
-  //     })
-  //     .catch(() => {
-  //       closeLoading()
-  //     })
-  // }
+const downErrorExcel = (dataKey: any) => {
+  userApi.errorRecord(dataKey).then((res: any) => {
+    const blob = new Blob([res], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const link = document.createElement('a')
+    link.style.display = 'none'
+    link.href = URL.createObjectURL(blob)
+    link.download = 'error.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  })
 }
 
-const showTips = (successCount: any, errorCount: any) => {
+const showTips = (successCount: any, errorCount: any, dataKey: any) => {
   let title = successCount ? t('sync.sync_complete') : t('sync.sync_failed')
   const childrenDomList = [h('span', null, t('sync.synced_10_users', { num: successCount }))]
   const contentDomList = h(
@@ -969,7 +988,7 @@ const showTips = (successCount: any, errorCount: any) => {
       h(
         ElButton,
         {
-          onClick: downErrorExcel,
+          onClick: () => downErrorExcel(dataKey),
           text: true,
           class: 'down-button',
         },
@@ -993,14 +1012,14 @@ const showTips = (successCount: any, errorCount: any) => {
     confirmButtonText: t('sync.continue_syncing'),
   })
     .then(() => {
-      // clearErrorRecord()
+      const { value, name } = currentPlatform.value
+      syncUserRef.value.open(value, name)
+      currentPlatform.value = null
     })
     .catch(() => {
-      // clearErrorRecord()
+      currentPlatform.value = null
     })
 }
-
-showTips(1, 2)
 </script>
 
 <style lang="less" scoped>
