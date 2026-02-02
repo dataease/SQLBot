@@ -55,18 +55,25 @@ export const settingMapping = {
       sort: 1,
     },
     {
+      realKey: 'agent_id',
+      pkey: 'agentId',
+      pval: '',
+      type: 'text',
+      sort: 2,
+    },
+    {
       realKey: 'client_id',
       pkey: 'APP Key',
       pval: '',
       type: 'text',
-      sort: 2,
+      sort: 3,
     },
     {
       realKey: 'client_secret',
       pkey: 'APP Secret',
       pval: '',
       type: 'pwd',
-      sort: 3,
+      sort: 4,
     },
   ],
   8: [
