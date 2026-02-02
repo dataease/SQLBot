@@ -120,6 +120,7 @@ class DatasourceConf(BaseModel):
     sheets: List = ''
     mode: str = ''
     timeout: int = 30
+    lowVersion: bool = False
 
     def to_dict(self):
         return {
@@ -134,7 +135,8 @@ class DatasourceConf(BaseModel):
             "filename": self.filename,
             "sheets": self.sheets,
             "mode": self.mode,
-            "timeout": self.timeout
+            "timeout": self.timeout,
+            "lowVersion": self.lowVersion
         }
 
 

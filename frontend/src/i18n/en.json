@@ -348,7 +348,8 @@
         "failed": "Connect failed"
       },
       "timeout": "Timeout(second)",
-      "address": "Address"
+      "address": "Address",
+      "low_version": "Compatible with lower versions"
     },
     "sync_fields": "Sync Fields"
   },

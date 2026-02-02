@@ -348,7 +348,8 @@
         "failed": "연결 실패"
       },
       "timeout": "쿼리 시간 초과(초)",
-      "address": "주소"
+      "address": "주소",
+      "low_version": "낮은 버전 호환"
     },
     "sync_fields": "동기화된 테이블 구조"
   },
