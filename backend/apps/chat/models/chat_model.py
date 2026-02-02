@@ -329,7 +329,7 @@ class McpQuestion(BaseModel):
     token: str = Body(description='token')
     stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)
     lang: Optional[str] = Body(description='语言：zh-CN|en|ko-KR', default='zh-CN')
-    datasource_id: Optional[int] = Body(description='数据源ID，仅当当前对话没有确定数据源时有效', default=None)
+    datasource_id: Optional[int | str] = Body(description='数据源ID，仅当当前对话没有确定数据源时有效', default=None)
 
 
 class AxisObj(BaseModel):
