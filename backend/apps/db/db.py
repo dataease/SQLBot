@@ -582,6 +582,8 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
         dialect = None
         if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks":
             dialect = 'mysql'
+        elif ds.type == "sqlServer":
+            dialect = 'tsql'
 
         statements = sqlglot.parse(sql, dialect=dialect)
 
