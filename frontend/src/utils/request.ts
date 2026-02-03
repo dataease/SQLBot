@@ -108,7 +108,8 @@ class HttpService {
             assistantStore.getCertificate
           ) {
             if (
-              (config.method?.toLowerCase() === 'get' && /\/chat\/\d+$/.test(config.url || '')) ||
+              /* (config.method?.toLowerCase() === 'get' && /\/chat\/\d+$/.test(config.url || '')) || */
+              /^\/chat/.test(config.url || '') ||
               config.url?.includes('/system/assistant/ds')
             ) {
               await assistantStore.refreshCertificate()
