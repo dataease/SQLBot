@@ -8,6 +8,7 @@
     "Details": "详情"
   },
   "sync": {
+    "integration": "Platform integration needs to be enabled.",
     "the_existing_user": "若用户已存在，覆盖旧用户",
     "sync_users": "同步用户",
     "sync_wechat_users": "同步企业微信用户",

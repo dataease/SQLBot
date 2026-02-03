@@ -58,30 +58,14 @@ const pageLogo = computed(() => {
       <div class="i-can">{{ welcomeDesc }}</div>
     </div>
     <div class="content">
-      <div class="textarea-send">
-        <el-input
-          v-model="textareaVal"
-          :autosize="{ minRows: 1, maxRows: 8.5848 }"
-          type="textarea"
-          clearable
-          :placeholder="$t('embedded.enter_a_question')"
-        />
-        <el-tooltip :offset="10" effect="dark" :content="$t('embedded.send')" placement="top">
-          <img :src="disable_answer" width="32px" height="32px" alt="" />
-        </el-tooltip>
-
-        <!-- <el-tooltip
-          :offset="10"
-          effect="dark"
-          :content="$t('embedded.stop_replying')"
-          placement="top"
-        >
-          <img :src="answer" width="32px" height="32px" alt="" />
-        </el-tooltip>
-
-        <img :src="loading_answer" width="32px" height="32px" alt="" />
-        <img :src="send_answer" width="32px" height="32px" alt="" /> -->
-      </div>
+      <el-button size="large" type="primary" class="greeting-btn">
+        <span class="inner-icon">
+          <el-icon>
+            <icon_new_chat_outlined />
+          </el-icon>
+        </span>
+        {{ $t('qa.start_sqlbot') }}
+      </el-button>
     </div>
 
     <div class="drawer-assistant"></div>
@@ -149,13 +133,10 @@ const pageLogo = computed(() => {
   }
   .center {
     width: 100%;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     flex-direction: column;
+    margin-top: 180px;
 
     .i-am {
       font-weight: 600;
@@ -182,37 +163,37 @@ const pageLogo = computed(() => {
   }
   .content {
     width: calc(100% - 32px);
+    margin-top: 8px;
+    margin-left: 16px;
 
-    .textarea-send {
+    .greeting-btn {
       width: 100%;
-      position: relative;
-      .ed-textarea {
-        width: 100%;
+      height: 88px;
+      border-radius: 16px;
+      border-style: dashed;
+
+      .inner-icon {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        margin-right: 6px;
       }
 
-      :deep(.ed-textarea__inner) {
-        padding: 12px 12px 52px 12px;
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 24px;
-        border-radius: 16px;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 500;
 
-        &::placeholder {
-          color: #8f959e;
-        }
-      }
-
-      img {
-        cursor: pointer;
-        position: absolute;
-        right: 12px;
-        bottom: 12px;
-      }
+      --ed-button-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-hover-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-active-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-bg-color: rgba(248, 249, 250, 1);
+      --ed-button-hover-bg-color: var(--ed-color-primary-1a, #1cba901a);
+      --ed-button-border-color: rgba(217, 220, 223, 1);
+      --ed-button-hover-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-active-bg-color: var(--ed-color-primary-33, #1cba9033);
+      --ed-button-active-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
     }
-
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
   }
 
   .drawer-assistant {
