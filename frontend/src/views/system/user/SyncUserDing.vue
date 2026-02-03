@@ -35,17 +35,17 @@
             default-expand-all
             :expand-on-click-node="false"
           >
-            <template #default="{ node }">
+            <template #default="{ node, data }">
               <div class="custom-tree-node flex">
                 <el-icon size="28">
-                  <avatar_personal v-if="node.isLeaf"></avatar_personal>
-                  <avatar_organize v-else></avatar_organize>
+                  <avatar_organize v-if="Array.isArray(data.children)"></avatar_organize>
+                  <avatar_personal v-else></avatar_personal>
                 </el-icon>
                 <span class="ml-8 ellipsis" style="max-width: 40%" :title="node.label">
                   {{ node.label }}</span
                 >
-                <span class="account ellipsis ml-8" style="max-width: 40%" :title="node.account"
-                  >({{ node.id }})</span
+                <span class="account ellipsis ml-8" style="max-width: 40%" :title="data.id"
+                  >({{ data.id }})</span
                 >
               </div>
             </template>
@@ -73,7 +73,7 @@
           class="flex-between align-center hover-bg_select"
         >
           <div
-            :title="`${ele.name}(${ele.account})`"
+            :title="`${ele.name}(${ele.id})`"
             class="flex align-center ellipsis"
             style="width: 100%"
           >
@@ -83,8 +83,8 @@
             <span class="ml-8 lighter ellipsis" style="max-width: 40%" :title="ele.name">{{
               ele.name
             }}</span>
-            <span class="account ellipsis ml-8" style="max-width: 40%" :title="ele.account"
-              >({{ ele.account }})</span
+            <span class="account ellipsis ml-8" style="max-width: 40%" :title="ele.id"
+              >({{ ele.id }})</span
             >
           </div>
           <el-button class="close-btn" text>
@@ -160,7 +160,7 @@ const filterNode: FilterNodeMethodFunction = (value: string, data: any) => {
 }
 
 function isLeafNode(node: any) {
-  return !node.children || node.children.length === 0
+  return !Array.isArray(node.children)
 }
 
 const handleCheck = () => {
