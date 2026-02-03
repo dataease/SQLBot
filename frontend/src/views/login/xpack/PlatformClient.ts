@@ -39,7 +39,7 @@ export const loadClient = (category: LoginCategory) => {
       confirmButtonType: 'danger',
       type: 'warning',
       showCancelButton: false,
-      confirmButtonText: t('commons.refresh'),
+      confirmButtonText: t('common.refresh'),
       cancelButtonText: t('dataset.cancel'),
       autofocus: false,
       showClose: false,
