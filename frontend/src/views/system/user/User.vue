@@ -24,7 +24,21 @@
           {{ $t('user.filter') }}
         </el-button>
 
-        <el-popover popper-class="sync-platform" placement="bottom-start">
+        <el-tooltip
+          v-if="!platformType.length"
+          effect="dark"
+          :content="$t('sync.integration')"
+          placement="left"
+        >
+          <el-button disabled secondary>
+            <template #icon>
+              <icon_replace_outlined />
+            </template>
+            {{ t('sync.sync_users') }}
+          </el-button>
+        </el-tooltip>
+
+        <el-popover v-else popper-class="sync-platform" placement="bottom-start">
           <template #reference>
             <el-button secondary>
               <template #icon>

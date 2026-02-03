@@ -8,6 +8,7 @@
     "Details": "Details"
   },
   "sync": {
+    "integration": "Platform integration needs to be enabled.",
     "the_existing_user": "If the user already exists, overwrite the existing user.",
     "sync_users": "Sync Users",
     "sync_wechat_users": "Sync WeChat Users",
