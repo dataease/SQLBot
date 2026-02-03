@@ -211,11 +211,6 @@ const open = async (id: any, title: any) => {
   const systemWorkspaceList = await modelApi.platform(id)
   organizationUserList.value = systemWorkspaceList.tree || []
   loadingInstance?.close()
-  nextTick(() => {
-    nextTick(() => {
-      handleCheckedWorkspaceChange(systemWorkspaceList.checked_list)
-    })
-  })
   loading.value = false
   centerDialogVisible.value = true
 }
