@@ -38,7 +38,7 @@
             <template #default="{ node, data }">
               <div class="custom-tree-node flex">
                 <el-icon size="28">
-                  <avatar_organize v-if="Array.isArray(data.children)"></avatar_organize>
+                  <avatar_organize v-if="!data.options.is_user"></avatar_organize>
                   <avatar_personal v-else></avatar_personal>
                 </el-icon>
                 <span class="ml-8 ellipsis" style="max-width: 40%" :title="node.label">
@@ -160,17 +160,26 @@ const filterNode: FilterNodeMethodFunction = (value: string, data: any) => {
 }
 
 function isLeafNode(node: any) {
-  return !Array.isArray(node.children)
+  return node.options.is_user
 }
 
 const handleCheck = () => {
-  checkTableList.value = organizationUserRef.value
-    .getCheckedNodes()
-    .filter((ele: any) => isLeafNode(ele))
+  const userList = organizationUserRef.value.getCheckedNodes()
+  let idArr = [...new Set(userList.map((ele: any) => ele.id))]
+
+  checkTableList.value = userList
+    .filter((ele: any) => {
+      if (idArr.includes(ele.id) && isLeafNode(ele)) {
+        idArr = idArr.filter((itx: any) => itx !== ele.id)
+        return true
+      }
+      return false
+    })
     .map((ele: any) => ({
       name: ele.name,
       id: ele.id,
       account: ele.id,
+      email: ele.options.email,
     }))
 }
 
@@ -214,7 +223,11 @@ const emits = defineEmits(['refresh'])
 const handleConfirm = () => {
   modelApi
     .userSync({
-      user_list: checkTableList.value.map((ele: any) => ({ id: ele.id, name: ele.name })),
+      user_list: checkTableList.value.map((ele: any) => ({
+        id: ele.id,
+        name: ele.name,
+        email: ele.email || '',
+      })),
       origin: oid,
       cover: existingUser.value,
     })
