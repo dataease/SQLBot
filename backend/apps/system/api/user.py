@@ -220,25 +220,35 @@ async def update(session: SessionDep, editor: UserEditor, trans: Trans):
     if not check_email_format(editor.email):
         raise Exception(trans('i18n_format_invalid', key = f"{trans('i18n_user.email')} [{editor.email}]"))
     origin_oid: int = user_model.oid
-    del_stmt = sqlmodel_delete(UserWsModel).where(UserWsModel.uid == editor.id)
-    session.exec(del_stmt)
+    
+    uws_list_stmt = select(UserWsModel).where(UserWsModel.uid == editor.id)
+    uws_list = session.exec(uws_list_stmt).all()
+    
+    existing_oids = {uws.oid for uws in uws_list}
+    new_oid_set = set(editor.oid_list) if editor.oid_list else set()
+    oids_to_remove = existing_oids - new_oid_set
+    oids_to_add = new_oid_set - existing_oids
+    
+    if oids_to_remove:
+        del_stmt = sqlmodel_delete(UserWsModel).where(UserWsModel.uid == editor.id, UserWsModel.oid.in_(oids_to_remove))
+        session.exec(del_stmt)
     
     data = editor.model_dump(exclude_unset=True)
     user_model.sqlmodel_update(data)
     
     user_model.oid = 0
     if editor.oid_list:
-        # need to validate oid_list
-        db_model_list = [
-            UserWsModel.model_validate({
-                "oid": oid,
-                "uid": user_model.id,
-                "weight": 0
-            })
-            for oid in editor.oid_list
-        ]
-        session.add_all(db_model_list)
         user_model.oid = origin_oid if origin_oid in editor.oid_list else  editor.oid_list[0]
+        if oids_to_add:
+            db_uws_model_list = [
+                UserWsModel.model_validate({
+                    "oid": oid,
+                    "uid": user_model.id,
+                    "weight": 0
+                })
+                for oid in oids_to_add
+            ]
+            session.add_all(db_uws_model_list)
     session.add(user_model)
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}user_del_api", description=f"{PLACEHOLDER_PREFIX}user_del_api")
