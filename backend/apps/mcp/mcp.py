@@ -85,9 +85,12 @@ def get_user(session: SessionDep, token: str):
 async def datasource_list(session: SessionDep, token: str):
     session_user = get_user(session, token)
     ds_list = get_datasource_list(session=session, user=session_user)
+    result = []
     for item in ds_list:
-        item.pop('embedding', None)
-    return
+        dic = item.__dict__
+        dic.pop('embedding', None)
+        result.append(dic)
+    return result
 
 
 #
