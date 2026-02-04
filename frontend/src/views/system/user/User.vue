@@ -25,7 +25,7 @@
         </el-button>
 
         <el-tooltip
-          v-if="!platformType.length"
+          v-if="!platformType.length && showSyncBtn"
           effect="dark"
           :content="$t('sync.integration')"
           placement="left"
@@ -38,7 +38,11 @@
           </el-button>
         </el-tooltip>
 
-        <el-popover v-else popper-class="sync-platform" placement="bottom-start">
+        <el-popover
+          v-if="platformType.length && showSyncBtn"
+          popper-class="sync-platform"
+          placement="bottom-start"
+        >
           <template #reference>
             <el-button secondary>
               <template #icon>
@@ -50,10 +54,10 @@
           <div class="popover">
             <div class="popover-content">
               <div
-                @click="handleSyncUser(ele)"
                 v-for="ele in platformType"
                 :key="ele.name"
                 class="popover-item"
+                @click="handleSyncUser(ele)"
               >
                 <img height="24" width="24" :src="ele.icon" />
                 <div class="model-name">{{ $t(ele.name) }}</div>
@@ -415,7 +419,7 @@
     :filter-options="filterOption"
     @trigger-filter="searchCondition"
   />
-  <SyncUserDing @refresh="refresh" ref="syncUserRef"></SyncUserDing>
+  <SyncUserDing ref="syncUserRef" @refresh="refresh"></SyncUserDing>
 </template>
 
 <script setup lang="ts">
@@ -935,8 +939,18 @@ const formatUserOrigin = (origin?: number) => {
   ]
   return originArray[origin - 1]
 }
+
+const showSyncBtn = ref(false)
 onMounted(() => {
-  loadData()
+  // eslint-disable-next-line no-undef
+  const obj = LicenseGenerator.getLicense()
+  if (obj?.status === 'valid') {
+    showSyncBtn.value = true
+    loadData()
+  } else {
+    platformType.value = []
+  }
+
   workspaceList().then((res) => {
     options.value = res || []
     filterOption.value[2].option = [...options.value]
