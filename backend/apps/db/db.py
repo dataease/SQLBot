@@ -72,7 +72,7 @@ def get_uri_from_config(type: str, conf: DatasourceConf) -> str:
         else:
             db_url = f"postgresql+psycopg2://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
     elif equals_ignore_case(type, "oracle"):
-        if equals_ignore_case(conf.mode, "service_name"):
+        if equals_ignore_case(conf.mode, "service_name", "serviceName"):
             if conf.extraJdbc is not None and conf.extraJdbc != '':
                 db_url = f"oracle+oracledb://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}?service_name={conf.database}&{conf.extraJdbc}"
             else:
