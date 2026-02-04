@@ -41,7 +41,9 @@
     "only_admin": "仅支持管理员调用！",
     "no_permission": "无权调用{url}{msg}",
     "authenticate_invalid": "认证无效【{msg}】",
-    "token_expired": "Token 已过期"
+    "token_expired": "Token 已过期",
+    "only_ws_admin": "仅支持工作空间管理员调用！",
+    "permission_resource_limit": "没有操作权限或资源不存在！"
   },
   "i18n_llm": {
     "validate_error": "校验失败[{msg}]",

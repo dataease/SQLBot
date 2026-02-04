@@ -41,7 +41,9 @@
     "only_admin": "Only administrators are allowed to call!",
     "no_permission": "No permission to call {url}{msg}",
     "authenticate_invalid": "Authentication invalid【{msg}】",
-    "token_expired": "Token expired"
+    "token_expired": "Token expired",
+    "only_ws_admin": "Workspace administrator access required!",
+    "permission_resource_limit": "Access denied or resource not found!"
   },
   "i18n_llm": {
     "validate_error": "Validation failed [{msg}]",
