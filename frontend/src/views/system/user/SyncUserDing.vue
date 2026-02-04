@@ -162,6 +162,22 @@ const dfsTree = (arr: any) => {
   })
 }
 
+const dfsTreeIds = (arr: any, ids: any) => {
+  return arr.filter((ele: any) => {
+    if (ele.children?.length) {
+      ele.children = dfsTreeIds(ele.children, ids)
+    }
+    if (
+      (ele.name.toLowerCase() as string).includes(search.value.toLowerCase()) ||
+      ele.children?.length
+    ) {
+      ids.push(ele.id)
+      return true
+    }
+    return false
+  })
+}
+
 watch(search, () => {
   organizationUserList.value = dfsTree(cloneDeep(rawTree))
   nextTick(() => {
@@ -179,7 +195,15 @@ function isLeafNode(node: any) {
 }
 
 const handleCheck = () => {
-  const userList = [...organizationUserRef.value.getCheckedNodes(), ...checkTableList.value]
+  const treeIds: any = []
+  dfsTreeIds(cloneDeep(rawTree), treeIds)
+  const checkNodes = organizationUserRef.value.getCheckedNodes()
+  const checkNodesIds = checkNodes.map((ele: any) => ele.id)
+  checkTableList.value = checkTableList.value.filter(
+    (ele: any) =>
+      !treeIds.includes(ele.id) || (treeIds.includes(ele.id) && checkNodesIds.includes(ele.id))
+  )
+  const userList = [...checkNodes, ...checkTableList.value]
   let idArr = [...new Set(userList.map((ele: any) => ele.id))]
 
   checkTableList.value = userList.filter((ele: any) => {
