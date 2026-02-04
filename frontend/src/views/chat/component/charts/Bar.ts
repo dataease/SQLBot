@@ -119,7 +119,7 @@ export class Bar extends BaseG2Chart {
         elementHighlight: { background: true, region: true },
         tooltip: { series: series.length > 0, shared: true },
       },
-      tooltip: (data) => {
+      tooltip: (data: any) => {
         if (series.length > 0) {
           return {
             name: data[series[0].value],
@@ -129,6 +129,30 @@ export class Bar extends BaseG2Chart {
           return { name: y[0].name, value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}` }
         }
       },
+      labels: this.showLabel
+        ? [
+          {
+            text: (data: any) => {
+              const value = data[y[0].value]
+              if (value === undefined || value === null) {
+                return ''
+              }
+              return `${value}${_data.isPercent ? '%' : ''}`
+            },
+            position: (data: any) => {
+              if (data[y[0].value] < 0) {
+                return 'left'
+              }
+              return 'right'
+            },
+            transform: [
+              { type: 'contrastReverse' },
+              { type: 'exceedAdjust' },
+              { type: 'overlapHide' },
+            ],
+          },
+        ]
+        : [],
     } as G2Spec
 
     if (series.length > 0) {

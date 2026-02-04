@@ -11,6 +11,7 @@ const props = defineProps<{
   message: ChatMessage
   data: Array<{ [key: string]: any }>
   loadingData?: boolean
+  showLabel?: boolean
 }>()
 
 const { t } = useI18n()
@@ -117,6 +118,7 @@ defineExpose({
       :series="series"
       :data="data"
       :multi-quota-name="multiQuotaName"
+      :show-label="showLabel"
     />
     <el-empty v-else :description="loadingData ? t('chat.loading_data') : t('chat.no_data')" />
   </div>
