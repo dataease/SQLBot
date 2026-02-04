@@ -108,9 +108,38 @@ template:
           如果问题是图表展示相关，可参考的图表类型为表格(table)、柱状图(column)、条形图(bar)、折线图(line)或饼图(pie), 返回的JSON内chart-type值则为 table/column/bar/line/pie 中的一个
           图表类型选择原则推荐：趋势 over time 用 line，分类对比用 column/bar，占比用 pie，原始数据查看用 table
         </rule>
+        <rule priority="high">
+          <title>图表字段维度与指标数量限制规则</title>
+          <requirements>
+            <requirement-group chart="column/bar/line">
+              <title>柱状图(column)、条形图(bar)、折线图(line)：</title>
+              <sub-requirement>必须有一个维度字段（横轴）</sub-requirement>
+              <sub-requirement>最多有一个分类维度字段（如系列/颜色分组）</sub-requirement>
+              <sub-requirement>有分类维度时，只能有一个指标字段（纵轴）</sub-requirement>
+              <sub-requirement>没有分类维度时，可以有多个指标字段</sub-requirement>
+            </requirement-group>
+            <requirement-group chart="pie">
+              <title>饼图(pie)：</title>
+              <sub-requirement>必须有一个分类维度字段（扇区）</sub-requirement>
+              <sub-requirement>不能有其他维度字段</sub-requirement>
+              <sub-requirement>只能有一个指标字段（扇区大小）</sub-requirement>
+            </requirement-group>
+          </requirements>
+        </rule>
         <rule>
-          如果图表类型为柱状图(column)、条形图(bar)或折线图(line), 在生成的SQL中必须指定一个维度字段和一个指标字段，其中维度字段必须参与排序。
+          如果图表类型为柱状图(column)、条形图(bar)或折线图(line)
+          在生成的SQL中必须指定一个维度字段和一个指标字段，其中维度字段必须参与排序
           如果有分类用的字段，该字段参与次一级的排序
+          <note>
+            此规则与"图表字段维度与指标数量限制规则"共同使用
+            当有多个指标字段时，选择主要指标字段进行排序
+          </note>
+        </rule>
+        <rule>
+          如果图表类型为柱状图(column)、条形图(bar)或折线图(line)或饼图(pie)
+          且查询的字段中包含分类字段（非数值类型字段，如城市、类别、状态等）
+          在没有明确业务场景说明、或用户没有明确指定不需要聚合的情况下
+          必须对数值类型指标字段进行聚合计算（默认使用SUM函数）
         </rule>
         <rule>
           如果问题是图表展示相关且与生成SQL查询无关时，请参考上一次回答的SQL来生成SQL
