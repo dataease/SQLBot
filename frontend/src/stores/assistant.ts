@@ -8,6 +8,7 @@ const flagKey = 'sqlbit-assistant-flag'
 type Resolver<T = any> = (value: T | PromiseLike<T>) => void
 type Rejecter = (reason?: any) => void
 interface PendingRequest<T = any> {
+  requestId: string
   resolve: Resolver<T>
   reject: Rejecter
 }
@@ -23,7 +24,9 @@ interface AssistantState {
   history: boolean
   hostOrigin: string
   autoDs?: boolean
-  requestPromiseMap: Map<string, PendingRequest>
+  requestPromiseMap: Map<string, PendingRequest[]>
+  pedding: boolean
+  certificateTime: number
 }
 
 export const AssistantStore = defineStore('assistant', {
@@ -40,7 +43,9 @@ export const AssistantStore = defineStore('assistant', {
       history: true,
       hostOrigin: '',
       autoDs: false,
-      requestPromiseMap: new Map<string, PendingRequest>(),
+      requestPromiseMap: new Map<string, PendingRequest[]>(),
+      pedding: false,
+      certificateTime: 0,
     }
   },
   getters: {
@@ -82,45 +87,114 @@ export const AssistantStore = defineStore('assistant', {
     },
   },
   actions: {
-    refreshCertificate<T>() {
-      const timeout = 30000
-      return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          this.requestPromiseMap.delete(this.id)
-          reject(new Error(`Request ${this.id} timed out after ${timeout}ms`))
-        }, timeout)
-        this.requestPromiseMap.set(this.id, {
+    refreshCertificate<T>(requestUrl?: string) {
+      if (+new Date() > this.certificateTime + 5000) {
+        return
+      }
+      const timeout = 5000
+      let peddingList = this.requestPromiseMap.get(this.id)
+      if (!peddingList) {
+        this.requestPromiseMap.set(this.id, [])
+        peddingList = this.requestPromiseMap.get(this.id)
+      }
+
+      const removeRequest = (requestId: string) => {
+        if (!peddingList) return
+        let len = peddingList.length
+        while (len--) {
+          const peddingRequest = peddingList[len]
+          if (peddingRequest?.requestId === requestId) {
+            peddingList.splice(len, 1)
+          }
+        }
+      }
+
+      const addRequest = (requestId: string, resolve: any, reject: any) => {
+        const currentPeddingRequest = {
+          requestId,
           resolve: (value: T) => {
-            clearTimeout(timeoutId)
-            this.requestPromiseMap.delete(this.id)
+            removeRequest(requestId)
             resolve(value)
           },
-          reject: (reason) => {
-            clearTimeout(timeoutId)
-            this.requestPromiseMap.delete(this.id)
+          reject: (reason: any) => {
+            removeRequest(requestId)
             reject(reason)
           },
-        })
-        const readyData = {
-          eventName: this.pageEmbedded ? 'sqlbot_embedded_event' : 'sqlbot_assistant_event',
-          busi: 'ready',
-          ready: true,
-          messageId: this.id,
+        } as PendingRequest
+        peddingList?.push(currentPeddingRequest)
+      }
+
+      return new Promise((resolve, reject) => {
+        const currentRequestId = `${this.id}|${+new Date()}`
+        const timeoutId = setTimeout(() => {
+          removeRequest(currentRequestId)
+          console.error(`Request ${currentRequestId}[${requestUrl}] timed out after ${timeout}ms`)
+          resolve(null)
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
+          // reject(new Error(`Request ${this.id} timed out after ${timeout}ms`))
+        }, timeout)
+
+        const cleanupAndResolve = (value: any) => {
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
+          resolve(value)
         }
-        window.parent.postMessage(readyData, '*')
+
+        const cleanupAndReject = (reason: any) => {
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
+          reject(reason)
+        }
+
+        addRequest(currentRequestId, cleanupAndResolve, cleanupAndReject)
+        if (!this.pedding) {
+          const readyData = {
+            eventName: this.pageEmbedded ? 'sqlbot_embedded_event' : 'sqlbot_assistant_event',
+            busi: 'ready',
+            ready: true,
+            messageId: this.id,
+          }
+          window.parent.postMessage(readyData, '*')
+          this.pedding = true
+        }
       })
     },
     resolveCertificate(data?: any) {
-      const peddingRequest = this.requestPromiseMap.get(this.id)
-      if (peddingRequest) {
-        peddingRequest.resolve(data)
+      const peddingRequestList = this.requestPromiseMap.get(this.id)
+      if (peddingRequestList?.length) {
+        peddingRequestList.forEach((peddingRequest: PendingRequest) => {
+          peddingRequest.resolve(data)
+        })
       }
+      this.pedding = false
+      /* const resolvePromiseList = [] as Promise<void>[]
+      if (peddingRequestList?.length) {
+        peddingRequestList.forEach((peddingRequest: PendingRequest) => {
+          const resolvePromise = new Promise((r: any) => {
+            peddingRequest.resolve(data)
+            r()
+          })
+          resolvePromiseList.push(resolvePromise as Promise<void>)
+        })
+      }
+      if (resolvePromiseList?.length) {
+        Promise.all(resolvePromiseList).then(() => {
+          this.pedding = false
+        })
+      } else {
+        this.pedding = false
+      } */
     },
     setId(id: string) {
       this.id = id
     },
     setCertificate(certificate: string) {
       this.certificate = certificate
+      this.certificateTime = +new Date()
     },
     setType(type: number) {
       this.type = type

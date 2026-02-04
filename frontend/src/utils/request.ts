@@ -112,7 +112,7 @@ class HttpService {
               /^\/chat/.test(config.url || '') ||
               config.url?.includes('/system/assistant/ds')
             ) {
-              await assistantStore.refreshCertificate()
+              await assistantStore.refreshCertificate(config.url || '')
             }
             config.headers['X-SQLBOT-ASSISTANT-CERTIFICATE'] = btoa(
               encodeURIComponent(assistantStore.getCertificate)
@@ -321,7 +321,7 @@ class HttpService {
         !!(assistantStore.getType % 2) &&
         assistantStore.getCertificate
       ) {
-        await assistantStore.refreshCertificate()
+        await assistantStore.refreshCertificate(url)
         heads['X-SQLBOT-ASSISTANT-CERTIFICATE'] = btoa(
           encodeURIComponent(assistantStore.getCertificate)
         )
