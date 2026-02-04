@@ -89,6 +89,8 @@ async def datasource_list(session: SessionDep, token: str):
     for item in ds_list:
         dic = item.__dict__
         dic.pop('embedding', None)
+        dic.pop('table_relation', None)
+        dic.pop('recommended_config', None)
         result.append(dic)
     return result
 
