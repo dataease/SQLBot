@@ -465,6 +465,40 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
 
 def convert_value(value):
     """转换值为JSON可序列化的类型"""
+    if value is None:
+        return None
+        # 处理 bytes 类型（包括 BIT 字段）
+    if isinstance(value, bytes):
+        # 1. 尝试判断是否是 BIT 类型
+        if len(value) <= 8:  # BIT 类型通常不会很长
+            try:
+                # 转换为整数
+                int_val = int.from_bytes(value, 'big')
+
+                # 如果是 0 或 1，返回布尔值更直观
+                if int_val in (0, 1):
+                    return bool(int_val)
+                else:
+                    return int_val
+            except:
+                # 如果转换失败，尝试解码为字符串
+                pass
+
+        # 2. 尝试解码为 UTF-8 字符串
+        try:
+            return value.decode('utf-8')
+        except UnicodeDecodeError:
+            # 3. 如果包含非打印字符，返回十六进制
+            if any(b < 32 and b not in (9, 10, 13) for b in value):  # 非打印字符
+                return f"0x{value.hex()}"
+            else:
+                # 4. 尝试 Latin-1 解码（不会失败）
+                return value.decode('latin-1')
+
+    elif isinstance(value, bytearray):
+        # 处理 bytearray
+        return convert_value(bytes(value))
+
     if isinstance(value, timedelta):
         # 将 timedelta 转换为秒数（整数）或字符串
         return str(value)  # 或 value.total_seconds()
