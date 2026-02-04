@@ -1149,7 +1149,7 @@ onMounted(() => {
     }
   }
   .hidden-sidebar-btn {
-    z-index: 1;
+    z-index: 11;
     position: absolute;
     padding: 16px;
     top: 0;
