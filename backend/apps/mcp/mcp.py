@@ -84,7 +84,10 @@ def get_user(session: SessionDep, token: str):
 @router.post("/mcp_ds_list", operation_id="mcp_datasource_list")
 async def datasource_list(session: SessionDep, token: str):
     session_user = get_user(session, token)
-    return get_datasource_list(session=session, user=session_user)
+    ds_list = get_datasource_list(session=session, user=session_user)
+    for item in ds_list:
+        item.pop('embedding', None)
+    return
 
 
 #
