@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import gou_icon from '@/assets/svg/gou_icon.svg'
 import icon_error from '@/assets/svg/icon_error.svg'
 import icon_database_colorful from '@/assets/svg/icon_database_colorful.svg'
 import icon_alarm_clock_colorful from '@/assets/svg/icon_alarm-clock_colorful.svg'
 import { chatApi, type ChatLogHistory } from '@/api/chat.ts'
 import { useI18n } from 'vue-i18n'
+import { debounce } from 'lodash-es'
 
 const { t } = useI18n()
 const logHistory = ref<ChatLogHistory>({})
@@ -13,12 +14,24 @@ const dialogFormVisible = ref(false)
 const drawerSize = ref('600px')
 
 function getLogList(recordId: any) {
-  drawerSize.value = window.innerWidth < 500 ? '460px' : '600px'
+  setDrawerSize()
   chatApi.get_chart_log_history(recordId).then((res) => {
     logHistory.value = chatApi.toChatLogHistory(res) as ChatLogHistory
     dialogFormVisible.value = true
   })
 }
+
+const setDrawerSize = debounce(() => {
+  drawerSize.value = window.innerWidth < 500 ? '460px' : '600px'
+}, 500)
+
+onMounted(() => {
+  window.addEventListener('resize', setDrawerSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', setDrawerSize)
+})
 
 defineExpose({
   getLogList,
