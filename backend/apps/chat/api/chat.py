@@ -98,6 +98,7 @@ async def chat_record_log(session: SessionDep, current_user: CurrentUser, chat_r
 
     return await asyncio.to_thread(inner)
 
+
 @router.get("/record/{chat_record_id}/usage", summary=f"{PLACEHOLDER_PREFIX}get_record_usage")
 async def chat_record_usage(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
     def inner():
@@ -528,7 +529,7 @@ async def export_excel(session: SessionDep, current_user: CurrentUser, chat_reco
 
     def inner():
 
-        data_list = DataFormat.convert_large_numbers_in_object_array(_data + _predict_data)
+        data_list = DataFormat.convert_large_numbers_in_object_array(obj_array=_data + _predict_data, int_threshold=1e11)
 
         md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
