@@ -934,18 +934,23 @@ async function clickAnalysis(id?: number) {
 }
 
 function getRecordUsage(recordId: any) {
-  chatApi.get_chart_usage(recordId).then((res) => {
-    const logHistory = chatApi.toChatLogHistory(res)
-    if (logHistory) {
-      currentChat.value.records.forEach((record) => {
-        if (record.id === recordId) {
-          record.duration = logHistory.duration
-          record.finish_time = logHistory.finish_time
-          record.total_tokens = logHistory.total_tokens
-        }
-      })
-    }
-  })
+  chatApi
+    .get_chart_usage(recordId)
+    .then((res) => {
+      const logHistory = chatApi.toChatLogHistory(res)
+      if (logHistory) {
+        currentChat.value.records.forEach((record) => {
+          if (record.id === recordId) {
+            record.duration = logHistory.duration
+            record.finish_time = logHistory.finish_time
+            record.total_tokens = logHistory.total_tokens
+          }
+        })
+      }
+    })
+    .catch((e) => {
+      console.error(e)
+    })
 }
 
 const predictAnswerRef = ref()
