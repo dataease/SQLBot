@@ -19,6 +19,7 @@ import icon_into_item_outlined from '@/assets/svg/icon_into-item_outlined.svg'
 import icon_window_max_outlined from '@/assets/svg/icon_window-max_outlined.svg'
 import icon_window_mini_outlined from '@/assets/svg/icon_window-mini_outlined.svg'
 import icon_copy_outlined from '@/assets/svg/icon_copy_outlined.svg'
+import ICON_STYLE from '@/assets/svg/icon_style-set_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import SQLComponent from '@/views/chat/component/SQLComponent.vue'
 import { useAssistantStore } from '@/stores/assistant'
@@ -211,6 +212,8 @@ function showSql() {
   sqlShow.value = true
 }
 
+const showLabel = ref(false)
+
 function addToDashboard() {
   const recordeInfo = {
     id: '1-1',
@@ -393,6 +396,27 @@ watch(
           </el-tooltip>
         </div>
 
+        <div class="chart-select-container">
+          <el-tooltip
+            v-if="currentChartType !== 'table'"
+            effect="dark"
+            :offset="8"
+            :content="showLabel ? t('chat.hide_label') : t('chat.show_label')"
+            placement="top"
+          >
+            <el-button
+              class="tool-btn"
+              :class="{ 'chart-active': showLabel }"
+              text
+              @click="showLabel = !showLabel"
+            >
+              <el-icon size="16">
+                <ICON_STYLE />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
+        </div>
+
         <div v-if="message?.record?.sql">
           <el-tooltip effect="dark" :offset="8" :content="t('chat.show_sql')" placement="top">
             <el-button class="tool-btn" text @click="showSql">
@@ -498,6 +522,7 @@ watch(
           :message="message"
           :data="data"
           :loading-data="loadingData"
+          :show-label="showLabel"
         />
       </div>
       <div v-if="dataObject.limit" class="over-limit-hint">

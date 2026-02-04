@@ -14,6 +14,7 @@ const params = withDefaults(
     y?: Array<ChartAxis>
     series?: Array<ChartAxis>
     multiQuotaName?: string | undefined
+    showLabel?: boolean
   }>(),
   {
     data: () => [],
@@ -22,6 +23,7 @@ const params = withDefaults(
     y: () => [],
     series: () => [],
     multiQuotaName: undefined,
+    showLabel: false,
   }
 )
 
@@ -61,13 +63,20 @@ const axis = computed(() => {
 
 let chartInstance: BaseChart | undefined
 
-function renderChart() {
   chartInstance = getChartInstance(params.type, chartId.value)
   if (chartInstance) {
+    chartInstance.showLabel = params.showLabel
     chartInstance.init(axis.value, params.data)
     chartInstance.render()
   }
 }
+
+watch(
+  () => params.showLabel,
+  () => {
+    renderChart()
+  }
+)
 
 function destroyChart() {
   if (chartInstance) {

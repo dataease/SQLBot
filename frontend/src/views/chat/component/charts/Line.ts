@@ -86,27 +86,29 @@ export class Line extends BaseG2Chart {
           encode: {
             shape: 'smooth',
           },
-          // labels: [
-          //   {
-          //     text: (data: any) => {
-          //       const value = data[y[0].value]
-          //       if (value === undefined || value === null) {
-          //         return ''
-          //       }
-          //       return `${value}${_data.isPercent ? '%' : ''}`
-          //     },
-          //     style: {
-          //       dx: -10,
-          //       dy: -12,
-          //     },
-          //     transform: [
-          //       { type: 'contrastReverse' },
-          //       { type: 'exceedAdjust' },
-          //       { type: 'overlapHide' },
-          //     ],
-          //   },
-          // ],
-          tooltip: (data) => {
+          labels: this.showLabel
+            ? [
+              {
+                text: (data: any) => {
+                  const value = data[y[0].value]
+                  if (value === undefined || value === null) {
+                    return ''
+                  }
+                  return `${value}${_data.isPercent ? '%' : ''}`
+                },
+                style: {
+                  dx: -10,
+                  dy: -12,
+                },
+                transform: [
+                  { type: 'contrastReverse' },
+                  { type: 'exceedAdjust' },
+                  { type: 'overlapHide' },
+                ],
+              },
+            ]
+            : [],
+          tooltip: (data: any) => {
             if (series.length > 0) {
               return {
                 name: data[series[0].value],
