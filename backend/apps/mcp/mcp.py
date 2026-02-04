@@ -91,6 +91,7 @@ async def datasource_list(session: SessionDep, token: str):
         dic.pop('embedding', None)
         dic.pop('table_relation', None)
         dic.pop('recommended_config', None)
+        dic.pop('configuration', None)
         result.append(dic)
     return result
 
