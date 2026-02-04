@@ -1028,7 +1028,6 @@ const showTips = (successCount: any, errorCount: any, dataKey: any) => {
     .then(() => {
       const { value, name } = currentPlatform.value
       syncUserRef.value.open(value, name)
-      currentPlatform.value = null
     })
     .catch(() => {
       currentPlatform.value = null
