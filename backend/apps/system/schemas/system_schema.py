@@ -193,6 +193,7 @@ class AssistantOutDsSchema(AssistantOutDsBase):
     password: Optional[str] = None
     db_schema: Optional[str] = None
     extraParams: Optional[str] = None
+    mode: Optional[str] = None
     tables: Optional[list[AssistantTableSchema]] = None
 
 

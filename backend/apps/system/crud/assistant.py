@@ -228,11 +228,11 @@ class AssistantOutDs:
 
     def convert2schema(self, ds_dict: dict, config: dict[any]) -> AssistantOutDsSchema:
         id_marker: str = ''
-        attr_list = ['name', 'type', 'host', 'port', 'user', 'dataBase', 'schema']
+        attr_list = ['name', 'type', 'host', 'port', 'user', 'dataBase', 'schema', 'mode']
         if config.get('encrypt', False):
             key = config.get('aes_key', None)
             iv = config.get('aes_iv', None)
-            aes_attrs = ['host', 'user', 'password', 'dataBase', 'db_schema', 'schema']
+            aes_attrs = ['host', 'user', 'password', 'dataBase', 'db_schema', 'schema', 'mode']
             for attr in aes_attrs:
                 if attr in ds_dict and ds_dict[attr]:
                     try:
@@ -268,7 +268,8 @@ def get_out_ds_conf(ds: AssistantOutDsSchema, timeout: int = 30) -> str:
         "driver": '',
         "extraJdbc": ds.extraParams or '',
         "dbSchema": ds.db_schema or '',
-        "timeout": timeout or 30
+        "timeout": timeout or 30,
+        "mode": ds.mode or ''
     }
     conf["extraJdbc"] = ''
     return aes_encrypt(json.dumps(conf))
