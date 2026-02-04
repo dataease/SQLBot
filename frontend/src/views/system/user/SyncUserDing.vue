@@ -121,6 +121,7 @@ import Close from '@/assets/svg/icon_close_outlined_w.svg'
 import Search from '@/assets/svg/icon_search-outline_outlined.svg'
 import type { CheckboxValueType } from 'element-plus-secondary'
 import type { FilterNodeMethodFunction } from 'element-plus-secondary'
+import { cloneDeep } from 'lodash-es'
 const checkAll = ref(false)
 const existingUser = ref(false)
 const isIndeterminate = ref(false)
@@ -134,7 +135,7 @@ const defaultProps = {
   children: 'children',
   label: 'name',
 }
-
+let rawTree: any = []
 const organizationUserList = ref<any[]>([])
 const loading = ref(false)
 const centerDialogVisible = ref(false)
@@ -146,9 +147,23 @@ const workspaceWithKeywords = computed(() => {
   )
 })
 
-watch(search, (val) => {
-  organizationUserRef.value!.filter(val)
+const dfsTree = (arr: any) => {
+  return arr.filter((ele: any) => {
+    if (ele.children?.length) {
+      ele.children = dfsTree(ele.children)
+    }
+    if (
+      (ele.name.toLowerCase() as string).includes(search.value.toLowerCase()) ||
+      ele.children?.length
+    ) {
+      return true
+    }
+    return false
+  })
+}
 
+watch(search, () => {
+  organizationUserList.value = dfsTree(cloneDeep(rawTree))
   nextTick(() => {
     organizationUserRef.value.setCheckedKeys(checkTableList.value.map((ele: any) => ele.id))
   })
@@ -164,23 +179,16 @@ function isLeafNode(node: any) {
 }
 
 const handleCheck = () => {
-  const userList = organizationUserRef.value.getCheckedNodes()
+  const userList = [...organizationUserRef.value.getCheckedNodes(), ...checkTableList.value]
   let idArr = [...new Set(userList.map((ele: any) => ele.id))]
 
-  checkTableList.value = userList
-    .filter((ele: any) => {
-      if (idArr.includes(ele.id) && isLeafNode(ele)) {
-        idArr = idArr.filter((itx: any) => itx !== ele.id)
-        return true
-      }
-      return false
-    })
-    .map((ele: any) => ({
-      name: ele.name,
-      id: ele.id,
-      account: ele.id,
-      email: ele.options.email,
-    }))
+  checkTableList.value = userList.filter((ele: any) => {
+    if (idArr.includes(ele.id) && isLeafNode(ele)) {
+      idArr = idArr.filter((itx: any) => itx !== ele.id)
+      return true
+    }
+    return false
+  })
 }
 
 const handleCheckedWorkspaceChange = (value: CheckboxValueType[]) => {
@@ -210,6 +218,7 @@ const open = async (id: any, title: any) => {
   const loadingInstance = ElLoading.service({ fullscreen: true })
   const systemWorkspaceList = await modelApi.platform(id)
   organizationUserList.value = systemWorkspaceList.tree || []
+  rawTree = cloneDeep(systemWorkspaceList.tree)
   loadingInstance?.close()
   loading.value = false
   centerDialogVisible.value = true
@@ -221,7 +230,7 @@ const handleConfirm = () => {
       user_list: checkTableList.value.map((ele: any) => ({
         id: ele.id,
         name: ele.name,
-        email: ele.email || '',
+        email: ele.options.email || '',
       })),
       origin: oid,
       cover: existingUser.value,
