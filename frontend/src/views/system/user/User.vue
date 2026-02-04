@@ -25,7 +25,7 @@
         </el-button>
 
         <el-tooltip
-          v-if="platformType.length"
+          v-if="!platformType.length"
           effect="dark"
           :content="$t('sync.integration')"
           placement="left"
