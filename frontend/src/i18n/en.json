@@ -173,7 +173,8 @@
     "password_reset_successful": "Password reset successful",
     "or": "Or",
     "refresh": "Refresh",
-    "input_limit": "Length cannot exceed {0} characters"
+    "input_limit": "Length cannot exceed {0} characters",
+    "file_size_limit_error": "File size exceeds the limit (maximum {limit})"
   },
   "dashboard": {
     "open_dashboard": "Open Dashboard",

@@ -185,6 +185,11 @@ const uploadImg = (options: any) => {
   }
 }
 const beforeUpload = (file: any, type: any) => {
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    ElMessage.error(t('common.file_size_limit_error', { limit: '10M' }))
+    return false
+  }
   let len = fileList.value?.length
   let match = false
   file.flag = type

@@ -173,7 +173,8 @@
     "password_reset_successful": "重置密码成功",
     "or": "或者",
     "refresh": "刷新",
-    "input_limit": "长度在 {0} 到 {1} 个字符"
+    "input_limit": "长度在 {0} 到 {1} 个字符",
+    "file_size_limit_error": "文件大小超出限制（最大{limit}）"
   },
   "dashboard": {
     "open_dashboard": "打开仪表板",

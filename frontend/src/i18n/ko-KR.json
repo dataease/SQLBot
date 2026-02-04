@@ -173,7 +173,8 @@
     "password_reset_successful": "비밀번호 재설정 성공",
     "or": "또는",
     "refresh": "새로고침",
-    "input_limit": "길이는 {0}자에서 {1}자 사이여야 합니다"
+    "input_limit": "길이는 {0}자에서 {1}자 사이여야 합니다",
+    "file_size_limit_error": "파일 크기가 제한을 초과했습니다 (최대 {limit})"
   },
   "dashboard": {
     "open_dashboard": "대시보드 열기",
