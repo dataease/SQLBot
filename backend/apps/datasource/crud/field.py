@@ -9,14 +9,15 @@ def delete_field_by_ds_id(session: SessionDep, id: int):
 
 
 def get_fields_by_table_id(session: SessionDep, id: int, field: FieldObj):
+    order = (CoreField.checked.desc(), CoreField.field_index.asc())
     if field and field.fieldName:
         return session.query(CoreField).filter(
             and_(CoreField.table_id == id, or_(CoreField.field_name.like(f'%{field.fieldName}%'),
                                                CoreField.field_name.like(f'%{field.fieldName.lower()}%'),
                                                CoreField.field_name.like(f'%{field.fieldName.upper()}%')))).order_by(
-            CoreField.field_index.asc()).all()
+            *order).all()
     else:
-        return session.query(CoreField).filter(CoreField.table_id == id).order_by(CoreField.field_index.asc()).all()
+        return session.query(CoreField).filter(CoreField.table_id == id).order_by(*order).all()
 
 
 def update_field(session: SessionDep, item: CoreField):
