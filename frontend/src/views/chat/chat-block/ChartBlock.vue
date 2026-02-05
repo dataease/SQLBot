@@ -396,9 +396,8 @@ watch(
           </el-tooltip>
         </div>
 
-        <div class="chart-select-container">
+        <div v-if="currentChartType !== 'table'" class="chart-select-container">
           <el-tooltip
-            v-if="currentChartType !== 'table'"
             effect="dark"
             :offset="8"
             :content="showLabel ? t('chat.hide_label') : t('chat.show_label')"
