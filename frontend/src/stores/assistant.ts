@@ -25,7 +25,7 @@ interface AssistantState {
   hostOrigin: string
   autoDs?: boolean
   requestPromiseMap: Map<string, PendingRequest[]>
-  pedding: boolean
+  peddingStatus: number //0: ready,1: pedding,2:finish
   certificateTime: number
 }
 
@@ -44,7 +44,7 @@ export const AssistantStore = defineStore('assistant', {
       hostOrigin: '',
       autoDs: false,
       requestPromiseMap: new Map<string, PendingRequest[]>(),
-      pedding: false,
+      peddingStatus: 0,
       certificateTime: 0,
     }
   },
@@ -87,49 +87,32 @@ export const AssistantStore = defineStore('assistant', {
     },
   },
   actions: {
-    refreshCertificate<T>(requestUrl?: string) {
-      if (+new Date() > this.certificateTime + 5000) {
+    refreshCertificate(requestUrl?: string) {
+      /* if (+new Date() < this.certificateTime + 5000) {
         return
-      }
-      const timeout = 5000
-      let peddingList = this.requestPromiseMap.get(this.id)
+      } */
+
+      const timeout = 30000
+      let peddingList = this.requestPromiseMap.get(this.id) as PendingRequest[]
       if (!peddingList) {
         this.requestPromiseMap.set(this.id, [])
-        peddingList = this.requestPromiseMap.get(this.id)
+        peddingList = this.requestPromiseMap.get(this.id) as PendingRequest[]
       }
 
-      const removeRequest = (requestId: string) => {
-        if (!peddingList) return
-        let len = peddingList.length
-        while (len--) {
-          const peddingRequest = peddingList[len]
-          if (peddingRequest?.requestId === requestId) {
-            peddingList.splice(len, 1)
-          }
+      if (this.peddingStatus === 2) {
+        if (peddingList?.length) {
+          return
+        } else {
+          this.peddingStatus = 0
         }
       }
 
-      const addRequest = (requestId: string, resolve: any, reject: any) => {
-        const currentPeddingRequest = {
-          requestId,
-          resolve: (value: T) => {
-            removeRequest(requestId)
-            resolve(value)
-          },
-          reject: (reason: any) => {
-            removeRequest(requestId)
-            reject(reason)
-          },
-        } as PendingRequest
-        peddingList?.push(currentPeddingRequest)
-      }
-
       return new Promise((resolve, reject) => {
-        const currentRequestId = `${this.id}|${+new Date()}`
+        const currentRequestId = `${this.id}|${requestUrl}|${+new Date()}`
         const timeoutId = setTimeout(() => {
-          removeRequest(currentRequestId)
           console.error(`Request ${currentRequestId}[${requestUrl}] timed out after ${timeout}ms`)
           resolve(null)
+          removeRequest(currentRequestId, peddingList)
           if (timeoutId) {
             clearTimeout(timeoutId)
           }
@@ -141,17 +124,20 @@ export const AssistantStore = defineStore('assistant', {
             clearTimeout(timeoutId)
           }
           resolve(value)
+          removeRequest(currentRequestId, peddingList)
         }
 
         const cleanupAndReject = (reason: any) => {
           if (timeoutId) {
             clearTimeout(timeoutId)
           }
+          removeRequest(currentRequestId, peddingList)
           reject(reason)
         }
 
-        addRequest(currentRequestId, cleanupAndResolve, cleanupAndReject)
-        if (!this.pedding) {
+        addRequest(currentRequestId, cleanupAndResolve, cleanupAndReject, peddingList)
+        if (this.peddingStatus !== 1) {
+          this.peddingStatus = 1
           const readyData = {
             eventName: this.pageEmbedded ? 'sqlbot_embedded_event' : 'sqlbot_assistant_event',
             busi: 'ready',
@@ -159,35 +145,20 @@ export const AssistantStore = defineStore('assistant', {
             messageId: this.id,
           }
           window.parent.postMessage(readyData, '*')
-          this.pedding = true
         }
       })
     },
     resolveCertificate(data?: any) {
       const peddingRequestList = this.requestPromiseMap.get(this.id)
+
       if (peddingRequestList?.length) {
-        peddingRequestList.forEach((peddingRequest: PendingRequest) => {
+        let len = peddingRequestList?.length
+        while (len--) {
+          const peddingRequest: PendingRequest = peddingRequestList[len]
           peddingRequest.resolve(data)
-        })
+        }
       }
-      this.pedding = false
-      /* const resolvePromiseList = [] as Promise<void>[]
-      if (peddingRequestList?.length) {
-        peddingRequestList.forEach((peddingRequest: PendingRequest) => {
-          const resolvePromise = new Promise((r: any) => {
-            peddingRequest.resolve(data)
-            r()
-          })
-          resolvePromiseList.push(resolvePromise as Promise<void>)
-        })
-      }
-      if (resolvePromiseList?.length) {
-        Promise.all(resolvePromiseList).then(() => {
-          this.pedding = false
-        })
-      } else {
-        this.pedding = false
-      } */
+      this.peddingStatus = 2
     },
     setId(id: string) {
       this.id = id
@@ -242,6 +213,35 @@ export const AssistantStore = defineStore('assistant', {
     },
   },
 })
+
+const removeRequest = (requestId: string, peddingList: PendingRequest[]) => {
+  if (!peddingList) return
+  let len = peddingList.length
+  while (len--) {
+    const peddingRequest = peddingList[len]
+    if (peddingRequest?.requestId === requestId) {
+      peddingList.splice(len, 1)
+    }
+  }
+}
+
+const addRequest = (
+  requestId: string,
+  resolve: any,
+  reject: any,
+  peddingList: PendingRequest[]
+) => {
+  const currentPeddingRequest = {
+    requestId,
+    resolve: (value: any) => {
+      resolve(value)
+    },
+    reject: (reason: any) => {
+      reject(reason)
+    },
+  } as PendingRequest
+  peddingList?.push(currentPeddingRequest)
+}
 
 export const useAssistantStore = () => {
   return AssistantStore(store)
