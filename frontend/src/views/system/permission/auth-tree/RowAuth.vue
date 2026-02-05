@@ -74,7 +74,16 @@ const dfsInit = (arr: any[]) => {
       const child = dfsInit(items)
       elementList.push({ logic, child })
     } else {
-      const { enum_value, field_id, filter_type, term, value, field, value_type, variable_id } = ele
+      const {
+        enum_value,
+        field_id,
+        filter_type,
+        term,
+        value,
+        field,
+        value_type = 'normal',
+        variable_id = '',
+      } = ele
       const { name } = field || {}
       elementList.push({
         enum_value: enum_value.join(','),

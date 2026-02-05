@@ -22,8 +22,8 @@ const keywords = ref('')
 const oldKeywords = ref('')
 const searchLoading = ref(false)
 
-const selectable = () => {
-  return true
+const selectable = (row: any) => {
+  return ![1, 2, 3].includes(row.id)
 }
 onMounted(() => {
   search()
