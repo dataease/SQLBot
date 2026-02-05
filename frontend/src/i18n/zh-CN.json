@@ -728,6 +728,8 @@
       "line": "折线图",
       "pie": "饼图"
     },
+    "hide_label": "隐藏标签",
+    "show_label": "显示标签",
     "sort_asc": "升序",
     "sort_desc": "降序",
     "sort_none": "不排序",

@@ -728,6 +728,8 @@
       "line": "선 차트",
       "pie": "원형 차트"
     },
+    "hide_label": "라벨 숨기기",
+    "show_label": "라벨 표시",
     "sort_asc": "오름차순",
     "sort_desc": "내림차순",
     "sort_none": "정렬 안 함",

@@ -728,6 +728,8 @@
       "line": "Line",
       "pie": "Pie"
     },
+    "hide_label": "Hide Label",
+    "show_label": "Show Label",
     "sort_asc": "Ascending",
     "sort_desc": "Descending",
     "sort_none": "No Sort",

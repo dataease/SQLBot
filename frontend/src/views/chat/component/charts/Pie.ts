@@ -43,14 +43,16 @@ export class Pie extends BaseG2Chart {
         color: { position: 'bottom', layout: { justifyContent: 'center' } },
       },
       animate: { enter: { type: 'waveIn' } },
-      labels: [
-        {
-          position: 'spider',
-          text: (data: any) => {
-            return `${data[series[0].value]}: ${data[y[0].value]}${_data.isPercent ? '%' : ''}`
-          },
-        },
-      ],
+      labels: this.showLabel
+        ? [
+            {
+              position: 'spider',
+              text: (data: any) => {
+                return `${data[series[0].value]}: ${data[y[0].value]}${_data.isPercent ? '%' : ''}`
+              },
+            },
+          ]
+        : [],
       tooltip: {
         title: (data: any) => data[series[0].value],
         items: [

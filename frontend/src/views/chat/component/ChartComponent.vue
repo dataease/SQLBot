@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { getChartInstance } from '@/views/chat/component/index.ts'
 import type { BaseChart, ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import { useEmitt } from '@/utils/useEmitt.ts'
@@ -63,6 +63,7 @@ const axis = computed(() => {
 
 let chartInstance: BaseChart | undefined
 
+function renderChart() {
   chartInstance = getChartInstance(params.type, chartId.value)
   if (chartInstance) {
     chartInstance.showLabel = params.showLabel
