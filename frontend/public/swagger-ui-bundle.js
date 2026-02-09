@@ -41747,7 +41747,8 @@
           }
           if (!a.ok) {
             const s = new Error(a.statusText || `response status is ${a.status}`)
-            if (a.status === 401 && a.statusText === 'Unauthorized') {
+            // if (a.status === 401 && a.statusText === 'Unauthorized') {
+            if (a.status === 401) {
               location.href = location.pathname.replace('/docs', '/') + '#/401?title=unauthorized&target=docs'
               return a
             }
