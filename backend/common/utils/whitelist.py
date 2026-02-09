@@ -7,7 +7,6 @@ wlist = [
     "/",
     "/docs",
     "/login/*",
-    "*.json",
     "*.ico",
     "*.html",
     "*.js",
@@ -22,6 +21,7 @@ wlist = [
     "*.ttf",
     "*.eot",
     "*.otf",
+    "*.css.map"
     "/mcp*",
     "/system/license",
     "/system/config/key",

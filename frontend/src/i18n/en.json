@@ -888,7 +888,8 @@
     "redirect_2_auth": "Redirecting to {0} authentication, {1} seconds...",
     "redirect_immediately": "Redirecting immediately",
     "permission_invalid": "Authentication invalid [Current account has insufficient permissions]",
-    "scan_qr_login": " Scan QR Code"
+    "scan_qr_login": " Scan QR Code",
+    "no_auth_error": "Not authenticated. Redirecting to login page in {0} seconds..."
   },
   "supplier": {
     "alibaba_cloud_bailian": "Alibaba Cloud Bailian",
