@@ -48,6 +48,10 @@ export const watchRouter = (router: Router) => {
         }
       }
     }
+    if (to.path === '/docs') {
+      location.href = to.fullPath
+      return
+    }
     if (to.path === '/' || accessCrossPermission(to)) {
       next('/chat')
       return
