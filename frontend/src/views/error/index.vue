@@ -42,9 +42,9 @@ onMounted(() => {
   }
   if (showTimer.value) {
     let timer = 3
-    const timerHander = setInterval(() => {
+    const timerHandler = setInterval(() => {
       if (timer-- <= 0) {
-        clearInterval(timerHander)
+        clearInterval(timerHandler)
         router.push(toLoginPage(target_full_path.value))
         return
       }
