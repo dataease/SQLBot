@@ -34,6 +34,7 @@ from apps.db.es_engine import get_es_connect, get_es_index, get_es_fields, get_e
 from common.core.config import settings
 import sqlglot
 from sqlglot import expressions as exp
+from sqlalchemy.pool import NullPool
 
 try:
     if os.path.exists(settings.ORACLE_CLIENT_PATH):
@@ -139,24 +140,21 @@ def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
         conf.timeout = timeout
     if timeout > 0:
         conf.timeout = timeout
+
     if equals_ignore_case(ds.type, "pg"):
         if conf.dbSchema is not None and conf.dbSchema != "":
             engine = create_engine(get_uri(ds),
                                    connect_args={"options": f"-c search_path={urllib.parse.quote(conf.dbSchema)}",
-                                                 "connect_timeout": conf.timeout},
-                                   pool_timeout=conf.timeout)
+                                                 "connect_timeout": conf.timeout}, poolclass=NullPool)
         else:
-            engine = create_engine(get_uri(ds),
-                                   connect_args={"connect_timeout": conf.timeout},
-                                   pool_timeout=conf.timeout)
+            engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, poolclass=NullPool)
     elif equals_ignore_case(ds.type, 'sqlServer'):
         engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds.type, conf),
-                               pool_timeout=conf.timeout)
+                               poolclass=NullPool)
     elif equals_ignore_case(ds.type, 'oracle'):
-        engine = create_engine(get_uri(ds),
-                               pool_timeout=conf.timeout)
+        engine = create_engine(get_uri(ds), poolclass=NullPool)
     else:  # mysql, ck
-        engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, pool_timeout=conf.timeout)
+        engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, poolclass=NullPool)
     return engine
 
 
