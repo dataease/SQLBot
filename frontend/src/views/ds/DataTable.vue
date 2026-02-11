@@ -381,10 +381,17 @@ const btnSelectClick = (val: any) => {
         <div class="select-table_top">
           {{ $t('ds.tables') }}
 
-          <el-tooltip effect="dark" :content="$t('ds.form.choose_tables')" placement="top">
-            <el-icon size="18" @click="handleSelectTableList">
-              <icon_form_outlined></icon_form_outlined>
-            </el-icon>
+          <el-tooltip
+            effect="dark"
+            offset="10"
+            :content="$t('ds.form.choose_tables')"
+            placement="top"
+          >
+            <el-button style="margin-right: -4px" @click="handleSelectTableList" text>
+              <el-icon size="18">
+                <icon_form_outlined></icon_form_outlined>
+              </el-icon>
+            </el-button>
           </el-tooltip>
         </div>
         <el-input
@@ -781,6 +788,10 @@ const btnSelectClick = (val: any) => {
           padding-left: 8px;
           border-radius: 4px;
           cursor: pointer;
+
+          &:not(:last-child) {
+            margin-bottom: 2px;
+          }
 
           &.disabled-table {
             background: #dee0e3 !important;

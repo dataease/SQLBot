@@ -185,6 +185,9 @@ const props = withDefaults(
     top: 30px;
     right: 4px;
     z-index: 1;
+    &:hover {
+      background-color: #1f23291a !important;
+    }
   }
 
   .tool-btn {
