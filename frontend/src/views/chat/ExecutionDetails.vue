@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import icon_expand_right_filled from '@/assets/svg/icon_expand-right_filled.svg'
 import gou_icon from '@/assets/svg/gou_icon.svg'
 import icon_error from '@/assets/svg/icon_error.svg'
 import icon_database_colorful from '@/assets/svg/icon_database_colorful.svg'
@@ -11,7 +12,16 @@ import { debounce } from 'lodash-es'
 const { t } = useI18n()
 const logHistory = ref<ChatLogHistory>({})
 const dialogFormVisible = ref(false)
+const expandIds = ref<any>([])
 const drawerSize = ref('600px')
+
+const handleExpand = (index: number) => {
+  if (expandIds.value.includes(index)) {
+    expandIds.value = expandIds.value.filter((ele: any) => ele !== index)
+  } else {
+    expandIds.value.push(index)
+  }
+}
 
 function getLogList(recordId: any) {
   setDrawerSize()
@@ -66,24 +76,35 @@ defineExpose({
     <div class="title">{{ t('parameter.execution_details') }}</div>
 
     <div class="list">
-      <div v-for="ele in logHistory.steps" :key="ele.duration" class="list-item">
-        <div class="name">
-          {{ ele.operate }}
-        </div>
-        <div class="status">
-          <div
-            v-if="ele.total_tokens && ele.total_tokens > 0"
-            class="time"
-            style="margin-right: 12px"
-          >
-            {{ ele.total_tokens }} tokens
+      <div
+        v-for="(ele, index) in logHistory.steps"
+        :key="ele.duration"
+        class="list-item"
+        @click="handleExpand(index)"
+      >
+        <div class="header">
+          <div class="name">
+            <el-icon class="shrink" :class="expandIds.includes(index) && 'expand'" size="10">
+              <icon_expand_right_filled></icon_expand_right_filled>
+            </el-icon>
+            {{ ele.operate }}
           </div>
-          <div class="time">{{ ele.duration }}s</div>
-          <el-icon size="16">
-            <icon_error v-if="ele.error"></icon_error>
-            <gou_icon v-else></gou_icon>
-          </el-icon>
+          <div class="status">
+            <div
+              v-if="ele.total_tokens && ele.total_tokens > 0"
+              class="time"
+              style="margin-right: 12px"
+            >
+              {{ ele.total_tokens }} tokens
+            </div>
+            <div class="time">{{ ele.duration }}s</div>
+            <el-icon size="16">
+              <icon_error v-if="ele.error"></icon_error>
+              <gou_icon v-else></gou_icon>
+            </el-icon>
+          </div>
         </div>
+        <div class="content"></div>
       </div>
     </div>
   </el-drawer>
@@ -138,13 +159,39 @@ defineExpose({
   .list {
     .list-item {
       width: 100%;
-      height: 54px;
       border-radius: 12px;
       border: 1px solid #dee0e3;
       padding: 16px;
       margin-bottom: 8px;
-      display: flex;
-      align-items: center;
+
+      .header {
+        display: flex;
+        align-items: center;
+      }
+
+      @keyframes expand {
+        0% {
+          height: 54px;
+        }
+
+        100% {
+          height: 504px;
+        }
+      }
+
+      &:has(.expand) {
+        height: 504px;
+        animation: expand 0.5s;
+      }
+
+      .shrink {
+        margin-right: 8px;
+        cursor: pointer;
+      }
+
+      .expand {
+        transform: rotate(90deg);
+      }
 
       .status {
         display: flex;
@@ -156,8 +203,7 @@ defineExpose({
         font-size: 14px;
         line-height: 22px;
         display: flex;
-        flex-direction: row;
-        gap: 12px;
+        align-items: center;
       }
 
       .time {
