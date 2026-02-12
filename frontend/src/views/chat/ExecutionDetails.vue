@@ -8,6 +8,13 @@ import icon_alarm_clock_colorful from '@/assets/svg/icon_alarm-clock_colorful.sv
 import { chatApi, type ChatLogHistory } from '@/api/chat.ts'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
+import LogTerm from './execution-component/LogTerm.vue'
+import LogSQLSample from './execution-component/LogSQLSample.vue'
+import LogCustomPrompt from './execution-component/LogCustomPrompt.vue'
+import LogDataQuery from './execution-component/LogDataQuery.vue'
+import LogChooseTable from './execution-component/LogChooseTable.vue'
+import LogGeneratePicture from './execution-component/LogGeneratePicture.vue'
+import LogWithAi from '@/views/chat/execution-component/LogWithAi.vue'
 
 const { t } = useI18n()
 const logHistory = ref<ChatLogHistory>({})
@@ -76,13 +83,8 @@ defineExpose({
     <div class="title">{{ t('parameter.execution_details') }}</div>
 
     <div class="list">
-      <div
-        v-for="(ele, index) in logHistory.steps"
-        :key="ele.duration"
-        class="list-item"
-        @click="handleExpand(index)"
-      >
-        <div class="header">
+      <div v-for="(ele, index) in logHistory.steps" :key="ele.duration" class="list-item">
+        <div class="header" @click="handleExpand(index)">
           <div class="name">
             <el-icon class="shrink" :class="expandIds.includes(index) && 'expand'" size="10">
               <icon_expand_right_filled></icon_expand_right_filled>
@@ -104,7 +106,15 @@ defineExpose({
             </el-icon>
           </div>
         </div>
-        <div class="content"></div>
+        <div v-if="expandIds.includes(index)" class="content">
+          <LogTerm v-if="ele.operate_key === 'FILTER_TERMS'" :item="ele" />
+          <LogSQLSample v-else-if="ele.operate_key === 'FILTER_SQL_EXAMPLE'" :item="ele" />
+          <LogCustomPrompt v-else-if="ele.operate_key === 'FILTER_CUSTOM_PROMPT'" :item="ele" />
+          <LogChooseTable v-else-if="ele.operate_key === 'CHOOSE_TABLE'" :item="ele" />
+          <LogDataQuery v-else-if="ele.operate_key === 'EXECUTE_SQL'" :item="ele" />
+          <LogGeneratePicture v-else-if="ele.operate_key === 'GENERATE_PICTURE'" :item="ele" />
+          <LogWithAi v-else :item="ele" />
+        </div>
       </div>
     </div>
   </el-drawer>
@@ -175,13 +185,13 @@ defineExpose({
         }
 
         100% {
-          height: 504px;
+          min-height: 54px;
         }
       }
 
       &:has(.expand) {
-        height: 504px;
-        animation: expand 0.5s;
+        min-height: 54px;
+        //animation: expand 0.5s;
       }
 
       .shrink {

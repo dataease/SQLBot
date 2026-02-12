@@ -767,7 +767,16 @@
       "FILTER_CUSTOM_PROMPT": "사용자 정의 프롬프트 매칭",
       "EXECUTE_SQL": "SQL 실행",
       "GENERATE_PICTURE": "이미지 생성"
-    }
+    },
+    "log_system": "대화 템플릿",
+    "log_question": "현재 질문",
+    "log_answer": "AI 응답",
+    "log_history": "기록",
+    "find_term_title": "{0}개의 용어 매칭됨",
+    "find_sql_sample_title": "{0}개의 SQL 예시 매칭됨",
+    "find_custom_prompt_title": "{0}개의 사용자 정의 프롬프트 매칭됨",
+    "query_count_title": "{0}개의 데이터 항목 발견됨",
+    "generate_picture_success": "이미지가 생성되었습니다"
   },
   "about": {
     "title": "정보",
