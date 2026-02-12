@@ -767,7 +767,16 @@
       "FILTER_CUSTOM_PROMPT": "匹配自定义提示词",
       "EXECUTE_SQL": "执行 SQL",
       "GENERATE_PICTURE": "生成图片"
-    }
+    },
+    "log_system": "对话模板",
+    "log_question": "本次提问",
+    "log_answer": "AI 回答",
+    "log_history": "历史记录",
+    "find_term_title":"匹配到 {0} 个术语",
+    "find_sql_sample_title":"匹配到 {0} 个SQL示例",
+    "find_custom_prompt_title":"匹配到 {0} 个自定义提示词",
+    "query_count_title":"查询到 {0} 条数据",
+    "generate_picture_success":"已生成图片"
   },
   "about": {
     "title": "关于",

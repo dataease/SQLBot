@@ -767,7 +767,16 @@
       "FILTER_CUSTOM_PROMPT": "Match Custom Prompts",
       "EXECUTE_SQL": "Execute SQL",
       "GENERATE_PICTURE": "Generate Picture"
-    }
+    },
+    "log_system": "Conversation Template",
+    "log_question": "Current Question",
+    "log_answer": "AI Response",
+    "log_history": "History",
+    "find_term_title": "Matched {0} terms",
+    "find_sql_sample_title": "Matched {0} SQL examples",
+    "find_custom_prompt_title": "Matched {0} custom prompts",
+    "query_count_title": "Found {0} data entries",
+    "generate_picture_success": "Image generated"
   },
   "about": {
     "title": "About",
