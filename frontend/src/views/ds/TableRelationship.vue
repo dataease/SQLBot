@@ -299,6 +299,10 @@ const getTableData = () => {
             cells.value.push(
               graph.createNode({
                 ...item,
+                position: {
+                  x: Number.parseInt(item.position.x),
+                  y: Number.parseInt(item.position.y),
+                },
                 height: LINE_HEIGHT + 15,
                 width: NODE_WIDTH,
               })
