@@ -21,7 +21,7 @@ wlist = [
     "*.ttf",
     "*.eot",
     "*.otf",
-    "*.css.map"
+    "*.css.map",
     "/mcp*",
     "/system/license",
     "/system/config/key",
