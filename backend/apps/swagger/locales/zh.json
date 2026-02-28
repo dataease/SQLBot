@@ -140,6 +140,7 @@
   "get_chat": "获取对话详情",
   "get_chat_with_data": "获取对话详情(带数据)",
   "get_chart_data": "获取图表数据",
+  "get_chart_data_live": "获取图表实时数据",
   "get_chart_predict_data": "获取图表预测数据",
   "get_record_log": "获取对话日志",
   "get_record_usage": "获取对话Token使用量及耗时",

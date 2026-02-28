@@ -1005,6 +1005,7 @@ class LLMService:
                     data_obj['limit'] = limit
                 else:
                     data_obj['data'] = data_result
+                data_obj['datasource'] = self.ds.id
             return save_sql_exec_data(session=session, record_id=self.record.id,
                                       data=orjson.dumps(data_obj).decode())
         except Exception as e:

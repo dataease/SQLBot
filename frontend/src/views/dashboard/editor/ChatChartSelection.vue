@@ -143,7 +143,13 @@ function adaptorChartInfoList(chatInfo: ChatInfo) {
           record?.predict_record_id !== null &&
           data?.data?.length > 0)
       ) {
-        const recordeInfo = { id: chatInfo.id + '_' + record.id, data: data, chart: {} }
+        const recordeInfo = {
+          id: chatInfo.id + '_' + record.id,
+          sql: record.sql,
+          datasource: record.datasource,
+          data: data,
+          chart: {},
+        }
         const chartBaseInfo = JSON.parse(record.chart)
         if (chartBaseInfo) {
           let yAxis = []
