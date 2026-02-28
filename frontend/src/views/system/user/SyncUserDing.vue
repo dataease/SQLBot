@@ -29,11 +29,11 @@
             :filter-node-method="filterNode"
             show-checkbox
             :default-checked-keys="defaultCheckedKeys"
-            @check="handleCheck"
             :props="defaultProps"
             node-key="id"
             default-expand-all
             :expand-on-click-node="false"
+            @check="handleCheck"
           >
             <template #default="{ node, data }">
               <div class="custom-tree-node flex">
@@ -95,7 +95,7 @@
     </div>
 
     <template #footer>
-      <el-checkbox style="float: left" v-model="existingUser">
+      <el-checkbox v-model="existingUser" style="float: left">
         {{ $t('sync.the_existing_user') }}
       </el-checkbox>
       <el-button secondary @click="centerDialogVisible = false">

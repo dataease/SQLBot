@@ -426,7 +426,9 @@ const submit = (item: any) => {
     >
       <template #header="{ close }">
         <span style="white-space: nowrap">{{
-          editModel ? $t('dashboard.edit') + $t('common.empty') + $t(activeNameI18nKey) : t('model.add_model')
+          editModel
+            ? $t('dashboard.edit') + $t('common.empty') + $t(activeNameI18nKey)
+            : t('model.add_model')
         }}</span>
         <div v-if="!editModel" class="flex-center" style="width: 100%">
           <el-steps custom style="max-width: 500px; flex: 1" :active="activeStep" align-center>

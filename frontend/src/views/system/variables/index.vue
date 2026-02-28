@@ -453,9 +453,9 @@ const handleCurrentChange = (val: number) => {
       </el-form-item>
       <el-form-item :label="t('variables.variable_type')">
         <el-radio-group
+          v-model="pageForm.var_type"
           :disabled="!!pageForm.id"
           @change="varTypeChange"
-          v-model="pageForm.var_type"
         >
           <el-radio value="text">{{ $t('model.text') }}</el-radio>
           <el-radio value="number">
@@ -481,8 +481,8 @@ const handleCurrentChange = (val: number) => {
         </template>
         <div class="value-list">
           <el-form-item
-            :key="index"
             v-for="(_, index) in pageForm.value"
+            :key="index"
             :prop="'value.' + index"
             :rules="{
               required: true,
@@ -510,7 +510,7 @@ const handleCurrentChange = (val: number) => {
           </el-form-item>
         </div>
       </el-form-item>
-      <el-form-item prop="value" v-else :label="t('variables.variable_value')">
+      <el-form-item v-else prop="value" :label="t('variables.variable_value')">
         <div class="value-number_date">
           <template v-if="pageForm.var_type === 'number'">
             <el-input
