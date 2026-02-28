@@ -27,16 +27,13 @@ export function highlightKeyword(
   highlightClass: string = 'highlight'
 ): string {
   if (!keyword) return escapeHtml(text)
-  
+
   const escapedText = escapeHtml(text)
   const escapedKeyword = escapeHtml(keyword)
-  
+
   // Use case-insensitive replace
   const regex = new RegExp(escapedKeyword, 'gi')
-  return escapedText.replace(
-    regex,
-    (match) => `<span class="${highlightClass}">${match}</span>`
-  )
+  return escapedText.replace(regex, (match) => `<span class="${highlightClass}">${match}</span>`)
 }
 
 /**
@@ -48,18 +45,18 @@ export function sanitizeHtml(html: string): string {
   // Create a temporary div to parse HTML
   const temp = document.createElement('div')
   temp.innerHTML = html
-  
+
   // List of allowed tags
   const allowedTags = ['b', 'i', 'u', 'strong', 'em', 'span', 'p', 'br', 'a']
-  
+
   // List of allowed attributes
   const allowedAttrs = ['class', 'href', 'title']
-  
+
   // Remove disallowed tags and attributes
   const sanitize = (node: Node): void => {
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element
-      
+
       // Check if tag is allowed
       if (!allowedTags.includes(element.tagName.toLowerCase())) {
         // Replace with text content
@@ -67,14 +64,14 @@ export function sanitizeHtml(html: string): string {
         element.parentNode?.replaceChild(textNode, element)
         return
       }
-      
+
       // Remove disallowed attributes
       Array.from(element.attributes).forEach((attr) => {
         if (!allowedAttrs.includes(attr.name.toLowerCase())) {
           element.removeAttribute(attr.name)
         }
       })
-      
+
       // For links, ensure they don't use javascript: protocol
       if (element.tagName.toLowerCase() === 'a') {
         const href = element.getAttribute('href') || ''
@@ -83,11 +80,11 @@ export function sanitizeHtml(html: string): string {
         }
       }
     }
-    
+
     // Recursively sanitize child nodes
     Array.from(node.childNodes).forEach(sanitize)
   }
-  
+
   sanitize(temp)
   return temp.innerHTML
 }

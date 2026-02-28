@@ -364,7 +364,7 @@ const btnSelectClick = (val: any) => {
       </el-icon>
       <div class="name">{{ info.name }}</div>
       <div class="export-remark">
-        <el-button style="margin-right: 12px" @click="downloadTemplate" secondary>
+        <el-button style="margin-right: 12px" secondary @click="downloadTemplate">
           <template #icon>
             <icon_import_outlined></icon_import_outlined>
           </template>
@@ -387,7 +387,7 @@ const btnSelectClick = (val: any) => {
             :content="$t('ds.form.choose_tables')"
             placement="top"
           >
-            <el-button style="margin-right: -4px" @click="handleSelectTableList" text>
+            <el-button style="margin-right: -4px" text @click="handleSelectTableList">
               <el-icon size="18">
                 <icon_form_outlined></icon_form_outlined>
               </el-icon>

@@ -69,7 +69,9 @@ defineExpose({ showErrorMask })
     </div>
     <div class="type-value">
       <span class="type">{{ $t('model.model_type') }}</span>
-      <span class="value"> {{ modelType.startsWith('modelType.') ? $t(modelType) : modelType }}</span>
+      <span class="value">
+        {{ modelType.startsWith('modelType.') ? $t(modelType) : modelType }}</span
+      >
     </div>
     <div class="type-value">
       <span class="type">{{ $t('model.basic_model') }}</span>

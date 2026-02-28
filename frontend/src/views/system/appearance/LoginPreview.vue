@@ -40,8 +40,8 @@
           <div class="config-area">
             <div class="login-logo">
               <div class="login-logo-icon">
-                <img height="52" v-if="pageLogin" :src="pageLogin" alt="" />
-                <el-icon size="52" v-else
+                <img v-if="pageLogin" height="52" :src="pageLogin" alt="" />
+                <el-icon v-else size="52"
                   ><custom_small v-if="themeColor !== 'default'"></custom_small>
                   <LOGO_fold v-else></LOGO_fold
                 ></el-icon>

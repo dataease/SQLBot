@@ -163,7 +163,7 @@
                   <div class="navigate-preview" style="height: 425px">
                     <div class="navigate-head">
                       <div class="header-sql">
-                        <img height="30" width="30" v-if="pageLogin" :src="pageLogin" alt="" />
+                        <img v-if="pageLogin" height="30" width="30" :src="pageLogin" alt="" />
                         <custom_small v-else-if="themeColor !== 'default'" class="logo" />
                         <logo v-else></logo>
                         <span style="margin-left: 8px">{{ loginForm.name }}</span>
