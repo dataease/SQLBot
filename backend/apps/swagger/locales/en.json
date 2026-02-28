@@ -140,6 +140,7 @@
   "get_chat": "Get Chat Details",
   "get_chat_with_data": "Get Chat Details (With Data)",
   "get_chart_data": "Get Chart Data",
+  "get_chart_data_live": "Get Chart Data Live",
   "get_chart_predict_data": "Get Chart Prediction Data",
   "get_record_log": "Get Chart Record Log",
   "get_record_usage": "Get Chart Record Token Usage & Duration",

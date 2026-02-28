@@ -140,6 +140,7 @@ class ChatRecordResult(BaseModel):
     question: Optional[str] = None
     sql_answer: Optional[str] = None
     sql: Optional[str] = None
+    datasource: Optional[int] = None
     data: Optional[str] = None
     chart_answer: Optional[str] = None
     chart: Optional[str] = None

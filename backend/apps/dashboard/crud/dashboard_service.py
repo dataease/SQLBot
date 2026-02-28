@@ -1,4 +1,9 @@
+import base64
+
+from orjson import orjson
 from sqlalchemy import select, and_, text
+
+from apps.chat.curd.chat import get_chart_data_ds
 from apps.dashboard.models.dashboard_model import CoreDashboard, CreateDashboard, QueryDashboard, DashboardBaseResponse
 from common.core.deps import SessionDep, CurrentUser
 import uuid
@@ -27,7 +32,7 @@ def list_resource(session: SessionDep, dashboard: QueryDashboard, current_user: 
     nodes = [DashboardBaseResponse(**row) for row in result.mappings()]
     tree = build_tree_generic(nodes, root_pid="root")
     return tree
-    
+
 
 def load_resource(session: SessionDep, dashboard: QueryDashboard):
     sql = text("""
@@ -41,7 +46,16 @@ def load_resource(session: SessionDep, dashboard: QueryDashboard):
                WHERE cd.id = :dashboard_id
                """)
     result = session.execute(sql, {"dashboard_id": dashboard.id}).mappings().first()
-    return result
+
+    result_dict = dict(result)
+    canvas_view_obj = orjson.loads(result_dict['canvas_view_info'])
+    for item in canvas_view_obj.values():  # 直接遍历值
+        # 检查必要字段是否存在
+        if all(key in item for key in ['datasource', 'sql']) and item['datasource'] is not None:
+            item['data']['data'] = get_chart_data_ds(session, item['datasource'], item['sql'])
+
+    result_dict['canvas_view_info'] = orjson.dumps(canvas_view_obj)
+    return result_dict
 
 
 def get_create_base_info(user: CurrentUser, dashboard: CreateDashboard):

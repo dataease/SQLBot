@@ -55,6 +55,8 @@ const dataObject = computed<{
   fields: Array<string>
   data: Array<{ [key: string]: any }>
   limit: number | undefined
+  datasource: number | undefined
+  sql: string | undefined
 }>(() => {
   if (props.message?.record?.data) {
     if (typeof props.message?.record?.data === 'string') {
@@ -220,6 +222,8 @@ function addToDashboard() {
     data: {
       data: data.value,
     },
+    sql: props.message?.record?.sql,
+    datasource: props.message?.record?.datasource,
     chart: {},
   }
   // @ts-expect-error eslint-disable-next-line @typescript-eslint/ban-ts-comment
