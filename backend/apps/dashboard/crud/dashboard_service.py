@@ -49,11 +49,12 @@ def load_resource(session: SessionDep, dashboard: QueryDashboard):
 
     result_dict = dict(result)
     canvas_view_obj = orjson.loads(result_dict['canvas_view_info'])
-    for item in canvas_view_obj.values():  # 直接遍历值
-        # 检查必要字段是否存在
+    for item in canvas_view_obj.values():
         if all(key in item for key in ['datasource', 'sql']) and item['datasource'] is not None:
-            item['data']['data'] = get_chart_data_ds(session, item['datasource'], item['sql'])
-
+            data_result = get_chart_data_ds(session, item['datasource'], item['sql'])
+            item['data']['data'] = data_result['data']
+            item['status'] = data_result['status']
+            item['message'] = data_result['message']
     result_dict['canvas_view_info'] = orjson.dumps(canvas_view_obj)
     return result_dict
 

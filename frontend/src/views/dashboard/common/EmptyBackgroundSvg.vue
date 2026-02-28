@@ -32,7 +32,6 @@ defineProps({
 }
 :deep(.ed-empty__description) {
   margin-top: 8px;
-
   color: var(--N600, #646a73);
   text-align: center;
   font-size: 14px;

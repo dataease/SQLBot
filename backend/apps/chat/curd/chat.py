@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 
 import orjson
 import sqlparse
@@ -18,7 +18,7 @@ from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory
 from apps.system.schemas.system_schema import AssistantOutDsSchema
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
-from common.utils.utils import extract_nested_json
+from common.utils.utils import extract_nested_json, SQLBotLogUtil
 
 
 def get_chat_record_by_id(session: SessionDep, record_id: int):
@@ -243,14 +243,24 @@ def get_chart_data_with_user_live(session: SessionDep, current_user: CurrentUser
     return get_chart_data_ds(session,row.datasource, row.sql)
 
 def get_chart_data_ds(session: SessionDep,ds_id,sql):
+    json_result: Dict[str, Any] = {'status': 'success','data':[],'message':''}
     try:
         datasource = get_ds(session,ds_id)
-        result = exec_sql(ds=datasource,sql=sql, origin_column=False)
-        _data = DataFormat.convert_large_numbers_in_object_array(result.get('data'))
-        return _data
-    except Exception:
+        if datasource is None:
+            json_result['status'] = 'failed'
+            json_result['message'] = 'Datasource not found'
+            return json_result
+        else:
+            result = exec_sql(ds=datasource,sql=sql, origin_column=False)
+            _data = DataFormat.convert_large_numbers_in_object_array(result.get('data'))
+            json_result['data'] = _data
+            return json_result
+    except Exception as e:
+        SQLBotLogUtil.error(f"Function failed: {e}")
+        json_result['status'] = 'failed'
+        json_result['message'] = f"{e}"
         pass
-    return []
+    return json_result
 
 def get_chat_chart_data(session: SessionDep, chat_record_id: int):
     stmt = select(ChatRecord.data).where(and_(ChatRecord.id == chat_record_id))
