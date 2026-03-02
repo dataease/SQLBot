@@ -8,7 +8,6 @@ Create Date: 2025-12-19 13:30:54.743171
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '3d4bd2d673dc'
@@ -29,7 +28,7 @@ def upgrade():
                     sa.Column('user_agent', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
                     sa.Column('execution_time', sa.BIGINT(), autoincrement=False, nullable=True),
                     sa.Column('error_message', sa.TEXT(), autoincrement=False, nullable=True),
-                    sa.Column('create_time', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+                    sa.Column('create_time', sa.DateTime(), autoincrement=False, nullable=True),
                     sa.Column('module', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
                     sa.Column('remark', sa.VARCHAR(length=255), autoincrement=False, nullable=True),
                     sa.Column('resource_id',sa.TEXT(), autoincrement=False, nullable=True),

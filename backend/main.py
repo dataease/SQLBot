@@ -34,6 +34,31 @@ def run_migrations():
     alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
 
+def init_milvus_collections():
+    """初始化 Milvus collections"""
+    if not settings.EMBEDDING_ENABLED:
+        return
+    
+    try:
+        from common.utils.milvus_client import MilvusClient
+        
+        # 创建术语collection
+        MilvusClient.create_collection(
+            collection_name="terminology",
+            dimension=settings.MILVUS_DIMENSION,
+            description="Terminology embeddings"
+        )
+        
+        # 创建数据训练collection（如果迁移到Milvus）
+        MilvusClient.create_collection(
+            collection_name="data_training",
+            dimension=settings.MILVUS_DIMENSION,
+            description="Data training embeddings"
+        )
+        
+        SQLBotLogUtil.info("✅ Milvus collections initialized")
+    except Exception as e:
+        SQLBotLogUtil.error(f"Failed to init Milvus collections: {e}")
 
 def init_terminology_embedding_data():
     fill_empty_terminology_embeddings()
@@ -50,6 +75,7 @@ def init_table_and_ds_embedding():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations()
+    init_milvus_collections()  # 初始化 Milvus collections
     init_sqlbot_cache()
     init_dynamic_cors(app)
     init_terminology_embedding_data()

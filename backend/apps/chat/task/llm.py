@@ -120,7 +120,7 @@ class LLMService:
                 ds = session.get(CoreDatasource, chat.datasource)
                 if not ds:
                     raise SingleMessageError("No available datasource configuration found")
-                chat_question.engine = (ds.type_name if ds.type != 'excel' else 'PostgreSQL') + get_version(ds)
+                chat_question.engine = (ds.type_name if ds.type != 'excel' else 'MySQL') + get_version(ds)
                 chat_question.db_schema = get_table_schema(session=session, current_user=current_user, ds=ds,
                                                            question=chat_question.question, embedding=embedding)
 
@@ -496,7 +496,7 @@ class LLMService:
                         _datasource = None
                         raise SingleMessageError(f"Datasource configuration with id {_datasource} not found")
                     self.ds = CoreDatasource(**_ds.model_dump())
-                    self.chat_question.engine = (_ds.type_name if _ds.type != 'excel' else 'PostgreSQL') + get_version(
+                    self.chat_question.engine = (_ds.type_name if _ds.type != 'excel' else 'MySQL') + get_version(
                         self.ds)
                     self.chat_question.db_schema = get_table_schema(session=_session,
                                                                     current_user=self.current_user, ds=self.ds,

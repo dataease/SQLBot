@@ -63,11 +63,17 @@ def get_uri_from_config(type: str, conf: DatasourceConf) -> str:
             db_url = f"mssql+pymssql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
             db_url = f"mssql+pymssql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
-    elif equals_ignore_case(type, "pg", "excel"):
+    elif equals_ignore_case(type, "pg"):
         if conf.extraJdbc is not None and conf.extraJdbc != '':
             db_url = f"postgresql+psycopg2://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
             db_url = f"postgresql+psycopg2://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}"
+    # Excel/CSV 使用 MySQL URI 生成逻辑
+    elif equals_ignore_case(type, "excel"):
+        if conf.extraJdbc is not None and conf.extraJdbc != '':
+            db_url = f"mysql+pymysql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
+        else:
+            db_url = f"mysql+pymysql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?charset=utf8mb4"
     elif equals_ignore_case(type, "oracle"):
         if equals_ignore_case(conf.mode, "service_name"):
             if conf.extraJdbc is not None and conf.extraJdbc != '':

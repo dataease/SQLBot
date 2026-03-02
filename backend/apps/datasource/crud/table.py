@@ -55,6 +55,12 @@ def run_fill_empty_table_and_ds_embedding(session_maker):
 
 
 def save_table_embedding(session_maker, ids: List[int]):
+    """
+    生成并保存表的embedding向量
+    
+    说明：
+    - embedding以JSON字符串形式存储在MySQL的Text字段中
+    """
     if not settings.TABLE_EMBEDDING_ENABLED:
         return
 
@@ -69,6 +75,7 @@ def save_table_embedding(session_maker, ids: List[int]):
             table = session.query(CoreTable).filter(CoreTable.id == _id).first()
             fields = session.query(CoreField).filter(CoreField.table_id == table.id).all()
 
+            # 构建表结构的文本表示
             schema_table = ''
             schema_table += f"# Table: {table.table_name}"
             table_comment = ''
@@ -91,7 +98,8 @@ def save_table_embedding(session_maker, ids: List[int]):
                         field_list.append(f"({field.field_name}:{field.field_type}, {field_comment})")
                 schema_table += ",\n".join(field_list)
             schema_table += '\n]\n'
-            # table_schema.append(schema_table)
+            
+            # 生成embedding向量并转为JSON字符串存储
             emb = json.dumps(model.embed_query(schema_table))
 
             stmt = update(CoreTable).where(and_(CoreTable.id == _id)).values(embedding=emb)
@@ -107,6 +115,12 @@ def save_table_embedding(session_maker, ids: List[int]):
 
 
 def save_ds_embedding(session_maker, ids: List[int]):
+    """
+    生成并保存数据源的embedding向量
+    
+    说明：
+    - embedding以JSON字符串形式存储在MySQL的Text字段中
+    """
     if not settings.TABLE_EMBEDDING_ENABLED:
         return
 
@@ -146,7 +160,8 @@ def save_ds_embedding(session_maker, ids: List[int]):
                             field_list.append(f"({field.field_name}:{field.field_type}, {field_comment})")
                     schema_table += ",\n".join(field_list)
                 schema_table += '\n]\n'
-            # table_schema.append(schema_table)
+            
+            # 生成embedding向量并转为JSON字符串存储
             emb = json.dumps(model.embed_query(schema_table))
 
             stmt = update(CoreDatasource).where(and_(CoreDatasource.id == _id)).values(embedding=emb)

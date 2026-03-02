@@ -5,7 +5,7 @@ from typing import Annotated, Any, Literal
 from pydantic import (
     AnyUrl,
     BeforeValidator,
-    PostgresDsn,
+    # PostgresDsn 已废弃：Excel/CSV 数据引擎已从 PostgreSQL 迁移到 MySQL
     computed_field,
     field_validator
 )
@@ -48,13 +48,12 @@ class Settings(BaseSettings):
             self.FRONTEND_HOST
         ]
 
-    POSTGRES_SERVER: str = 'localhost'
-    POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = 'root'
-    POSTGRES_PASSWORD: str = "Password123@pg"
-    POSTGRES_DB: str = "sqlbot"
-    SQLBOT_DB_URL: str = ''
-    # SQLBOT_DB_URL: str = 'mysql+pymysql://root:Password123%40mysql@127.0.0.1:3306/sqlbot'
+    MYSQL_SERVER: str = 'localhost'
+    MYSQL_PORT: int = 3306
+    MYSQL_USER: str = 'root'
+    MYSQL_PASSWORD: str = "Password123@mysql"
+    MYSQL_DB: str = "sqlbot"
+    SQLBOT_DB_URL: str = 'mysql+pymysql://root:22333@127.0.0.1:3306/sqlbot'
 
     TOKEN_KEY: str = "X-SQLBOT-TOKEN"
     DEFAULT_PWD: str = "SQLBot@123456"
@@ -72,20 +71,13 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "/opt/sqlbot/data/file"
     SQLBOT_KEY_EXPIRED: int = 100  # License key expiration timestamp, 0 means no expiration
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn | str:
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.SQLBOT_DB_URL:
             return self.SQLBOT_DB_URL
-        # return MultiHostUrl.build(
-        #     scheme="postgresql+psycopg",
-        #     username=urllib.parse.quote(self.POSTGRES_USER),
-        #     password=urllib.parse.quote(self.POSTGRES_PASSWORD),
-        #     host=self.POSTGRES_SERVER,
-        #     port=self.POSTGRES_PORT,
-        #     path=self.POSTGRES_DB,
-        # )
-        return f"postgresql+psycopg://{urllib.parse.quote(self.POSTGRES_USER)}:{urllib.parse.quote(self.POSTGRES_PASSWORD)}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        # 使用 MySQL 配置
+        return f"mysql+pymysql://{urllib.parse.quote(self.MYSQL_USER)}:{urllib.parse.quote(self.MYSQL_PASSWORD)}@{self.MYSQL_SERVER}:{self.MYSQL_PORT}/{self.MYSQL_DB}?charset=utf8mb4"
 
     MCP_IMAGE_PATH: str = '/opt/sqlbot/images'
     EXCEL_PATH: str = '/opt/sqlbot/data/excel'
@@ -110,10 +102,10 @@ class Settings(BaseSettings):
     DEFAULT_REASONING_CONTENT_START: str = '<think>'
     DEFAULT_REASONING_CONTENT_END: str = '</think>'
 
-    PG_POOL_SIZE: int = 20
-    PG_MAX_OVERFLOW: int = 30
-    PG_POOL_RECYCLE: int = 3600
-    PG_POOL_PRE_PING: bool = True
+    MYSQL_POOL_SIZE: int = 20
+    MYSQL_MAX_OVERFLOW: int = 30
+    MYSQL_POOL_RECYCLE: int = 3600
+    MYSQL_POOL_PRE_PING: bool = True
 
     TABLE_EMBEDDING_ENABLED: bool = True
     TABLE_EMBEDDING_COUNT: int = 10
@@ -121,11 +113,22 @@ class Settings(BaseSettings):
 
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
 
+    # Milvus 配置
+    MILVUS_HOST: str = 'localhost'
+    MILVUS_PORT: int = 19530
+    MILVUS_DATABASE: str = 'sqlbot'
+    MILVUS_DIMENSION: int = 768
+    # MILVUS_INDEX_TYPE: str = 'IVF_FLAT'
+    # MILVUS_METRIC_TYPE: str = 'L2'
+    # MILVUS_INDEX_PARAM: dict = {'nlist': 128}
+    MILVUS_USER: str = 'root'
+    MILVUS_PASSWORD: str = 'Milvus'
+
     @field_validator('SQL_DEBUG',
                      'EMBEDDING_ENABLED',
                      'GENERATE_SQL_QUERY_LIMIT_ENABLED',
                      'PARSE_REASONING_BLOCK_ENABLED',
-                     'PG_POOL_PRE_PING',
+                     'MYSQL_POOL_PRE_PING',
                      'TABLE_EMBEDDING_ENABLED',
                      mode='before')
     @classmethod

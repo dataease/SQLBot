@@ -4,9 +4,10 @@ from typing import List, Optional, Union
 
 from fastapi import Body
 from pydantic import BaseModel
-from sqlalchemy import Column, Integer, Text, BigInteger, DateTime, Identity, Boolean
+from sqlalchemy import Column, Integer, Text, BigInteger, DateTime, Boolean
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy.dialects.postgresql import JSONB
+# from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON
 from sqlmodel import SQLModel, Field
 
 from apps.db.constant import DB
@@ -58,7 +59,7 @@ class QuickCommand(Enum):
 
 class ChatLog(SQLModel, table=True):
     __tablename__ = "chat_log"
-    id: Optional[int] = Field(sa_column=Column(BigInteger, Identity(always=True), primary_key=True))
+    id: Optional[int] = Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
     type: TypeEnum = Field(
         sa_column=Column(SQLAlchemyEnum(TypeEnum, native_enum=False, values_callable=enum_values, length=3)))
     operate: OperationEnum = Field(
@@ -66,16 +67,16 @@ class ChatLog(SQLModel, table=True):
     pid: Optional[int] = Field(sa_column=Column(BigInteger, nullable=True))
     ai_modal_id: Optional[int] = Field(sa_column=Column(BigInteger))
     base_modal: Optional[str] = Field(max_length=255)
-    messages: Optional[list[dict]] = Field(sa_column=Column(JSONB))
+    messages: Optional[list[dict]] = Field(sa_column=Column(JSON, nullable=True))
     reasoning_content: Optional[str | None] = Field(sa_column=Column(Text, nullable=True))
     start_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     finish_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    token_usage: Optional[dict | None | int] = Field(sa_column=Column(JSONB))
+    token_usage: Optional[dict | None | int] = Field(sa_column=Column(JSON, nullable=True))
 
 
 class Chat(SQLModel, table=True):
     __tablename__ = "chat"
-    id: Optional[int] = Field(sa_column=Column(BigInteger, Identity(always=True), primary_key=True))
+    id: Optional[int] = Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
     oid: Optional[int] = Field(sa_column=Column(BigInteger, nullable=True, default=1))
     create_time: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     create_by: int = Field(sa_column=Column(BigInteger, nullable=True))
@@ -93,7 +94,7 @@ class Chat(SQLModel, table=True):
 
 class ChatRecord(SQLModel, table=True):
     __tablename__ = "chat_record"
-    id: Optional[int] = Field(sa_column=Column(BigInteger, Identity(always=True), primary_key=True))
+    id: Optional[int] = Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
     chat_id: int = Field(sa_column=Column(BigInteger, nullable=False))
     ai_modal_id: Optional[int] = Field(sa_column=Column(BigInteger))
     first_chat: bool = Field(sa_column=Column(Boolean, nullable=True, default=False))

@@ -52,12 +52,7 @@ def get_column_permission_fields(session: SessionDep, current_user: CurrentUser,
             and_(DsPermission.table_id == table.id, DsPermission.type == 'column')).all()
         if column_permissions is not None:
             for permission in column_permissions:
-                # check permission and user in same rules
-                # obj = session.query(DsRules).filter(
-                #     and_(DsRules.permission_list.op('@>')(cast([permission.id], JSONB)),
-                #          or_(DsRules.user_list.op('@>')(cast([f'{current_user.id}'], JSONB)),
-                #              DsRules.user_list.op('@>')(cast([current_user.id], JSONB))))
-                # ).first()
+                # 检查权限和用户是否在同一规则中
                 flag = False
                 for r in contain_rules:
                     p_list = json.loads(r.permission_list)

@@ -1,5 +1,3 @@
-# Author: Junjun
-# Date: 2025/5/19
 import urllib.parse
 from typing import List
 
@@ -11,20 +9,20 @@ from common.core.config import settings
 
 
 def get_engine_config():
-    return DatasourceConf(username=settings.POSTGRES_USER, password=settings.POSTGRES_PASSWORD,
-                          host=settings.POSTGRES_SERVER, port=settings.POSTGRES_PORT, database=settings.POSTGRES_DB,
-                          dbSchema="public", timeout=30) # read engine config
+    return DatasourceConf(username=settings.MYSQL_USER, password=settings.MYSQL_PASSWORD,
+                          host=settings.MYSQL_SERVER, port=settings.MYSQL_PORT, database=settings.MYSQL_DB,
+                          timeout=30)
 
 
 def get_engine_uri(conf: DatasourceConf):
-    return f"postgresql+psycopg2://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{urllib.parse.quote(conf.database)}"
+    return f"mysql+pymysql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{urllib.parse.quote(conf.database)}?charset=utf8mb4"
 
 
 def get_engine_conn():
     conf = get_engine_config()
     db_url = get_engine_uri(conf)
     engine = create_engine(db_url,
-                           connect_args={"options": f"-c search_path={conf.dbSchema}", "connect_timeout": conf.timeout},
+                           connect_args={"connect_timeout": conf.timeout},
                            pool_timeout=conf.timeout)
     return engine
 
@@ -45,17 +43,17 @@ def create_table(session, table_name: str, fields: List[any]):
         elif "int" in f["type"]:
             f["relType"] = "bigint"
         elif "float" in f["type"]:
-            f["relType"] = "numeric"
+            f["relType"] = "double"
         elif "datetime" in f["type"]:
-            f["relType"] = "timestamp"
+            f["relType"] = "datetime"
         else:
             f["relType"] = "text"
-        list.append(f'"{f["name"]}" {f["relType"]}')
+        list.append(f'`{f["name"]}` {f["relType"]}')
 
     sql = f"""
-            CREATE TABLE "{table_name}" (
+            CREATE TABLE `{table_name}` (
                 {", ".join(list)}
-            );
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
             """
     session.execute(text(sql))
     session.commit()

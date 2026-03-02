@@ -1,5 +1,3 @@
-# Author: Junjun
-# Date: 2025/9/23
 import json
 import time
 import traceback
@@ -41,6 +39,14 @@ def get_table_embedding(tables: list[dict], question: str):
 
 
 def calc_table_embedding(tables: list[dict], question: str):
+    """
+    计算表与问题的相似度
+    
+    说明：
+    - 从数据库加载预存储的embedding（JSON字符串格式）
+    - 在内存中计算余弦相似度
+    - 返回最相关的表列表
+    """
     _list = []
     for table in tables:
         _list.append(
@@ -49,16 +55,16 @@ def calc_table_embedding(tables: list[dict], question: str):
 
     if _list:
         try:
-            # text = [s.get('schema_table') for s in _list]
-            #
             model = EmbeddingModelCache.get_model()
             start_time = time.time()
-            # results = model.embed_documents(text)
-            # end_time = time.time()
-            # SQLBotLogUtil.info(str(end_time - start_time))
+            
+            # 从数据库加载预存储的embedding（JSON字符串格式）
             results = [item.get('embedding') for item in _list]
 
+            # 生成问题的embedding向量
             q_embedding = model.embed_query(question)
+            
+            # 计算余弦相似度（将JSON字符串解析为向量）
             for index in range(len(results)):
                 item = results[index]
                 if item:

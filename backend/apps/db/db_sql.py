@@ -5,7 +5,7 @@ from common.utils.utils import equals_ignore_case
 
 
 def get_version_sql(ds: CoreDatasource, conf: DatasourceConf):
-    if equals_ignore_case(ds.type, "mysql", "doris", "starrocks"):
+    if equals_ignore_case(ds.type, "mysql", "doris", "starrocks", "excel"):
         return """
                 SELECT VERSION()
                 """
@@ -13,7 +13,7 @@ def get_version_sql(ds: CoreDatasource, conf: DatasourceConf):
         return """
                 select SERVERPROPERTY('ProductVersion')
                 """
-    elif equals_ignore_case(ds.type, "pg", "kingbase", "excel"):
+    elif equals_ignore_case(ds.type, "pg", "kingbase"):
         return """
               SELECT current_setting('server_version')
               """
@@ -34,7 +34,7 @@ def get_version_sql(ds: CoreDatasource, conf: DatasourceConf):
 
 
 def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''):
-    if equals_ignore_case(ds.type, "mysql"):
+    if equals_ignore_case(ds.type, "mysql", "excel"):
         return """
                 SELECT 
                     TABLE_NAME, 
@@ -60,7 +60,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
                     t.TABLE_TYPE IN ('BASE TABLE', 'VIEW')
                     AND t.TABLE_SCHEMA = :param
                 """, conf.dbSchema
-    elif equals_ignore_case(ds.type, "pg", "excel"):
+    elif equals_ignore_case(ds.type, "pg"):
         return """
               SELECT c.relname                                       AS TABLE_NAME,
                      COALESCE(COALESCE(d.description, obj_description(c.oid)), '') AS TABLE_COMMENT
@@ -165,7 +165,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
 
 
 def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = None):
-    if equals_ignore_case(ds.type, "mysql"):
+    if equals_ignore_case(ds.type, "mysql", "excel"):
         sql1 = """
                 SELECT 
                     COLUMN_NAME,
@@ -196,7 +196,7 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                 """
         sql2 = " AND C.TABLE_NAME = :param2" if table_name is not None and table_name != "" else ""
         return sql1 + sql2, conf.dbSchema, table_name
-    elif equals_ignore_case(ds.type, "pg", "excel"):
+    elif equals_ignore_case(ds.type, "pg"):
         sql1 = """
                SELECT a.attname                                       AS COLUMN_NAME,
                       pg_catalog.format_type(a.atttypid, a.atttypmod) AS DATA_TYPE,

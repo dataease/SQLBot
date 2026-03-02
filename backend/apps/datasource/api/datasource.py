@@ -4,7 +4,6 @@ import io
 import os
 import traceback
 import uuid
-from io import StringIO
 from typing import List
 from urllib.parse import quote
 
@@ -334,7 +333,7 @@ async def upload_excel(session: SessionDep, file: UploadFile = File(..., descrip
             df = pd.read_csv(save_path, engine='c')
             tableName = f"sheet1_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
             sheets.append({"tableName": tableName, "tableComment": ""})
-            insert_pg(df, tableName, engine)
+            insert_excel_data(df, tableName, engine)
         else:
             sheet_names = pd.ExcelFile(save_path).sheet_names
             for sheet_name in sheet_names:
@@ -343,7 +342,7 @@ async def upload_excel(session: SessionDep, file: UploadFile = File(..., descrip
                 # df_temp = pd.read_excel(save_path, nrows=5)
                 # non_empty_cols = df_temp.columns[df_temp.notna().any()].tolist()
                 df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine')
-                insert_pg(df, tableName, engine)
+                insert_excel_data(df, tableName, engine)
 
         # os.remove(save_path)
         return {"filename": filename, "sheets": sheets}
@@ -351,38 +350,30 @@ async def upload_excel(session: SessionDep, file: UploadFile = File(..., descrip
     return await asyncio.to_thread(inner)
 
 
-def insert_pg(df, tableName, engine):
+def insert_excel_data(df, tableName, engine):
+    """
+    将 DataFrame 数据插入 MySQL 表
+    使用 pandas to_sql 方法直接写入
+    """
     # fix field type
     for i in range(len(df.dtypes)):
         if str(df.dtypes[i]) == 'uint64':
             df[str(df.columns[i])] = df[str(df.columns[i])].astype('string')
 
-    conn = engine.raw_connection()
-    cursor = conn.cursor()
     try:
+        # 使用 pandas to_sql 直接写入 MySQL
+        # method='multi' 启用批量插入以提升性能，chunksize 控制每批插入行数
         df.to_sql(
             tableName,
             engine,
             if_exists='replace',
-            index=False
+            index=False,
+            method='multi',
+            chunksize=1000
         )
-        # trans csv
-        output = StringIO()
-        df.to_csv(output, sep='\t', header=False, index=False)
-        # output.seek(0)
-
-        # pg copy
-        cursor.copy_expert(
-            sql=f"""COPY "{tableName}" FROM STDIN WITH CSV DELIMITER E'\t'""",
-            file=output
-        )
-        conn.commit()
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(400, str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
 
 t_sheet = "数据表列表"

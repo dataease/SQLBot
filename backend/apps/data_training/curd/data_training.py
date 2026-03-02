@@ -16,6 +16,8 @@ from apps.template.generate_chart.generator import get_base_data_training_templa
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
 from common.utils.embedding_threads import run_save_data_training_embeddings
+from common.utils.milvus_client import milvus_client
+from common.utils.utils import SQLBotLogUtil
 
 
 def get_data_training_base_query(oid: int, name: Optional[str] = None):
@@ -197,7 +199,8 @@ def create_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         datasource=info.datasource,
         advanced_application=info.advanced_application,
         create_time=create_time,
-        enabled=info.enabled if info.enabled is not None else True
+        enabled=info.enabled if info.enabled is not None else True,
+        embedded=False  # 新创建的SQL示例需要向量化
     )
 
     session.add(data_training)
@@ -254,7 +257,8 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         description=info.description.strip(),
         datasource=info.datasource,
         advanced_application=info.advanced_application,
-        enabled=info.enabled if info.enabled is not None else True
+        enabled=info.enabled if info.enabled is not None else True,
+        embedded=False  # 更新SQL示例后需要重新向量化
     )
     session.execute(stmt)
     session.commit()
@@ -409,7 +413,17 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
 
 
 def delete_training(session: SessionDep, ids: list[int]):
-    stmt = delete(DataTraining).where(and_(DataTraining.id.in_(ids)))
+    # 先从 Milvus 删除向量
+    try:
+        if settings.EMBEDDING_ENABLED:
+            milvus_client.delete_vectors("data_training", ids)
+            SQLBotLogUtil.info(f"Deleted {len(ids)} data training vectors from Milvus")
+    except Exception as e:
+        # Milvus删除失败不影响数据库删除
+        SQLBotLogUtil.warning(f"Failed to delete data training vectors from Milvus: {e}")
+    
+    # 再从数据库删除
+    stmt = delete(DataTraining).where(DataTraining.id.in_(ids))
     session.execute(stmt)
     session.commit()
 
@@ -437,71 +451,99 @@ def enable_training(session: SessionDep, id: int, enabled: bool, trans: Trans):
 
 
 def run_fill_empty_embeddings(session_maker):
+    """
+    填充所有SQL示例的 embeddings 到 Milvus
+    
+    查找 embedded=False 的记录（未向量化的SQL示例）
+    """
     try:
         if not settings.EMBEDDING_ENABLED:
             return
 
         session = session_maker()
-        stmt = select(DataTraining.id).where(and_(DataTraining.embedding.is_(None)))
+        
+        # 查找未向量化的SQL示例
+        stmt = select(DataTraining.id).where(DataTraining.embedded == False)
         results = session.execute(stmt).scalars().all()
 
-        save_embeddings(session_maker, results)
-    except Exception:
+        if results:
+            SQLBotLogUtil.info(f"Filling {len(results)} data training embeddings to Milvus")
+            save_embeddings(session_maker, results)
+        else:
+            SQLBotLogUtil.info("No data training to fill embeddings")
+            
+    except Exception as e:
+        SQLBotLogUtil.error(f"Failed to fill empty data training embeddings: {e}")
         traceback.print_exc()
     finally:
         session_maker.remove()
 
 
 def save_embeddings(session_maker, ids: List[int]):
+    """
+    保存SQL示例的向量到 Milvus
+
+    1. 从数据库查询指定ID的SQL示例问题
+    2. 使用embedding模型生成向量
+    3. 先删除Milvus中的旧向量（如果存在）
+    4. 将新向量插入Milvus（collection: data_training）
+    5. 更新数据库中的embedded状态为True
+    """
     if not settings.EMBEDDING_ENABLED:
         return
 
     if not ids or len(ids) == 0:
         return
+    
     try:
         session = session_maker()
-        _list = session.query(DataTraining).filter(and_(DataTraining.id.in_(ids))).all()
-
+        
+        # 获取需要向量化的SQL示例
+        _list = session.query(DataTraining).filter(DataTraining.id.in_(ids)).all()
+        
+        if not _list:
+            return
+        
+        # 提取问题列表用于向量化
         _question_list = [item.question for item in _list]
 
+        # 生成 embeddings
         model = EmbeddingModelCache.get_model()
-
         results = model.embed_documents(_question_list)
-
-        for index in range(len(results)):
-            item = results[index]
-            stmt = update(DataTraining).where(and_(DataTraining.id == _list[index].id)).values(embedding=item)
+        
+        milvus_ids = [item.id for item in _list]
+        oids = [item.oid for item in _list]
+        
+        # 先删除旧数据（如果存在）
+        try:
+            milvus_client.delete_vectors("data_training", milvus_ids)
+        except Exception as e:
+            SQLBotLogUtil.warning(f"Delete old data training vectors: {e}")
+        
+        # 插入新数据到 Milvus
+        milvus_client.insert_vectors(
+            collection_name="data_training",
+            ids=milvus_ids,
+            embeddings=results,
+            oids=oids
+        )
+        
+        # 更新 embedded 状态为 True
+        for data_id in milvus_ids:
+            stmt = update(DataTraining).where(
+                DataTraining.id == data_id
+            ).values(embedded=True)
             session.execute(stmt)
-            session.commit()
+        
+        session.commit()
+        
+        SQLBotLogUtil.info(f"Saved {len(milvus_ids)} data training embeddings to Milvus")
 
-    except Exception:
+    except Exception as e:
+        SQLBotLogUtil.error(f"Failed to save data training embeddings: {e}")
         traceback.print_exc()
     finally:
         session_maker.remove()
-
-
-embedding_sql = f"""
-SELECT id, datasource, question, similarity
-FROM
-(SELECT id, datasource, question, oid, enabled,
-( 1 - (embedding <=> :embedding_array) ) AS similarity
-FROM data_training AS child
-) TEMP
-WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and datasource = :datasource and enabled = true
-ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
-"""
-embedding_sql_in_advanced_application = f"""
-SELECT id, advanced_application, question, similarity
-FROM
-(SELECT id, advanced_application, question, oid, enabled,
-( 1 - (embedding <=> :embedding_array) ) AS similarity
-FROM data_training AS child
-) TEMP
-WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and advanced_application = :advanced_application and enabled = true
-ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
-"""
 
 
 def select_training_by_question(session: SessionDep, question: str, oid: int, datasource: Optional[int] = None,
@@ -511,50 +553,77 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
 
     _list: List[DataTraining] = []
 
-    # maybe use label later?
+    # ===== 第一步：SQL 模糊匹配 =====
     stmt = (
         select(
             DataTraining.id,
             DataTraining.question,
         )
         .where(
-            and_(or_(text(":sentence ILIKE '%' || question || '%'"), text("question ILIKE '%' || :sentence || '%'")),
+            and_(or_(text(":sentence LIKE CONCAT('%', question, '%')"), text("question LIKE CONCAT('%', :sentence, '%')")),
                  DataTraining.oid == oid,
                  DataTraining.enabled == True)
         )
     )
+    
+    # 按数据源或高级应用筛选
     if advanced_application_id is not None:
-        stmt = stmt.where(and_(DataTraining.advanced_application == advanced_application_id))
+        stmt = stmt.where(DataTraining.advanced_application == advanced_application_id)
     else:
-        stmt = stmt.where(and_(DataTraining.datasource == datasource))
+        stmt = stmt.where(DataTraining.datasource == datasource)
 
     results = session.execute(stmt, {'sentence': question}).fetchall()
 
     for row in results:
         _list.append(DataTraining(id=row.id, question=row.question))
 
+    # ===== 第二步：Milvus 向量搜索 =====
     if settings.EMBEDDING_ENABLED:
-        with session.begin_nested():
-            try:
-                model = EmbeddingModelCache.get_model()
+        try:
+            model = EmbeddingModelCache.get_model()
+            embedding = model.embed_query(question)
 
-                embedding = model.embed_query(question)
+            # Milvus 搜索
+            milvus_results = milvus_client.search_vectors(
+                collection_name="data_training",
+                query_embedding=embedding,
+                oid=oid,
+                top_k=settings.EMBEDDING_DATA_TRAINING_TOP_COUNT,
+                similarity_threshold=settings.EMBEDDING_DATA_TRAINING_SIMILARITY
+            )
 
+            # 将 Milvus 结果转换为 DataTraining 对象
+            if milvus_results:
+                milvus_ids = [r["id"] for r in milvus_results]
+                
+                # 从数据库获取详细信息并过滤
+                milvus_stmt = select(
+                    DataTraining.id,
+                    DataTraining.question,
+                ).where(
+                    and_(
+                        DataTraining.id.in_(milvus_ids),
+                        DataTraining.enabled == True
+                    )
+                )
+                
+                # 按数据源或高级应用筛选
                 if advanced_application_id is not None:
-                    results = session.execute(text(embedding_sql_in_advanced_application),
-                                              {'embedding_array': str(embedding), 'oid': oid,
-                                               'advanced_application': advanced_application_id})
+                    milvus_stmt = milvus_stmt.where(DataTraining.advanced_application == advanced_application_id)
                 else:
-                    results = session.execute(text(embedding_sql),
-                                              {'embedding_array': str(embedding), 'oid': oid, 'datasource': datasource})
+                    milvus_stmt = milvus_stmt.where(DataTraining.datasource == datasource)
+                
+                milvus_trainings = session.execute(milvus_stmt).fetchall()
+                
+                for training in milvus_trainings:
+                    _list.append(DataTraining(id=training.id, question=training.question))
 
-                for row in results:
-                    _list.append(DataTraining(id=row.id, question=row.question))
+        except Exception as e:
+            # Milvus 搜索失败不影响基本功能
+            SQLBotLogUtil.error(f"Milvus data training search failed: {e}")
+            traceback.print_exc()
 
-            except Exception:
-                traceback.print_exc()
-                session.rollback()
-
+    # ===== 第三步：去重和格式化结果 =====
     _map: dict = {}
     _ids: list[int] = []
     for row in _list:

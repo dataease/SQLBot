@@ -8,7 +8,6 @@ Create Date: 2025-06-23 16:39:39.499180
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'fde8acca6143'

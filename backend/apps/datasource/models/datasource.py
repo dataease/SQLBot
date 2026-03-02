@@ -2,14 +2,13 @@ from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel
-from sqlalchemy import Column, Text, BigInteger, DateTime, Identity
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Text, BigInteger, DateTime, Identity, JSON
 from sqlmodel import SQLModel, Field
 
 
 class CoreDatasource(SQLModel, table=True):
     __tablename__ = "core_datasource"
-    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, nullable=False, primary_key=True, autoincrement=True))
     name: str = Field(max_length=128, nullable=False)
     description: str = Field(max_length=512, nullable=True)
     type: str = Field(max_length=64)
@@ -20,14 +19,14 @@ class CoreDatasource(SQLModel, table=True):
     status: str = Field(max_length=64, nullable=True)
     num: str = Field(max_length=256, nullable=True)
     oid: int = Field(sa_column=Column(BigInteger()))
-    table_relation: List = Field(sa_column=Column(JSONB, nullable=True))
+    table_relation: List = Field(sa_column=Column(JSON, nullable=True))
     embedding: str = Field(sa_column=Column(Text, nullable=True))
     recommended_config: int = Field(sa_column=Column(BigInteger()))
 
 
 class CoreTable(SQLModel, table=True):
     __tablename__ = "core_table"
-    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, nullable=False, primary_key=True, autoincrement=True))
     ds_id: int = Field(sa_column=Column(BigInteger()))
     checked: bool = Field(default=True)
     table_name: str = Field(sa_column=Column(Text))
@@ -38,7 +37,7 @@ class CoreTable(SQLModel, table=True):
 
 class DsRecommendedProblem(SQLModel, table=True):
     __tablename__ = "ds_recommended_problem"
-    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, nullable=False, primary_key=True, autoincrement=True))
     datasource_id: int = Field(sa_column=Column(BigInteger()))
     question: str = Field(sa_column=Column(Text))
     remark: str = Field(sa_column=Column(Text))
@@ -49,7 +48,7 @@ class DsRecommendedProblem(SQLModel, table=True):
 
 class CoreField(SQLModel, table=True):
     __tablename__ = "core_field"
-    id: int = Field(sa_column=Column(BigInteger, Identity(always=True), nullable=False, primary_key=True))
+    id: int = Field(sa_column=Column(BigInteger, nullable=False, primary_key=True, autoincrement=True))
     ds_id: int = Field(sa_column=Column(BigInteger()))
     table_id: int = Field(sa_column=Column(BigInteger()))
     checked: bool = Field(default=True)

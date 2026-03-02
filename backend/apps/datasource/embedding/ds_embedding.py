@@ -1,5 +1,3 @@
-# Author: Junjun
-# Date: 2025/9/18
 import json
 import time
 import traceback
@@ -55,21 +53,20 @@ def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, o
         for _ds in _ds_list:
             if _ds.get('id'):
                 ds = session.get(CoreDatasource, _ds.get('id'))
-                # table_schema = get_table_schema(session, current_user, ds, question, embedding=False)
-                # ds_info = f"{ds.name}, {ds.description}\n"
-                # ds_schema = ds_info + table_schema
                 _list.append({"id": ds.id, "cosine_similarity": 0.0, "ds": ds, "embedding": ds.embedding})
 
         if _list:
             try:
-                # text = [s.get('ds_schema') for s in _list]
-
                 model = EmbeddingModelCache.get_model()
                 start_time = time.time()
-                # results = model.embed_documents(text)
+                
+                # 从数据库加载预存储的embedding（JSON字符串格式）
                 results = [item.get('embedding') for item in _list]
 
+                # 生成问题的embedding向量
                 q_embedding = model.embed_query(question)
+                
+                # 计算余弦相似度（将JSON字符串解析为向量）
                 for index in range(len(results)):
                     item = results[index]
                     if item:

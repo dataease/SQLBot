@@ -15,7 +15,8 @@ class ConnectType(Enum):
 
 
 class DB(Enum):
-    excel = ('excel', 'Excel/CSV', '"', '"', ConnectType.sqlalchemy, 'PostgreSQL')
+    # Excel/CSV数据引擎使用MySQL
+    excel = ('excel', 'Excel/CSV', '`', '`', ConnectType.sqlalchemy, 'MySQL')
     redshift = ('redshift', 'AWS Redshift', '"', '"', ConnectType.py_driver, 'AWS_Redshift')
     ck = ('ck', 'ClickHouse', '"', '"', ConnectType.sqlalchemy, 'ClickHouse')
     dm = ('dm', '达梦', '"', '"', ConnectType.py_driver, 'DM')

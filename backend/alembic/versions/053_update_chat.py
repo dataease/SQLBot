@@ -19,6 +19,7 @@ def upgrade():
     op.execute("UPDATE chat SET brief_generate = true WHERE brief_generate IS NULL")
     with op.batch_alter_table('chat') as batch_op:
         batch_op.alter_column('brief_generate',
+                             existing_type=sa.Boolean(),
                              server_default=sa.text('false'),
                              nullable=False)
     # ### end Alembic commands ###

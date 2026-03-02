@@ -1,11 +1,12 @@
 import datetime
+import json
 import logging
 import traceback
 from typing import List, Optional, Any
 from xml.dom.minidom import parseString
 
 import dicttoxml
-from sqlalchemy import and_, or_, select, func, delete, update, union, text, BigInteger
+from sqlalchemy import and_, or_, select, func, delete, update, union, text, BigInteger, JSON, cast
 from sqlalchemy.orm import aliased
 
 from apps.ai_model.embedding import EmbeddingModelCache
@@ -15,6 +16,8 @@ from apps.terminology.models.terminology_model import Terminology, TerminologyIn
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
 from common.utils.embedding_threads import run_save_terminology_embeddings
+from common.utils.utils import SQLBotLogUtil
+from common.utils.milvus_client import milvus_client
 
 
 def get_terminology_base_query(oid: int, name: Optional[str] = None):
@@ -67,13 +70,13 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
         datasource_conditions = []
         # datasource_ids 与 dslist 中的任一元素有交集
         for ds_id in dslist:
-            # 使用 JSONB 包含操作符，但需要确保类型正确
+            # 使用 JSON_CONTAINS 函数检查 JSON 数组是否包含指定值
             datasource_conditions.append(
-                Terminology.datasource_ids.contains([ds_id])
+                func.json_contains(Terminology.datasource_ids, ds_id) == 1
             )
 
-        # datasource_ids 为空数组
-        empty_array_condition = Terminology.datasource_ids == []
+        # datasource_ids 为空数组（使用 JSON_LENGTH 判断）
+        empty_array_condition = func.json_length(Terminology.datasource_ids) == 0
 
         ds_filter_condition = or_(
             *datasource_conditions,
@@ -114,9 +117,10 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
     children_subquery = (
         select(
             child.pid,
-            func.jsonb_agg(child.word).filter(child.word.isnot(None)).label('other_words')
+            # 使用 JSON_ARRAYAGG（通过 WHERE 过滤 NULL）
+            func.json_arrayagg(child.word).label('other_words')
         )
-        .where(child.pid.isnot(None))
+        .where(and_(child.pid.isnot(None), child.word.isnot(None)))
         .group_by(child.pid)
         .subquery()
     )
@@ -124,9 +128,11 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
     # 创建子查询来获取数据源名称
     datasource_names_subquery = (
         select(
-            func.jsonb_array_elements(Terminology.datasource_ids).cast(BigInteger).label('ds_id'),
+            CoreDatasource.id.label('ds_id'),
             Terminology.id.label('term_id')
         )
+        .select_from(Terminology)
+        .join(CoreDatasource, func.json_contains(Terminology.datasource_ids, CoreDatasource.id) == 1)
         .where(Terminology.id.in_(paginated_parent_ids))
         .subquery()
     )
@@ -140,7 +146,7 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
             Terminology.specific_ds,
             Terminology.datasource_ids,
             children_subquery.c.other_words,
-            func.jsonb_agg(CoreDatasource.name).filter(CoreDatasource.id.isnot(None)).label('datasource_names'),
+            func.json_arrayagg(CoreDatasource.name).label('datasource_names'),
             Terminology.enabled
         )
         .outerjoin(
@@ -188,7 +194,7 @@ def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfo
             other_words=row.other_words if row.other_words else [],
             specific_ds=row.specific_ds if row.specific_ds is not None else False,
             datasource_ids=row.datasource_ids if row.datasource_ids is not None else [],
-            datasource_names=row.datasource_names if row.datasource_names is not None else [],
+            datasource_names=[n for n in (row.datasource_names or []) if n is not None],
             enabled=row.enabled if row.enabled is not None else False,
         ))
 
@@ -250,7 +256,8 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         oid=oid,
         specific_ds=specific_ds,
         enabled=info.enabled,
-        datasource_ids=datasource_ids
+        datasource_ids=datasource_ids,
+        embedded=False  # 新创建的术语需要向量化
     )
 
     words = [info.word.strip()]
@@ -281,16 +288,18 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                 and_(
                     Terminology.specific_ds == True,
                     Terminology.datasource_ids.isnot(None),
+                    # 使用 JSON_OVERLAPS 检查 JSON 数组是否有交集
                     text("""
-                        EXISTS (
-                            SELECT 1 FROM jsonb_array_elements(datasource_ids) AS elem
-                            WHERE elem::text::int = ANY(:datasource_ids)
-                        )
+                        JSON_OVERLAPS(
+                            datasource_ids,
+                            CAST(:datasource_ids_json AS JSON)
+                        ) = 1
                     """)
                 )
             )
         )
-        query = query.params(datasource_ids=datasource_ids)
+        # 将 Python list 转换为 JSON 字符串以供原生 SQL 使用
+        query = query.params(datasource_ids_json=json.dumps(datasource_ids))
 
     # 转换为 EXISTS 查询并获取结果
     exists = session.query(query.exists()).scalar()
@@ -316,7 +325,8 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                     oid=oid,
                     enabled=info.enabled,
                     specific_ds=specific_ds,
-                    datasource_ids=datasource_ids
+                    datasource_ids=datasource_ids,
+                    embedded=False  # 新创建的子节点需要向量化
                 )
             )
 
@@ -544,16 +554,18 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                 and_(
                     Terminology.specific_ds == True,
                     Terminology.datasource_ids.isnot(None),
+                    # 使用 JSON_OVERLAPS 检查 JSON 数组是否有交集
                     text("""
-                        EXISTS (
-                            SELECT 1 FROM jsonb_array_elements(datasource_ids) AS elem
-                            WHERE elem::text::int = ANY(:datasource_ids)
-                        )
+                        JSON_OVERLAPS(
+                            datasource_ids,
+                            CAST(:datasource_ids_json AS JSON)
+                        ) = 1
                     """)  # 检查是否包含任意目标值
                 )
             )
         )
-        query = query.params(datasource_ids=datasource_ids)
+        # 将 Python list 转换为 JSON 字符串以供原生 SQL 使用
+        query = query.params(datasource_ids_json=json.dumps(datasource_ids))
 
     # 转换为 EXISTS 查询并获取结果
     exists = session.query(query.exists()).scalar()
@@ -567,6 +579,7 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         specific_ds=specific_ds,
         datasource_ids=datasource_ids,
         enabled=info.enabled,
+        embedded=False  # 更新术语后需要重新向量化
     )
     session.execute(stmt)
     session.commit()
@@ -590,7 +603,8 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                     oid=oid,
                     enabled=info.enabled,
                     specific_ds=specific_ds,
-                    datasource_ids=datasource_ids
+                    datasource_ids=datasource_ids,
+                    embedded=False  # 更新后的子节点需要重新向量化
                 )
             )
 
@@ -637,87 +651,129 @@ def enable_terminology(session: SessionDep, id: int, enabled: bool, trans: Trans
 # session_maker = scoped_session(sessionmaker(bind=engine))
 
 def run_fill_empty_embeddings(session_maker):
+    """
+    填充所有术语的 embeddings 到 Milvus
+
+    1. 查找 embedded=False 且 pid IS NULL 的父节点（未向量化的父节点）
+    2. 查找有子节点 embedded=False 的父节点的ID（有未向量化子节点的父节点）
+    3. 合并去重，得到完整待处理列表
+    """
     try:
         if not settings.EMBEDDING_ENABLED:
             return
         session = session_maker()
-        stmt1 = select(Terminology.id).where(and_(Terminology.embedding.is_(None), Terminology.pid.is_(None)))
+
+        # 查找未向量化的父节点
+        stmt1 = select(Terminology.id).where(
+            and_(Terminology.embedded == False, Terminology.pid.is_(None))
+        )
+        
+        # 查找有未向量化子节点的父节点
         stmt2 = select(Terminology.pid).where(
-            and_(Terminology.embedding.is_(None), Terminology.pid.isnot(None))).distinct()
+            and_(Terminology.embedded == False, Terminology.pid.isnot(None))
+        ).distinct()
+        
+        # 合并去重
         combined_stmt = union(stmt1, stmt2)
         results = session.execute(combined_stmt).scalars().all()
-        save_embeddings(session_maker, results)
-    except Exception:
+        
+        if results:
+            SQLBotLogUtil.info(f"Filling {len(results)} terminology embeddings to Milvus")
+            save_embeddings(session_maker, results)
+        else:
+            SQLBotLogUtil.info("No terminologies to fill embeddings")
+            
+    except Exception as e:
+        SQLBotLogUtil.error(f"Failed to fill empty embeddings: {e}")
         traceback.print_exc()
     finally:
         session_maker.remove()
 
 
 def save_embeddings(session_maker, ids: List[int]):
+    """
+    保存术语的向量到 Milvus
+    """
     if not settings.EMBEDDING_ENABLED:
         return
 
     if not ids or len(ids) == 0:
         return
+    
     try:
         session = session_maker()
-        _list = session.query(Terminology).filter(or_(Terminology.id.in_(ids), Terminology.pid.in_(ids))).all()
-
+        
+        # 获取需要向量化的tree
+        _list = session.query(Terminology).filter(
+            and_(Terminology.id.in_(ids), Terminology.pid.is_(None))
+        ).all()
+        
+        if not _list:
+            return
+        
         _words_list = [item.word for item in _list]
 
+        # 生成 smbeddings
         model = EmbeddingModelCache.get_model()
-
         results = model.embed_documents(_words_list)
-
-        for index in range(len(results)):
-            item = results[index]
-            stmt = update(Terminology).where(and_(Terminology.id == _list[index].id)).values(embedding=item)
+        
+        milvus_ids = [item.id for item in _list]
+        oids = [item.oid for item in _list]
+        
+        # 先删除旧数据（如果存在）
+        try:
+            milvus_client.delete_vectors("terminology", milvus_ids)
+        except Exception as e:
+            SQLBotLogUtil.warning(f"Delete old terminology vectors: {e}")
+        
+        # 插入新数据到 Milvus
+        milvus_client.insert_vectors(
+            collection_name="terminology",
+            ids=milvus_ids,
+            embeddings=results,
+            oids=oids
+        )
+        
+        # 更新 embedded 状态为 True（包括父节点和所有子节点）
+        for parent_id in milvus_ids:
+            # 更新父节点
+            stmt = update(Terminology).where(
+                Terminology.id == parent_id
+            ).values(embedded=True)
             session.execute(stmt)
-            session.commit()
+            
+            # 更新该父节点的所有子节点
+            stmt = update(Terminology).where(
+                Terminology.pid == parent_id
+            ).values(embedded=True)
+            session.execute(stmt)
+        
+        session.commit()
+        
+        SQLBotLogUtil.info(f"Saved {len(milvus_ids)} terminology embeddings to Milvus")
 
-    except Exception:
+    except Exception as e:
+        SQLBotLogUtil.error(f"Failed to save terminology embeddings: {e}")
         traceback.print_exc()
     finally:
         session_maker.remove()
 
 
-embedding_sql = f"""
-SELECT id, pid, word, similarity
-FROM
-(SELECT id, pid, word, oid, specific_ds, datasource_ids, enabled,
-( 1 - (embedding <=> :embedding_array) ) AS similarity
-FROM terminology AS child
-) TEMP
-WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid AND enabled = true
-AND (specific_ds = false OR specific_ds IS NULL)
-ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
-"""
-
-embedding_sql_with_datasource = f"""
-SELECT id, pid, word, similarity
-FROM
-(SELECT id, pid, word, oid, specific_ds, datasource_ids, enabled,
-( 1 - (embedding <=> :embedding_array) ) AS similarity
-FROM terminology AS child
-) TEMP
-WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid AND enabled = true
-AND (
-    (specific_ds = false OR specific_ds IS NULL)
-     OR
-    (specific_ds = true AND datasource_ids IS NOT NULL AND datasource_ids @> jsonb_build_array(:datasource))
-)
-ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
-"""
-
-
 def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasource: int = None):
+    """
+    通过关键词搜索术语（模糊匹配 + Milvus 向量搜索）
+    
+    修改说明：
+    1. 保留原有的 SQL LIKE 模糊匹配逻辑
+    2. 向量搜索从 PostgreSQL pgvector 迁移到 Milvus
+    3. datasource_ids 的 JSONB 操作改为 MySQL JSON 操作
+    """
     if word.strip() == "":
         return []
 
     _list: List[Terminology] = []
 
+    # ===== 第一步：SQL 模糊匹配 =====
     stmt = (
         select(
             Terminology.id,
@@ -725,7 +781,7 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
             Terminology.word,
         )
         .where(
-            and_(text(":sentence ILIKE '%' || word || '%'"), Terminology.oid == oid, Terminology.enabled == True)
+            and_(text(":sentence LIKE CONCAT('%', word, '%')"), Terminology.oid == oid, Terminology.enabled == True)
         )
     )
 
@@ -736,7 +792,7 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
                 and_(
                     Terminology.specific_ds == True,
                     Terminology.datasource_ids.isnot(None),
-                    text("datasource_ids @> jsonb_build_array(:datasource)")
+                    text("JSON_CONTAINS(datasource_ids, CAST(:datasource AS JSON), '$')")
                 )
             )
         )
@@ -746,35 +802,77 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
     # 执行查询
     params: dict[str, Any] = {'sentence': word}
     if datasource is not None:
-        params['datasource'] = datasource
+        params['datasource'] = str(datasource)
 
     results = session.execute(stmt, params).fetchall()
 
     for row in results:
         _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
 
+    # ===== 第二步：Milvus 向量搜索 =====
     if settings.EMBEDDING_ENABLED:
-        with session.begin_nested():
-            try:
-                model = EmbeddingModelCache.get_model()
+        try:
+            model = EmbeddingModelCache.get_model()
+            embedding = model.embed_query(word)
 
-                embedding = model.embed_query(word)
+            # Milvus 搜索
+            milvus_results = milvus_client.search_vectors(
+                collection_name="terminology",
+                query_embedding=embedding,
+                oid=oid,
+                top_k=settings.EMBEDDING_TERMINOLOGY_TOP_COUNT,
+                similarity_threshold=settings.EMBEDDING_TERMINOLOGY_SIMILARITY
+            )
 
+            # 将 Milvus 结果转换为 Terminology 对象
+            if milvus_results:
+                milvus_ids = [r["id"] for r in milvus_results]
+                
+                # 从数据库获取详细信息
+                milvus_stmt = select(
+                    Terminology.id,
+                    Terminology.pid,
+                    Terminology.word,
+                    Terminology.specific_ds,
+                    Terminology.datasource_ids
+                ).where(
+                    and_(
+                        Terminology.id.in_(milvus_ids),
+                        Terminology.enabled == True
+                    )
+                )
+                
+                # 添加 datasource 过滤
                 if datasource is not None:
-                    results = session.execute(text(embedding_sql_with_datasource),
-                                              {'embedding_array': str(embedding), 'oid': oid,
-                                               'datasource': datasource}).fetchall()
+                    milvus_stmt = milvus_stmt.where(
+                        or_(
+                            or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)),
+                            and_(
+                                Terminology.specific_ds == True,
+                                Terminology.datasource_ids.isnot(None),
+                                text("JSON_CONTAINS(datasource_ids, CAST(:datasource AS JSON), '$')")
+                            )
+                        )
+                    )
+                    milvus_terms = session.execute(
+                        milvus_stmt, 
+                        {'datasource': str(datasource)}
+                    ).fetchall()
                 else:
-                    results = session.execute(text(embedding_sql),
-                                              {'embedding_array': str(embedding), 'oid': oid}).fetchall()
+                    milvus_stmt = milvus_stmt.where(
+                        or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None))
+                    )
+                    milvus_terms = session.execute(milvus_stmt).fetchall()
+                
+                for term in milvus_terms:
+                    _list.append(Terminology(id=term.id, word=term.word, pid=term.pid))
 
-                for row in results:
-                    _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
+        except Exception as e:
+            # Milvus 搜索失败不影响基本功能
+            SQLBotLogUtil.error(f"Milvus terminology search failed: {e}")
+            traceback.print_exc()
 
-            except Exception:
-                traceback.print_exc()
-                session.rollback()
-
+    # ===== 第三步：去重和格式化结果 =====
     _map: dict = {}
     _ids: list[int] = []
     for row in _list:

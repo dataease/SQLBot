@@ -8,7 +8,6 @@ Create Date: 2025-09-28 13:57:01.509249
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '8855aea2dd61'
@@ -27,7 +26,7 @@ def upgrade():
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
     sa.Column('prompt', sa.Text(), nullable=True),
     sa.Column('specific_ds', sa.Boolean(), nullable=True),
-    sa.Column('datasource_ids', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('datasource_ids', sa.JSON(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

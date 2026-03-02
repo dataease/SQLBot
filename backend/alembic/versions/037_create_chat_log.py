@@ -8,7 +8,7 @@ Create Date: 2025-08-18 16:02:43.353110
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
-from sqlalchemy.dialects import postgresql
+# 移除 postgresql 方言导入，JSONB → JSON
 
 # revision identifiers, used by Alembic.
 revision = '68a06302cf70'
@@ -17,91 +17,89 @@ branch_labels = None
 depends_on = None
 
 
-sql='''
-CREATE OR REPLACE FUNCTION safe_jsonb_cast(text) RETURNS jsonb AS
-$$
-BEGIN
-    RETURN $1::jsonb;
-EXCEPTION
-    WHEN others THEN
-        RETURN to_json($1::text)::jsonb;
-END;
-$$ LANGUAGE plpgsql;
-
-INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
+# 原PostgreSQL的数据迁移SQL使用了safe_jsonb_cast函数和::jsonb类型转换
+# 现改为MySQL兼容的JSON函数: 使用CAST(... AS JSON)和JSON_EXTRACT替代
+# MySQL中JSON_VALID检查JSON是否合法，JSON_EXTRACT替代->>操作符
+# 注意：op.execute() 每次只能执行一条语句，多条语句需拆分为列表逐条执行
+sql_statements = [
+    """INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
 SELECT '0',
        '0',
        id,
        ai_modal_id,
-       safe_jsonb_cast(full_sql_message),
+       CASE WHEN JSON_VALID(full_sql_message) THEN CAST(full_sql_message AS JSON) ELSE JSON_QUOTE(full_sql_message) END,
        create_time,
        finish_time,
-       safe_jsonb_cast(token_sql),
-       safe_jsonb_cast(sql_answer)->>'reasoning_content'
+       CASE WHEN JSON_VALID(token_sql) THEN CAST(token_sql AS JSON) ELSE JSON_QUOTE(token_sql) END,
+       CASE WHEN JSON_VALID(sql_answer) THEN JSON_UNQUOTE(JSON_EXTRACT(CAST(sql_answer AS JSON), '$.reasoning_content')) ELSE NULL END
 FROM chat_record
-WHERE full_sql_message IS NOT NULL;
-INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
+WHERE full_sql_message IS NOT NULL""",
+
+    """INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
 SELECT '0',
        '1',
        id,
        ai_modal_id,
-       safe_jsonb_cast(full_chart_message),
+       CASE WHEN JSON_VALID(full_chart_message) THEN CAST(full_chart_message AS JSON) ELSE JSON_QUOTE(full_chart_message) END,
        create_time,
        finish_time,
-       safe_jsonb_cast(token_chart),
-       safe_jsonb_cast(chart_answer)->>'reasoning_content'
+       CASE WHEN JSON_VALID(token_chart) THEN CAST(token_chart AS JSON) ELSE JSON_QUOTE(token_chart) END,
+       CASE WHEN JSON_VALID(chart_answer) THEN JSON_UNQUOTE(JSON_EXTRACT(CAST(chart_answer AS JSON), '$.reasoning_content')) ELSE NULL END
 FROM chat_record
-WHERE full_chart_message IS NOT NULL;
-INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
+WHERE full_chart_message IS NOT NULL""",
+
+    """INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
 SELECT '0',
        '2',
        id,
        ai_modal_id,
-       safe_jsonb_cast(full_analysis_message),
+       CASE WHEN JSON_VALID(full_analysis_message) THEN CAST(full_analysis_message AS JSON) ELSE JSON_QUOTE(full_analysis_message) END,
        create_time,
        finish_time,
-       safe_jsonb_cast(token_analysis),
-       safe_jsonb_cast(analysis)->>'reasoning_content'
+       CASE WHEN JSON_VALID(token_analysis) THEN CAST(token_analysis AS JSON) ELSE JSON_QUOTE(token_analysis) END,
+       CASE WHEN JSON_VALID(analysis) THEN JSON_UNQUOTE(JSON_EXTRACT(CAST(analysis AS JSON), '$.reasoning_content')) ELSE NULL END
 FROM chat_record
-WHERE full_analysis_message IS NOT NULL;
-INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
+WHERE full_analysis_message IS NOT NULL""",
+
+    """INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
 SELECT '0',
        '3',
        id,
        ai_modal_id,
-       safe_jsonb_cast(full_predict_message),
+       CASE WHEN JSON_VALID(full_predict_message) THEN CAST(full_predict_message AS JSON) ELSE JSON_QUOTE(full_predict_message) END,
        create_time,
        finish_time,
-       safe_jsonb_cast(token_predict),
-       safe_jsonb_cast(predict)->>'reasoning_content'
+       CASE WHEN JSON_VALID(token_predict) THEN CAST(token_predict AS JSON) ELSE JSON_QUOTE(token_predict) END,
+       CASE WHEN JSON_VALID(predict) THEN JSON_UNQUOTE(JSON_EXTRACT(CAST(predict AS JSON), '$.reasoning_content')) ELSE NULL END
 FROM chat_record
-WHERE full_predict_message IS NOT NULL;
-INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
+WHERE full_predict_message IS NOT NULL""",
+
+    """INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
 SELECT '0',
        '4',
        id,
        ai_modal_id,
-       safe_jsonb_cast(full_recommended_question_message),
+       CASE WHEN JSON_VALID(full_recommended_question_message) THEN CAST(full_recommended_question_message AS JSON) ELSE JSON_QUOTE(full_recommended_question_message) END,
        create_time,
        finish_time,
-       safe_jsonb_cast(token_recommended_question),
-       safe_jsonb_cast(recommended_question_answer)->>'reasoning_content'
+       CASE WHEN JSON_VALID(token_recommended_question) THEN CAST(token_recommended_question AS JSON) ELSE JSON_QUOTE(token_recommended_question) END,
+       CASE WHEN JSON_VALID(recommended_question_answer) THEN JSON_UNQUOTE(JSON_EXTRACT(CAST(recommended_question_answer AS JSON), '$.reasoning_content')) ELSE NULL END
 FROM chat_record
-WHERE full_recommended_question_message IS NOT NULL;
-INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
+WHERE full_recommended_question_message IS NOT NULL""",
+
+    """INSERT INTO chat_log(type, operate, pid, ai_modal_id, messages, start_time, finish_time, token_usage, reasoning_content)
 SELECT '0',
        '6',
        id,
        ai_modal_id,
-       safe_jsonb_cast(full_select_datasource_message),
+       CASE WHEN JSON_VALID(full_select_datasource_message) THEN CAST(full_select_datasource_message AS JSON) ELSE JSON_QUOTE(full_select_datasource_message) END,
        create_time,
        finish_time,
-       safe_jsonb_cast(token_select_datasource_question),
-       safe_jsonb_cast(datasource_select_answer)->>'reasoning_content'
+       CASE WHEN JSON_VALID(token_select_datasource_question) THEN CAST(token_select_datasource_question AS JSON) ELSE JSON_QUOTE(token_select_datasource_question) END,
+       CASE WHEN JSON_VALID(datasource_select_answer) THEN JSON_UNQUOTE(JSON_EXTRACT(CAST(datasource_select_answer AS JSON), '$.reasoning_content')) ELSE NULL END
 FROM chat_record
-WHERE full_select_datasource_message IS NOT NULL;
-
-'''
+WHERE full_select_datasource_message IS NOT NULL""",
+]
 
 def upgrade():
     # ### commands auto generated by Alembic - please adjust! ###
@@ -112,15 +110,16 @@ def upgrade():
     sa.Column('pid', sa.BigInteger(), nullable=True),
     sa.Column('ai_modal_id', sa.BigInteger(), nullable=True),
     sa.Column('base_modal', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
-    sa.Column('messages', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('messages', sa.JSON(), nullable=True),
     sa.Column('reasoning_content', sa.Text(), nullable=True),
     sa.Column('start_time', sa.DateTime(), nullable=True),
     sa.Column('finish_time', sa.DateTime(), nullable=True),
-    sa.Column('token_usage', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('token_usage', sa.JSON(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
 
-    op.execute(sql)
+    for stmt in sql_statements:
+        op.execute(stmt)
     # ### end Alembic commands ###
 
 

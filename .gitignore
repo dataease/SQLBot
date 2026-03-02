@@ -187,5 +187,7 @@ cython_debug/
 .DS_Store
 test.py
 
+# Log files
+backend/nohup.out
 
 !/.venv/
