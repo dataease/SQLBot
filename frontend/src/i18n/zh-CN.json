@@ -387,7 +387,7 @@
         "success": "连接成功",
         "failed": "连接失败"
       },
-      "timeout": "查询超时(秒)",
+      "timeout": "连接超时(秒)",
       "address": "地址",
       "low_version": "兼容低版本"
     },
