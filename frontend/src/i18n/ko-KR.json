@@ -387,7 +387,7 @@
         "success": "연결 성공",
         "failed": "연결 실패"
       },
-      "timeout": "쿼리 시간 초과(초)",
+      "timeout": "연결 시간 초과(초)",
       "address": "주소",
       "low_version": "낮은 버전 호환"
     },
