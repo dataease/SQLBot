@@ -115,6 +115,28 @@ export class Table extends BaseChart {
         operation: {
           sort: true,
         },
+        dataCell: {
+          enable: true,
+          content: (cell) => {
+            const meta = cell.getMeta()
+            const container = document.createElement('div')
+            container.style.padding = '8px 0'
+            container.style.minWidth = '100px'
+            container.style.maxWidth = '400px'
+            container.style.display = 'flex'
+            container.style.alignItems = 'center'
+            container.style.padding = '8px 16px'
+            container.style.cursor = 'pointer'
+            container.style.color = '#606266'
+            container.style.fontSize = '14px'
+            container.style.whiteSpace = 'pre-wrap'
+
+            const text = document.createTextNode(meta.fieldValue)
+            container.appendChild(text)
+
+            return container
+          },
+        },
       },
       // 如果有省略号, 复制到的是完整文本
       interaction: {
