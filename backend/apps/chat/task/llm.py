@@ -70,8 +70,8 @@ class LLMService:
     record: ChatRecord
     config: LLMConfig
     llm: BaseChatModel
-    sql_message: List[Union[BaseMessage, dict[str, Any]]] = []
-    chart_message: List[Union[BaseMessage, dict[str, Any]]] = []
+    sql_message: List[Union[BaseMessage, dict[str, Any]]]
+    chart_message: List[Union[BaseMessage, dict[str, Any]]]
 
     # session: Session = db_session
     current_user: CurrentUser
@@ -79,12 +79,10 @@ class LLMService:
     out_ds_instance: Optional[AssistantOutDs] = None
     change_title: bool = False
 
-    generate_sql_logs: List[ChatLog] = []
-    generate_chart_logs: List[ChatLog] = []
-
-    current_logs: dict[OperationEnum, ChatLog] = {}
-
-    chunk_list: List[str] = []
+    generate_sql_logs: List[ChatLog]
+    generate_chart_logs: List[ChatLog]
+    current_logs: dict[OperationEnum, ChatLog]
+    chunk_list: List[str]
     future: Future
 
     trans: I18nHelper = None
@@ -98,6 +96,11 @@ class LLMService:
     def __init__(self, session: Session, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
                  embedding: bool = False, config: LLMConfig = None):
+        self.sql_message = []
+        self.chart_message = []
+        self.generate_sql_logs = []
+        self.generate_chart_logs = []
+        self.current_logs = {}
         self.chunk_list = []
         self.current_user = current_user
         self.current_assistant = current_assistant
