@@ -48,6 +48,8 @@ const title = computed(() => {
   line-height: 20px;
   font-weight: 500;
   vertical-align: middle;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 .item-list {
   display: flex;
@@ -79,6 +81,7 @@ const title = computed(() => {
       font-size: 14px;
       vertical-align: middle;
       white-space: pre-wrap;
+      word-break: break-all;
     }
   }
 }
