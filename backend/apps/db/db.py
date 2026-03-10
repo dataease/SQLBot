@@ -5,7 +5,7 @@ import platform
 import urllib.parse
 from datetime import datetime, date, time, timedelta
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
 
 import oracledb
 import psycopg2
@@ -57,6 +57,7 @@ def get_uri(ds: CoreDatasource) -> str:
 def get_uri_from_config(type: str, conf: DatasourceConf) -> str:
     db_url: str
     if equals_ignore_case(type, "mysql"):
+        checkParams(conf.extraJdbc, DB.mysql.illegalParams)
         if conf.extraJdbc is not None and conf.extraJdbc != '':
             db_url = f"mysql+pymysql://{urllib.parse.quote(conf.username)}:{urllib.parse.quote(conf.password)}@{conf.host}:{conf.port}/{conf.database}?{conf.extraJdbc}"
         else:
@@ -682,3 +683,11 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
 
     except Exception as e:
         raise ValueError(f"Parse SQL Error: {e}")
+
+
+def checkParams(extraParams: str, illegalParams: List[str]):
+    kvs = extraParams.split('&')
+    for kv in kvs:
+        k, v = kv.split('=')
+        if k in illegalParams:
+            raise HTTPException(status_code=500, detail=f'Illegal Parameter: {k}')
