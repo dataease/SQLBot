@@ -5,6 +5,7 @@ import os
 import traceback
 import uuid
 from io import StringIO
+from psycopg2 import sql
 from typing import List
 from urllib.parse import quote
 
@@ -382,10 +383,10 @@ def insert_pg(df, tableName, engine):
         # output.seek(0)
 
         # pg copy
-        cursor.copy_expert(
-            sql=f"""COPY "{tableName}" FROM STDIN WITH CSV DELIMITER E'\t'""",
-            file=output
+        query = sql.SQL("COPY {} FROM STDIN WITH CSV DELIMITER E'\t'").format(
+            sql.Identifier(tableName)
         )
+        cursor.copy_expert(sql=query.as_string(cursor.connection), file=output)
         conn.commit()
     except Exception as e:
         traceback.print_exc()
