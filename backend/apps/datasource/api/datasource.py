@@ -5,12 +5,12 @@ import os
 import traceback
 import uuid
 from io import StringIO
-from psycopg2 import sql
 from typing import List
 from urllib.parse import quote
 
 import orjson
 import pandas as pd
+from psycopg2 import sql
 from fastapi import APIRouter, File, UploadFile, HTTPException, Path
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_
