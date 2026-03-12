@@ -224,6 +224,11 @@ const saveHandler = () => {
       if (obj.id === '' || obj.id === null) {
         delete obj.id
       }
+
+      if (obj.var_type === 'text') {
+        obj.value = [...new Set(obj.value)]
+      }
+
       variablesApi.save(obj).then(() => {
         ElMessage({
           type: 'success',
@@ -244,7 +249,7 @@ const editHandler = (row: any) => {
     pageForm.value.id = id
     pageForm.value.name = name
     pageForm.value.var_type = var_type
-    pageForm.value.value = value
+    pageForm.value.value = cloneDeep(value)
   }
   dialogTitle.value = row?.id ? t('variables.edit_variable') : t('variables.add_variable')
   dialogFormVisible.value = true
@@ -513,20 +518,18 @@ const handleCurrentChange = (val: number) => {
       <el-form-item v-else prop="value" :label="t('variables.variable_value')">
         <div class="value-number_date">
           <template v-if="pageForm.var_type === 'number'">
-            <el-input
+            <el-input-number
               v-model.number="pageForm.value[0]"
               :placeholder="$t('variables.please_enter_value')"
-              autocomplete="off"
-              maxlength="50"
               clearable
+              controls-position="right"
             />
             <span class="ed-range-separator separator"></span>
-            <el-input
+            <el-input-number
               v-model.number="pageForm.value[1]"
               :placeholder="$t('variables.please_enter_value')"
-              autocomplete="off"
-              maxlength="50"
               clearable
+              controls-position="right"
             />
           </template>
           <template v-else>
@@ -770,6 +773,11 @@ const handleCurrentChange = (val: number) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    .ed-input-number {
+      width: 100%;
+    }
+
     .ed-range-separator::after {
       content: '';
       height: 1px;
