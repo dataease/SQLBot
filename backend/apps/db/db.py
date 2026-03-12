@@ -670,7 +670,7 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
         write_types = (
             exp.Insert, exp.Update, exp.Delete,
             exp.Create, exp.Drop, exp.Alter,
-            exp.Merge, exp.Command
+            exp.Merge, exp.Command, exp.Copy
         )
 
         for stmt in statements:
