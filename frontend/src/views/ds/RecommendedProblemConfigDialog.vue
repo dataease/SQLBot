@@ -4,6 +4,8 @@ import { recommendedApi } from '@/api/recommendedApi.ts'
 import { Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
+import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
+
 const { t } = useI18n()
 
 interface RecommendedProblem {
@@ -105,37 +107,53 @@ defineExpose({
     :close-on-click-modal="false"
     @before-closed="closeDialog"
   >
-    <el-form-item :label="$t('datasource.problem_generation_method')" prop="mode">
-      <el-radio-group v-model="state.recommended.recommended_config">
-        <el-radio :value="1">{{ $t('datasource.ai_automatic_generation') }}</el-radio>
-        <el-radio :value="2">{{ $t('datasource.user_defined') }}</el-radio>
-      </el-radio-group>
-    </el-form-item>
-    <template v-if="state.recommended.recommended_config === 2">
+    <el-form label-width="180px" label-position="top" class="form-content_error" @submit.prevent>
       <el-form-item
-        v-for="(recommendedItem, index) in state.recommended.recommendedProblemList"
-        :key="index"
+        class="is-required"
+        :label="$t('datasource.problem_generation_method')"
         prop="mode"
       >
-        <el-row class="question-item">
-          <el-input
-            v-model="recommendedItem.question"
-            max="200"
-            min="2"
-            class="input-item"
-            clearable
-            :placeholder="$t('datasource.question_tips')"
-          >
-          </el-input>
-          <el-icon class="delete-item"><Delete @click="deleteRecommendedProblem(index)" /></el-icon>
-        </el-row>
+        <el-radio-group v-model="state.recommended.recommended_config">
+          <el-radio :value="1">{{ $t('datasource.ai_automatic_generation') }}</el-radio>
+          <el-radio :value="2">{{ $t('datasource.user_defined') }}</el-radio>
+        </el-radio-group>
       </el-form-item>
-      <div v-if="state.recommended.recommendedProblemList.length < 10">
-        <el-button text @click="addRecommendedProblem">
-          {{ $t('datasource.add_question') }}</el-button
+      <template v-if="state.recommended.recommended_config === 2">
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span>{{ t('datasource.recommended_question') }}</span>
+          <span
+            v-if="state.recommended.recommendedProblemList.length < 10"
+            class="btn"
+            @click="addRecommendedProblem"
+          >
+            <el-icon style="margin-right: 4px" size="16">
+              <icon_add_outlined></icon_add_outlined>
+            </el-icon>
+            {{ $t('model.add') }}
+          </span>
+        </div>
+        <el-form-item
+          v-for="(recommendedItem, index) in state.recommended.recommendedProblemList"
+          :key="index"
+          prop="mode"
         >
-      </div>
-    </template>
+          <el-row class="question-item">
+            <el-input
+              v-model="recommendedItem.question"
+              max="200"
+              min="2"
+              class="input-item"
+              clearable
+              :placeholder="$t('datasource.question_tips')"
+            >
+            </el-input>
+            <el-icon class="delete-item"
+              ><Delete @click="deleteRecommendedProblem(index)"
+            /></el-icon>
+          </el-row>
+        </el-form-item>
+      </template>
+    </el-form>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 20px">
       <el-button secondary @click="closeDialog">{{ $t('common.cancel') }}</el-button>
@@ -145,6 +163,21 @@ defineExpose({
 </template>
 
 <style scoped lang="less">
+.btn {
+  margin-left: auto;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border-radius: 6px;
+  margin-right: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #1f23291a;
+  }
+}
 .add-question_dialog {
   .ed-input-group__append {
     background-color: #fff;
