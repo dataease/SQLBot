@@ -164,8 +164,8 @@ session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 
 
 @router.post("/uploadExcel", summary=f"{PLACEHOLDER_PREFIX}upload_term")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 @system_log(LogConfig(operation_type=OperationType.IMPORT, module=OperationModules.TERMINOLOGY))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
