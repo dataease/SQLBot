@@ -400,7 +400,9 @@ def updateNum(session: SessionDep, ds: CoreDatasource):
 
 def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource) -> List[TableAndFields]:
     _list: List = []
-    tables = session.query(CoreTable).filter(CoreTable.ds_id == ds.id).all()
+    tables = session.query(CoreTable).filter(
+        and_(CoreTable.ds_id == ds.id, CoreTable.checked == True)
+    ).all()
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
     schema = conf.dbSchema if conf.dbSchema is not None and conf.dbSchema != "" else conf.database
 
