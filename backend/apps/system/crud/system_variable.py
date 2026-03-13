@@ -1,8 +1,8 @@
 # Author: Junjun
 # Date: 2026/1/26
 import datetime
-
 from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy import and_
 from sqlmodel import select
@@ -37,11 +37,12 @@ def delete(session: SessionDep, ids: List[int]):
 
 def list_all(session: SessionDep, trans: Trans, variable: SystemVariable):
     if variable.name is None:
-        records = session.query(SystemVariable).order_by(SystemVariable.type.desc()).all()
+        records = session.query(SystemVariable).order_by(SystemVariable.type.desc(),
+                                                         SystemVariable.create_time.desc()).all()
     else:
         records = session.query(SystemVariable).filter(
             and_(SystemVariable.name.like(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
-            SystemVariable.type.desc()).all()
+            SystemVariable.type.desc(), SystemVariable.create_time.desc()).all()
 
     res = []
     for r in records:
@@ -58,11 +59,11 @@ async def list_page(session: SessionDep, trans: Trans, pageNum: int, pageSize: i
     filters = {}
 
     if variable.name is None:
-        stmt = select(SystemVariable).order_by(SystemVariable.type.desc())
+        stmt = select(SystemVariable).order_by(SystemVariable.type.desc(), SystemVariable.create_time.desc())
     else:
         stmt = select(SystemVariable).where(
             and_(SystemVariable.name.like(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
-            SystemVariable.type.desc())
+            SystemVariable.type.desc(), SystemVariable.create_time.desc())
 
     variable_page = await paginator.get_paginated_response(
         stmt=stmt,
@@ -92,7 +93,7 @@ def checkName(session: SessionDep, trans: Trans, variable: SystemVariable):
             raise HTTPException(status_code=500, detail=trans('i18n_variable.name_exist'))
 
 
-def checkValue(session: SessionDep, trans: Trans, values:List):
+def checkValue(session: SessionDep, trans: Trans, values: List):
     # values: [{"variableId":1,"variableValues":["a","b"]}]
 
     pass
