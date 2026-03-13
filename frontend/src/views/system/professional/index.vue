@@ -470,7 +470,7 @@ const changeStatus = (id: any, val: any) => {
     <div
       v-if="!searchLoading"
       class="table-content"
-      :class="multipleSelectionAll?.length && 'show-pagination_height'"
+      :class="multipleSelectionAll.length ? 'show-pagination_height' : ''"
     >
       <filter-text
         :total="pageInfo.total"

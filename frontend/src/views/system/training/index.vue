@@ -393,7 +393,7 @@ const onRowFormClose = () => {
     <div
       v-if="!searchLoading"
       class="table-content"
-      :class="multipleSelectionAll?.length && 'show-pagination_height'"
+      :class="multipleSelectionAll?.length ? 'show-pagination_height' : ''"
     >
       <div class="preview-or-schema">
         <el-table

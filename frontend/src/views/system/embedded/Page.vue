@@ -356,7 +356,7 @@ const copyCode = (row: any, key: any = 'app_secret') => {
     <div
       v-if="!searchLoading"
       class="table-content"
-      :class="multipleSelectionAll.length && 'show-pagination_height'"
+      :class="multipleSelectionAll.length ? 'show-pagination_height' : ''"
     >
       <template v-if="!oldKeywords && !fieldList.length">
         <EmptyBackground
