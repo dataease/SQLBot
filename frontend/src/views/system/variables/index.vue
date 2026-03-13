@@ -7,6 +7,9 @@ import IconOpeDelete from '@/assets/svg/icon_delete.svg'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useI18n } from 'vue-i18n'
+import field_text from '@/assets/svg/field_text.svg'
+import field_time from '@/assets/svg/field_time.svg'
+import field_value from '@/assets/svg/field_value.svg'
 import { cloneDeep } from 'lodash-es'
 
 interface Form {
@@ -21,6 +24,11 @@ const multipleSelectionAll = ref<any[]>([])
 const keywords = ref('')
 const oldKeywords = ref('')
 const searchLoading = ref(false)
+const iconMap = {
+  text: field_text,
+  number: field_value,
+  datetime: field_time,
+}
 
 const selectable = (row: any) => {
   return ![1, 2, 3].includes(row.id)
@@ -322,7 +330,30 @@ const handleCurrentChange = (val: number) => {
           <el-table-column prop="name" :label="$t('variables.variable_name')">
             <template #default="scope">
               <div style="display: flex; align-items: center" :title="scope.row.name">
-                <div class="ellipsis" style="max-width: calc(100% - 60px); width: fit-content">
+                <div
+                  class="ellipsis"
+                  style="
+                    max-width: calc(100% - 60px);
+                    width: fit-content;
+                    position: relative;
+                    padding-left: 20px;
+                  "
+                >
+                  <el-icon
+                    :class="`${scope.row.var_type}-variables`"
+                    size="16"
+                    style="
+                      margin-right: 4px;
+                      position: absolute;
+                      left: 0;
+                      top: 50%;
+                      transform: translateY(-50%);
+                    "
+                  >
+                    <component
+                      :is="iconMap[scope.row.var_type as keyof typeof iconMap]"
+                    ></component>
+                  </el-icon>
                   {{ scope.row.name }}
                 </div>
                 <div v-if="scope.row.type === 'system'" class="system-flag">
@@ -629,8 +660,11 @@ const handleCurrentChange = (val: number) => {
         margin-left: 4px;
         color: var(--ed-color-primary-15-d, #189e7a);
       }
-      .ed-icon {
-        color: #646a73;
+
+      &:not(:has(.ellipsis)) {
+        .ed-icon {
+          color: #646a73;
+        }
       }
 
       .field-comment {

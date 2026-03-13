@@ -4,6 +4,10 @@ import { ref, inject, computed, onBeforeMount, toRefs, type Ref, shallowRef } fr
 import { variablesApi } from '@/api/variables'
 import { useI18n } from 'vue-i18n'
 import { allOptions } from '../options'
+import field_text from '@/assets/svg/field_text.svg'
+import field_time from '@/assets/svg/field_time.svg'
+import field_value from '@/assets/svg/field_value.svg'
+
 export interface Item {
   term: string
   field_id: string
@@ -116,6 +120,12 @@ const filterTypeChange = () => {
 }
 const initEnumOptions = () => {
   console.info('initEnumOptions')
+}
+
+const iconMap = {
+  text: field_text,
+  number: field_value,
+  datetime: field_time,
 }
 
 const selectItem = ({ field_name, id }: any) => {
@@ -248,6 +258,12 @@ const emits = defineEmits(['update:item', 'del'])
             :placeholder="t('datasource.Please_select')"
           >
             <el-option v-for="ele in variables" :key="ele.id" :label="ele.name" :value="ele.id">
+              <div style="width: 100%; display: flex; align-items: center">
+                <el-icon :class="`${ele.var_type}-variables`" size="16" style="margin-right: 4px">
+                  <component :is="iconMap[ele.var_type as keyof typeof iconMap]"></component>
+                </el-icon>
+                {{ ele.name }}
+              </div>
             </el-option>
           </el-select>
         </template>
