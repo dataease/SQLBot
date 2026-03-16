@@ -451,7 +451,7 @@
             />
             <el-date-picker
               v-else
-              v-model="state.form.system_variables[index].variableValues"
+              v-model="state.form.system_variables[index].variableValue"
               type="date"
               style="width: 236px"
               value-format="YYYY-MM-DD"
@@ -543,6 +543,7 @@ import UserImport from './UserImport.vue'
 import SuccessFilled from '@/assets/svg/gou_icon.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
 import CircleCloseFilled from '@/assets/svg/icon_ban_filled.svg'
+import { ElButton } from 'element-plus-secondary'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
@@ -1017,10 +1018,9 @@ const formatVariableValues = () => {
   if (!state.form.system_variables?.length) return []
   return state.form.system_variables.map((ele: any) => ({
     variableId: ele.variableId,
-    variableValues:
-      variableValueMap.value[ele.variableId].var_type === 'number'
-        ? [ele.variableValue]
-        : ele.variableValues,
+    variableValues: ['number', 'datetime'].includes(variableValueMap.value[ele.variableId].var_type)
+      ? [ele.variableValue]
+      : ele.variableValues,
   }))
 }
 
@@ -1082,7 +1082,7 @@ const validateSystemVariables = () => {
         return true
       }
 
-      if (obj.var_type === 'number' && !ele.variableValue) {
+      if (obj.var_type === 'number' && [null, undefined, ''].includes(ele.variableValue)) {
         ElMessage.error(t('variables.​​cannot_be_empty'))
         return true
       }
@@ -1098,8 +1098,8 @@ const validateSystemVariables = () => {
       if (obj.var_type === 'datetime') {
         const [min, max] = obj.value
         if (
-          +new Date(ele.variableValues) > +new Date(max) ||
-          +new Date(ele.variableValues) < +new Date(min)
+          +new Date(ele.variableValue) > +new Date(max) ||
+          +new Date(ele.variableValue) < +new Date(min)
         ) {
           ElMessage.error(
             t('variables.1_to_100_de', {
