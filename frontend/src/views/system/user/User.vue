@@ -452,12 +452,10 @@
             <el-date-picker
               v-else
               v-model="state.form.system_variables[index].variableValues"
-              type="daterange"
-              style="max-width: 236px"
+              type="date"
+              style="width: 236px"
               value-format="YYYY-MM-DD"
-              range-separator=""
-              :start-placeholder="$t('variables.start_date')"
-              :end-placeholder="$t('variables.end_date')"
+              :placeholder="$t('variables.please_select_date')"
             />
             <el-tooltip
               :offset="14"
@@ -1099,12 +1097,9 @@ const validateSystemVariables = () => {
 
       if (obj.var_type === 'datetime') {
         const [min, max] = obj.value
-        const [minVal, maxVal] = ele.variableValues
         if (
-          +new Date(minVal) > +new Date(max) ||
-          +new Date(maxVal) < +new Date(min) ||
-          +new Date(maxVal) > +new Date(max) ||
-          +new Date(minVal) < +new Date(min)
+          +new Date(ele.variableValues) > +new Date(max) ||
+          +new Date(ele.variableValues) < +new Date(min)
         ) {
           ElMessage.error(
             t('variables.1_to_100_de', {

@@ -8,6 +8,7 @@
     "Details": "Details"
   },
   "variables": {
+    "please_select_date": "Please select a date",
     "number_variable_error": "Please enter the correct numerical range.",
     "built_in": "Built-in",
     "normal_value": "Normal value",

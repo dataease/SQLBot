@@ -24,6 +24,7 @@
     "return_to_view": "返回查看"
   },
   "variables": {
+    "please_select_date": "请选择日期",
     "number_variable_error": "请输入正确的数值范围",
     "built_in": "已内置",
     "normal_value": "常规值",

@@ -24,6 +24,7 @@
     "return_to_view": "화면으로 돌아가기"
   },
   "variables": {
+    "please_select_date": "날짜를 선택하십시오",
     "number_variable_error": "올바른 숫자 범위를 입력하십시오.",
     "built_in": "내장형",
     "normal_value": "정상값",
