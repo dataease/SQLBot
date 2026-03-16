@@ -136,6 +136,7 @@ defineExpose({
           v-for="(recommendedItem, index) in state.recommended.recommendedProblemList"
           :key="index"
           prop="mode"
+          class="recommended-form-item"
         >
           <el-row class="question-item">
             <el-input
@@ -182,6 +183,9 @@ defineExpose({
   .ed-input-group__append {
     background-color: #fff;
     padding: 0 12px;
+  }
+  .recommended-form-item {
+    margin-bottom: 8px;
   }
   .question-item {
     width: 100%;
