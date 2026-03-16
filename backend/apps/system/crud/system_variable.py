@@ -41,7 +41,7 @@ def list_all(session: SessionDep, trans: Trans, variable: SystemVariable):
                                                          SystemVariable.name.asc()).all()
     else:
         records = session.query(SystemVariable).filter(
-            and_(SystemVariable.name.like(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
+            and_(SystemVariable.name.ilike(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
             SystemVariable.type.desc(), SystemVariable.name.asc()).all()
 
     res = []
@@ -62,7 +62,7 @@ async def list_page(session: SessionDep, trans: Trans, pageNum: int, pageSize: i
         stmt = select(SystemVariable).order_by(SystemVariable.type.desc(), SystemVariable.name.asc())
     else:
         stmt = select(SystemVariable).where(
-            and_(SystemVariable.name.like(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
+            and_(SystemVariable.name.ilike(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
             SystemVariable.type.desc(), SystemVariable.name.asc())
 
     variable_page = await paginator.get_paginated_response(
