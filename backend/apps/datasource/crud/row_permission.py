@@ -69,6 +69,9 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
             variable_id = item.get('variable_id')
             if variable_id is not None:
                 sys_variable = session.query(SystemVariable).filter(SystemVariable.id == variable_id).first()
+                if sys_variable is None:
+                    return None
+
                 # do inner system variable
                 if sys_variable.type == 'system':
                     res = whereName + whereTerm + getSysVariableValue(sys_variable, current_user)
