@@ -1,5 +1,6 @@
 import json
 
+from redis import typing
 from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -11,6 +12,7 @@ from common.utils.utils import SQLBotLogUtil
 
 class ResponseMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
+        self.allow_origins = ["'self'"]
         super().__init__(app)
 
     async def dispatch(self, request, call_next):
@@ -76,7 +78,13 @@ class ResponseMiddleware(BaseHTTPMiddleware):
                         if k.lower() not in ("content-length", "content-type")
                     }
                 )
-
+        content_type = response.headers.get("content-type", "")
+        static_content_types = ["text/html", "javascript", "typescript", "css"]
+        if any(ct in content_type for ct in static_content_types):
+            if self.allow_origins:
+                frame_ancestors_value = " ".join(self.allow_origins)
+                response.headers["Content-Security-Policy"] = f"frame-ancestors {frame_ancestors_value};"
+            
         return response
 
 
