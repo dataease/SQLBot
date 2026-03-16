@@ -82,7 +82,7 @@ const deleteBatchUser = () => {
         message: t('dashboard.delete_success'),
       })
       multipleSelectionAll.value = []
-      search()
+      handleCurrentChange(1)
     })
   })
 }
@@ -102,7 +102,7 @@ const deleteHandler = (row: any) => {
         type: 'success',
         message: t('dashboard.delete_success'),
       })
-      search()
+      handleCurrentChange(1)
     })
   })
 }
@@ -258,7 +258,7 @@ const saveHandler = () => {
           type: 'success',
           message: t('common.save_success'),
         })
-        search()
+        handleCurrentChange(1)
         onFormClose()
       })
     }
