@@ -21,6 +21,7 @@ from common.core.sqlbot_cache import cache
 from common.utils.aes_crypto import simple_aes_decrypt
 from common.utils.utils import SQLBotLogUtil, equals_ignore_case, get_domain_list, string_to_numeric_hash
 from common.core.deps import Trans
+from common.core.response_middleware import ResponseMiddleware
 
 
 @cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="assistant_id")
@@ -87,13 +88,20 @@ def init_dynamic_cors(app: FastAPI):
                             seen.add(domain)
                             unique_domains.append(domain)
             cors_middleware = None
+            response_middleware = None
             for middleware in app.user_middleware:
-                if middleware.cls == CORSMiddleware:
+                if not cors_middleware and middleware.cls == CORSMiddleware:
                     cors_middleware = middleware
+                if not response_middleware and middleware.cls == ResponseMiddleware:
+                    response_middleware = middleware
+                if cors_middleware and response_middleware:
                     break
+                
+            updated_origins = list(set(settings.all_cors_origins + unique_domains))
             if cors_middleware:
-                updated_origins = list(set(settings.all_cors_origins + unique_domains))
                 cors_middleware.kwargs['allow_origins'] = updated_origins
+            if response_middleware:
+                response_middleware.kwargs['allow_origins'] = updated_origins
     except Exception as e:
         return False, e
 
