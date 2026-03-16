@@ -189,7 +189,12 @@ const validateValue = (_: any, value: any, callback: any) => {
     }
     return
   }
-  if (value.some((ele: any) => ele === '')) {
+  if (var_type === 'datetime') {
+    if (value === null) {
+      callback(new Error(t('datasource.please_enter') + t('common.empty') + t('variables.date')))
+    }
+  }
+  if (value.some((ele: any) => ele === '' || ele === null)) {
     callback(
       new Error(
         t('datasource.please_enter') +
@@ -235,6 +240,17 @@ const saveHandler = () => {
 
       if (obj.var_type === 'text') {
         obj.value = [...new Set(obj.value)]
+      }
+
+      if (obj.var_type === 'number') {
+        const [min = 0, max = 0] = obj.value
+        if (min > max) {
+          ElMessage({
+            type: 'error',
+            message: t('variables.number_variable_error'),
+          })
+          return
+        }
       }
 
       variablesApi.save(obj).then(() => {
@@ -553,12 +569,14 @@ const handleCurrentChange = (val: number) => {
               v-model.number="pageForm.value[0]"
               :placeholder="$t('variables.please_enter_value')"
               clearable
+              max="10000000000000000"
               controls-position="right"
             />
             <span class="ed-range-separator separator"></span>
             <el-input-number
               v-model.number="pageForm.value[1]"
               :placeholder="$t('variables.please_enter_value')"
+              max="10000000000000000"
               clearable
               controls-position="right"
             />

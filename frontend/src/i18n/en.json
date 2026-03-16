@@ -8,6 +8,7 @@
     "Details": "Details"
   },
   "variables": {
+    "number_variable_error": "Please enter the correct numerical range.",
     "built_in": "Built-in",
     "normal_value": "Normal value",
     "​​cannot_be_empty": "Variable values ​​cannot be empty.",

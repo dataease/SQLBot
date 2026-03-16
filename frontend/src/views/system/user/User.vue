@@ -391,6 +391,9 @@
                 v-for="item in variables"
                 :key="item.id"
                 :label="item.name"
+                :disabled="
+                  state.form.system_variables.map((ele: any) => ele.variableId).includes(item.id)
+                "
                 :value="item.id"
               >
                 <div style="width: 100%; display: flex; align-items: center">
@@ -434,7 +437,7 @@
               >
               </el-option>
             </el-select>
-            <el-input
+            <el-input-number
               v-else-if="
                 variableValueMap[state.form.system_variables[index].variableId].var_type ===
                 'number'
@@ -442,9 +445,9 @@
               v-model.number="state.form.system_variables[index].variableValue"
               style="width: 236px"
               :placeholder="$t('variables.please_enter_value')"
-              autocomplete="off"
-              maxlength="50"
               clearable
+              max="10000000000000000"
+              controls-position="right"
             />
             <el-date-picker
               v-else
