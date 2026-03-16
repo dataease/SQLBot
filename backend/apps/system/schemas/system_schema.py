@@ -58,7 +58,7 @@ class UserCreator(BaseUser):
     status: int = Field(default=1, description=f"{PLACEHOLDER_PREFIX}status")
     origin: Optional[int] = Field(default=0, description=f"{PLACEHOLDER_PREFIX}origin")
     oid_list: Optional[list[int]] = Field(default=None, description=f"{PLACEHOLDER_PREFIX}oid")
-    system_variables: Optional[List] = Field(default=None)
+    system_variables: Optional[List] = Field(default=[])
 
     """ @field_validator("email")
     def validate_email(cls, lang: str) -> str:
