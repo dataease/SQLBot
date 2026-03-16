@@ -1077,7 +1077,7 @@ const validateSystemVariables = () => {
   if (system_variables?.length) {
     return system_variables.some((ele: any) => {
       const obj = variableValueMap.value[ele.variableId]
-      if (obj.var_type !== 'number' && !ele.variableValues.length) {
+      if (obj.var_type === 'text' && !ele.variableValues.length) {
         ElMessage.error(t('variables.​​cannot_be_empty'))
         return true
       }
