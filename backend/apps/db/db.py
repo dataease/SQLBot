@@ -670,7 +670,7 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
         write_types = (
             exp.Insert, exp.Update, exp.Delete,
             exp.Create, exp.Drop, exp.Alter,
-            exp.Merge, exp.Command
+            exp.Merge, exp.Command, exp.Copy
         )
 
         for stmt in statements:
@@ -688,6 +688,7 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
 def checkParams(extraParams: str, illegalParams: List[str]):
     kvs = extraParams.split('&')
     for kv in kvs:
-        k, v = kv.split('=')
-        if k in illegalParams:
-            raise HTTPException(status_code=500, detail=f'Illegal Parameter: {k}')
+        if kv and '=' in kv:
+            k, v = kv.split('=')
+            if k in illegalParams:
+                raise HTTPException(status_code=500, detail=f'Illegal Parameter: {k}')

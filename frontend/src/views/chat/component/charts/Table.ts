@@ -7,12 +7,67 @@ import {
   type S2Options,
   type SortMethod,
   TableSheet,
+  type SortFuncParam,
 } from '@antv/s2'
 import { debounce, filter } from 'lodash-es'
 import { i18n } from '@/i18n'
 import '@antv/s2/dist/s2.min.css'
 
 const { t } = i18n.global
+
+const createSmartSortFunc = (sortMethod: string) => {
+  const compareNumericString = (a: string, b: string): number => {
+    const isNegA = a.startsWith('-')
+    const isNegB = b.startsWith('-')
+
+    // 负数 < 正数
+    if (isNegA && !isNegB) return -1
+    if (!isNegA && isNegB) return 1
+
+    const [intA, decA = ''] = isNegA ? a.slice(1).split('.') : a.split('.')
+    const [intB, decB = ''] = isNegB ? b.slice(1).split('.') : b.split('.')
+
+    // 都是正数
+    if (!isNegA && !isNegB) {
+      if (intA.length !== intB.length) return intA.length - intB.length
+      const intCmp = intA.localeCompare(intB)
+      if (intCmp !== 0) return intCmp
+      if (decA && decB) return decA.localeCompare(decB)
+      return decA ? 1 : decB ? -1 : 0
+    }
+
+    // 都是负数：绝对值大的实际值小，比较结果取反
+    if (intA.length !== intB.length) return -(intA.length - intB.length)
+    const intCmp = intA.localeCompare(intB)
+    if (intCmp !== 0) return -intCmp
+    if (decA && decB) return -decA.localeCompare(decB)
+    return decA ? 1 : decB ? -1 : 0
+  }
+
+  return (params: SortFuncParam) => {
+    const { data, sortFieldId } = params
+    if (!data || data.length === 0) return data
+    const isAsc = sortMethod.toLowerCase() === 'asc'
+    return [...data].sort((a: any, b: any) => {
+      const valA = a[sortFieldId],
+        valB = b[sortFieldId]
+      if (valA == null) return isAsc ? -1 : 1
+      if (valB == null) return isAsc ? 1 : -1
+      const strA = String(valA),
+        strB = String(valB)
+      const isNumA = !isNaN(Number(strA)) && strA.trim() !== ''
+      const isNumB = !isNaN(Number(strB)) && strB.trim() !== ''
+      if (isNumA && !isNumB) return isAsc ? -1 : 1
+      if (!isNumA && isNumB) return isAsc ? 1 : -1
+      if (isNumA && isNumB) {
+        const cmp = compareNumericString(strA, strB)
+        return isAsc ? cmp : -cmp
+      }
+      const cmp = strA.localeCompare(strB)
+      return isAsc ? cmp : -cmp
+    })
+  }
+}
 
 export class Table extends BaseChart {
   table?: TableSheet = undefined
@@ -81,7 +136,17 @@ export class Table extends BaseChart {
         const sortOrder = ['none', 'desc', 'asc']
         const nextMethod = sortOrder[(sortOrder.indexOf(currentMethod) + 1) % sortOrder.length]
         sortState[fieldId] = nextMethod
-        s2.groupSortByMethod(nextMethod === 'none' ? 'none' : (nextMethod as SortMethod), meta)
+        if (nextMethod === 'none') {
+          s2.emit(S2Event.RANGE_SORT, [{ sortFieldId: fieldId, sortMethod: 'none' as SortMethod }])
+        } else {
+          s2.emit(S2Event.RANGE_SORT, [
+            {
+              sortFieldId: fieldId,
+              sortMethod: nextMethod as SortMethod,
+              sortFunc: createSmartSortFunc(nextMethod),
+            },
+          ])
+        }
         s2.render()
       }
     }

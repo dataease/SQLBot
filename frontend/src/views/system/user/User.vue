@@ -391,8 +391,23 @@
                 v-for="item in variables"
                 :key="item.id"
                 :label="item.name"
+                :disabled="
+                  state.form.system_variables.map((ele: any) => ele.variableId).includes(item.id)
+                "
                 :value="item.id"
               >
+                <div style="width: 100%; display: flex; align-items: center">
+                  <el-icon
+                    :class="`${variableValueMap[item.id].var_type}-variables`"
+                    size="16"
+                    style="margin-right: 4px"
+                  >
+                    <component
+                      :is="iconMap[variableValueMap[item.id].var_type as keyof typeof iconMap]"
+                    ></component>
+                  </el-icon>
+                  {{ item.name }}
+                </div>
               </el-option>
             </el-select>
             <el-select
@@ -422,7 +437,7 @@
               >
               </el-option>
             </el-select>
-            <el-input
+            <el-input-number
               v-else-if="
                 variableValueMap[state.form.system_variables[index].variableId].var_type ===
                 'number'
@@ -430,19 +445,17 @@
               v-model.number="state.form.system_variables[index].variableValue"
               style="width: 236px"
               :placeholder="$t('variables.please_enter_value')"
-              autocomplete="off"
-              maxlength="50"
               clearable
+              max="10000000000000000"
+              controls-position="right"
             />
             <el-date-picker
               v-else
-              v-model="state.form.system_variables[index].variableValues"
-              type="daterange"
-              style="max-width: 236px"
+              v-model="state.form.system_variables[index].variableValue"
+              type="date"
+              style="width: 236px"
               value-format="YYYY-MM-DD"
-              range-separator=""
-              :start-placeholder="$t('variables.start_date')"
-              :end-placeholder="$t('variables.end_date')"
+              :placeholder="$t('variables.please_select_date')"
             />
             <el-tooltip
               :offset="14"
@@ -530,6 +543,7 @@ import UserImport from './UserImport.vue'
 import SuccessFilled from '@/assets/svg/gou_icon.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
 import CircleCloseFilled from '@/assets/svg/icon_ban_filled.svg'
+import { ElButton } from 'element-plus-secondary'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
@@ -544,6 +558,9 @@ import logo_lark from '@/assets/img/lark.png'
 import logo_wechat_work from '@/assets/img/wechat.png'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import { userApi } from '@/api/user'
+import field_text from '@/assets/svg/field_text.svg'
+import field_time from '@/assets/svg/field_time.svg'
+import field_value from '@/assets/svg/field_value.svg'
 import { request } from '@/utils/request'
 import { workspaceList } from '@/api/workspace'
 import { variablesApi } from '@/api/variables'
@@ -566,6 +583,12 @@ const drawerMainRef = ref()
 const userImportRef = ref()
 const syncUserRef = ref()
 const selectionLoading = ref(false)
+
+const iconMap = {
+  text: field_text,
+  number: field_value,
+  datetime: field_time,
+}
 const filterOption = ref<any[]>([
   {
     type: 'enum',
@@ -995,10 +1018,9 @@ const formatVariableValues = () => {
   if (!state.form.system_variables?.length) return []
   return state.form.system_variables.map((ele: any) => ({
     variableId: ele.variableId,
-    variableValues:
-      variableValueMap.value[ele.variableId].var_type === 'number'
-        ? [ele.variableValue]
-        : ele.variableValues,
+    variableValues: ['number', 'datetime'].includes(variableValueMap.value[ele.variableId].var_type)
+      ? [ele.variableValue]
+      : ele.variableValues,
   }))
 }
 
@@ -1055,12 +1077,12 @@ const validateSystemVariables = () => {
   if (system_variables?.length) {
     return system_variables.some((ele: any) => {
       const obj = variableValueMap.value[ele.variableId]
-      if (obj.var_type !== 'number' && !ele.variableValues.length) {
+      if (obj.var_type === 'text' && !ele.variableValues.length) {
         ElMessage.error(t('variables.​​cannot_be_empty'))
         return true
       }
 
-      if (obj.var_type === 'number' && !ele.variableValue) {
+      if (obj.var_type === 'number' && [null, undefined, ''].includes(ele.variableValue)) {
         ElMessage.error(t('variables.​​cannot_be_empty'))
         return true
       }
@@ -1075,12 +1097,9 @@ const validateSystemVariables = () => {
 
       if (obj.var_type === 'datetime') {
         const [min, max] = obj.value
-        const [minVal, maxVal] = ele.variableValues
         if (
-          +new Date(minVal) > +new Date(max) ||
-          +new Date(maxVal) < +new Date(min) ||
-          +new Date(maxVal) > +new Date(max) ||
-          +new Date(minVal) < +new Date(min)
+          +new Date(ele.variableValue) > +new Date(max) ||
+          +new Date(ele.variableValue) < +new Date(min)
         ) {
           ElMessage.error(
             t('variables.1_to_100_de', {

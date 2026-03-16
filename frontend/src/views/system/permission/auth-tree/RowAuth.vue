@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import AuthTree from './AuthTree.vue'
 import { useI18n } from 'vue-i18n'
+import { variablesApi } from '@/api/variables'
 
 const { t } = useI18n()
 const errorMessage = ref('')
@@ -26,9 +27,10 @@ const svgDashinePath = computed(() => {
   return path
 })
 
-const init = (expressionTree: any) => {
+const init = async (expressionTree: any) => {
   const { logic: lg = 'or', items = [] } = expressionTree
   logic.value = lg
+  await getVariables()
   relationList.value = dfsInit(items)
 }
 const submit = () => {
@@ -65,6 +67,17 @@ const errorDetected = ({ filter_type, field_id, term, value, value_type, variabl
     }
   }
 }
+const variables = ref<any[]>([])
+const getVariables = () => {
+  return variablesApi.listAll().then((res: any) => {
+    variables.value = res || []
+  })
+}
+
+const canPush = (value_type: any, variable_id: any) => {
+  if (value_type === 'normal') return true
+  return variables.value.some((ele) => ele.id === variable_id)
+}
 const dfsInit = (arr: any[]) => {
   const elementList: any[] = []
   arr.forEach((ele: any) => {
@@ -85,16 +98,18 @@ const dfsInit = (arr: any[]) => {
         variable_id = '',
       } = ele
       const { name } = field || {}
-      elementList.push({
-        enum_value: enum_value.join(','),
-        field_id,
-        filter_type,
-        term,
-        value,
-        name,
-        value_type,
-        variable_id,
-      })
+      if (canPush(value_type, variable_id)) {
+        elementList.push({
+          enum_value: enum_value.join(','),
+          field_id,
+          filter_type,
+          term,
+          value,
+          name,
+          value_type,
+          variable_id,
+        })
+      }
     }
   })
   return elementList
