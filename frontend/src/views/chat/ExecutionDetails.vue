@@ -173,6 +173,7 @@ defineExpose({
       border: 1px solid #dee0e3;
       padding: 16px;
       margin-bottom: 8px;
+      cursor: pointer;
 
       .header {
         display: flex;
