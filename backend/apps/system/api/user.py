@@ -180,7 +180,8 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
         raise Exception(trans('i18n_exist', msg = f"{trans('i18n_user.email')} [{creator.email}]"))
     if not check_email_format(creator.email):
         raise Exception(trans('i18n_format_invalid', key = f"{trans('i18n_user.email')} [{creator.email}]"))
-    data = creator.model_dump(exclude_unset=True)
+    #data = creator.model_dump(exclude_unset=True)
+    data = creator.model_dump()
     user_model = UserModel.model_validate(data)
     #user_model.create_time = get_timestamp()
     user_model.language = "zh-CN"
