@@ -38,11 +38,11 @@ def delete(session: SessionDep, ids: List[int]):
 def list_all(session: SessionDep, trans: Trans, variable: SystemVariable):
     if variable.name is None:
         records = session.query(SystemVariable).order_by(SystemVariable.type.desc(),
-                                                         SystemVariable.create_time.desc()).all()
+                                                         SystemVariable.name.asc()).all()
     else:
         records = session.query(SystemVariable).filter(
             and_(SystemVariable.name.like(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
-            SystemVariable.type.desc(), SystemVariable.create_time.desc()).all()
+            SystemVariable.type.desc(), SystemVariable.name.asc()).all()
 
     res = []
     for r in records:
@@ -59,11 +59,11 @@ async def list_page(session: SessionDep, trans: Trans, pageNum: int, pageSize: i
     filters = {}
 
     if variable.name is None:
-        stmt = select(SystemVariable).order_by(SystemVariable.type.desc(), SystemVariable.create_time.desc())
+        stmt = select(SystemVariable).order_by(SystemVariable.type.desc(), SystemVariable.name.asc())
     else:
         stmt = select(SystemVariable).where(
             and_(SystemVariable.name.like(f'%{variable.name}%'), SystemVariable.type != 'system')).order_by(
-            SystemVariable.type.desc(), SystemVariable.create_time.desc())
+            SystemVariable.type.desc(), SystemVariable.name.asc())
 
     variable_page = await paginator.get_paginated_response(
         stmt=stmt,
