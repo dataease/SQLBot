@@ -9,6 +9,7 @@ from common.core.config import settings
 from apps.system.models.system_model import AssistantModel
 from common.utils.time import get_timestamp
 from common.utils.utils import get_domain_list
+from common.core.response_middleware import ResponseMiddleware
 
 
 def dynamic_upgrade_cors(request: Request, session: Session):
@@ -24,14 +25,21 @@ def dynamic_upgrade_cors(request: Request, session: Session):
                     unique_domains.append(domain)
     app: FastAPI = request.app
     cors_middleware = None
+    response_middleware = None
     for middleware in app.user_middleware:
-        if middleware.cls == CORSMiddleware:
+        if not cors_middleware and middleware.cls == CORSMiddleware:
             cors_middleware = middleware
+        if not response_middleware and middleware.cls == ResponseMiddleware:
+            response_middleware = middleware
+        if cors_middleware and response_middleware:
             break
+        
+    updated_origins = list(set(settings.all_cors_origins + unique_domains))
     if cors_middleware:
-        updated_origins = list(set(settings.all_cors_origins + unique_domains))
         cors_middleware.kwargs['allow_origins'] = updated_origins
-
+    if response_middleware:
+        for instance in ResponseMiddleware.instances:
+            instance.update_allow_origins(updated_origins)
 
 async def save(request: Request, session: Session, creator: AssistantBase, oid: Optional[int] = 1):
     db_model = AssistantModel.model_validate(creator)
