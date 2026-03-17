@@ -154,7 +154,9 @@ def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
                                poolclass=NullPool)
     elif equals_ignore_case(ds.type, 'oracle'):
         engine = create_engine(get_uri(ds), poolclass=NullPool)
-    else:  # mysql, ck
+    elif equals_ignore_case(ds.type, 'mysql'): # mysql
+        engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout, "ssl": {"require": True}}, poolclass=NullPool)
+    else:  # ck
         engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, poolclass=NullPool)
     return engine
 
