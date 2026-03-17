@@ -75,7 +75,7 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
 
                 # do inner system variable
                 if sys_variable.type == 'system':
-                    res = whereName + whereTerm + getSysVariableValue(sys_variable, current_user, ds, field)
+                    res = whereName + whereTerm + getSysVariableValue(sys_variable, current_user, ds, field, item)
                 else:
                     # check user variable
                     user_variables = current_user.system_variables
@@ -216,7 +216,8 @@ def userHaveVariable(user_variables: List, sys_variable: SystemVariable):
     return False
 
 
-def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser, ds: CoreDatasource, field: CoreField):
+def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser, ds: CoreDatasource, field: CoreField,
+                        item: Dict, ):
     v = None
     if sys_variable.value[0] == 'name':
         v = current_user.name
@@ -225,8 +226,32 @@ def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser,
     if sys_variable.value[0] == 'email':
         v = current_user.email
 
-    if ds.type == 'sqlServer' and (
-            field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-        return f"N'{v}'"
+    whereValue = ''
+    if item['term'] == 'null':
+        whereValue = ''
+    elif item['term'] == 'not_null':
+        whereValue = ''
+    elif item['term'] == 'empty':
+        whereValue = "''"
+    elif item['term'] == 'not_empty':
+        whereValue = "''"
+    elif item['term'] == 'in' or item['term'] == 'not in':
+        if ds.type == 'sqlServer' and (
+                field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
+            whereValue = f"(N'{v}')"
+        else:
+            whereValue = f"('{v}')"
+    elif item['term'] == 'like' or item['term'] == 'not like':
+        if ds.type == 'sqlServer' and (
+                field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
+            whereValue = f"N'%{v}%'"
+        else:
+            whereValue = f"'%{v}%'"
     else:
-        return f"'{v}'"
+        if ds.type == 'sqlServer' and (
+                field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
+            whereValue = f"N'{v}'"
+        else:
+            whereValue = f"'{v}'"
+
+    return whereValue
