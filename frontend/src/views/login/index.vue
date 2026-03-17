@@ -41,7 +41,7 @@
                 <el-input
                   v-model="loginForm.username"
                   clearable
-                  :placeholder="$t('common.your_account_email_address')"
+                  :placeholder="$t('login.input_account')"
                   size="large"
                 ></el-input>
               </el-form-item>

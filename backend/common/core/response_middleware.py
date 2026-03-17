@@ -1,6 +1,6 @@
 import json
+from typing import Optional
 
-from redis import typing
 from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -11,10 +11,19 @@ from common.utils.utils import SQLBotLogUtil
 
 
 class ResponseMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
-        self.allow_origins = ["'self'"]
-        super().__init__(app)
+    instances = []
 
+    def __init__(self, app, allow_origins: Optional[list[str]] = None):
+        super().__init__(app)
+        self.allow_origins = allow_origins or ["'self'"]
+        ResponseMiddleware.instances.append(self)
+
+    def update_allow_origins(self, new_allow_origins: Optional[list[str]] = None):
+        if not new_allow_origins:
+            return
+        self.allow_origins = list(set(self.allow_origins + new_allow_origins))
+        
+        
     async def dispatch(self, request, call_next):
         response = await call_next(request)
 
