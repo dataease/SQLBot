@@ -911,7 +911,16 @@ const editHandler = (row: any) => {
     })
     .finally(() => {
       state.form.system_variables = state.form.system_variables.filter((ele: any) => {
-        return !!variableValueMap.value[ele.variableId]
+        if (variableValueMap.value[ele.variableId]) {
+          if (variableValueMap.value[ele.variableId].var_type === 'text') {
+            ele.variableValues = variableValueMap.value[ele.variableId].value.filter(
+              (item: any) => ele.variableValues.indexOf(item) > -1
+            )
+            return !!ele.variableValues.length
+          }
+          return true
+        }
+        return false
       })
       dialogTitle.value = row?.id ? t('user.edit_user') : t('user.add_users')
       dialogFormVisible.value = true
