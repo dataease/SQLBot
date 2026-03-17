@@ -575,6 +575,7 @@
     "operate_with_caution": "删除后，该工作空间下的用户将被移除，所有资源也将被删除，请谨慎操作。"
   },
   "permission": {
+    "search_field": "搜索字段",
     "search_rule_group": "搜索规则组",
     "add_rule_group": "添加规则组",
     "permission_rule": "权限规则",

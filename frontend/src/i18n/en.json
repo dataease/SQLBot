@@ -575,6 +575,7 @@
     "operate_with_caution": "After deletion, the users under the workspace will be removed and all resources will be deleted. Please operate with caution."
   },
   "permission": {
+    "search_field": "Search field",
     "search_rule_group": "Search rule group",
     "add_rule_group": "Add rule group",
     "permission_rule": "Permission rules",
