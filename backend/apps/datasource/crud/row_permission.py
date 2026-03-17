@@ -2,6 +2,7 @@
 # Date: 2025/6/25
 
 from typing import List, Dict
+
 from apps.datasource.models.datasource import CoreField, CoreDatasource
 from apps.db.constant import DB
 from apps.system.models.system_variable_model import SystemVariable
@@ -74,7 +75,7 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
 
                 # do inner system variable
                 if sys_variable.type == 'system':
-                    res = whereName + whereTerm + getSysVariableValue(sys_variable, current_user)
+                    res = whereName + whereTerm + getSysVariableValue(sys_variable, current_user, ds, field)
                 else:
                     # check user variable
                     user_variables = current_user.system_variables
@@ -215,10 +216,17 @@ def userHaveVariable(user_variables: List, sys_variable: SystemVariable):
     return False
 
 
-def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser):
+def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser, ds: CoreDatasource, field: CoreField):
+    v = None
     if sys_variable.value[0] == 'name':
-        return current_user.name
+        v = current_user.name
     if sys_variable.value[0] == 'account':
-        return current_user.account
+        v = current_user.account
     if sys_variable.value[0] == 'email':
-        return current_user.email
+        v = current_user.email
+
+    if ds.type == 'sqlServer' and (
+            field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
+        return f"N'{v}'"
+    else:
+        return f"'{v}'"
