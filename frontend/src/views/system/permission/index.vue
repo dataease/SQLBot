@@ -867,7 +867,7 @@ const columnRules = {
           <el-input
             v-if="ruleType !== 1"
             v-model="searchColumn"
-            :placeholder="$t('permission.search_rule_group')"
+            :placeholder="$t('permission.search_field')"
             autocomplete="off"
             clearable
             ><template #prefix>
