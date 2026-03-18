@@ -35,6 +35,8 @@ const emits = defineEmits([
   'dataTableDetail',
   'showTable',
   'recommendation',
+  'startChecking',
+  'endChecking',
 ])
 const icon = computed(() => {
   return (dsTypeWithImg.find((ele) => props.type === ele.type) || {}).img
@@ -53,11 +55,17 @@ const handleDel = () => {
 
 const handleQuestion = () => {
   //check first
-  datasourceApi.check_by_id(props.id).then((res: any) => {
-    if (res) {
-      emits('question', props.id)
-    }
-  })
+  emits('startChecking')
+  datasourceApi
+    .check_by_id(props.id)
+    .then((res: any) => {
+      if (res) {
+        emits('question', props.id)
+      }
+    })
+    .finally(() => {
+      emits('endChecking')
+    })
 }
 
 function runSQL() {
