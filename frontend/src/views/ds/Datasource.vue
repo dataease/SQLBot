@@ -198,6 +198,15 @@ const back = () => {
   currentDataTable.value = null
 }
 
+const loading = ref(false)
+
+function startLoading() {
+  loading.value = true
+}
+function endLoading() {
+  loading.value = false
+}
+
 useEmitt({
   name: 'ds-index-click',
   callback: back,
@@ -205,7 +214,7 @@ useEmitt({
 </script>
 
 <template>
-  <div v-show="!currentDataTable" class="datasource-config no-padding">
+  <div v-show="!currentDataTable" v-loading="loading" class="datasource-config no-padding">
     <div class="datasource-methods">
       <span class="title">{{ $t('ds.title') }}</span>
       <div class="button-input">
@@ -299,6 +308,8 @@ useEmitt({
             :type-name="ele.type_name"
             :num="ele.num"
             :description="ele.description"
+            @start-checking="startLoading"
+            @end-checking="endLoading"
             @question="handleQuestion"
             @edit="handleEditDatasource(ele)"
             @recommendation="handleRecommendation(ele)"
