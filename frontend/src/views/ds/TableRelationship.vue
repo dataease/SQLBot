@@ -406,7 +406,7 @@ const drop = (e: any) => {
   })
 }
 const save = () => {
-  datasourceApi.relationSave(props.id, graph.toJSON().cells).then(() => {
+  datasourceApi.relationSave(props.id, graph ? graph.toJSON().cells : []).then(() => {
     ElMessage({
       type: 'success',
       message: t('common.save_success'),
@@ -447,7 +447,7 @@ const save = () => {
     @drop.prevent.stop="drop"
   ></div>
   <div class="save-btn">
-    <el-button v-if="nodeIds.length" type="primary" @click="save">
+    <el-button type="primary" @click="save">
       {{ t('common.save') }}
     </el-button>
   </div>
