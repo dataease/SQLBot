@@ -39,7 +39,7 @@ function getLogList(recordId: any) {
 }
 
 const setDrawerSize = debounce(() => {
-  drawerSize.value = window.innerWidth < 500 ? '460px' : '600px'
+  drawerSize.value = window.innerWidth < 500 ? '460px' : `${window.innerWidth * 0.5}px`
 }, 500)
 
 onMounted(() => {
