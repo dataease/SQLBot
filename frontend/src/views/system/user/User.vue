@@ -706,7 +706,7 @@ const platformType = ref<any[]>([
 const refresh = (res: any) => {
   showTips(res.successCount, res.errorCount, res.dataKey)
   if (res.successCount) {
-    search()
+    handleCurrentChange(1)
   }
 }
 
@@ -876,7 +876,8 @@ const clearFilter = (params?: number) => {
 const searchCondition = (conditions: any) => {
   state.conditions = conditions
   fillFilterText()
-  search()
+  handleCurrentChange(1)
+
   drawerMainClose()
 }
 const drawerMainOpen = async () => {
@@ -957,7 +958,7 @@ const deleteBatchUser = () => {
         type: 'success',
         message: t('dashboard.delete_success'),
       })
-      search()
+      handleCurrentChange(1)
     })
   })
 }
@@ -975,7 +976,7 @@ const deleteHandler = (row: any) => {
         type: 'success',
         message: t('dashboard.delete_success'),
       })
-      search()
+      handleCurrentChange(1)
     })
   })
 }
@@ -1039,7 +1040,8 @@ const addTerm = () => {
     .add({ account, email, name, oid, status, oid_list, system_variables: formatVariableValues() })
     .then(() => {
       onFormClose()
-      search()
+      handleCurrentChange(1)
+
       ElMessage({
         type: 'success',
         message: t('common.save_success'),
@@ -1065,7 +1067,8 @@ const editTerm = () => {
     })
     .then(() => {
       onFormClose()
-      search()
+      handleCurrentChange(1)
+
       ElMessage({
         type: 'success',
         message: t('common.save_success'),
@@ -1193,7 +1196,8 @@ onMounted(() => {
     options.value = res || []
     filterOption.value[2].option = [...options.value]
   })
-  search()
+  handleCurrentChange(1)
+
   loadDefaultPwd()
 })
 const downErrorExcel = (dataKey: any) => {
