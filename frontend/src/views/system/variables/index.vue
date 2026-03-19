@@ -210,7 +210,7 @@ const rules = {
   name: [
     {
       required: true,
-      message: t('datasource.please_enter') + t('common.empty') + t('embedded.application_name'),
+      message: t('datasource.please_enter') + t('common.empty') + t('variables.variable_name'),
     },
   ],
   value: [
