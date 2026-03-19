@@ -208,11 +208,15 @@ const initGraph = () => {
   graph.on(
     'node:port:mouseenter',
     debounce(({ e, node, port }: any) => {
-      tooltipY.value = e.offsetY + 'px'
-      tooltipX.value = e.offsetX + 'px'
       tooltipContent.value = node.port.ports.find(
         (ele: any) => +port === ele.id
       ).attrs.portNameLabel.text
+      if (tooltipContent.value) {
+        tooltipY.value = e.offsetY + 'px'
+        tooltipX.value = e.offsetX + 'px'
+      } else {
+        resetTooltip()
+      }
     }, 100)
   )
 
