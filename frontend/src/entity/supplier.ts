@@ -10,6 +10,7 @@ import icon_txhy_colorful from '@/assets/model/icon_txhy_colorful.png'
 import icon_hsyq_colorful from '@/assets/model/icon_hsyq_colorful.png'
 // import icon_vllm_colorful from '@/assets/model/icon_vllm_colorful.png'
 import icon_common_openai from '@/assets/model/icon_common_openai.png'
+import icon_minimax_colorful from '@/assets/model/icon_minimax_colorful.png'
 // import icon_azure_openAI_colorful from '@/assets/model/icon_Azure_OpenAI_colorful.png'
 
 type ModelArg = { key: string; val?: string | number; type: string; range?: string }
@@ -272,6 +273,23 @@ export const supplierList: Array<{
           { name: 'kimi-k2-250711' },
           { name: 'deepseek-v3-250324' },
           { name: 'deepseek-r1' },
+        ],
+      },
+    },
+  },
+  {
+    id: 13,
+    name: 'MiniMax',
+    i18nKey: 'supplier.minimax',
+    icon: icon_minimax_colorful,
+    model_config: {
+      0: {
+        api_domain: 'https://api.minimax.io/v1',
+        common_args: [{ key: 'temperature', val: 0.7, type: 'number', range: '[0, 1]' }],
+        model_options: [
+          { name: 'MiniMax-M2.7' },
+          { name: 'MiniMax-M2.5' },
+          { name: 'MiniMax-M2.5-highspeed' },
         ],
       },
     },
