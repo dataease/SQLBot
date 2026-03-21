@@ -915,6 +915,7 @@
     "kimi": "Kimi",
     "tencent_cloud": "腾讯云",
     "volcano_engine": "火山引擎",
+    "minimax": "MiniMax",
     "generic_openai": "通用OpenAI"
   },
   "modelType": {

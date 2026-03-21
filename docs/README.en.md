@@ -30,6 +30,23 @@ SQLBot is an intelligent data query system based on large language models and RA
 - **Easy Integration:** Supports multiple integration methods, providing capabilities such as web embedding, pop-up embedding, and MCP invocation. It can be quickly embedded into applications such as n8n, Dify, MaxKB, and DataEase, allowing various applications to quickly acquire intelligent data collection capabilities.
 - **Increasingly Accurate with Use:** Supports customizable prompts and terminology library configurations, maintainable SQL example calibration logic, and accurate matching of business scenarios. Efficient operation, based on continuous iteration and optimization using user interaction data, the data collection effect gradually improves with use, becoming more accurate with each use.
 
+## Supported LLM Providers
+
+| Provider | API Compatibility |
+|----------|-------------------|
+| Alibaba Cloud Bailian | OpenAI Compatible |
+| Qianfan Model | OpenAI Compatible |
+| DeepSeek | OpenAI Compatible |
+| Tencent Hunyuan | OpenAI Compatible |
+| iFlytek Spark | OpenAI Compatible |
+| Gemini | OpenAI Compatible |
+| OpenAI | Native |
+| Kimi | OpenAI Compatible |
+| Tencent Cloud | OpenAI Compatible |
+| Volcano Engine | OpenAI Compatible |
+| MiniMax | OpenAI Compatible |
+| Generic OpenAI Compatible | Custom |
+
 ## Quick Start
 
 ### Installation and Deployment
