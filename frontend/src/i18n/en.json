@@ -915,6 +915,7 @@
     "kimi": "Kimi",
     "tencent_cloud": "Tencent Cloud",
     "volcano_engine": "Volcano Engine",
+    "minimax": "MiniMax",
     "generic_openai": "Generic OpenAI"
   },
   "modelType": {
