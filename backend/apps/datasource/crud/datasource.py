@@ -31,7 +31,7 @@ def get_datasource_list(session: SessionDep, user: CurrentUser, oid: Optional[in
     if user.isAdmin and oid:
         current_oid = oid
     return session.exec(
-        select(CoreDatasource).where(CoreDatasource.oid == current_oid).order_by(CoreDatasource.name)).all()
+        select(CoreDatasource).where(CoreDatasource.oid == int(current_oid)).order_by(CoreDatasource.name)).all()
 
 
 def get_ds(session: SessionDep, id: int):
