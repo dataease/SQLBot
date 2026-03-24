@@ -99,15 +99,15 @@ async def mcp_start(session: SessionDep, chat: ChatStart):
 
 
 @router.post("/mcp_ws_list", operation_id="mcp_ws_list")
-async def ws_list(session: SessionDep, token: str):
-    session_user = get_user(session, token)
-    return await user_ws_options(session, session_user.id)
+async def ws_list(session: SessionDep, chat_mcp: ChatMcp):
+    session_user = get_user(session, chat_mcp.token)
+    return user_ws_options(session, session_user.id)
 
 
 @router.post("/mcp_ds_list", operation_id="mcp_datasource_list")
 async def datasource_list(session: SessionDep, mcp_ds: McpDs):
     session_user = get_user(session, mcp_ds.token)
-    if mcp_ds.oid is not None:
+    if mcp_ds.oid:
         session_user.oid = mcp_ds.oid
     ds_list = get_datasource_list(session=session, user=session_user)
     result = []
@@ -131,7 +131,7 @@ async def datasource_list(session: SessionDep, mcp_ds: McpDs):
 @router.post("/mcp_question", operation_id="mcp_question")
 async def mcp_question(session: SessionDep, chat: McpQuestion):
     session_user = get_user(session, chat.token)
-    if chat.oid is not None:
+    if chat.oid:
         session_user.oid = chat.oid
     ds_id: Optional[int] = None
     if chat.datasource_id:
