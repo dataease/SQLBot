@@ -391,7 +391,8 @@
       },
       "timeout": "连接超时(秒)",
       "address": "地址",
-      "low_version": "兼容低版本"
+      "low_version": "兼容低版本",
+      "ssl": "启用 SSL"
     },
     "sync_fields": "同步表结构"
   },
