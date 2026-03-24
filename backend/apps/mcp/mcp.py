@@ -23,7 +23,7 @@ from apps.system.schemas.system_schema import BaseUserDTO, AssistantHeader
 from apps.system.schemas.system_schema import UserInfoDTO
 from common.core import security
 from common.core.config import settings
-from common.core.deps import SessionDep
+from common.core.deps import SessionDep, Trans
 from common.core.schemas import TokenPayload, XOAuth2PasswordBearer, Token
 from common.core.security import create_access_token
 
@@ -99,9 +99,9 @@ async def mcp_start(session: SessionDep, chat: ChatStart):
 
 
 @router.post("/mcp_ws_list", operation_id="mcp_ws_list")
-async def ws_list(session: SessionDep, chat_mcp: ChatMcp):
-    session_user = get_user(session, chat_mcp.token)
-    return user_ws_options(session, session_user.id)
+async def ws_list(session: SessionDep, trans: Trans, token: str):
+    session_user = get_user(session, token)
+    return await user_ws_options(session, session_user.id, trans)
 
 
 @router.post("/mcp_ds_list", operation_id="mcp_datasource_list")
