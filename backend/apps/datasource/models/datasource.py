@@ -121,6 +121,7 @@ class DatasourceConf(BaseModel):
     mode: str = ''
     timeout: int = 30
     lowVersion: bool = False
+    ssl: bool = False
 
     def to_dict(self):
         return {
@@ -136,7 +137,8 @@ class DatasourceConf(BaseModel):
             "sheets": self.sheets,
             "mode": self.mode,
             "timeout": self.timeout,
-            "lowVersion": self.lowVersion
+            "lowVersion": self.lowVersion,
+            "ssl": self.ssl
         }
 
 

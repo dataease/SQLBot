@@ -144,6 +144,7 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
                                        in_chat=False, stream=chat.stream)
 
 
+# Cordys crm
 @router.post("/mcp_assistant", operation_id="mcp_assistant")
 async def mcp_assistant(session: SessionDep, chat: McpAssistant):
     session_user = BaseUserDTO(**{

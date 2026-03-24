@@ -391,7 +391,8 @@
       },
       "timeout": "Connection Timeout(second)",
       "address": "Address",
-      "low_version": "Compatible with lower versions"
+      "low_version": "Compatible with lower versions",
+      "ssl": "Enable SSL"
     },
     "sync_fields": "Sync Fields"
   },

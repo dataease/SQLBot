@@ -391,7 +391,8 @@
       },
       "timeout": "연결 시간 초과(초)",
       "address": "주소",
-      "low_version": "낮은 버전 호환"
+      "low_version": "낮은 버전 호환",
+      "ssl": "SSL 활성화"
     },
     "sync_fields": "동기화된 테이블 구조"
   },

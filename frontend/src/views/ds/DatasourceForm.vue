@@ -117,6 +117,7 @@ const form = ref<any>({
   mode: 'service_name',
   timeout: 30,
   lowVersion: false,
+  ssl: false,
 })
 
 const close = () => {
@@ -164,6 +165,10 @@ const initForm = (item: any, editTable: boolean = false) => {
         configuration.lowVersion !== null && configuration.lowVersion !== undefined
           ? configuration.lowVersion
           : true
+      form.value.ssl =
+        configuration.ssl !== null && configuration.ssl !== undefined
+          ? configuration.ssl
+          : false
     }
 
     if (editTable) {
@@ -236,6 +241,7 @@ const initForm = (item: any, editTable: boolean = false) => {
       mode: 'service_name',
       timeout: 30,
       lowVersion: false,
+      ssl: false,
     }
   }
   dialogVisible.value = true
@@ -324,6 +330,7 @@ const buildConf = () => {
       mode: form.value.mode,
       timeout: form.value.timeout,
       lowVersion: form.value.lowVersion,
+      ssl: form.value.ssl,
     })
   )
   const obj = JSON.parse(JSON.stringify(form.value))
@@ -340,6 +347,7 @@ const buildConf = () => {
   delete obj.mode
   delete obj.timeout
   delete obj.lowVersion
+  delete obj.ssl
   return obj
 }
 
@@ -685,6 +693,13 @@ defineExpose({
             prop="low_version"
           >
             <el-checkbox v-model="form.lowVersion" :label="t('ds.form.low_version')" />
+          </el-form-item>
+          <el-form-item
+            v-if="form.type === 'mysql'"
+            :label="t('ds.form.ssl')"
+            prop="ssl"
+          >
+            <el-switch v-model="form.ssl" />
           </el-form-item>
           <el-form-item v-if="form.type !== 'es'" :label="t('ds.form.extra_jdbc')">
             <el-input
