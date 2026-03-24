@@ -108,7 +108,7 @@ async def ws_list(session: SessionDep, trans: Trans, token: str):
 async def datasource_list(session: SessionDep, mcp_ds: McpDs):
     session_user = get_user(session, mcp_ds.token)
     if mcp_ds.oid:
-        session_user.oid = mcp_ds.oid
+        session_user.oid = int(mcp_ds.oid)
     ds_list = get_datasource_list(session=session, user=session_user)
     result = []
     for item in ds_list:
