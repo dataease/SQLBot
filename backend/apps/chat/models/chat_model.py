@@ -319,6 +319,11 @@ class ChatMcp(ChatQuestion):
     token: str
 
 
+class McpDs(BaseModel):
+    token: str = Body(description='用户token')
+    oid: Optional[int | str] = Body(description='组织ID，如果不传则为最后一次登录SQLBot时所使用的组织ID', default=None)
+
+
 class ChatStart(BaseModel):
     username: str = Body(description='用户名')
     password: str = Body(description='密码')
@@ -331,6 +336,8 @@ class McpQuestion(BaseModel):
     stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)
     lang: Optional[str] = Body(description='语言：zh-CN|en|ko-KR', default='zh-CN')
     datasource_id: Optional[int | str] = Body(description='数据源ID，仅当当前对话没有确定数据源时有效', default=None)
+    oid: Optional[int | str] = Body(
+        description='组织ID，仅当数据源ID为空时有效，如果不传则为最后一次登录SQLBot时所使用的组织ID', default=None)
 
 
 class AxisObj(BaseModel):

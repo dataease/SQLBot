@@ -13,9 +13,9 @@ from sqlmodel import select
 
 from apps.chat.api.chat import create_chat, question_answer_inner
 from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion, \
-    ChatFinishStep
+    ChatFinishStep, McpDs
 from apps.datasource.crud.datasource import get_datasource_list
-from apps.system.crud.user import authenticate
+from apps.system.crud.user import authenticate, user_ws_options
 from apps.system.crud.user import get_db_user
 from apps.system.models.system_model import UserWsModel
 from apps.system.models.user import UserModel
@@ -81,9 +81,34 @@ def get_user(session: SessionDep, token: str):
     return session_user
 
 
-@router.post("/mcp_ds_list", operation_id="mcp_datasource_list")
-async def datasource_list(session: SessionDep, token: str):
+@router.post("/mcp_start", operation_id="mcp_start")
+async def mcp_start(session: SessionDep, chat: ChatStart):
+    user: BaseUserDTO = authenticate(session=session, account=chat.username, password=chat.password)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect account or password")
+
+    if not user.oid or user.oid == 0:
+        raise HTTPException(status_code=400, detail="No associated workspace, Please contact the administrator")
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    user_dict = user.to_dict()
+    t = Token(access_token=create_access_token(
+        user_dict, expires_delta=access_token_expires
+    ))
+    c = create_chat(session, user, CreateChat(origin=1), False)
+    return {"access_token": t.access_token, "chat_id": c.id}
+
+
+@router.post("/mcp_ws_list", operation_id="mcp_ws_list")
+async def ws_list(session: SessionDep, token: str):
     session_user = get_user(session, token)
+    return await user_ws_options(session, session_user.id)
+
+
+@router.post("/mcp_ds_list", operation_id="mcp_datasource_list")
+async def datasource_list(session: SessionDep, mcp_ds: McpDs):
+    session_user = get_user(session, mcp_ds.token)
+    if mcp_ds.oid is not None:
+        session_user.oid = mcp_ds.oid
     ds_list = get_datasource_list(session=session, user=session_user)
     result = []
     for item in ds_list:
@@ -103,26 +128,11 @@ async def datasource_list(session: SessionDep, token: str):
 #     return session.query(AiModelDetail).all()
 
 
-@router.post("/mcp_start", operation_id="mcp_start")
-async def mcp_start(session: SessionDep, chat: ChatStart):
-    user: BaseUserDTO = authenticate(session=session, account=chat.username, password=chat.password)
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect account or password")
-
-    if not user.oid or user.oid == 0:
-        raise HTTPException(status_code=400, detail="No associated workspace, Please contact the administrator")
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    user_dict = user.to_dict()
-    t = Token(access_token=create_access_token(
-        user_dict, expires_delta=access_token_expires
-    ))
-    c = create_chat(session, user, CreateChat(origin=1), False)
-    return {"access_token": t.access_token, "chat_id": c.id}
-
-
 @router.post("/mcp_question", operation_id="mcp_question")
 async def mcp_question(session: SessionDep, chat: McpQuestion):
     session_user = get_user(session, chat.token)
+    if chat.oid is not None:
+        session_user.oid = chat.oid
     ds_id: Optional[int] = None
     if chat.datasource_id:
         if isinstance(chat.datasource_id, str):
