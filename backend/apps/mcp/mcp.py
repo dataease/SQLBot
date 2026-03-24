@@ -132,7 +132,7 @@ async def datasource_list(session: SessionDep, mcp_ds: McpDs):
 async def mcp_question(session: SessionDep, chat: McpQuestion):
     session_user = get_user(session, chat.token)
     if chat.oid:
-        session_user.oid = chat.oid
+        session_user.oid = int(chat.oid)
     ds_id: Optional[int] = None
     if chat.datasource_id:
         if isinstance(chat.datasource_id, str):
