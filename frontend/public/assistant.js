@@ -1,4 +1,4 @@
-;(function () {
+; (function () {
   window.sqlbot_assistant_handler = window.sqlbot_assistant_handler || {}
   const defaultData = {
     id: '1',
@@ -170,6 +170,13 @@
       chat_button_img = root.querySelector('.sqlbot-assistant-chat-button > img')
     }
     chat_button_img.style.display = 'block'
+    function resizeImg() {
+      const rate = window.outerWidth / window.innerWidth;
+      chat_button_img.style.width = `${30 * (1 / rate)}px`;
+      chat_button_img.style.height = `${30 * (1 / rate)}px`;
+    }
+    resizeImg()
+    window.addEventListener('resize', resizeImg);
     //  对话框元素
     const chat_container = root.querySelector('#sqlbot-assistant-chat-container')
     // 引导层
