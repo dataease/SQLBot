@@ -668,7 +668,7 @@
     "interface_url": "인터페이스 URL",
     "format_is_incorrect": "형식이 올바르지 않습니다{msg}",
     "domain_format_incorrect": ", http:// 또는 https://로 시작해야 하며, 슬래시(/)로 끝날 수 없습니다. 여러 도메인은 세미콜론으로 구분합니다",
-    "interface_url_incorrect": ", 상대 경로를 입력해주세요. /로 시작합니다",
+    "interface_url_incorrect": ", 상대 경로는 /로 시작하거나, 절대 경로는 http:// 또는 https://로 시작하는 경로를 입력해 주세요.",
     "aes_enable": "AES 암호화 활성화",
     "aes_enable_tips": "암호화 필드 (host, user, password, dataBase, schema)는 모두 AES-CBC-PKCS5Padding 암호화 방식을 사용합니다",
     "bit": "비트",

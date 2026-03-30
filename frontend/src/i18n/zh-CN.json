@@ -668,7 +668,7 @@
     "interface_url": "接口 URL",
     "format_is_incorrect": "格式不对{msg}",
     "domain_format_incorrect": "，http或https开头，不能以 / 结尾，多个域名以分号(半角)分隔",
-    "interface_url_incorrect": "，请填写相对路径，以/开头",
+    "interface_url_incorrect": "，请填写相对路径，以/开头，或者绝对路径以http或https开头",
     "aes_enable": "开启 AES 加密",
     "aes_enable_tips": "加密字段 (host, user, password, dataBase, schema) 均采用 AES-CBC-PKCS5Padding 加密方式",
     "bit": "位",
@@ -777,11 +777,11 @@
     "log_question": "本次提问",
     "log_answer": "AI 回答",
     "log_history": "历史记录",
-    "find_term_title":"匹配到 {0} 个术语",
-    "find_sql_sample_title":"匹配到 {0} 个SQL示例",
-    "find_custom_prompt_title":"匹配到 {0} 个自定义提示词",
-    "query_count_title":"查询到 {0} 条数据",
-    "generate_picture_success":"已生成图片"
+    "find_term_title": "匹配到 {0} 个术语",
+    "find_sql_sample_title": "匹配到 {0} 个SQL示例",
+    "find_custom_prompt_title": "匹配到 {0} 个自定义提示词",
+    "query_count_title": "查询到 {0} 条数据",
+    "generate_picture_success": "已生成图片"
   },
   "about": {
     "title": "关于",

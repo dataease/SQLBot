@@ -325,9 +325,10 @@ const validatePass = (_: any, value: any, callback: any) => {
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
     // var Expression = /^https?:\/\/[^\s/?#]+(:\d+)?/i
+    const absoluteUrlRegex = /^https?:\/\/[^\s/?#]+(:\d+)?(\/[^\s?#]*)?(\?[^\s#]*)?(#\S*)?$/i
     var Expression = /^\/([a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+(\?[a-zA-Z0-9_=&-]+)?$/
     var objExp = new RegExp(Expression)
-    if (objExp.test(value)) {
+    if (objExp.test(value) || absoluteUrlRegex.test(value)) {
       callback()
     } else {
       callback(t('embedded.format_is_incorrect', { msg: t('embedded.interface_url_incorrect') }))
