@@ -151,7 +151,7 @@ async def mcp_question(session: SessionDep, chat: McpQuestion):
     mcp_chat = ChatMcp(token=chat.token, chat_id=chat.chat_id, question=chat.question, datasource_id=ds_id)
 
     return await question_answer_inner(session=session, current_user=session_user, request_question=mcp_chat,
-                                       in_chat=False, stream=chat.stream)
+                                       in_chat=False, stream=chat.stream, return_img=chat.return_img)
 
 
 # Cordys crm

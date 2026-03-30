@@ -80,6 +80,7 @@ async def chat_record_data(session: SessionDep, current_user: CurrentUser, chat_
 
     return await asyncio.to_thread(inner)
 
+
 @router.get("/record/{chat_record_id}/data_live", summary=f"{PLACEHOLDER_PREFIX}get_chart_data_live")
 async def chat_record_data_live(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
     def inner():
@@ -87,6 +88,7 @@ async def chat_record_data_live(session: SessionDep, current_user: CurrentUser, 
         return format_json_data(data)
 
     return await asyncio.to_thread(inner)
+
 
 @router.get("/record/{chat_record_id}/predict_data", summary=f"{PLACEHOLDER_PREFIX}get_chart_predict_data")
 async def chat_predict_data(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
@@ -275,7 +277,8 @@ async def question_answer(session: SessionDep, current_user: CurrentUser, reques
 async def question_answer_inner(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
                                 current_assistant: Optional[CurrentAssistant] = None, in_chat: bool = True,
                                 stream: bool = True,
-                                finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, embedding: bool = False):
+                                finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, embedding: bool = False,
+                                return_img: bool = True):
     try:
         command, text_before_command, record_id, warning_info = parse_quick_command(request_question.question)
         if command:
@@ -331,7 +334,7 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
                 request_question.question = text_before_command
                 request_question.regenerate_record_id = rec_id
                 return await stream_sql(session, current_user, request_question, current_assistant, in_chat, stream,
-                                        finish_step, embedding)
+                                        finish_step, embedding, return_img)
 
             elif command == QuickCommand.ANALYSIS:
                 return await analysis_or_predict(session, current_user, rec_id, 'analysis', current_assistant, in_chat,
@@ -344,7 +347,7 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
                 raise Exception(f'Unknown command: {command.value}')
         else:
             return await stream_sql(session, current_user, request_question, current_assistant, in_chat, stream,
-                                    finish_step, embedding)
+                                    finish_step, embedding, return_img)
     except Exception as e:
         traceback.print_exc()
 
@@ -366,12 +369,13 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
 
 async def stream_sql(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
                      current_assistant: Optional[CurrentAssistant] = None, in_chat: bool = True, stream: bool = True,
-                     finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, embedding: bool = False):
+                     finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, embedding: bool = False,
+                     return_img: bool = True):
     try:
         llm_service = await LLMService.create(session, current_user, request_question, current_assistant,
                                               embedding=embedding)
         llm_service.init_record(session=session)
-        llm_service.run_task_async(in_chat=in_chat, stream=stream, finish_step=finish_step)
+        llm_service.run_task_async(in_chat=in_chat, stream=stream, finish_step=finish_step, return_img=return_img)
     except Exception as e:
         traceback.print_exc()
 
@@ -536,7 +540,8 @@ async def export_excel(session: SessionDep, current_user: CurrentUser, chat_reco
 
     def inner():
 
-        data_list = DataFormat.convert_large_numbers_in_object_array(obj_array=_data + _predict_data, int_threshold=1e11)
+        data_list = DataFormat.convert_large_numbers_in_object_array(obj_array=_data + _predict_data,
+                                                                     int_threshold=1e11)
 
         md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 

@@ -1059,18 +1059,18 @@ class LLMService:
             yield chunk
 
     def run_task_async(self, in_chat: bool = True, stream: bool = True,
-                       finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART):
+                       finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, return_img: bool = True):
         if in_chat:
             stream = True
-        self.future = executor.submit(self.run_task_cache, in_chat, stream, finish_step)
+        self.future = executor.submit(self.run_task_cache, in_chat, stream, finish_step, return_img)
 
     def run_task_cache(self, in_chat: bool = True, stream: bool = True,
-                       finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART):
-        for chunk in self.run_task(in_chat, stream, finish_step):
+                       finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, return_img: bool = True):
+        for chunk in self.run_task(in_chat, stream, finish_step, return_img):
             self.chunk_list.append(chunk)
 
     def run_task(self, in_chat: bool = True, stream: bool = True,
-                 finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART):
+                 finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, return_img: bool = True):
         json_result: Dict[str, Any] = {'success': True}
         _session = None
         try:
@@ -1311,7 +1311,7 @@ class LLMService:
             else:
                 # generate picture
                 try:
-                    if chart.get('type') != 'table':
+                    if chart.get('type') != 'table' and return_img:
                         # yield '### generated chart picture\n\n'
                         self.current_logs[OperationEnum.GENERATE_PICTURE] = start_log(session=_session,
                                                                                       operate=OperationEnum.GENERATE_PICTURE,
