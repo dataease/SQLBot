@@ -7,22 +7,6 @@
     "AI Model Configuration": "모델 구성",
     "Details": "세부"
   },
-  "sync": {
-    "integration": "플랫폼 통합을 활성화해야 합니다.",
-    "the_existing_user": "해당 사용자가 이미 존재하는 경우 기존 사용자를 덮어씁니다.",
-    "sync_users": "사용자 동기화",
-    "sync_wechat_users": "위챗 사용자 동기화",
-    "sync_dingtalk_users": "딩톡 사용자 동기화",
-    "sync_lark_users": "라크 사용자 동기화",
-    "sync_complete": "동기화 완료",
-    "synced_10_users": "{num}명 동기화 성공",
-    "failed_3_users": "{failed}명 동기화 성공, {success}명 동기화 실패",
-    "download_failure_list": "실패 목록 다운로드",
-    "sync_failed": "동기화 실패",
-    "failed_10_users": "{failed}명 동기화 실패",
-    "continue_syncing": "동기화 계속",
-    "return_to_view": "화면으로 돌아가기"
-  },
   "variables": {
     "please_select_date": "날짜를 선택하십시오",
     "number_variable_error": "올바른 숫자 범위를 입력하십시오.",
@@ -47,6 +31,25 @@
     "end_date": "종료일",
     "enter_variable_name": "변수 이름을 입력하세요",
     "enter_variable_value": "변수 값을 입력하세요"
+  },
+  "sync": {
+    "records": "{total}개 중 {num}개의 레코드 표시",
+    "confirm_upload": "업로드 확인",
+    "field_details": "필드 세부 정보",
+    "integration": "플랫폼 통합을 활성화해야 합니다.",
+    "the_existing_user": "해당 사용자가 이미 존재하는 경우 기존 사용자를 덮어씁니다.",
+    "sync_users": "사용자 동기화",
+    "sync_wechat_users": "위챗 사용자 동기화",
+    "sync_dingtalk_users": "딩톡 사용자 동기화",
+    "sync_lark_users": "라크 사용자 동기화",
+    "sync_complete": "동기화 완료",
+    "synced_10_users": "{num}명 동기화 성공",
+    "failed_3_users": "{failed}명 동기화 성공, {success}명 동기화 실패",
+    "download_failure_list": "실패 목록 다운로드",
+    "sync_failed": "동기화 실패",
+    "failed_10_users": "{failed}명 동기화 실패",
+    "continue_syncing": "동기화 계속",
+    "return_to_view": "화면으로 돌아가기"
   },
   "parameter": {
     "execution_details": "실행 세부 정보",
@@ -442,6 +445,9 @@
     "get_schema": "스키마 가져오기"
   },
   "model": {
+    "int": "정수",
+    "float": "소수",
+    "string": "문자열",
     "default_model": "기본 모델",
     "model_type": "모델 유형",
     "basic_model": "기본 모델",
