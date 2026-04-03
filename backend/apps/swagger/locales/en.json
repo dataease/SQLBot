@@ -22,6 +22,8 @@
   "ds_preview_data": "Preview Data",
   "ds_upload_excel": "Upload Excel",
   "ds_excel": "File",
+  "ds_parse_excel": "Parse Excel and Preview Data",
+  "ds_import_to_db": "Import Data to Database",
   "ds_export_ds_schema": "Export Comment",
   "ds_upload_ds_schema": "Upload Comment",
 

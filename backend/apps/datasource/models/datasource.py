@@ -192,3 +192,18 @@ class PreviewResponse(BaseModel):
     fields: List | None = []
     data: List | None = []
     sql: str | None = ''
+
+
+class FieldInfo(BaseModel):
+    fieldName: str
+    fieldType: str
+
+
+class SheetFields(BaseModel):
+    sheetName: str
+    fields: List[FieldInfo]
+
+
+class ImportRequest(BaseModel):
+    filePath: str
+    sheets: List[SheetFields]
