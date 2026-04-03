@@ -7,22 +7,6 @@
     "AI Model Configuration": "模型配置",
     "Details": "详情"
   },
-  "sync": {
-    "integration": "需开启平台对接",
-    "the_existing_user": "若用户已存在，覆盖旧用户",
-    "sync_users": "同步用户",
-    "sync_wechat_users": "同步企业微信用户",
-    "sync_dingtalk_users": "同步钉钉用户",
-    "sync_lark_users": "同步飞书用户",
-    "sync_complete": "同步完成",
-    "synced_10_users": "成功同步 {num} 个用户",
-    "failed_3_users": "成功同步 {success} 个用户，同步失败 {failed} 个用户，",
-    "download_failure_list": "下载失败列表",
-    "sync_failed": "同步失败",
-    "failed_10_users": "同步失败 {num} 个用户，",
-    "continue_syncing": "继续同步",
-    "return_to_view": "返回查看"
-  },
   "variables": {
     "please_select_date": "请选择日期",
     "number_variable_error": "请输入正确的数值范围",
@@ -47,6 +31,25 @@
     "end_date": "结束日期",
     "enter_variable_name": "请输入变量名称",
     "enter_variable_value": "请输入变量值"
+  },
+  "sync": {
+    "records":"显示 {num} 条数据，共 {total} 条",
+    "confirm_upload":"确定上传",
+    "field_details":"字段详情",
+    "integration": "需开启平台对接",
+    "the_existing_user": "若用户已存在，覆盖旧用户",
+    "sync_users": "同步用户",
+    "sync_wechat_users": "同步企业微信用户",
+    "sync_dingtalk_users": "同步钉钉用户",
+    "sync_lark_users": "同步飞书用户",
+    "sync_complete": "同步完成",
+    "synced_10_users": "成功同步 {num} 个用户",
+    "failed_3_users": "成功同步 {success} 个用户，同步失败 {failed} 个用户，",
+    "download_failure_list": "下载失败列表",
+    "sync_failed": "同步失败",
+    "failed_10_users": "同步失败 {num} 个用户，",
+    "continue_syncing": "继续同步",
+    "return_to_view": "返回查看"
   },
   "parameter": {
     "execution_details": "执行详情",
@@ -442,6 +445,9 @@
     "get_schema": "获取Schema"
   },
   "model": {
+    "int": "整数",
+    "float": "小数",
+    "string": "字符串",
     "default_model": "默认模型",
     "model_type": "模型类型",
     "basic_model": "基础模型",

@@ -17,6 +17,8 @@ import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import icon_fileExcel_colorful from '@/assets/datasource/icon_excel.png'
 import IconOpeDelete from '@/assets/svg/icon_delete.svg'
 import { useCache } from '@/utils/useCache'
+import ExcelDetailDialog from './ExcelDetailDialog.vue'
+import icon_visible_outlined from '@/assets/embedded/icon_visible_outlined.svg'
 
 const props = withDefaults(
   defineProps<{
@@ -34,6 +36,7 @@ const props = withDefaults(
 )
 
 const dsFormRef = ref<FormInstance>()
+const excelDetailDialogRef = ref<InstanceType<typeof ExcelDetailDialog>>()
 const emit = defineEmits(['refresh', 'changeActiveStep', 'close'])
 const isCreate = ref(true)
 const isEditTable = ref(false)
@@ -44,7 +47,7 @@ const tableListLoading = ref(false)
 const tableListLoadingV1 = ref(false)
 const checkLoading = ref(false)
 const dialogTitle = ref('')
-const getUploadURL = import.meta.env.VITE_API_BASE_URL + '/datasource/uploadExcel'
+const getUploadURL = import.meta.env.VITE_API_BASE_URL + '/datasource/parseExcel'
 const saveLoading = ref<boolean>(false)
 const uploadLoading = ref(false)
 const { t } = useI18n()
@@ -54,7 +57,7 @@ const rules = reactive<FormRules>({
   name: [
     {
       required: true,
-      message: t('datasource.please_enter') + t('common.empty') + t('ds.form.name'),
+      message: t('datasource.please_enter') + t('common.empty') + t('ds.name'),
       trigger: 'blur',
     },
     { min: 1, max: 50, message: t('ds.form.validate.name_length'), trigger: 'blur' },
@@ -166,9 +169,7 @@ const initForm = (item: any, editTable: boolean = false) => {
           ? configuration.lowVersion
           : true
       form.value.ssl =
-        configuration.ssl !== null && configuration.ssl !== undefined
-          ? configuration.ssl
-          : false
+        configuration.ssl !== null && configuration.ssl !== undefined ? configuration.ssl : false
     }
 
     if (editTable) {
@@ -431,13 +432,24 @@ const beforeUpload = (rawFile: any) => {
   uploadLoading.value = true
   return true
 }
-
+let fileDetail: any = null
 const onSuccess = (response: any) => {
-  form.value.filename = response.data.filename
-  form.value.sheets = response.data.sheets
-  tableList.value = response.data.sheets
+  fileDetail = response.data
+  excelDetailDialogRef.value?.init(response.data)
   excelUploadSuccess.value = true
   uploadLoading.value = false
+}
+
+const openFile = () => {
+  onSuccess({
+    data: fileDetail,
+  })
+}
+
+const saveExcel = (excel: any) => {
+  form.value.filename = excel.filename
+  form.value.sheets = excel.sheets
+  tableList.value = excel.sheets
 }
 
 const onError = (e: any) => {
@@ -552,6 +564,26 @@ defineExpose({
         :rules="rules"
         @submit.prevent
       >
+        <el-form-item :label="t('ds.name')" prop="name">
+          <el-input
+            v-model="form.name"
+            clearable
+            :placeholder="$t('datasource.please_enter') + $t('common.empty') + t('ds.name')"
+          />
+        </el-form-item>
+        <el-form-item :label="t('ds.form.description')">
+          <el-input
+            v-model="form.description"
+            :placeholder="
+              $t('datasource.please_enter') + $t('common.empty') + t('ds.form.description')
+            "
+            :rows="2"
+            show-word-limit
+            maxlength="200"
+            clearable
+            type="textarea"
+          />
+        </el-form-item>
         <div v-if="form.type === 'excel'">
           <el-form-item prop="sheets" :label="t('ds.form.file')">
             <div v-if="form.filename" class="pdf-card">
@@ -560,9 +592,22 @@ defineExpose({
                 <div class="name">{{ form.filename }}</div>
                 <div class="size">{{ form.filename.split('.')[1] }} - {{ fileSize }}</div>
               </div>
-              <el-icon v-if="!form.id" class="action-btn" size="16" @click="clearFile">
-                <IconOpeDelete></IconOpeDelete>
-              </el-icon>
+              <div
+                style="
+                  width: 40px;
+                  margin-left: auto;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <el-icon v-if="!form.id" class="action-btn" size="16" @click="openFile">
+                  <icon_visible_outlined></icon_visible_outlined>
+                </el-icon>
+                <el-icon v-if="!form.id" class="action-btn" size="16" @click="clearFile">
+                  <IconOpeDelete></IconOpeDelete>
+                </el-icon>
+              </div>
             </div>
             <el-upload
               v-if="form.filename && !form.id"
@@ -602,26 +647,6 @@ defineExpose({
             <span v-if="!form.filename" class="not_exceed">{{ $t('common.not_exceed_50mb') }}</span>
           </el-form-item>
         </div>
-        <el-form-item :label="t('ds.form.name')" prop="name">
-          <el-input
-            v-model="form.name"
-            clearable
-            :placeholder="$t('datasource.please_enter') + $t('common.empty') + t('ds.form.name')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('ds.form.description')">
-          <el-input
-            v-model="form.description"
-            :placeholder="
-              $t('datasource.please_enter') + $t('common.empty') + t('ds.form.description')
-            "
-            :rows="2"
-            show-word-limit
-            maxlength="200"
-            clearable
-            type="textarea"
-          />
-        </el-form-item>
         <div v-if="form.type !== 'excel'" style="margin-top: 16px">
           <el-form-item
             :label="form.type !== 'es' ? t('ds.form.host') : t('ds.form.address')"
@@ -694,11 +719,7 @@ defineExpose({
           >
             <el-checkbox v-model="form.lowVersion" :label="t('ds.form.low_version')" />
           </el-form-item>
-          <el-form-item
-            v-if="form.type === 'mysql'"
-            :label="t('ds.form.ssl')"
-            prop="ssl"
-          >
+          <el-form-item v-if="form.type === 'mysql'" :label="t('ds.form.ssl')" prop="ssl">
             <el-switch v-model="form.ssl" />
           </el-form-item>
           <el-form-item v-if="form.type !== 'es'" :label="t('ds.form.extra_jdbc')">
@@ -829,6 +850,7 @@ defineExpose({
       </el-button>
     </div>
   </div>
+  <ExcelDetailDialog ref="excelDetailDialogRef" @finish="saveExcel" />
 </template>
 
 <style lang="less" scoped>
@@ -896,10 +918,6 @@ defineExpose({
           line-height: 20px;
           color: #8f959e;
         }
-      }
-
-      .action-btn {
-        margin-left: auto;
       }
 
       .ed-icon {
