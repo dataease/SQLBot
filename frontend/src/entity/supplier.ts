@@ -46,6 +46,10 @@ export const supplierList: Array<{
           { key: 'extra_body', val: '{"enable_thinking": false}', type: 'json' },
         ],
         model_options: [
+          { name: 'qwen3.6-plus' },
+          { name: 'qwen3.5-plus' },
+          { name: 'qwen3.5-flash' },
+          { name: 'qwen3-coder-next' },
           { name: 'qwen3-coder-plus' },
           { name: 'qwen3-coder-flash' },
           { name: 'qwen-plus' },
