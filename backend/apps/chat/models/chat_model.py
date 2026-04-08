@@ -248,7 +248,7 @@ class AiModelQuestion(BaseModel):
         _example_answer_3 = _sql_template['example_answer_3_with_limit'] if enable_query_limit else _sql_template[
             'example_answer_3']
 
-        templates['system'] = _base_template['system'].format(process_check=_process_check)
+        templates['system'] = _base_template['system'].format(lang=self.lang, process_check=_process_check)
         templates['rules'] = _base_template['generate_rules'].format(lang=self.lang,
                                                                      base_sql_rules=_base_sql_rules,
                                                                      basic_sql_examples=_sql_examples,
@@ -282,10 +282,14 @@ class AiModelQuestion(BaseModel):
                                                  change_title=change_title)
 
     def chart_sys_question(self):
-        return get_chart_template()['system'].format(sql=self.sql, question=self.question, lang=self.lang)
+        templates: dict[str, str] = {
+            'system': get_chart_template()['system'].format(lang=self.lang),
+            'rules': get_chart_template()['generate_rules'].format(lang=self.lang)
+        }
+        return templates
 
     def chart_user_question(self, chart_type: Optional[str] = '', schema: Optional[str] = ''):
-        return get_chart_template()['user'].format(sql=self.sql, question=self.question, rule=self.rule,
+        return get_chart_template()['user'].format(lang=self.lang, sql=self.sql, question=self.question, rule=self.rule,
                                                    chart_type=chart_type, schema=schema)
 
     def analysis_sys_question(self):

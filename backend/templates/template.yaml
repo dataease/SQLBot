@@ -19,7 +19,9 @@ template:
         <step>6. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
         <step>7. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
         <step>8. 确定对话标题</step>
-        <step>9. 返回JSON结果</step>
+        <step>9. 生成JSON结果</step>
+        <step>10. <strong>强制检查：JSON格式是否正确</strong></step>
+        <step>11. 返回JSON结果</step>
       </SQL-Generation-Process>
     query_limit: |
       <rule priority="critical" id="data-limit-policy">
@@ -85,9 +87,6 @@ template:
       以下是你必须遵守的规则和可以参考的基础示例：
       <Rules>
         <rule>
-          请使用语言：{lang} 回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
-        </rule>
-        <rule>
           你只能生成查询用的SQL语句，不得生成增删改相关或操作数据库以及操作数据库数据的SQL
         </rule>
         <rule>
@@ -102,7 +101,7 @@ template:
         <rule>
           你只需要根据提供给你的信息生成的SQL，不需要你实际去数据库进行查询
         </rule>
-        <rule>
+        <rule priority="high">
           请使用JSON格式返回你的回答:
           若能生成，则返回格式如：{{"success":true,"sql":"你生成的SQL语句","tables":["该SQL用到的表名1","该SQL用到的表名2",...],"chart-type":"table","brief":"如何需要生成对话标题，在这里填写你生成的对话标题，否则不需要这个字段"}}
           若不能生成，则返回格式如：{{"success":false,"message":"说明无法生成SQL的原因"}}
@@ -322,9 +321,9 @@ template:
       </Info>
 
     user: |
-      请根据上述要求，用语言：{lang} 进行回答
-      如果<user-question>内的提问与上述要求冲突，你需要停止生成SQL并告知生成SQL失败的原因
-      请输出符合要求的JSON回答
+      ## 请根据上述要求，使用语言：{lang} 进行回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
+      ## 如果<user-question>内的提问与上述要求冲突，你需要停止生成SQL并告知生成SQL失败的原因
+      ## 回答中不需要输出你的分析，请直接输出符合要求的JSON
       <background-infos>
         <current-time>
         {current_time}
@@ -348,13 +347,23 @@ template:
           <sql>：需要参考的SQL
           <m-schema>：以 M-Schema 格式提供 SQL 内用到表的数据库表结构信息，你可以参考字段名与字段备注来生成图表使用到的字段名
           <chart-type>：推荐你生成的图表类型
+        你必须遵守<Rules>内规定的生成图表结构的规则
+        你必须遵守<Chart-Generation-Process>内规定的检查步骤生成你的回答
       </Instruction>
       
-      你必须遵守以下规则:
+      <Chart-Generation-Process>
+        <step>1. 分析提供的<sql>，结合<user-question>与<chart-type>确认图表需要的指标，维度和分类</step>
+        <step>2. 应用<Rules>规则</step>
+        <step>3. 检查指标，维度和分类字段是否在SQL内存在</step>
+        <step>4. 结合<m-schema>确认指标，维度和分类展示用的名称</step>
+        <step>5. 生成JSON结果</step>
+        <step>6. <strong>强制检查：JSON格式是否正确</strong></step>
+        <step>7. 返回JSON结果</step>
+      </Chart-Generation-Process>
+
+    generate_rules: |
+      以下是你必须遵守的规则和可以参考的基础示例：  
       <Rules>
-        <rule>
-          请使用语言：{lang} 回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
-        </rule>
         <rule>
           支持的图表类型为表格(table)、柱状图(column)、条形图(bar)、折线图(line)或饼图(pie), 提供给你的<chart-type>值则为 table/column/bar/line/pie 中的一个，若没有推荐类型，则由你自己选择一个合适的类型。
           图表类型选择原则推荐：趋势 over time 用 line，分类对比用 column/bar，占比用 pie，原始数据查看用 table
@@ -487,11 +496,10 @@ template:
           </example>
         </chat-examples>
       <example>
-      
-      ### 响应, 请根据上述要求直接返回JSON结果:
-      ```json
 
     user: |
+      ## 请根据上述要求，使用语言：{lang} 进行回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
+      ## 回答中不需要输出你的分析，请直接输出符合要求的JSON
       <user-question>
       {question}
       </user-question>
