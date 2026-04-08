@@ -261,11 +261,17 @@ class LLMService:
                 filter(lambda obj: obj.pid == self.chat_question.regenerate_record_id, self.generate_chart_logs), None)
             last_chart_messages: List[dict[str, Any]] = _temp_log.messages if _temp_log else []
 
+        # 排除所有的系统提示词
+        last_chart_messages = [obj for obj in last_chart_messages if obj.get("sqlbot_system") != True]
+
         count_chart_limit = self.base_message_round_count_limit
 
         self.chart_message = []
         # add sys prompt
-        self.chart_message.append(SystemPromptMessage(content=self.chat_question.chart_sys_question()))
+        _chart_system_templates = self.chat_question.chart_sys_question()
+        self.chart_message.append(SystemPromptMessage(content=_chart_system_templates['system']))
+        self.chart_message.append(HumanPromptMessage(content=_chart_system_templates['rules']))
+        self.chart_message.append(AIPromptMessage(content='我已掌握所有规则，我会严格遵守这些规则来生成符合要求的JSON。'))
         if last_chart_messages is not None and len(last_chart_messages) > 0:
             last_rounds = get_last_conversation_rounds(last_chart_messages, rounds=count_chart_limit)
 

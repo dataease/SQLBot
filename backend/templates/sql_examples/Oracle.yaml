@@ -10,7 +10,9 @@ template:
       <step>7. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
       <step>8. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
       <step>9. 确定对话标题</step>
-      <step>10. 返回JSON结果</step>
+      <step>10. 生成JSON结果</step>
+      <step>11. <strong>强制检查：JSON格式是否正确</strong></step>
+      <step>12. 返回JSON结果</step>
     </SQL-Generation-Process>
 
   quot_rule: |
