@@ -16,6 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     gcc \
     g++ \
+    unixodbc \
+    unixodbc-dev \
+    freetds-bin \
+    tdsodbc \
     libcairo2-dev \
     libpango1.0-dev \
     libjpeg-dev \

@@ -27,6 +27,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Create necessary directories
 RUN mkdir -p ${APP_HOME} ${UI_HOME}
 
+# ODBC build/runtime deps for pyodbc + SQL Server
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unixodbc \
+    unixodbc-dev \
+    freetds-bin \
+    tdsodbc \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR ${APP_HOME}
 
 COPY  --from=sqlbot-ui-builder ${UI_HOME} ${UI_HOME}
@@ -69,6 +77,12 @@ FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-python-pg:latest
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unixodbc \
+    freetds-bin \
+    tdsodbc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set runtime environment variables
 ENV PYTHONUNBUFFERED=1
