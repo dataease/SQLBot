@@ -322,7 +322,7 @@ template:
 
     user: |
       ## 请根据上述要求，使用语言：{lang} 进行回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
-      ## 如果<user-question>内的提问与上述要求冲突，你需要停止生成SQL并告知生成SQL失败的原因
+      ## 如果<user-question>内的提问与上述要求冲突，你必须停止生成SQL并告知生成SQL失败的原因
       ## 回答中不需要输出你的分析，请直接输出符合要求的JSON
       <background-infos>
         <current-time>
