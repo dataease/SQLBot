@@ -41749,7 +41749,8 @@
             const s = new Error(a.statusText || `response status is ${a.status}`)
             // if (a.status === 401 && a.statusText === 'Unauthorized') {
             if (a.status === 401) {
-              location.href = location.pathname.replace('/docs', '/') + '#/401?title=unauthorized&target=docs'
+              location.href =
+                location.pathname.replace('/docs', '/') + '#/401?title=unauthorized&target=docs'
               return a
             }
             throw ((s.status = a.status), (s.statusCode = a.status), (s.response = a), s)
@@ -56482,8 +56483,15 @@
                 const a = o.getConfigs().withCredentials
                 o.fn.fetch.withCredentials = a
               })
+        function getTokenKey() {
+          var pathname = window.location.pathname.replace('docs', '')
+          var match = pathname.match(/^\/([^\/]+)/)
+          var prefix = match ? `${match[1]}_` : 'sqlbot_v1_'
+          return `${prefix}user.token`
+        }
         function get_token() {
-          var tokenCache = localStorage.getItem('user.token')
+          var token_key = getTokenKey()
+          var tokenCache = localStorage.getItem(token_key)
           if (!tokenCache) {
             return null
           }
