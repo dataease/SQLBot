@@ -38,7 +38,7 @@ const handleAdd = () => {
 const pwd = ref('**********')
 const toApiDoc = () => {
   console.log('Add API Key')
-  const url = '/docs'
+  const url = './docs'
   window.open(url, '_blank')
 }
 

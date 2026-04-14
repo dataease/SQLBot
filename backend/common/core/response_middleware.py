@@ -30,9 +30,9 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         direct_paths = [
             f"{settings.API_V1_STR}/mcp/mcp_question",
             f"{settings.API_V1_STR}/mcp/mcp_assistant",
-            "/openapi.json",
-            "/docs",
-            "/redoc"
+            f"{settings.CONTEXT_PATH}/openapi.json",
+            f"{settings.CONTEXT_PATH}/docs",
+            f"{settings.CONTEXT_PATH}/redoc"
         ]
 
         route = request.scope.get("route")
@@ -40,7 +40,7 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         path_pattern = '' if not route else route.path_format
 
         if (isinstance(response, JSONResponse)
-                or request.url.path == f"{settings.API_V1_STR}/openapi.json"
+                or request.url.path == f"{settings.CONTEXT_PATH}/openapi.json"
                 or path_pattern in direct_paths):
             return response
         if response.status_code != 200:
