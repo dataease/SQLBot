@@ -177,6 +177,8 @@ export const UserStore = defineStore('user', {
         language = 'zh-CN'
       } else if (language === 'zh_CN') {
         language = 'zh-CN'
+      } else if (language === 'zh_TW') {
+        language = 'zh-TW'
       } else if (language === 'ko_KR') {
         language = 'ko-KR'
       }
