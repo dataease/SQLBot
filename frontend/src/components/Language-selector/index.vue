@@ -34,6 +34,7 @@ const userStore = useUserStore()
 const languageOptions = computed(() => [
   { value: 'en', label: t('common.english') },
   { value: 'zh-CN', label: t('common.simplified_chinese') },
+  { value: 'zh-TW', label: t('common.traditional_chinese') },
   { value: 'ko-KR', label: t('common.korean') },
 ])
 

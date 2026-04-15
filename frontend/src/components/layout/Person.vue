@@ -59,6 +59,10 @@ const languageList = computed(() => [
     value: 'zh-CN',
   },
   {
+    name: '繁體中文',
+    value: 'zh-TW',
+  },
+  {
     name: '한국인',
     value: 'ko-KR',
   },
