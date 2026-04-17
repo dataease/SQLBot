@@ -32,7 +32,7 @@ class BaseUser(BaseModel):
 
 
 class BaseUserDTO(BaseUser, BaseCreatorDTO):
-    language: str = Field(pattern=r"^(zh-CN|en|ko-KR)$", default="zh-CN", description="用户语言")
+    language: str = Field(pattern=r"^(zh-CN|zh-TW|en|ko-KR)$", default="zh-CN", description="用户语言")
     password: str
     status: int = 1
     origin: int = 0
@@ -47,8 +47,8 @@ class BaseUserDTO(BaseUser, BaseCreatorDTO):
 
     @field_validator("language")
     def validate_language(cls, lang: str) -> str:
-        if not re.fullmatch(r"^(zh-CN|en|ko-KR)$", lang):
-            raise ValueError("Language must be 'zh-CN', 'en', or 'ko-KR'")
+        if not re.fullmatch(r"^(zh-CN|zh-TW|en|ko-KR)$", lang):
+            raise ValueError("Language must be 'zh-CN', 'zh-TW', 'en', or 'ko-KR'")
         return lang
 
 

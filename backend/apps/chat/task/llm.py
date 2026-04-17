@@ -1832,6 +1832,8 @@ def get_lang_name(lang: str):
     if not lang:
         return '简体中文'
     normalized = lang.lower()
+    if normalized.startswith('zh-tw'):
+        return '繁体中文'
     if normalized.startswith('en'):
         return '英文'
     if normalized.startswith('ko'):
