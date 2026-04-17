@@ -267,9 +267,13 @@ defineExpose({
       color: #646a73;
     }
 
+    .preview {
+      height: calc(100% - 78px);
+    }
+
     .table-container {
       width: 100%;
-      height: calc(100% - 46px);
+      height: 100%;
     }
   }
 }
