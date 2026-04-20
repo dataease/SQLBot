@@ -51,6 +51,7 @@
     "miss_default": "기본 대형 언어 모델이 구성되지 않았습니다"
   },
   "i18n_ds_invalid": "데이터 소스 연결이 무효합니다",
+  "i18n_ds_upload_error": "파일 업로드 실패",
   "i18n_embedded": {
     "invalid_origin": "도메인 이름 검증 실패 【{origin}】"
   },

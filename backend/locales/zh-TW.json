@@ -51,6 +51,7 @@
     "miss_default": "尚未配置默認大語言模型"
   },
   "i18n_ds_invalid": "數據源連接無效",
+  "i18n_ds_upload_error": "上傳文件失敗",
   "i18n_embedded": {
     "invalid_origin": "網域校驗失敗【{origin}】"
   },

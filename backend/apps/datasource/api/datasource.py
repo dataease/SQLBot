@@ -565,7 +565,7 @@ async def parse_excel(file: UploadFile = File(..., description=f"{PLACEHOLDER_PR
 
 
 @router.post("/importToDb", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_import_to_db")
-async def import_to_db(session: SessionDep, import_req: ImportRequest):
+async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequest):
     save_path = os.path.join(path, import_req.filePath)
     if not os.path.exists(save_path):
         raise HTTPException(400, "File not found")
@@ -585,11 +585,14 @@ async def import_to_db(session: SessionDep, import_req: ImportRequest):
                 for col in field_mapping.keys()
             }
 
-            if save_path.endswith(".csv"):
-                df = pd.read_csv(save_path, engine='c', dtype=dtype_dict)
-                sheet_name = "Sheet1"
-            else:
-                df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine', dtype=dtype_dict)
+            try:
+                if save_path.endswith(".csv"):
+                    df = pd.read_csv(save_path, engine='c', dtype=dtype_dict)
+                    sheet_name = "Sheet1"
+                else:
+                    df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine', dtype=dtype_dict)
+            except Exception as e:
+                raise HTTPException(500, f"{trans('i18n_ds_upload_error')}: {str(e)}")
 
             conn = engine.raw_connection()
             cursor = conn.cursor()
@@ -615,7 +618,7 @@ async def import_to_db(session: SessionDep, import_req: ImportRequest):
                     "rows": len(df)
                 })
             except Exception as e:
-                raise HTTPException(400, f"Insert data failed for {table_name}: {str(e)}")
+                raise HTTPException(500, f"Insert data failed for {table_name}: {str(e)}")
             finally:
                 cursor.close()
                 conn.close()
