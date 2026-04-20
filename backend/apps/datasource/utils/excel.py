@@ -35,7 +35,8 @@ def parse_excel_preview(save_path: str, max_rows: int = 10):
                 "fieldName": col,
                 "fieldType": infer_field_type(df[col].dtype)
             })
-        preview_data = df.head(max_rows).to_dict(orient='records')
+        preview_df = df.head(max_rows).replace({pd.NA: None, float('nan'): None})
+        preview_data = preview_df.to_dict(orient='records')
         sheets_data.append({
             "sheetName": "Sheet1",
             "fields": fields,
@@ -52,7 +53,8 @@ def parse_excel_preview(save_path: str, max_rows: int = 10):
                     "fieldName": col,
                     "fieldType": infer_field_type(df[col].dtype)
                 })
-            preview_data = df.head(max_rows).to_dict(orient='records')
+            preview_df = df.head(max_rows).replace({pd.NA: None, float('nan'): None})
+            preview_data = preview_df.to_dict(orient='records')
             sheets_data.append({
                 "sheetName": sheet_name,
                 "fields": fields,
