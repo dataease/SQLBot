@@ -131,7 +131,7 @@ async def datasource_list(session: SessionDep, mcp_ds: McpDs):
 @router.post("/mcp_question", operation_id="mcp_question")
 async def mcp_question(session: SessionDep, chat: McpQuestion):
     session_user = get_user(session, chat.token)
-    lang = chat.language
+    lang = chat.lang
     if lang in ["zh-CN", "zh-TW", "en", "ko-KR"]:
         session_user.language = lang
     if chat.oid:
