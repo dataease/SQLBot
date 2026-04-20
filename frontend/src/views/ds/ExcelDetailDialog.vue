@@ -159,13 +159,13 @@ defineExpose({
               <el-icon
                 :class="`${scope.row.fieldType}-variables`"
                 size="16"
-                style="position: absolute; top: 20px; left: 32px; z-index: 10"
+                style="position: absolute; top: 20px; left: 24px; z-index: 10"
               >
                 <component :is="iconMap[scope.row.fieldType as keyof typeof iconMap]"></component>
               </el-icon>
               <el-select
                 v-model="scope.row.fieldType"
-                style="max-width: 197px; margin-left: 8px"
+                style="max-width: 197px"
                 :placeholder="t('datasource.Please_select')"
               >
                 <el-option
