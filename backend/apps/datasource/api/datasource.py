@@ -76,26 +76,11 @@ async def check_by_id(session: SessionDep, trans: Trans,
 @system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.DATASOURCE, result_id_expr="id"))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def add(session: SessionDep, trans: Trans, user: CurrentUser, ds: CreateDatasource):
-    """ def inner():
-        return create_ds(session, trans, user, ds)
-
-    return await asyncio.to_thread(inner) """
-    loop = asyncio.get_event_loop()
-
-    def sync_wrapper():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(create_ds(session, trans, user, ds))
-        finally:
-            loop.close()
-
-    return await loop.run_in_executor(None, sync_wrapper)
+    return await create_ds(session, trans, user, ds)
 
 
 @router.post("/chooseTables/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_choose_tables")
-@require_permissions(
-    permission=SqlbotPermission(role=['ws_admin'], permission=SqlbotPermission(type='ds', keyExpression="id")))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="id"))
 async def choose_tables(session: SessionDep, trans: Trans, tables: List[CoreTable],
                         id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     def inner():
@@ -105,8 +90,7 @@ async def choose_tables(session: SessionDep, trans: Trans, tables: List[CoreTabl
 
 
 @router.post("/update", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_update")
-@require_permissions(
-    permission=SqlbotPermission(role=['ws_admin'], permission=SqlbotPermission(type='ds', keyExpression="ds.id")))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds.id"))
 @system_log(
     LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.DATASOURCE, resource_id_expr="ds.id"))
 async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
