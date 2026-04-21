@@ -195,7 +195,7 @@ class PreviewResponse(BaseModel):
 
 
 class FieldInfo(BaseModel):
-    fieldName: str
+    fieldName: object
     fieldType: str
 
 
