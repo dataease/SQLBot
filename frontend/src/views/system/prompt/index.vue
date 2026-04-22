@@ -292,7 +292,7 @@ const rules = {
   prompt: [
     {
       required: true,
-      message: t('datasource.please_enter') + t('common.empty') + t('prompt.replaced_with'),
+      message: t('prompt.replaced_with'),
     },
   ],
 }
