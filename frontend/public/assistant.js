@@ -37,7 +37,7 @@
   const chatButtonHtml = (data) => `
 <div class="sqlbot-assistant-chat-button">
   <img style="height:30px;width:30px;display:none;" src="${data.float_icon}">
-  <svg style="display:none;" data-v-39a51454="" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="none">
+  <svg style="display:none;" data-v-39a51454="" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="none">
     <path fill="#149CC5" d="M28.333 13.669h-.231c.138.758.207 1.527.206 2.298.005.946-.107 1.89-.335 2.808h.65a1.05 1.05 0 0 0 1.05-1.05V15.01a1.343 1.343 0 0 0-1.34-1.341"></path>
     <path fill="#69CAA4" d="M1.692 15.967c0-.77.068-1.54.206-2.298h-.23a1.34 1.34 0 0 0-1.342 1.34v2.716a1.05 1.05 0 0 0 1.05 1.05h.651a11.4 11.4 0 0 1-.335-2.808"></path>
     <path fill="url(#a)" d="M15 3.795c-6.89 0-12.474 5.282-12.474 12.171 0 6.89 5.585 10.239 12.474 10.239s12.474-3.35 12.474-10.238c0-6.89-5.585-12.172-12.474-12.172m3.026 17.33h-6.052a6 6 0 0 1-2.484-.535c-.564-.256-2.208.282-2.663-.127-.551-.495.117-1.969-.221-2.636a6.014 6.014 0 0 1 5.368-8.73h6.052a6.014 6.014 0 0 1 0 12.029"></path>
