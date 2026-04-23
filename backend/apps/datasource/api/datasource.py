@@ -162,6 +162,7 @@ async def get_fields(session: SessionDep,
 
 
 @router.post("/syncFields/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_sync_fields")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="id"))
 async def sync_fields(session: SessionDep, trans: Trans,
                       id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_table_id")):
     return sync_single_fields(session, trans, id)
@@ -223,6 +224,7 @@ async def edit_field(session: SessionDep, field: CoreField):
 
 
 @router.post("/previewData/{id}", response_model=PreviewResponse, summary=f"{PLACEHOLDER_PREFIX}ds_preview_data")
+@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="id"))
 async def preview_data(session: SessionDep, trans: Trans, current_user: CurrentUser, data: TableObj,
                        id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     def inner():
@@ -314,6 +316,7 @@ async def field_enum(session: SessionDep, id: int):
 
 # deprecated
 @router.post("/uploadExcel", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_upload_excel")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def upload_excel(session: SessionDep, file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
     ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
@@ -392,6 +395,7 @@ f_c_col = "字段备注"
 
 
 @router.get("/exportDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_export_ds_schema")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="id"))
 async def export_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
     # {
     #     'sheet':'', sheet name
@@ -466,6 +470,7 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
 
 
 @router.post("/uploadDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_upload_ds_schema")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="id"))
 async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
                            file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
@@ -527,6 +532,7 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
 
 
 @router.post("/parseExcel", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_parse_excel")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def parse_excel(file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
     ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
@@ -549,6 +555,7 @@ async def parse_excel(file: UploadFile = File(..., description=f"{PLACEHOLDER_PR
 
 
 @router.post("/importToDb", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_import_to_db")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequest):
     save_path = os.path.join(path, import_req.filePath)
     if not os.path.exists(save_path):
