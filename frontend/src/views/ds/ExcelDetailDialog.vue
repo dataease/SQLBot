@@ -152,7 +152,11 @@ defineExpose({
       </div>
 
       <div v-if="btnSelect === 'q'" class="field-details">
-        <el-table row-class-name="hover-icon_edit" :data="fieldList" style="width: 100%">
+        <el-table
+          row-class-name="hover-icon_edit"
+          :data="fieldList"
+          style="width: 100%; height: 100%"
+        >
           <el-table-column prop="fieldName" :label="t('datasource.field_name')" />
           <el-table-column prop="fieldType" :label="t('datasource.field_type')" width="240">
             <template #default="scope">
@@ -227,6 +231,7 @@ defineExpose({
     position: relative;
     z-index: 1;
     .field-details {
+      height: calc(100% - 78px);
       .ed-select__wrapper {
         padding-left: 32px;
       }
