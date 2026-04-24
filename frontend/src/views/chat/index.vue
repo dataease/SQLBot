@@ -190,6 +190,7 @@
             :class="{
               'no-sidebar': isCompletePage && !chatListSideBarShow,
               pad16: !isCompletePage,
+              pad8: isPhone,
             }"
           >
             <template v-for="(message, _index) in computedMessages" :key="_index">
@@ -1208,6 +1209,9 @@ onMounted(() => {
 
     &.no-sidebar {
       padding-left: 96px;
+    }
+    &.pad8 {
+      padding: 8px;
     }
 
     &.pad16 {

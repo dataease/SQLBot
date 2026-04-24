@@ -7,6 +7,7 @@ import icon_database_colorful from '@/assets/svg/icon_database_colorful.svg'
 import icon_alarm_clock_colorful from '@/assets/svg/icon_alarm-clock_colorful.svg'
 import { chatApi, type ChatLogHistory } from '@/api/chat.ts'
 import { useI18n } from 'vue-i18n'
+import { isMobile } from '@/utils/utils'
 import { debounce } from 'lodash-es'
 import LogTerm from './execution-component/LogTerm.vue'
 import LogSQLSample from './execution-component/LogSQLSample.vue'
@@ -39,6 +40,10 @@ function getLogList(recordId: any) {
 }
 
 const setDrawerSize = debounce(() => {
+  if (isMobile()) {
+    drawerSize.value = window.innerWidth + 'px'
+    return
+  }
   drawerSize.value =
     window.innerWidth < 500 ? '460px' : `${Math.max(window.innerWidth * 0.5, 600)}px`
 }, 500)
