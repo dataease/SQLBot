@@ -99,6 +99,13 @@ const rules = reactive<FormRules>({
       trigger: 'blur',
     },
   ],
+  filename: [
+    {
+      required: true,
+      message: t('datasource.please_enter') + t('common.empty') + t('ds.form.file_path'),
+      trigger: 'blur',
+    },
+  ],
 })
 
 const dialogVisible = ref<boolean>(false)
@@ -647,7 +654,16 @@ defineExpose({
             <span v-if="!form.filename" class="not_exceed">{{ $t('common.not_exceed_50mb') }}</span>
           </el-form-item>
         </div>
-        <div v-if="form.type !== 'excel'" style="margin-top: 16px">
+        <div v-if="form.type === 'sqlite'" style="margin-top: 16px">
+          <el-form-item :label="t('ds.form.file_path')" prop="filename">
+            <el-input
+              v-model="form.filename"
+              clearable
+              :placeholder="$t('datasource.please_enter') + $t('common.empty') + t('ds.form.file_path')"
+            />
+          </el-form-item>
+        </div>
+        <div v-if="form.type !== 'excel' && form.type !== 'sqlite'" style="margin-top: 16px">
           <el-form-item
             :label="form.type !== 'es' ? t('ds.form.host') : t('ds.form.address')"
             prop="host"
@@ -719,7 +735,7 @@ defineExpose({
           >
             <el-checkbox v-model="form.lowVersion" :label="t('ds.form.low_version')" />
           </el-form-item>
-          <el-form-item v-if="form.type === 'mysql'" :label="t('ds.form.ssl')" prop="ssl">
+          <el-form-item v-if="form.type === 'mysql' || form.type === 'doris'" :label="t('ds.form.ssl')" prop="ssl">
             <el-switch v-model="form.ssl" />
           </el-form-item>
           <el-form-item v-if="form.type !== 'es'" :label="t('ds.form.extra_jdbc')">

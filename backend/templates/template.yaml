@@ -348,6 +348,9 @@ template:
       <m-schema>
       {schema}
       </m-schema>
+      <sample-data>
+      {sample_data}
+      </sample-data>
       </Info>
 
     user: |

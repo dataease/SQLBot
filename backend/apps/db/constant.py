@@ -28,6 +28,8 @@ class DB(Enum):
     oracle = ('oracle', 'Oracle', '"', '"', ConnectType.sqlalchemy, 'Oracle', [])
     pg = ('pg', 'PostgreSQL', '"', '"', ConnectType.sqlalchemy, 'PostgreSQL', [])
     starrocks = ('starrocks', 'StarRocks', '`', '`', ConnectType.py_driver, 'StarRocks', [])
+    sqlite = ('sqlite', 'SQLite', '"', '"', ConnectType.sqlalchemy, 'SQLite', [])
+    hive = ('hive', 'Apache Hive', '"', '"', ConnectType.py_driver, 'Hive', [])
 
     def __init__(self, type, db_name, prefix, suffix, connect_type: ConnectType, template_name: str,
                  illegalParams: List[str]):

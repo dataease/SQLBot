@@ -36,7 +36,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj, SystemPromptMessage, HumanPromptMessage, AIPromptMessage
 from apps.data_training.curd.data_training import get_training_template
-from apps.datasource.crud.datasource import get_table_schema
+from apps.datasource.crud.datasource import get_table_schema, get_tables_sample_data
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
 from apps.datasource.embedding.ds_embedding import get_ds_embedding
 from apps.datasource.models.datasource import CoreDatasource
@@ -384,6 +384,13 @@ class LLMService:
             ds=self.ds,
             question=self.chat_question.question)
 
+        # Get sample data for all tables
+        if not self.out_ds_instance:
+            self.chat_question.sample_data = get_tables_sample_data(
+                session=_session,
+                current_user=self.current_user,
+                ds=self.ds)
+
         self.current_logs[OperationEnum.CHOOSE_TABLE] = end_log(session=_session,
                                                                 log=self.current_logs[OperationEnum.CHOOSE_TABLE],
                                                                 full_message=self.chat_question.db_schema)
@@ -504,6 +511,13 @@ class LLMService:
                 current_user=self.current_user, ds=self.ds,
                 question=self.chat_question.question,
                 embedding=False)
+
+            # Get sample data for all tables
+            if not self.out_ds_instance:
+                self.chat_question.sample_data = get_tables_sample_data(
+                    session=_session,
+                    current_user=self.current_user,
+                    ds=self.ds)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemPromptMessage(content=self.chat_question.guess_sys_question(self.articles_number)))

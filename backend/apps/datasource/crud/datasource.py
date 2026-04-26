@@ -17,7 +17,7 @@ from apps.system.schemas.auth import CacheName, CacheNamespace
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.embedding_threads import run_save_table_embeddings, run_save_ds_embeddings
-from common.utils.utils import SQLBotLogUtil, deepcopy_ignore_extra
+from common.utils.utils import SQLBotLogUtil, deepcopy_ignore_extra, equals_ignore_case
 from common.core.sqlbot_cache import cache, clear_cache
 from .table import get_tables_by_ds_id
 from ..crud.field import delete_field_by_ds_id, update_field
@@ -357,12 +357,16 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
             {where} 
             LIMIT 100"""
     elif ds.type == "dm":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}" 
-            {where} 
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}"
+            {where}
             LIMIT 100"""
     elif ds.type == "es":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}" 
-            {where} 
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}"
+            {where}
+            LIMIT 100"""
+    elif ds.type == "sqlite":
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}"
+            {where}
             LIMIT 100"""
     return exec_sql(ds, sql, True)
 
@@ -430,6 +434,79 @@ def get_table_obj_by_ds(session: SessionDep, current_user: CurrentUser, ds: Core
     return _list
 
 
+def get_table_sample_data(ds: CoreDatasource, table_name: str, fields: list) -> str:
+    """Get 3 sample rows from a table in JSON format to help AI understand the data"""
+    if not fields:
+        return ""
+
+    db = DB.get_db(ds.type)
+    # Get prefix/suffix for identifier quoting
+    prefix = db.prefix if hasattr(db, 'prefix') else '"'
+    suffix = db.suffix if hasattr(db, 'suffix') else '"'
+
+    # Build field list with proper quoting
+    field_names = []
+    for field in fields[:10]:  # Limit to first 10 fields to avoid too wide results
+        field_name = f"{prefix}{field.field_name}{suffix}"
+        field_names.append(field_name)
+
+    # Build LIMIT query based on database type
+    if equals_ignore_case(ds.type, "sqlServer"):
+        query = f"SELECT TOP 3 {','.join(field_names)} FROM {prefix}{table_name}{suffix}"
+    elif equals_ignore_case(ds.type, "ck"):
+        query = f"SELECT {','.join(field_names)} FROM {table_name} LIMIT 3"
+    elif equals_ignore_case(ds.type, "hive"):
+        query = f"SELECT {','.join(field_names)} FROM {table_name} LIMIT 3"
+    elif equals_ignore_case(ds.type, "oracle"):
+        query = f"SELECT {','.join(field_names)} FROM \"{table_name}\" WHERE ROWNUM <= 3"
+    elif equals_ignore_case(ds.type, "dm"):
+        query = f"SELECT {','.join(field_names)} FROM \"{table_name}\" WHERE ROWNUM <= 3"
+    else:
+        query = f"SELECT {','.join(field_names)} FROM {prefix}{table_name}{suffix} LIMIT 3"
+
+    try:
+        result = exec_sql(ds=ds, sql=query, origin_column=True)
+        if result and result.get('data') and len(result['data']) > 0:
+            import json
+            # Truncate long string values for readability
+            json_rows = []
+            for row in result['data'][:3]:
+                truncated_row = {}
+                for key, value in row.items():
+                    if value is None:
+                        truncated_row[key] = None
+                    elif isinstance(value, str):
+                        # Truncate long strings
+                        if len(value) > 100:
+                            value = value[:100] + '...'
+                        truncated_row[key] = value.replace('\n', ' ').replace('\r', ' ')
+                    else:
+                        truncated_row[key] = value
+                json_rows.append(truncated_row)
+            return json.dumps(json_rows, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+    return ""
+
+
+def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource,
+                          table_list: list[str] = None) -> str:
+    """Get sample data (3 rows) for all tables to help AI understand the data"""
+    table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
+    if len(table_objs) == 0:
+        return ""
+
+    sample_data_parts = []
+    for obj in table_objs:
+        if table_list is not None and obj.table.table_name not in table_list:
+            continue
+        if obj.fields:
+            sample = get_table_sample_data(ds, obj.table.table_name, obj.fields)
+            if sample:
+                sample_data_parts.append(f"# Table: {obj.table.table_name}\n{sample}")
+    return "\n".join(sample_data_parts)
+
+
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
                      embedding: bool = True, table_list: list[str] = None) -> str:
     schema_str = ""
@@ -446,7 +523,8 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
             continue
 
         schema_table = ''
-        schema_table += f"# Table: {db_name}.{obj.table.table_name}" if ds.type != "mysql" and ds.type != "es" else f"# Table: {obj.table.table_name}"
+        no_schema_types = ["mysql", "es", "sqlite", "hive", "doris", "starrocks"]
+        schema_table += f"# Table: {db_name}.{obj.table.table_name}" if ds.type not in no_schema_types and db_name else f"# Table: {obj.table.table_name}"
         table_comment = ''
         if obj.table.custom_comment:
             table_comment = obj.table.custom_comment.strip()
