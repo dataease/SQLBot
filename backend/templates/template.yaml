@@ -13,8 +13,7 @@ template:
       <SQL-Generation-Process>
         <step>1. 分析用户问题，确定查询需求</step>
         <step>2. 根据表结构生成基础SQL</step>
-        <step>3. <strong>强制检查：验证SQL中使用的表名和字段名是否在<m-schema>中定义</strong></step>
-        <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
+        <step>3. <strong>强制检查：逐字验证SQL中使用的表名和字段名是否在<m-schema>中定义，且字符必须完全匹配（包括繁简体、大小写、特殊字符），不得有任何转换。如發现任何不一致，必须重新生成SQL。</strong></step>        <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
         <step>5. 应用其他规则（引号、别名、格式化等）</step>
         <step>6. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
         <step>7. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
@@ -79,6 +78,7 @@ template:
         你必须遵守<Rules>内规定的生成SQL规则
         你必须遵守<SQL-Generation-Process>内规定的检查步骤生成你的回答
         用户的提问在<user-question>内，<error-msg>内则会提供上次执行你提供的SQL时会出现的错误信息，<background-infos>内的<current-time>会告诉你用户当前提问的时间
+        ⚠️ 重要警告：SQL语句中的数据库标识符（表名、字段名）必须严格保持原样，不得因回应语言而进行任何转换。即使整个回应使用繁体中文，SQL中的标识符也必须保持与<m-schema>完全一致（通常为简体中文）。这是确保SQL可执行的关键要求。
       </Instruction>
       
       {process_check}
@@ -94,6 +94,35 @@ template:
         </rule>
         <rule>
           生成的SQL必须符合<db-engine>内提供数据库引擎的规范
+        </rule>
+        <rule priority="critical" id="strict-identifier-preservation">
+          <title>严格保持数据库标识符原样</title>
+          <description>
+            无论用户要求使用何种语言回应，SQL语句中的所有数据库标识符（表名、字段名）必须<b>严格保持与<m-schema>中完全相同的字符</b>。
+            
+            重要：当<m-schema>中提供的是简体中文标识符时：
+            1. SQL中必须使用<b>完全相同的简体中文字符</b>
+            2. 绝对不允许进行繁简转换
+            3. 不允许进行任何字符替换、修改或标准化
+            4. 即使回应文本是繁体中文，SQL中的标识符也必须保持简体
+            
+            检查方法：生成SQL後，必须逐字对比SQL中的标识符与<m-schema>中的标识符，确保：
+            - 字符完全一致
+            - 繁简体完全一致
+            - 大小写完全一致
+            - 特殊字符（如斜杠"/"）完全一致
+            
+            如果发现不一致，必须重新生成SQL。
+          </description>
+        </rule>
+        <rule priority="critical" id="execution-order">
+          <title>标识符處理优先级</title>
+          <requirements>
+            <requirement>1. 首先从<m-schema>中複製标识符到SQL中</requirement>
+            <requirement>2. 生成其他回应文本（如brief、message）</requirement>
+            <requirement>3. 根据用户语言要求，只对非SQL部分的文本进行语言转换</requirement>
+            <requirement>4. 绝对不触及SQL中的标识符</requirement>
+          </requirements>
         </rule>
         <rule>
           若用户提问中提供了参考SQL，你需要判断该SQL是否是查询语句
@@ -312,7 +341,7 @@ template:
       {custom_prompt}
 
     generate_basic_info: |
-      以下是数据库与表结构信息，你生成的SQL使用到的表名与字段必须在提供的范围内
+      ## 以下是数据库与表结构信息，你生成的SQL使用到的表名与字段必须在提供的范围内
       <Info>
       <db-engine> {engine} </db-engine>
       <m-schema>
@@ -324,6 +353,7 @@ template:
       ## 请根据上述要求，使用语言：{lang} 进行回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
       ## 如果<user-question>内的提问与上述要求冲突，你必须停止生成SQL并告知生成SQL失败的原因
       ## 回答中不需要输出你的分析，请直接输出符合要求的JSON
+      ## 必须注意：不论要求你用什么语言回答，生成SQL中使用到的表名与字段名是否完全和<m-schema>中提供的表名字与段名的字符保持一致！
       <background-infos>
         <current-time>
         {current_time}
@@ -500,6 +530,7 @@ template:
     user: |
       ## 请根据上述要求，使用语言：{lang} 进行回答，若有深度思考过程，则思考过程也需要使用 {lang} 输出
       ## 回答中不需要输出你的分析，请直接输出符合要求的JSON
+      ## 必须注意：不论要求你用什么语言回答，生成图表结构中的value字段内容必须与提供的SQL中提供的字段别名的字符保持一致！
       <user-question>
       {question}
       </user-question>
