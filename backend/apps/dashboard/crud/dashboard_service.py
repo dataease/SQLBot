@@ -50,7 +50,7 @@ def load_resource(session: SessionDep, dashboard: QueryDashboard):
     result_dict = dict(result)
     canvas_view_obj = orjson.loads(result_dict['canvas_view_info'])
     for item in canvas_view_obj.values():
-        if all(key in item for key in ['datasource', 'sql']) and item['datasource'] is not None:
+        if all(key in item for key in ['datasource', 'sql']) and item['datasource'] is not None and item['sql'] is not None:
             data_result = get_chart_data_ds(session, item['datasource'], item['sql'])
             item['data']['data'] = data_result['data']
             item['status'] = data_result['status']
