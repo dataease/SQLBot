@@ -143,7 +143,7 @@ class DatasourceConf(BaseModel):
 
 
 class TableSchema:
-    def __init__(self, attr1, attr2):
+    def __init__(self, attr1, attr2=None):
         self.tableName = attr1
         self.tableComment = attr2 if attr2 is None or isinstance(attr2, str) else attr2.decode("utf-8")
 
