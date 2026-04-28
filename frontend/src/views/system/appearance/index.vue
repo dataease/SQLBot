@@ -260,7 +260,7 @@
                       "
                       type="textarea"
                       show-word-limit
-                      maxlength="50"
+                      maxlength="250"
                     />
                   </div>
                 </div>
@@ -377,8 +377,8 @@ const defaultTopForm = {
   help: 'https://dataease.cn/sqlbot/v1/',
   showDoc: '0',
   showAbout: '0',
-  pc_welcome: '你好，我是 SQLBot ',
-  pc_welcome_desc: `我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～`,
+  pc_welcome: t('embedded.i_am_sqlbot'),
+  pc_welcome_desc: t("qa.hint_description"),
 }
 
 const topForm = reactive<{
