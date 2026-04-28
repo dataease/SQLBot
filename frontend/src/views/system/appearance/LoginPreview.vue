@@ -62,22 +62,14 @@
                 <el-form-item class="login-form-item" prop="username">
                   <el-input
                     readonly
-                    :placeholder="
-                      $t('datasource.please_enter') +
-                      $t('common.empty') +
-                      $t('common.your_account_email_address')
-                    "
+                    :placeholder="$t('common.your_account_email_address')"
                     autofocus
                   />
                 </el-form-item>
                 <el-form-item prop="password">
                   <el-input
                     readonly
-                    :placeholder="
-                      $t('datasource.please_enter') +
-                      $t('common.empty') +
-                      $t('common.enter_your_password')
-                    "
+                    :placeholder="$t('common.enter_your_password')"
                     show-password
                     maxlength="30"
                     show-word-limit
