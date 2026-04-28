@@ -10,8 +10,8 @@ import redshift from '@/assets/datasource/icon_redshift.png'
 import es from '@/assets/datasource/icon_es.png'
 import kingbase from '@/assets/datasource/icon_kingbase.png'
 import starrocks from '@/assets/datasource/icon_starrocks.png'
-import sqlite_icon from '@/assets/datasource/icon_starrocks.png'
-import hive_icon from '@/assets/datasource/icon_starrocks.png'
+import sqlite_icon from '@/assets/datasource/icon_sqlite.png'
+import hive_icon from '@/assets/datasource/icon_hive.png'
 import { i18n } from '@/i18n'
 
 const t = i18n.global.t
