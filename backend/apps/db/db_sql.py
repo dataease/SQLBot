@@ -271,11 +271,10 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                     c.DATA_TYPE      AS "DATA_TYPE",
                     COALESCE(com.COMMENTS, '') AS "COMMENTS"
                 FROM 
-                    ALL_TAB_COLS c
+                    ALL_TAB_COLUMNS c
                 LEFT JOIN 
                     ALL_COL_COMMENTS com 
-                    ON c.OWNER = com.OWNER 
-                   AND c.TABLE_NAME = com.TABLE_NAME 
+                    ON c.TABLE_NAME = com.TABLE_NAME 
                    AND c.COLUMN_NAME = com.COLUMN_NAME
                 WHERE 
                     c.OWNER = :param1
