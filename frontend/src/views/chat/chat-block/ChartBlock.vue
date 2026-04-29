@@ -219,8 +219,6 @@ const showLabel = ref(false)
 function addToDashboard() {
   const recordeInfo = {
     id: '1-1',
-    sourceRecordId: props.message?.record.id,
-    sourceChatId: props.message?.record.chat_id,
     data: {
       data: data.value,
     },
