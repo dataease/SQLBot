@@ -6,6 +6,7 @@ import urllib.parse
 import warnings
 from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime
+from dis import specialized
 from typing import Any, List, Optional, Union, Dict, Iterator
 
 import orjson
@@ -174,7 +175,13 @@ class LLMService:
 
     @classmethod
     async def create(cls, *args, **kwargs):
-        config: LLMConfig = await get_default_config()
+        specialized_model_id = None
+        if args[3]:
+            if args[3].enable_custom_model:
+                if args[3].custom_model:
+                    specialized_model_id = args[3].custom_model
+                    print("use custom model: id[" + args[3].custom_model + "]")
+        config: LLMConfig = await get_default_config(specialized_model_id)
         instance = cls(*args, **kwargs, config=config)
 
         chat_params: list[SysArgModel] = await get_groups(args[0], "chat")

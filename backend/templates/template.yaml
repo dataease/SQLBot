@@ -87,7 +87,7 @@ template:
     generate_rules: |
       以下是你必须遵守的规则和可以参考的基础示例：
       <Rules>
-        <rule>
+        <rule priority="critical">
           你只能生成查询用的SQL语句，不得生成增删改相关或操作数据库以及操作数据库数据的SQL
         </rule>
         <rule>

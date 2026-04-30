@@ -665,6 +665,7 @@
     "application_name": "애플리케이션 이름",
     "application_description": "애플리케이션 설명",
     "cross_domain_settings": "교차 도메인 설정",
+    "enableCustomModel": "지정된 모델 사용",
     "third_party_address": "임베디드할 제3자 주소를 입력하십시오, 여러 항목을 세미콜론으로 구분",
     "set_to_private": "비공개로 설정",
     "set_to_public": "공개로 설정",

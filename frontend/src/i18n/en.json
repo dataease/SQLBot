@@ -665,6 +665,7 @@
     "application_name": "Application name",
     "application_description": "Application description",
     "cross_domain_settings": "Cross-domain settings",
+    "enableCustomModel": "Use specified model",
     "third_party_address": "Please enter the embedded third party address,multiple items separated by semicolons",
     "set_to_private": "Set as private",
     "set_to_public": "Set as public",
