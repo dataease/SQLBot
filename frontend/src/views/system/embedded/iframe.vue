@@ -20,6 +20,7 @@ import { getList, updateAssistant, saveAssistant, delOne, dsApi } from '@/api/em
 import { useI18n } from 'vue-i18n'
 import { cloneDeep } from 'lodash-es'
 import { useUserStore } from '@/stores/user.ts'
+import { modelApi } from '@/api/system.ts'
 
 const userStore = useUserStore()
 defineProps({
@@ -59,6 +60,8 @@ const defaultEmbedded = {
   description: '',
   configuration: '',
   domain: '',
+  enable_custom_model: false,
+  custom_model: '',
 }
 const currentEmbedded = reactive<any>(cloneDeep(defaultEmbedded))
 
@@ -98,9 +101,32 @@ const dsListOptions = ref<any[]>([])
 const embeddedListWithSearch = computed(() => {
   if (!keywords.value) return embeddedList.value
   return embeddedList.value.filter((ele: any) =>
-    ele.name.toLowerCase().includes(keywords.value.toLowerCase())
+    ele.name.toLowerCase().includes(keywords.value.toLowerCase()),
   )
 })
+
+interface Model {
+  name: string
+  model_type: string
+  base_model: string
+  id: string
+  default_model: boolean
+  supplier: number
+}
+
+const modelList =ref<Array<Model>>([])
+
+const searchModels = () => {
+  searchLoading.value = true
+  modelApi
+    .queryAll()
+    .then((res: any) => {
+      modelList.value = res
+    })
+    .finally(() => {
+      searchLoading.value = false
+    })
+}
 
 const userTypeList = [
   {
@@ -147,6 +173,9 @@ const handleBaseEmbedded = (row: any) => {
   }
   getDsList()
   ruleConfigvVisible.value = true
+
+  searchModels()
+
   dialogTitle.value = row?.id
     ? t('embedded.edit_basic_applications')
     : t('embedded.create_basic_application')
@@ -166,6 +195,9 @@ const handleAdvancedEmbedded = (row: any) => {
     Object.assign(urlForm, tempData)
   }
   ruleConfigvVisible.value = true
+
+  searchModels()
+
   dialogTitle.value = row?.id
     ? t('embedded.edit_advanced_applications')
     : t('embedded.creating_advanced_applications')
@@ -275,8 +307,8 @@ const validateUrl = (_: any, value: any, callback: any) => {
   if (value === '') {
     callback(
       new Error(
-        t('datasource.please_enter') + t('common.empty') + t('embedded.cross_domain_settings')
-      )
+        t('datasource.please_enter') + t('common.empty') + t('embedded.cross_domain_settings'),
+      ),
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
@@ -320,7 +352,7 @@ const dsRules = {
 const validatePass = (_: any, value: any, callback: any) => {
   if (value === '') {
     callback(
-      new Error(t('datasource.please_enter') + t('common.empty') + t('embedded.interface_url'))
+      new Error(t('datasource.please_enter') + t('common.empty') + t('embedded.interface_url')),
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
@@ -438,6 +470,9 @@ const saveEmbedded = () => {
       if (!currentEmbedded.id) {
         delete obj.id
       }
+      if (obj.custom_model == undefined){
+        obj.custom_model = ''
+      }
       req(obj).then(() => {
         ElMessage({
           type: 'success',
@@ -491,29 +526,29 @@ const handleEmbedded = (row: any) => {
 }
 const copyJsCode = () => {
   copy(jsCodeElement.value)
-    .then(function () {
+    .then(function() {
       ElMessage.success(t('embedded.copy_successful'))
     })
-    .catch(function () {
+    .catch(function() {
       ElMessage.error(t('embedded.copy_failed'))
     })
 }
 
 const copyJsCodeFull = () => {
   copy(jsCodeElementFull.value)
-    .then(function () {
+    .then(function() {
       ElMessage.success(t('embedded.copy_successful'))
     })
-    .catch(function () {
+    .catch(function() {
       ElMessage.error(t('embedded.copy_failed'))
     })
 }
 const copyCode = () => {
   copy(scriptElement.value)
-    .then(function () {
+    .then(function() {
       ElMessage.success(t('embedded.copy_successful'))
     })
-    .catch(function () {
+    .catch(function() {
       ElMessage.error(t('embedded.copy_failed'))
     })
 }
@@ -713,7 +748,7 @@ const saveHandler = () => {
         <div v-if="editRule !== 2" class="flex-center" style="width: 100%">
           <el-steps custom style="max-width: 500px; flex: 1" :active="activeStep" align-center>
             <el-step>
-              <template #title> {{ $t('embedded.basic_information') }} </template>
+              <template #title> {{ $t('embedded.basic_information') }}</template>
             </el-step>
             <el-step>
               <template #title>
@@ -784,6 +819,25 @@ const saveHandler = () => {
                   autocomplete="off"
                 />
               </el-form-item>
+
+              <el-form-item prop="enable_custom_model">
+                <el-checkbox v-model="currentEmbedded.enable_custom_model" >
+                  {{t('embedded.enableCustomModel')}}
+                </el-checkbox>
+              </el-form-item>
+
+              <el-form-item prop="custom_model" :label="t('modelType.llm')"
+                            v-if="currentEmbedded.enable_custom_model">
+                <el-select v-model="currentEmbedded.custom_model" clearable filterable>
+                  <el-option
+                    v-for="item in modelList"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  />
+                </el-select>
+              </el-form-item>
+
             </el-form>
           </div>
         </el-scrollbar>
@@ -959,7 +1013,7 @@ const saveHandler = () => {
                   <div class="private-list">
                     {{ t('embedded.set_data_source') }}
                     <span :title="$t('embedded.open_the_query')" class="open-the_query ellipsis"
-                      >{{ $t('embedded.open_the_query') }}
+                    >{{ $t('embedded.open_the_query') }}
                     </span>
                   </div>
                 </template>
@@ -991,7 +1045,7 @@ const saveHandler = () => {
       </div>
 
       <template #footer>
-        <el-button secondary @click="beforeClose"> {{ $t('common.cancel') }} </el-button>
+        <el-button secondary @click="beforeClose"> {{ $t('common.cancel') }}</el-button>
         <el-button v-if="activeStep === 1 && editRule !== 2" secondary @click="preview">
           {{ t('ds.previous') }}
         </el-button>
@@ -1177,6 +1231,7 @@ const saveHandler = () => {
     padding-bottom: 0;
     height: auto;
   }
+
   .tool-left {
     display: flex;
     align-items: center;
@@ -1189,6 +1244,7 @@ const saveHandler = () => {
       font-size: 20px;
       line-height: 28px;
     }
+
     .title {
       font-weight: 500;
       font-size: 20px;
@@ -1212,12 +1268,14 @@ const saveHandler = () => {
       .ed-button:not(.is-active) {
         color: #1f2329;
       }
+
       .ed-button.is-text {
         height: 24px;
         width: auto;
         padding: 0 8px;
         line-height: 24px;
       }
+
       .ed-button + .ed-button {
         margin-left: 4px;
       }
@@ -1246,6 +1304,7 @@ const saveHandler = () => {
     padding-left: 0;
     padding-right: 0;
   }
+
   .title {
     font-weight: 500;
     font-size: 16px;
@@ -1263,6 +1322,7 @@ const saveHandler = () => {
   .private-list {
     display: flex;
     align-items: center;
+
     .open-the_query {
       color: #ff8800;
       margin-left: 4px;
@@ -1278,6 +1338,7 @@ const saveHandler = () => {
 
     .card {
       width: 392px;
+
       &:nth-child(even) {
         margin-right: 0;
       }
@@ -1292,6 +1353,7 @@ const saveHandler = () => {
     width: 100%;
     height: 100%;
     padding-bottom: 24px;
+
     & > .ed-scrollbar {
       .scroll-content {
         width: 800px;
@@ -1303,6 +1365,7 @@ const saveHandler = () => {
       &:last-child {
         margin-bottom: 0;
       }
+
       .aes-encrypt-tips {
         font-weight: 400;
         font-size: 14px;
@@ -1368,9 +1431,11 @@ const saveHandler = () => {
         color: #646a73;
         height: 24px;
       }
+
       .ed-button:not(.is-disabled):hover {
         background: #1f23291a;
       }
+
       .ed-button + .ed-button {
         margin-left: 8px;
       }
@@ -1397,6 +1462,7 @@ const saveHandler = () => {
       padding: 4px;
       position: relative;
     }
+
     .popover-item {
       min-height: 98px;
       display: flex;
@@ -1406,6 +1472,7 @@ const saveHandler = () => {
       border-radius: 4px;
       cursor: pointer;
       padding-top: 8px;
+
       &:hover {
         background: #1f23291a;
       }
@@ -1437,6 +1504,7 @@ const saveHandler = () => {
 .embed-third_party {
   .floating-window {
     width: 552px;
+
     .mode {
       display: flex;
       align-items: center;
@@ -1474,6 +1542,7 @@ const saveHandler = () => {
         border-color: var(--ed-color-primary, #1cba90);
       }
     }
+
     .line {
       background-color: #1f232926;
       width: calc(100% - 32px);
@@ -1483,6 +1552,7 @@ const saveHandler = () => {
 
     .code {
       padding: 16px;
+
       .copy {
         display: flex;
         align-items: center;
@@ -1494,6 +1564,7 @@ const saveHandler = () => {
         .ed-icon {
           cursor: pointer;
           position: relative;
+
           &:hover {
             &::after {
               content: '';

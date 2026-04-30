@@ -117,6 +117,8 @@
   "assistant_type": "助手类型(0: 基础, 1: 高级, 4: 页面)",
   "assistant_configuration": "配置",
   "assistant_description": "描述",
+  "assistant_enableCustomModel": "使用指定大模型",
+  "assistant_customModel": "大语言模型",
 
   "system_embedded_api": "页面嵌入式api",
   "embedded_resetsecret_api": "重置 Secret",

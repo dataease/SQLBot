@@ -665,6 +665,7 @@
     "application_name": "应用名称",
     "application_description": "应用描述",
     "cross_domain_settings": "跨域设置",
+    "enableCustomModel": "使用指定大模型",
     "third_party_address": "请输入嵌入的第三方地址，多个以分号分割",
     "set_to_private": "设为私有",
     "set_to_public": "设为公共",

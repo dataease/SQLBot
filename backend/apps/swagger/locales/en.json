@@ -117,6 +117,8 @@
   "assistant_type": "Assistant Type (0: Basic, 1: Advanced, 4: Page)",
   "assistant_configuration": "Configuration",
   "assistant_description": "Description",
+  "assistant_enableCustomModel": "Use specified model",
+  "assistant_customModel": "Large Language Model",
 
   "system_embedded_api": "Page Embedded API",
   "embedded_resetsecret_api": "Reset Secret",

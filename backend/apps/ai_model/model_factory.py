@@ -14,6 +14,8 @@ from common.utils.crypto import sqlbot_decrypt
 from common.utils.utils import prepare_model_arg
 from langchain_community.llms import VLLMOpenAI
 from langchain_openai import AzureChatOpenAI
+
+
 # from langchain_community.llms import Tongyi, VLLM
 
 class LLMConfig(BaseModel):
@@ -24,16 +26,17 @@ class LLMConfig(BaseModel):
     api_key: Optional[str] = None
     api_base_url: Optional[str] = None
     additional_params: Dict[str, Any] = {}
+
     class Config:
         frozen = True
 
     def __hash__(self):
         if hasattr(self, 'additional_params') and isinstance(self.additional_params, dict):
-            hashable_params = frozenset((k, tuple(v) if isinstance(v, (list, dict)) else v) 
-                            for k, v in self.additional_params.items())
+            hashable_params = frozenset((k, tuple(v) if isinstance(v, (list, dict)) else v)
+                                        for k, v in self.additional_params.items())
         else:
             hashable_params = None
-        
+
         return hash((
             self.model_id,
             self.model_type,
@@ -61,6 +64,7 @@ class BaseLLM(ABC):
         """Return the langchain LLM instance"""
         return self._llm
 
+
 class OpenAIvLLM(BaseLLM):
     def _init_llm(self) -> VLLMOpenAI:
         return VLLMOpenAI(
@@ -70,6 +74,7 @@ class OpenAIvLLM(BaseLLM):
             streaming=True,
             **self.config.additional_params,
         )
+
 
 class OpenAIAzureLLM(BaseLLM):
     def _init_llm(self) -> AzureChatOpenAI:
@@ -88,6 +93,8 @@ class OpenAIAzureLLM(BaseLLM):
             streaming=True,
             **self.config.additional_params,
         )
+
+
 class OpenAILLM(BaseLLM):
     def _init_llm(self) -> BaseChatModel:
         return BaseChatOpenAI(
@@ -138,11 +145,15 @@ class LLMFactory:
     return config """
 
 
-async def get_default_config() -> LLMConfig:
+async def get_default_config(custom_model_id: Optional[int] = None) -> LLMConfig:
     with Session(engine) as session:
-        db_model = session.exec(
-            select(AiModelDetail).where(AiModelDetail.default_model == True)
-        ).first()
+        db_model: AiModelDetail | None = None
+        if custom_model_id:
+            db_model = session.get(AiModelDetail, custom_model_id)
+        if not db_model:
+            db_model = session.exec(
+                select(AiModelDetail).where(AiModelDetail.default_model == True)
+            ).first()
         if not db_model:
             raise Exception("The system default model has not been set")
 
@@ -150,14 +161,14 @@ async def get_default_config() -> LLMConfig:
         if db_model.config:
             try:
                 config_raw = json.loads(db_model.config)
-                additional_params = {item["key"]: prepare_model_arg(item.get('val')) for item in config_raw if "key" in item and "val" in item}
+                additional_params = {item["key"]: prepare_model_arg(item.get('val')) for item in config_raw if
+                                     "key" in item and "val" in item}
             except Exception:
                 pass
         if not db_model.api_domain.startswith("http"):
             db_model.api_domain = await sqlbot_decrypt(db_model.api_domain)
             if db_model.api_key:
                 db_model.api_key = await sqlbot_decrypt(db_model.api_key)
-            
 
         # 构造 LLMConfig
         return LLMConfig(

@@ -24,13 +24,14 @@ config = context.config
 
 # from apps.system.models.user import SQLModel  # noqa
 # from apps.settings.models.setting_models import SQLModel
-from apps.chat.models.chat_model import SQLModel
-from apps.terminology.models.terminology_model import SQLModel
+#from apps.chat.models.chat_model import SQLModel
+#from apps.terminology.models.terminology_model import SQLModel
 #from apps.custom_prompt.models.custom_prompt_model import SQLModel
-from apps.data_training.models.data_training_model import SQLModel
+#from apps.data_training.models.data_training_model import SQLModel
 # from apps.dashboard.models.dashboard_model import SQLModel
 from common.core.config import settings # noqa
 #from apps.datasource.models.datasource import SQLModel
+from apps.system.models.system_model import SQLModel
 
 target_metadata = SQLModel.metadata
 
