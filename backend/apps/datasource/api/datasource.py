@@ -162,7 +162,7 @@ async def get_fields(session: SessionDep,
 
 
 @router.post("/syncFields/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_sync_fields")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="id"))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def sync_fields(session: SessionDep, trans: Trans,
                       id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_table_id")):
     return sync_single_fields(session, trans, id)
