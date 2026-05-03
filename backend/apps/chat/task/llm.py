@@ -1318,6 +1318,7 @@ class LLMService:
                                                                                  'count': len(result.get('data'))})
 
             _data = DataFormat.convert_large_numbers_in_object_array(result.get('data'))
+            _data = DataFormat.normalize_qualified_sql_column_keys_in_object_array(_data)
             result["data"] = _data
 
             self.save_sql_data(session=_session, data_obj=result)

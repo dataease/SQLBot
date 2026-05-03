@@ -211,7 +211,7 @@ def format_json_list_data(origin_data: list[dict]):
                         if len(decimal_str) > 15:
                             value = str(value)
             _row[key] = value
-        data.append(_row)
+        data.append(DataFormat.normalize_qualified_sql_column_keys(_row))
 
     return data
 
@@ -253,6 +253,7 @@ def get_chart_data_ds(session: SessionDep,ds_id,sql):
         else:
             result = exec_sql(ds=datasource,sql=sql, origin_column=False)
             _data = DataFormat.convert_large_numbers_in_object_array(result.get('data'))
+            _data = DataFormat.normalize_qualified_sql_column_keys_in_object_array(_data)
             json_result['data'] = _data
             return json_result
     except Exception as e:
