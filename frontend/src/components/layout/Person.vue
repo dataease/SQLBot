@@ -154,7 +154,7 @@ const logout = async () => {
           </el-icon>
           <div class="datasource-name">API Key</div>
         </div>
-        <el-popover :teleported="false" popper-class="system-language" placement="right">
+        <el-popover popper-class="system-language" placement="right">
           <template #reference>
             <div class="popover-item">
               <el-icon size="16">
@@ -368,6 +368,7 @@ const logout = async () => {
 }
 
 .system-language.system-language {
+  z-index: 6000 !important;
   padding: 4px 4px 2px 4px;
   width: 240px !important;
   box-shadow: 0px 4px 8px 0px #1f23291a;

@@ -140,6 +140,11 @@ const routerList = computed(() => {
     }
   }
 }
+
+/* 问数侧栏折叠时，设置等子菜单浮层需盖过下方历史区与主内容区 */
+.menu-left-sub-popup {
+  z-index: 6000 !important;
+}
 .ed-sub-menu {
   .subTitleMenu {
     display: none;

@@ -8,7 +8,7 @@ template:
       <step>5. 应用其他规则（引号、别名、格式化等）</step>
       <step>6. <strong>最终验证：GROUP BY查询的ROWNUM位置是否正确？</strong></step>
       <step>7. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
-      <step>8. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
+      <step>8. 确定图表类型（根据规则选择table/column/bar/line/pie/scatter）</step>
       <step>9. 确定对话标题</step>
       <step>10. 生成JSON结果</step>
       <step>11. <strong>强制检查：JSON格式是否正确</strong></step>

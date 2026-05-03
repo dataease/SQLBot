@@ -5,7 +5,7 @@ from typing import Optional, List
 
 import orjson
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, select
 from starlette.responses import JSONResponse
@@ -13,7 +13,8 @@ from starlette.responses import JSONResponse
 from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user, get_chat_predict_data_with_user, \
     list_chats, get_chat_with_records, create_chat, rename_chat, \
     delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
-    format_json_data, format_json_list_data, get_chart_config, list_recent_questions, get_chat as get_chat_exec, \
+    format_json_data, format_json_list_data, get_chart_config, list_recent_questions, list_popular_questions, \
+    get_chat as get_chat_exec, \
     rename_chat_with_user, get_chat_log_history, get_chart_data_with_user_live
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
     ChatInfo, Chat, ChatFinishStep
@@ -32,6 +33,17 @@ router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 @router.get("/list", response_model=List[Chat], summary=f"{PLACEHOLDER_PREFIX}get_chat_list")
 async def chats(session: SessionDep, current_user: CurrentUser):
     return list_chats(session, current_user)
+
+
+@router.get("/popular_questions", summary=f"{PLACEHOLDER_PREFIX}popular_questions_workspace")
+async def popular_questions(
+    session: SessionDep, current_user: CurrentUser, limit: int = Query(8, ge=1, le=50)
+):
+    """工作空间内提问频次统计（排除首条占位记录）。"""
+    def inner():
+        return list_popular_questions(session=session, current_user=current_user, limit=limit)
+
+    return await asyncio.to_thread(inner)
 
 
 @router.get("/{chart_id}", response_model=ChatInfo, summary=f"{PLACEHOLDER_PREFIX}get_chat")

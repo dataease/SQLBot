@@ -329,8 +329,8 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
 
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
     sql: str = ""
-    if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks":
-        sql = f"""SELECT `{"`, `".join(fields)}` FROM `{data.table.table_name}` 
+    if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks" or ds.type == "hive":
+        sql = f"""SELECT `{"`, `".join(fields)}` FROM `{conf.database}`.`{data.table.table_name}` 
             {where} 
             LIMIT 100"""
     elif ds.type == "sqlServer":

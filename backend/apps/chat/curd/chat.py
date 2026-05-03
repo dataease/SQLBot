@@ -20,6 +20,8 @@ from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
 from common.utils.utils import extract_nested_json, SQLBotLogUtil
 
+from apps.chat.utils.popular_questions_cluster import cluster_questions_for_datasource
+
 
 def get_chat_record_by_id(session: SessionDep, record_id: int):
     record: ChatRecord | None = None
@@ -64,6 +66,58 @@ def list_recent_questions(session: SessionDep, current_user: CurrentUser, dataso
         .all()
     )
     return [record[0] for record in chat_records] if chat_records else []
+
+
+def list_popular_questions(session: SessionDep, current_user: CurrentUser, limit: int = 8) -> List[Dict[str, Any]]:
+    """按数据源 + 语义合并统计热门问题（同一数据源内相近问句合并，非纯字面 group_by）。"""
+    oid = current_user.oid if current_user.oid is not None else 1
+    limit = min(max(limit, 1), 50)
+    cnt = func.count(ChatRecord.id).label('cnt')
+    rows = (
+        session.query(Chat.datasource, ChatRecord.question, cnt)
+        .join(Chat, ChatRecord.chat_id == Chat.id)
+        .filter(
+            Chat.oid == oid,
+            Chat.create_by == current_user.id,
+            Chat.datasource.isnot(None),
+            ChatRecord.question.isnot(None),
+            ChatRecord.question != '',
+            ChatRecord.first_chat.isnot(True),
+        )
+        .group_by(Chat.datasource, ChatRecord.question)
+        .order_by(desc(cnt))
+        .limit(400)
+        .all()
+    )
+    by_ds: Dict[Any, List[tuple]] = {}
+    for ds_id, question, c in rows:
+        by_ds.setdefault(ds_id, []).append((question, int(c)))
+
+    ds_ids = [k for k in by_ds.keys() if k is not None]
+    id_to_name: Dict[Any, str] = {}
+    if ds_ids:
+        ds_rows = session.query(CoreDatasource.id, CoreDatasource.name).filter(
+            CoreDatasource.id.in_(ds_ids),
+            CoreDatasource.oid == oid,
+        ).all()
+        id_to_name = {r[0]: r[1] for r in ds_rows}
+
+    flat: List[Dict[str, Any]] = []
+    for ds_id, weighted in by_ds.items():
+        if ds_id is None:
+            continue
+        for rep_q, total in cluster_questions_for_datasource(weighted):
+            flat.append(
+                {
+                    'datasource_id': int(ds_id),
+                    'datasource_name': id_to_name.get(ds_id) or '',
+                    'question': rep_q,
+                    'count': total,
+                }
+            )
+
+    flat.sort(key=lambda x: (-x['count'], x.get('datasource_name') or ''))
+    return flat[:limit]
 
 
 def rename_chat_with_user(session: SessionDep, current_user: CurrentUser, rename_object: RenameChat) -> str:

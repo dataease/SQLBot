@@ -293,6 +293,7 @@
     "data_predict": "資料預測",
     "data_regenerated": "重新產生",
     "chat_search": "搜尋",
+    "chat_history_section": "歷史會話",
     "thinking": "思考中",
     "thinking_step": "思考過程",
     "ask_again": "重新產生",
@@ -303,7 +304,8 @@
     "rename_conversation_title": "重新命名對話標題",
     "conversation_title": "對話標題",
     "copied": "已複製",
-    "ask_failed": "問數失敗"
+    "ask_failed": "問數失敗",
+    "home_quick_cards_title": "熱門問題"
   },
   "ds": {
     "title": "資料來源",
@@ -739,7 +741,8 @@
       "bar": "橫條圖",
       "column": "柱狀圖",
       "line": "折線圖",
-      "pie": "圓餅圖"
+      "pie": "圓餅圖",
+      "scatter": "散佈圖"
     },
     "hide_label": "隱藏標籤",
     "show_label": "顯示標籤",

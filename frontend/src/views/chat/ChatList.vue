@@ -296,12 +296,13 @@ const handleConfirmPassword = () => {
 
   padding-left: 16px;
   padding-right: 16px;
+  padding-top: 2px;
   width: 100%;
 
   display: flex;
   flex-direction: column;
 
-  gap: 16px;
+  gap: 8px;
 
   .group {
     display: flex;
@@ -310,11 +311,11 @@ const handleConfirmPassword = () => {
     .group-title {
       padding: 0 8px;
       color: rgba(100, 106, 115, 1);
-      line-height: 20px;
+      line-height: 18px;
       font-weight: 500;
       font-size: 12px;
 
-      margin-bottom: 4px;
+      margin-bottom: 2px;
 
       .expand {
         transform: rotate(-90deg);

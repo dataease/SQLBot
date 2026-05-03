@@ -293,6 +293,7 @@
     "data_predict": "데이터 예측",
     "data_regenerated": "재생성",
     "chat_search": "검색",
+    "chat_history_section": "대화 기록",
     "thinking": "생각 중",
     "thinking_step": "사고 과정",
     "ask_again": "다시 생성",
@@ -303,7 +304,8 @@
     "rename_conversation_title": "대화 제목 이름 바꾸기",
     "conversation_title": "대화 제목",
     "copied": "복사됨",
-    "ask_failed": "데이터 조회 실패"
+    "ask_failed": "데이터 조회 실패",
+    "home_quick_cards_title": "인기 질문"
   },
   "ds": {
     "title": "데이터 소스",
@@ -739,7 +741,8 @@
       "bar": "막대 차트",
       "column": "세로 막대 차트",
       "line": "선 차트",
-      "pie": "원형 차트"
+      "pie": "원형 차트",
+      "scatter": "분산형 차트"
     },
     "hide_label": "라벨 숨기기",
     "show_label": "라벨 표시",

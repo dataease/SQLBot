@@ -293,6 +293,7 @@
     "data_predict": "Data Prediction",
     "data_regenerated": "Regenerate",
     "chat_search": "Search",
+    "chat_history_section": "Chat history",
     "thinking": "Thinking",
     "thinking_step": "Thought Process",
     "ask_again": "Regenerate",
@@ -303,7 +304,8 @@
     "rename_conversation_title": "Rename conversation title",
     "conversation_title": "Conversation title",
     "copied": "Copied",
-    "ask_failed": "Q&A failed"
+    "ask_failed": "Q&A failed",
+    "home_quick_cards_title": "Popular questions"
   },
   "ds": {
     "title": "Data Sources",
@@ -739,7 +741,8 @@
       "bar": "Bar",
       "column": "Column",
       "line": "Line",
-      "pie": "Pie"
+      "pie": "Pie",
+      "scatter": "Scatter"
     },
     "hide_label": "Hide Label",
     "show_label": "Show Label",

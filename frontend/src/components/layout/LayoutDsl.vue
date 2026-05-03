@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onBeforeMount, watch } from 'vue'
 import Menu from './Menu.vue'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import Workspace from './Workspace.vue'
@@ -12,7 +12,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useEmitt } from '@/utils/useEmitt'
 import { isMobile } from '@/utils/utils'
-import { onBeforeMount } from 'vue'
 
 const isPhone = computed(() => {
   return isMobile()
@@ -58,17 +57,67 @@ const route = useRoute()
 const showSysmenu = computed(() => {
   return route.path.includes('/system')
 })
+const isChatRoute = computed(() => route.path.startsWith('/chat'))
+const CHAT_LEFT_WIDTH_KEY = 'sqlbot-layout-chat-left-width'
+const leftPanelWidth = ref(280)
+let resizeActive = false
+
+function onChatResizeStart(e: MouseEvent) {
+  if (!isChatRoute.value || isPhone.value) return
+  e.preventDefault()
+  resizeActive = true
+  const startX = e.clientX
+  const startW = leftPanelWidth.value
+  const onMove = (ev: MouseEvent) => {
+    if (!resizeActive) return
+    const dx = ev.clientX - startX
+    leftPanelWidth.value = Math.min(520, Math.max(220, startW + dx))
+  }
+  const onUp = () => {
+    resizeActive = false
+    localStorage.setItem(CHAT_LEFT_WIDTH_KEY, String(leftPanelWidth.value))
+    window.removeEventListener('mousemove', onMove)
+    window.removeEventListener('mouseup', onUp)
+  }
+  window.addEventListener('mousemove', onMove)
+  window.addEventListener('mouseup', onUp)
+}
+
+watch(isChatRoute, (chat) => {
+  if (chat) {
+    const s = localStorage.getItem(CHAT_LEFT_WIDTH_KEY)
+    if (s) {
+      const n = parseInt(s, 10)
+      if (!Number.isNaN(n)) {
+        leftPanelWidth.value = Math.min(520, Math.max(220, n))
+      }
+    }
+  }
+})
+
 onBeforeMount(() => {
   if (isPhone.value) {
     collapse.value = true
     collapseCopy.value = true
   }
+  const s = localStorage.getItem(CHAT_LEFT_WIDTH_KEY)
+  if (s) {
+    const n = parseInt(s, 10)
+    if (!Number.isNaN(n)) {
+      leftPanelWidth.value = Math.min(520, Math.max(220, n))
+    }
+  }
 })
 </script>
 
 <template>
-  <div class="system-layout">
-    <div class="left-side" :class="collapse && 'left-side-collapse'">
+  <div class="system-layout" :class="{ 'system-layout--chat': isChatRoute }">
+    <div
+      class="left-side"
+      :class="[collapse && !isChatRoute && 'left-side-collapse', isChatRoute && 'left-side--chat']"
+      :style="isChatRoute ? { width: leftPanelWidth + 'px', minWidth: '220px', maxWidth: '520px' } : undefined"
+    >
+      <div class="left-side-nav-block">
       <template v-if="showSysmenu">
         <div class="sys-management" @click="toUserIndex">
           <img
@@ -204,7 +253,13 @@ onBeforeMount(() => {
       </template>
       <Workspace v-if="!showSysmenu" :collapse="collapse"></Workspace>
       <Menu :collapse="collapseCopy"></Menu>
-      <div class="bottom">
+      </div>
+      <div v-if="isChatRoute" class="layout-chat-history-shell">
+        <div class="layout-chat-history-divider" role="presentation" />
+        <div class="layout-chat-history-heading">{{ $t('qa.chat_history_section') }}</div>
+        <div id="layout-chat-history" class="layout-chat-history"></div>
+      </div>
+      <div class="bottom" :class="isChatRoute && 'bottom--flow'">
         <div
           v-if="showSysmenu"
           class="back-to_workspace"
@@ -218,14 +273,22 @@ onBeforeMount(() => {
         </div>
         <div class="personal-info">
           <Person :collapse="collapse" :in-sysmenu="showSysmenu"></Person>
-          <el-icon size="20" class="fold" @click="handleFoldExpand">
+          <el-icon v-if="!isChatRoute" size="20" class="fold" @click="handleFoldExpand">
             <icon_side_expand_outlined v-if="collapse"></icon_side_expand_outlined>
             <icon_side_fold_outlined v-else></icon_side_fold_outlined>
           </el-icon>
         </div>
       </div>
     </div>
-    <div class="right-main" :class="collapse && 'right-side-collapse'">
+    <div
+      v-if="isChatRoute && !isPhone"
+      class="layout-column-resizer"
+      @mousedown="onChatResizeStart"
+    ></div>
+    <div
+      class="right-main"
+      :class="[collapse && !isChatRoute && 'right-side-collapse', isChatRoute && 'right-main--chat']"
+    >
       <div class="content">
         <router-view />
       </div>
@@ -389,6 +452,101 @@ onBeforeMount(() => {
         padding: 0;
       }
     }
+  }
+
+  &.system-layout--chat {
+    align-items: stretch;
+  }
+
+  .layout-column-resizer {
+    width: 6px;
+    flex-shrink: 0;
+    cursor: col-resize;
+    align-self: stretch;
+    margin: 8px 0;
+    border-radius: 4px;
+    background: transparent;
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(31, 35, 41, 0.08);
+    }
+  }
+
+  .left-side--chat {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+
+    .left-side-nav-block {
+      flex-shrink: 0;
+      flex: 0 1 auto;
+      max-height: 46%;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+      z-index: 5;
+    }
+
+    .layout-chat-history-shell {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding-top: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .layout-chat-history-divider {
+      flex-shrink: 0;
+      height: 1px;
+      margin: 0 12px;
+      background: rgba(31, 35, 41, 0.12);
+    }
+
+    .layout-chat-history-heading {
+      flex-shrink: 0;
+      padding: 8px 16px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 18px;
+      color: rgba(100, 106, 115, 1);
+      letter-spacing: 0.02em;
+    }
+
+    .layout-chat-history {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      & > * {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+      }
+    }
+
+    .bottom.bottom--flow {
+      position: static !important;
+      width: 100% !important;
+      left: auto !important;
+      bottom: auto !important;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+  }
+
+  .right-main--chat {
+    flex: 1;
+    width: auto !important;
+    min-width: 0;
+    min-height: 0;
   }
 }
 </style>

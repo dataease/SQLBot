@@ -9,8 +9,30 @@
     <icon_sidebar_outlined></icon_sidebar_outlined>
   </el-icon>
   <el-container class="chat-container no-padding">
+    <Teleport
+      defer
+      v-if="useTeleportHistory && (isCompletePage || pageEmbedded) && chatListSideBarShow"
+      to="#layout-chat-history"
+    >
+      <ChatListContainer
+        v-model:chat-list="chatList"
+        v-model:current-chat-id="currentChatId"
+        v-model:current-chat="currentChat"
+        v-model:loading="loading"
+        :in-popover="false"
+        :layout-docked="true"
+        :app-name="customName"
+        @go-empty="goEmpty"
+        @on-chat-created="onChatCreated"
+        @on-click-history="onClickHistory"
+        @on-chat-deleted="onChatDeleted"
+        @on-chat-renamed="onChatRenamed"
+        @on-click-side-bar-btn="hideSideBar"
+      />
+    </Teleport>
+
     <el-aside
-      v-if="(isCompletePage || pageEmbedded) && chatListSideBarShow"
+      v-else-if="(isCompletePage || pageEmbedded) && chatListSideBarShow"
       class="chat-container-left"
       :class="{ 'embedded-history-hidden': embeddedHistoryHidden }"
     >
@@ -103,63 +125,105 @@
         </el-button>
       </el-tooltip>
     </div>
-    <el-container :loading="loading">
+    <el-container :loading="loading" class="chat-inner-wrap">
       <el-main
         class="chat-record-list"
         :class="{
           'hide-sidebar': (isCompletePage || pageEmbedded) && !chatListSideBarShow,
           'assistant-chat-main': !isCompletePage && !pageEmbedded,
+          'chat-record-list--with-toolbar': isCompletePage,
         }"
       >
+        <div v-if="isCompletePage" class="chat-main-top-toolbar">
+          <el-tooltip effect="dark" :offset="8" :content="t('qa.new_chat')" placement="bottom">
+            <el-button circle type="primary" plain class="chat-main-new-chat-btn" @click="createNewChatSimple">
+              <el-icon><icon_new_chat_outlined /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </div>
         <div v-if="computedMessages.length == 0 && !loading" class="welcome-content-block">
-          <div class="welcome-content">
-            <template v-if="isCompletePage">
-              <div class="greeting">
-                <img v-if="loginBg" height="32" width="32" :src="loginBg" alt="" />
-                <el-icon v-else size="32"
-                  ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
-                  <LOGO_fold v-else></LOGO_fold
-                ></el-icon>
-                {{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}
-              </div>
-              <div class="sub">
-                {{
-                  appearanceStore.pc_welcome_desc ??
-                  '我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～'
-                }}
-              </div>
-            </template>
+          <div class="chat-home-stack">
+            <div class="chat-home-stack__top">
+              <div class="welcome-content">
+                <template v-if="isCompletePage">
+                  <div class="greeting">
+                    <img v-if="loginBg" height="32" width="32" :src="loginBg" alt="" />
+                    <el-icon v-else size="32"
+                      ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
+                      <LOGO_fold v-else></LOGO_fold
+                    ></el-icon>
+                    {{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}
+                  </div>
+                  <div class="sub">
+                    {{
+                      appearanceStore.pc_welcome_desc ??
+                      '我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～'
+                    }}
+                  </div>
+                </template>
 
-            <div v-else class="assistant-desc">
-              <img
-                v-if="logoAssistant"
-                :src="logoAssistant"
-                class="logo"
-                width="30px"
-                height="30px"
-                alt=""
-              />
-              <el-icon v-else size="32">
-                <logo_fold />
-              </el-icon>
-              <div class="i-am">{{ welcome }}</div>
-              <div class="i-can">{{ welcomeDesc }}</div>
+                <div v-else class="assistant-desc">
+                  <img
+                    v-if="logoAssistant"
+                    :src="logoAssistant"
+                    class="logo"
+                    width="30px"
+                    height="30px"
+                    alt=""
+                  />
+                  <el-icon v-else size="32">
+                    <logo_fold />
+                  </el-icon>
+                  <div class="i-am">{{ welcome }}</div>
+                  <div class="i-can">{{ welcomeDesc }}</div>
+                </div>
+
+                <el-button
+                  v-if="(isCompletePage || selectAssistantDs) && currentChatId === undefined"
+                  size="large"
+                  type="primary"
+                  class="greeting-btn"
+                  @click="createNewChatSimple"
+                >
+                  <span class="inner-icon">
+                    <el-icon>
+                      <icon_new_chat_outlined />
+                    </el-icon>
+                  </span>
+                  {{ t('qa.start_sqlbot') }}
+                </el-button>
+              </div>
             </div>
 
-            <el-button
-              v-if="(isCompletePage || selectAssistantDs) && currentChatId === undefined"
-              size="large"
-              type="primary"
-              class="greeting-btn"
-              @click="createNewChatSimple"
+            <div
+              v-if="isCompletePage && currentChatId === undefined && popularQuestionItems.length > 0"
+              class="chat-home-stack__bottom"
             >
-              <span class="inner-icon">
-                <el-icon>
-                  <icon_new_chat_outlined />
-                </el-icon>
-              </span>
-              {{ t('qa.start_sqlbot') }}
-            </el-button>
+              <div class="home-quick-cards-title">{{ t('qa.home_quick_cards_title') }}</div>
+              <div class="home-quick-cards-grid">
+                <button
+                  v-for="(item, idx) in popularQuestionItems"
+                  :key="`${item.datasource_id}-${item.question}-${idx}`"
+                  type="button"
+                  class="home-quick-card"
+                  :disabled="popularHomeBusy"
+                  @click="startPopularChat(item)"
+                >
+                  <span class="home-quick-card__row home-quick-card__row--stack">
+                    <span class="home-quick-card__meta">
+                      <span v-if="item.datasource_name" class="home-quick-card__ds">{{
+                        item.datasource_name
+                      }}</span>
+                      <template v-if="item.datasource_name">
+                        <span class="home-quick-card__sep">：</span>
+                      </template>
+                      <span class="home-quick-card__title">{{ item.question }}</span>
+                    </span>
+                    <span v-if="item.count > 1" class="home-quick-card__count">{{ item.count }}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div v-else-if="computedMessages.length == 0 && loading" class="welcome-content-block">
@@ -377,7 +441,11 @@
         </el-scrollbar>
       </el-main>
       <el-footer
-        v-if="computedMessages.length > 0 || (!isCompletePage && !selectAssistantDs)"
+        v-if="
+          computedMessages.length > 0 ||
+          (!isCompletePage && !selectAssistantDs) ||
+          (currentChatId != null && (isCompletePage || selectAssistantDs))
+        "
         class="chat-footer"
       >
         <div class="input-wrapper" @click="clickInput">
@@ -404,7 +472,9 @@
               :current-chat="currentChat"
               :record-id="computedMessages[0].record?.id"
               :disabled="isTyping"
-              :first-chat="true"
+              :first-chat="
+                currentChat.records.length === 1 && !!computedMessages[0]?.record?.first_chat
+              "
               @quick-ask="quickAsk"
               @stop="onChatStop"
               @loading-over="loadingOver"
@@ -449,7 +519,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord } from '@/api/chat'
 import ChatRow from './ChatRow.vue'
 import ChartAnswer from './answer/ChartAnswer.vue'
@@ -462,6 +532,7 @@ import ChatCreator from '@/views/chat/ChatCreator.vue'
 import ChatTokenTime from '@/views/chat/ChatTokenTime.vue'
 import ErrorInfo from './ErrorInfo.vue'
 import ChatToolBar from './ChatToolBar.vue'
+import { runQuestionStream } from '@/views/chat/answer/runQuestionStream.ts'
 import { dsTypeWithImg } from '@/views/ds/js/ds-type'
 import { useI18n } from 'vue-i18n'
 import { find, forEach } from 'lodash-es'
@@ -681,6 +752,9 @@ function getChatList(callback?: () => void) {
     .then((res) => {
       chatList.value = chatApi.toChatInfoList(res)
     })
+    .catch((e) => {
+      console.error('getChatList failed', e)
+    })
     .finally(() => {
       loading.value = false
       if (callback && typeof callback === 'function') {
@@ -712,6 +786,94 @@ function onChatRenamed(chat: Chat) {
 }
 
 const chatListSideBarShow = ref<boolean>(true)
+
+/** 会话列表 Teleport 到 Layout 左侧槽位，形成「导航 + 历史」单列 */
+const useTeleportHistory = computed(
+  () => isCompletePage.value && !props.pageEmbedded && chatListSideBarShow.value
+)
+
+const popularQuestionItems = ref<
+  Array<{ datasource_id: number; datasource_name: string; question: string; count: number }>
+>([])
+/** 首页热门卡片创建会话中：勿占用全局 loading，否则 .finally 会与 sendMessage 争抢 loading 导致首轮问数无响应 */
+const popularHomeBusy = ref(false)
+
+async function loadPopularQuestions() {
+  if (!isCompletePage.value) {
+    return
+  }
+  try {
+    popularQuestionItems.value = await chatApi.popularQuestions(8)
+  } catch (e) {
+    console.error(e)
+    popularQuestionItems.value = []
+  }
+}
+
+async function startPopularChat(item: {
+  datasource_id: number
+  datasource_name: string
+  question: string
+}) {
+  if (popularHomeBusy.value) {
+    return
+  }
+  try {
+    await chatApi.checkLLMModel()
+  } catch (error: any) {
+    console.error(error)
+    let errorMsg = t('model.default_miss')
+    let confirm_text = t('datasource.got_it')
+    if (userStore.isAdmin) {
+      errorMsg = t('model.default_miss_admin')
+      confirm_text = t('model.to_config')
+    }
+    ElMessageBox.confirm(t('qa.ask_failed'), {
+      confirmButtonType: 'primary',
+      tip: errorMsg,
+      showCancelButton: userStore.isAdmin,
+      confirmButtonText: confirm_text,
+      cancelButtonText: t('common.cancel'),
+      customClass: 'confirm-no_icon',
+      autofocus: false,
+      showClose: false,
+      callback: (val: string) => {
+        if (userStore.isAdmin && val === 'confirm') {
+          router.push('/system/model')
+        }
+      },
+    })
+    return
+  }
+  const param: Record<string, unknown> = { datasource: item.datasource_id }
+  let method = chatApi.startChat
+  if (assistantStore.getAssistant) {
+    param['origin'] = 2
+    method = chatApi.startAssistantChat
+  }
+  popularHomeBusy.value = true
+  method(param as any)
+    .then(async (res) => {
+      const chat = chatApi.toChatInfo(res)
+      if (!chat || chat.id == null) {
+        ElMessage.warning(t('qa.ask_failed'))
+        return
+      }
+      onChatCreatedQuick(chat)
+      inputMessage.value = item.question
+      await nextTick()
+      await sendMessage()
+    })
+    .catch((e: any) => {
+      console.error(e)
+      const detail = e?.response?.data?.detail ?? e?.response?.data?.message ?? e?.message
+      ElMessage.error(typeof detail === 'string' ? detail : t('qa.ask_failed'))
+    })
+    .finally(() => {
+      popularHomeBusy.value = false
+    })
+}
+
 function hideSideBar() {
   if ((!isCompletePage.value && !props.pageEmbedded) || isPhone.value) {
     floatPopoverVisible.value = false
@@ -727,6 +889,19 @@ function showSideBar() {
   }
   chatListSideBarShow.value = true
 }
+
+/** 使用 layout 左侧槽位 Teleport 时，等目标节点与 defer 完成后再拉列表，避免首屏左侧空白 */
+watch(
+  useTeleportHistory,
+  (ok) => {
+    if (ok) {
+      nextTick(() => {
+        getChatList()
+      })
+    }
+  },
+  { flush: 'post', immediate: true }
+)
 
 function onChatCreatedQuick(chat: ChatInfo) {
   chatList.value.unshift(chat)
@@ -770,6 +945,8 @@ function quickAsk(question: string) {
 }
 
 const chartAnswerRef = ref()
+/** 完整页由 index 直接跑 runQuestionStream 时，与全局 stop() 联动中止 fetch */
+const questionStreamUserAbort = ref(false)
 const getRecommendQuestionsLoading = ref(false)
 async function onChartAnswerFinish(id: number) {
   getRecommendQuestionsLoading.value = true
@@ -790,6 +967,7 @@ function onChartAnswerError(id: number) {
 }
 
 function onChatStop() {
+  questionStreamUserAbort.value = true
   loading.value = false
   isTyping.value = false
   console.debug('onChatStop')
@@ -806,6 +984,7 @@ const assistantPrepareSend = async () => {
     }
   }
 }
+
 const sendMessage = async (
   regenerate_record_id: number | undefined = undefined,
   $event: any = {}
@@ -837,28 +1016,77 @@ const sendMessage = async (
   currentChat.value.records.push(currentRecord)
   inputMessage.value = ''
 
-  nextTick(async () => {
-    if (!isCompletePage.value && innerRef.value) {
-      scrollTopVal = innerRef.value!.clientHeight
-      scrollTime = setInterval(() => {
-        scrollBottom()
-      }, 300)
+  await nextTick()
+
+  if (!isCompletePage.value && innerRef.value) {
+    scrollTopVal = innerRef.value!.clientHeight
+    scrollTime = setInterval(() => {
+      scrollBottom()
+    }, 300)
+  }
+  const recordIndex = currentChat.value.records.length - 1
+  if (isCompletePage.value) {
+    questionStreamUserAbort.value = false
+    const chatId = currentChatId.value
+    if (chatId == null) {
+      loading.value = false
+      isTyping.value = false
+      ElMessage.error(t('qa.ask_failed'))
+      return
     }
-    const index = currentChat.value.records.length - 1
-    if (chartAnswerRef.value) {
-      if (chartAnswerRef.value instanceof Array) {
-        for (let i = 0; i < chartAnswerRef.value.length; i++) {
-          const _index = chartAnswerRef.value[i].index()
-          if (index === _index) {
-            await chartAnswerRef.value[i].sendMessage()
+    try {
+      await runQuestionStream({
+        currentChat: currentChat.value,
+        chatList: chatList.value,
+        chatId,
+        recordIndex,
+        shouldAbort: () => questionStreamUserAbort.value,
+        scrollBottom: () => scrollToBottom(),
+        onFinish: (id) => {
+          if (id != null) onChartAnswerFinish(id)
+        },
+        onError: (id) => {
+          if (id != null) onChartAnswerError(id)
+          else {
+            loading.value = false
+            isTyping.value = false
+          }
+        },
+      })
+    } catch (e: any) {
+      loading.value = false
+      isTyping.value = false
+      const msg = e?.message
+      if (msg && String(msg).length > 0) {
+        try {
+          ElMessage({
+            message: msg,
+            type: 'error',
+            showClose: true,
+          })
+        } catch {
+          /* ignore */
+        }
+      } else {
+        ElMessage.error(t('qa.ask_failed'))
+      }
+    }
+  } else {
+    const cref = chartAnswerRef.value
+    if (cref) {
+      if (cref instanceof Array) {
+        for (let i = 0; i < cref.length; i++) {
+          const _index = cref[i].index()
+          if (recordIndex === _index) {
+            await cref[i].sendMessage()
             break
           }
         }
       } else {
-        await chartAnswerRef.value.sendMessage()
+        await cref.sendMessage()
       }
     }
-  })
+  }
 }
 
 const analysisAnswerRef = ref()
@@ -1033,6 +1261,7 @@ function clickInput() {
 }
 
 function stop(func?: (...p: any[]) => void, ...param: any[]) {
+  questionStreamUserAbort.value = true
   if (recommendQuestionRef.value) {
     if (recommendQuestionRef.value instanceof Array) {
       for (let i = 0; i < recommendQuestionRef.value.length; i++) {
@@ -1134,6 +1363,9 @@ onMounted(() => {
     }
   }
   getChatList(jumpCreatChat)
+  nextTick(() => {
+    loadPopularQuestions()
+  })
   assistantPrepareInit()
 })
 </script>
@@ -1142,8 +1374,193 @@ onMounted(() => {
 .chat-container {
   height: 100%;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   border-radius: 12px;
+
+  .chat-inner-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-record-list--with-toolbar {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .chat-main-top-toolbar {
+    flex-shrink: 0;
+    padding: 12px 16px 4px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .chat-main-new-chat-btn {
+    border-radius: 8px;
+    border: none !important;
+    --ed-button-border-color: transparent;
+    --ed-button-hover-border-color: transparent;
+
+    &:focus,
+    &:focus-visible,
+    &:hover,
+    &:active {
+      border: none !important;
+    }
+  }
+
+  .welcome-content-block {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 0;
+    padding-bottom: 24px;
+  }
+
+  .chat-home-stack {
+    width: 100%;
+    max-width: 880px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chat-home-stack__top {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chat-home-stack__bottom {
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
+    width: 100%;
+    padding-top: 24px;
+    padding-bottom: 8px;
+  }
+
+  .home-quick-cards-wrap {
+    margin-top: 28px;
+    width: 100%;
+    max-width: 880px;
+    padding: 0 16px 24px;
+  }
+
+  .home-quick-cards-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(100, 106, 115, 1);
+    margin-bottom: 14px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .home-quick-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (max-width: 640px) {
+    .home-quick-cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .home-quick-card {
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(31, 35, 41, 0.12);
+    background: rgba(248, 249, 250, 1);
+    cursor: pointer;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      box-shadow 0.15s;
+
+    &:hover {
+      border-color: var(--ed-color-primary, #1cba90);
+      background: rgba(28, 186, 144, 0.06);
+      box-shadow: 0 2px 8px rgba(31, 35, 41, 0.06);
+    }
+
+    &__row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+    }
+
+    &__row--stack {
+      align-items: flex-start;
+    }
+
+    &__meta {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+      text-align: left;
+      line-height: 22px;
+    }
+
+    &__ds {
+      color: var(--ed-color-primary, #1cba90);
+      font-weight: 600;
+    }
+
+    &__sep {
+      color: rgba(100, 106, 115, 1);
+      font-weight: 500;
+    }
+
+    &__title {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(31, 35, 41, 1);
+      line-height: 22px;
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+      text-align: left;
+    }
+
+    &__count {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 22px;
+      color: rgba(100, 106, 115, 1);
+      padding: 0 8px;
+      border-radius: 10px;
+      background: rgba(31, 35, 41, 0.06);
+    }
+
+    &__desc {
+      font-size: 12px;
+      color: rgba(100, 106, 115, 1);
+      line-height: 20px;
+    }
+  }
   .assistant-popover-sidebar {
     button {
       display: none;
