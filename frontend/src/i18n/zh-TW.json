@@ -395,7 +395,8 @@
       "timeout": "連線逾時(秒)",
       "address": "位址",
       "low_version": "相容低版本",
-      "ssl": "啟用 SSL"
+      "ssl": "啟用 SSL",
+      "file_path": "文件路徑"
     },
     "sync_fields": "同步表結構"
   },

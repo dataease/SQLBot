@@ -395,7 +395,8 @@
       "timeout": "Connection Timeout(second)",
       "address": "Address",
       "low_version": "Compatible with lower versions",
-      "ssl": "Enable SSL"
+      "ssl": "Enable SSL",
+      "file_path": "File Path"
     },
     "sync_fields": "Sync Fields"
   },

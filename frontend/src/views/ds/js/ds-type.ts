@@ -49,4 +49,4 @@ export const dsTypeWithImg = [
   { name: 'Apache Hive', type: 'hive', img: hive_icon },
 ]
 
-export const haveSchema = ['sqlServer', 'pg', 'oracle', 'dm', 'redshift', 'kingbase', 'hive']
+export const haveSchema = ['sqlServer', 'pg', 'oracle', 'dm', 'redshift', 'kingbase']
