@@ -188,6 +188,7 @@
     "traditional_chinese": "繁體中文",
     "help": "帮助",
     "language": "语言",
+    "ui_theme": "界面主题",
     "english": "English",
     "re_upload": "重新上传",
     "not_exceed_50mb": "支持 XLS、XLSX、CSV 格式，文件大小不超过 50MB",
@@ -293,6 +294,7 @@
     "data_predict": "数据预测",
     "data_regenerated": "重新生成",
     "chat_search": "搜索",
+    "chat_history_section": "历史会话",
     "thinking": "思考中",
     "thinking_step": "思考过程",
     "ask_again": "重新生成",
@@ -303,7 +305,8 @@
     "rename_conversation_title": "重命名对话标题",
     "conversation_title": "对话标题",
     "copied": "已复制",
-    "ask_failed": "问数失败"
+    "ask_failed": "问数失败",
+    "home_quick_cards_title": "热门问题"
   },
   "ds": {
     "title": "数据源",
@@ -395,7 +398,8 @@
       "timeout": "连接超时(秒)",
       "address": "地址",
       "low_version": "兼容低版本",
-      "ssl": "启用 SSL"
+      "ssl": "启用 SSL",
+      "file_path": "文件路径"
     },
     "sync_fields": "同步表结构"
   },
@@ -738,7 +742,8 @@
       "bar": "条形图",
       "column": "柱状图",
       "line": "折线图",
-      "pie": "饼图"
+      "pie": "饼图",
+      "scatter": "散点图"
     },
     "hide_label": "隐藏标签",
     "show_label": "显示标签",
@@ -954,5 +959,11 @@
     "create": "创建",
     "to_doc": "查看 API",
     "trigger_limit": "最多支持创建 {0} 个 API Key"
+  },
+  "theme": {
+    "claude": "Claude",
+    "apple": "Apple",
+    "notion": "Notion",
+    "airbnb": "Airbnb"
   }
 }

@@ -1,0 +1,95 @@
+/**
+ * Default tokens (Claude theme). Other presets in theme-presets.less override per
+ * html[data-ui-theme="…"]. All four themes are kept in lock-step with DESIGN_*.md.
+ */
+:root {
+  /* Brand */
+  --color-primary: #cc785c;
+  --color-primary-active: #a9583e;
+  --color-primary-disabled: #e6dfd8;
+
+  /* Surfaces */
+  --color-canvas: #faf9f5;
+  --color-canvas-parchment: #f5f0e8;
+  --color-surface-soft: #f5f0e8;
+  --color-surface-card: #efe9de;
+  --color-surface-cream-strong: #e8e0d2;
+  --color-surface-dark: #181715;
+  --color-surface-dark-elevated: #252320;
+  --color-surface-dark-soft: #1f1e1b;
+  --color-hairline: #e6dfd8;
+  --color-hairline-soft: #ebe6df;
+
+  /* Text */
+  --color-ink: #141413;
+  --color-body-strong: #252523;
+  --color-body: #3d3d3a;
+  --color-muted: #6c6a64;
+  --color-muted-soft: #8e8b82;
+  --color-on-primary: #ffffff;
+  --color-on-dark: #faf9f5;
+  --color-on-dark-soft: #a09d96;
+
+  /* Accents */
+  --color-accent-secondary: #5db8a6;
+  --color-accent-tertiary: #e8a55a;
+
+  /* Semantic */
+  --color-success: #5db872;
+  --color-warning: #d4a017;
+  --color-error: #c64545;
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', 'EB Garamond', Garamond, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --font-display-weight: 500;
+  --font-display-tracking: -0.02em;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  /* Spacing (base 4px) */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Interaction overlays */
+  --overlay-hover: rgba(20, 20, 19, 0.08);
+  --overlay-pressed: rgba(20, 20, 19, 0.14);
+  --overlay-strong: rgba(20, 20, 19, 0.18);
+
+  /* Shadows */
+  --sqlbot-shadow-soft: 0 1px 3px rgba(20, 20, 19, 0.08);
+
+  /* Chat bubbles */
+  --chat-bubble-user-bg: #efe9de;
+  --chat-bubble-user-text: var(--color-ink);
+  --chat-bubble-user-border: var(--color-hairline);
+  --chat-bubble-assistant-bg: #ffffff;
+}
+
+/* Global type — every theme switches font through these inherited styles */
+html,
+body {
+  font-family: var(--font-sans);
+  color: var(--color-body);
+  background-color: var(--color-canvas);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight, 600);
+  letter-spacing: var(--font-display-tracking, -0.01em);
+  color: var(--color-ink);
+}

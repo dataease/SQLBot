@@ -9,6 +9,7 @@ import type { ChartTypes } from '@/views/chat/component/BaseChart.ts'
 import ICON_BAR from '@/assets/svg/chart/icon_bar_outlined.svg'
 import ICON_COLUMN from '@/assets/svg/chart/icon_dashboard_outlined.svg'
 import ICON_LINE from '@/assets/svg/chart/icon_chart-line.svg'
+import ICON_SCATTER from '@/assets/svg/chart/icon_scatter_outlined.svg'
 import ICON_PIE from '@/assets/svg/chart/icon_pie_outlined.svg'
 import ICON_TABLE from '@/assets/svg/chart/icon_form_outlined.svg'
 import icon_sql_outlined from '@/assets/svg/icon_sql_outlined.svg'
@@ -153,6 +154,7 @@ const chartTypeList = computed(() => {
       case 'column':
       case 'bar':
       case 'line':
+      case 'scatter':
         _list.push({
           value: 'column',
           name: t('chat.chart_type.column'),
@@ -167,6 +169,11 @@ const chartTypeList = computed(() => {
           value: 'line',
           name: t('chat.chart_type.line'),
           icon: ICON_LINE,
+        })
+        _list.push({
+          value: 'scatter',
+          name: t('chat.chart_type.scatter'),
+          icon: ICON_SCATTER,
         })
         break
       case 'pie':

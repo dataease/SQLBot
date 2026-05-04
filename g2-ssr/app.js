@@ -7,6 +7,7 @@ const { getPieOptions } = require('./charts/pie.js');
 const { getLineOptions } = require('./charts/line.js');
 const { getColumnOptions } = require('./charts/column.js');
 const { getBarOptions } = require('./charts/bar.js');
+const { getScatterOptions } = require('./charts/scatter.js');
 
 http.createServer((req, res) => {
     res.statusCode = 200,
@@ -42,6 +43,8 @@ function getOptions(type, axis, data) {
             return getLineOptions(base_options, axis, data);
         case 'pie':
             return getPieOptions(base_options, axis, data);
+        case 'scatter':
+            return getScatterOptions(base_options, axis, data);
     }
 
     return base_options

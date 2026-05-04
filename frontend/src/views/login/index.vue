@@ -4,7 +4,7 @@
     v-loading="true"
     :element-loading-text="t('qa.loading')"
     class="xpack-login-handler-mask"
-    element-loading-background="#F5F6F7"
+    :element-loading-background="'var(--color-surface-soft)'"
   ></div>
 
   <div class="login-container" :class="{ 'hide-login-container': showLoading }">
@@ -16,12 +16,9 @@
         <div class="login-logo-icon">
           <img v-if="loginBg" height="52" :src="loginBg" alt="" />
           <el-icon v-else size="52"
-            ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
-            <LOGO_fold v-else></LOGO_fold
+            ><custom_small></custom_small
           ></el-icon>
-          <span style="margin-left: 14px; font-size: 34px; font-weight: 900; color: #485559">{{
-            appearanceStore.name
-          }}</span>
+          <span class="login-brand-name">{{ appearanceStore.name }}</span>
         </div>
         <div v-if="appearanceStore.getShowSlogan" class="welcome">
           {{ appearanceStore.slogan ?? $t('common.intelligent_questioning_platform') }}
@@ -79,7 +76,6 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
-import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import loginImage from '@/assets/blue/login-image_blue.png'
@@ -131,7 +127,7 @@ const switchTab = (name: string) => {
 .login-container {
   height: 100vh;
   width: 100vw;
-  background-color: #fff;
+  background-color: var(--color-canvas);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,6 +154,15 @@ const switchTab = (name: string) => {
       flex-direction: column;
       position: relative;
 
+      .login-brand-name {
+        margin-left: 14px;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-family: var(--font-display);
+        color: var(--color-ink);
+      }
+
       .login-logo-icon {
         width: auto;
         height: 52px;
@@ -170,16 +175,17 @@ const switchTab = (name: string) => {
         font-weight: 400;
         font-size: 14px;
         line-height: 20px;
-        color: #646a73;
+        color: var(--color-muted);
       }
 
       .login-form {
-        border: 1px solid #dee0e3;
+        border: 1px solid var(--color-hairline);
         padding: 40px;
         width: 480px;
         min-height: 392px;
-        border-radius: 12px;
-        box-shadow: 0px 6px 24px 0px #1f232914;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--sqlbot-shadow-soft);
+        background: var(--chat-bubble-assistant-bg);
 
         .form-content_error {
           .ed-form-item--default {
@@ -191,24 +197,25 @@ const switchTab = (name: string) => {
         }
 
         .title {
-          font-weight: 500;
-          font-style: Medium;
+          font-weight: 600;
           font-size: 20px;
           line-height: 28px;
           margin-bottom: 24px;
+          color: var(--color-ink);
+          font-family: var(--font-sans);
         }
 
         .login-btn {
           width: 100%;
           height: 40px;
           font-size: 16px;
-          border-radius: 4px;
+          border-radius: var(--radius-md);
         }
 
         .agreement {
           margin-top: 20px;
           text-align: center;
-          color: #666;
+          color: var(--color-muted);
         }
       }
     }
@@ -218,7 +225,7 @@ const switchTab = (name: string) => {
   display: none;
 }
 :deep(.ed-input__wrapper) {
-  background-color: #f5f7fa;
+  background-color: var(--color-surface-soft);
 }
 .xpack-login-handler-mask {
   position: fixed;

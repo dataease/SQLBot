@@ -188,6 +188,7 @@
     "traditional_chinese": "繁體中文",
     "help": "Help",
     "language": "Language",
+    "ui_theme": "Appearance",
     "english": "English",
     "re_upload": "Re-upload",
     "not_exceed_50mb": "Supports XLS, XLSX, CSV formats, file size does not exceed 50MB",
@@ -293,6 +294,7 @@
     "data_predict": "Data Prediction",
     "data_regenerated": "Regenerate",
     "chat_search": "Search",
+    "chat_history_section": "Chat history",
     "thinking": "Thinking",
     "thinking_step": "Thought Process",
     "ask_again": "Regenerate",
@@ -303,7 +305,8 @@
     "rename_conversation_title": "Rename conversation title",
     "conversation_title": "Conversation title",
     "copied": "Copied",
-    "ask_failed": "Q&A failed"
+    "ask_failed": "Q&A failed",
+    "home_quick_cards_title": "Popular questions"
   },
   "ds": {
     "title": "Data Sources",
@@ -395,7 +398,8 @@
       "timeout": "Connection Timeout(second)",
       "address": "Address",
       "low_version": "Compatible with lower versions",
-      "ssl": "Enable SSL"
+      "ssl": "Enable SSL",
+      "file_path": "File Path"
     },
     "sync_fields": "Sync Fields"
   },
@@ -738,7 +742,8 @@
       "bar": "Bar",
       "column": "Column",
       "line": "Line",
-      "pie": "Pie"
+      "pie": "Pie",
+      "scatter": "Scatter"
     },
     "hide_label": "Hide Label",
     "show_label": "Show Label",
@@ -954,5 +959,11 @@
     "create": "Create",
     "to_doc": "View API",
     "trigger_limit": "Supports up to {0} API Keys"
+  },
+  "theme": {
+    "claude": "Claude",
+    "apple": "Apple",
+    "notion": "Notion",
+    "airbnb": "Airbnb"
   }
 }

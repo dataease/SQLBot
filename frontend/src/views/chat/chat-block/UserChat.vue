@@ -65,21 +65,25 @@ const copyCode = () => {
   display: flex;
   flex-direction: row;
   gap: 8px;
-  border-radius: 16px;
-  min-height: 48px;
-  line-height: 24px;
-  font-size: 16px;
-  padding: 12px 16px;
-  color: rgba(31, 35, 41, 1);
-  background: rgba(245, 246, 247, 1);
+  border-radius: var(--radius-lg);
+  min-height: 44px;
+  line-height: 1.47;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  padding: 11px 20px;
+  color: var(--chat-bubble-user-text);
+  background: var(--chat-bubble-user-bg);
+  border: 1px solid var(--color-hairline-soft);
   position: relative;
 
   word-wrap: break-word;
   white-space: pre-wrap;
 
   .prefix-title {
-    color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+    color: var(--color-primary);
     white-space: nowrap;
+    font-weight: 600;
   }
 }
 </style>

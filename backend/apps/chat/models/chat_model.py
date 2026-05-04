@@ -229,6 +229,7 @@ class AiModelQuestion(BaseModel):
     custom_prompt: str = ""
     error_msg: str = ""
     regenerate_record_id: Optional[int] = None
+    sample_data: str = ""
 
     def sql_sys_question(self, db_type: Union[str, DB], enable_query_limit: bool = True):
         templates: dict[str, str] = {}
@@ -256,7 +257,7 @@ class AiModelQuestion(BaseModel):
                                                                      example_answer_1=_example_answer_1,
                                                                      example_answer_2=_example_answer_2,
                                                                      example_answer_3=_example_answer_3)
-        templates['schema'] = _base_template['generate_basic_info'].format(engine=self.engine, schema=self.db_schema)
+        templates['schema'] = _base_template['generate_basic_info'].format(engine=self.engine, schema=self.db_schema, sample_data=self.sample_data)
 
         if self.terminologies:
             templates['terminologies'] = _base_template['generate_terminologies_info'].format(

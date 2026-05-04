@@ -231,6 +231,7 @@ async def preview_data(session: SessionDep, trans: Trans, current_user: CurrentU
         try:
             return preview(session, current_user, id, data)
         except Exception as e:
+            SQLBotLogUtil.error(f"Preview failed: {e}, try another way")
             ds = session.query(CoreDatasource).filter(CoreDatasource.id == id).first()
             # check ds status
             status = check_status(session, trans, ds, True)

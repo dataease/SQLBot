@@ -8,10 +8,6 @@ import { filter, includes } from 'lodash-es'
 import ChatCreator from '@/views/chat/ChatCreator.vue'
 import { useAssistantStore } from '@/stores/assistant'
 import icon_sidebar_outlined from '@/assets/svg/icon_sidebar_outlined.svg'
-import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
-import { useUserStore } from '@/stores/user'
-import router from '@/router'
-const userStore = useUserStore()
 const props = withDefaults(
   defineProps<{
     inPopover?: boolean
@@ -20,6 +16,8 @@ const props = withDefaults(
     currentChat?: ChatInfo
     loading?: boolean
     appName?: string
+    /** 会话列表停靠在 layout 左侧槽位（与主导航同列） */
+    layoutDocked?: boolean
   }>(),
   {
     chatList: () => [],
@@ -28,6 +26,7 @@ const props = withDefaults(
     loading: false,
     inPopover: false,
     appName: '',
+    layoutDocked: false,
   }
 )
 
@@ -119,44 +118,6 @@ function goEmpty(func?: (...p: any[]) => void, ...params: any[]) {
   emits('goEmpty', func, ...params)
 }
 
-const createNewChat = async () => {
-  try {
-    await chatApi.checkLLMModel()
-  } catch (error: any) {
-    console.error(error)
-    let errorMsg = t('model.default_miss')
-    let confirm_text = t('datasource.got_it')
-    if (userStore.isAdmin) {
-      errorMsg = t('model.default_miss_admin')
-      confirm_text = t('model.to_config')
-    }
-    ElMessageBox.confirm(t('qa.ask_failed'), {
-      confirmButtonType: 'primary',
-      tip: errorMsg,
-      showCancelButton: userStore.isAdmin,
-      confirmButtonText: confirm_text,
-      cancelButtonText: t('common.cancel'),
-      customClass: 'confirm-no_icon',
-      autofocus: false,
-      showClose: false,
-      callback: (val: string) => {
-        if (userStore.isAdmin && val === 'confirm') {
-          router.push('/system/model')
-        }
-      },
-    })
-    return
-  }
-  goEmpty(doCreateNewChat)
-}
-
-async function doCreateNewChat() {
-  if (!isCompletePage.value && !selectAssistantDs.value) {
-    return
-  }
-  chatCreatorRef.value?.showDs()
-}
-
 function onClickHistory(chat: Chat) {
   if (chat !== undefined && chat.id !== undefined) {
     if (_currentChatId.value === chat.id) {
@@ -217,9 +178,9 @@ function onChatRenamed(chat: Chat) {
 </script>
 
 <template>
-  <el-container class="chat-container-right-container">
-    <el-header class="chat-list-header" :class="{ 'in-popover': inPopover }">
-      <div v-if="!inPopover" class="title">
+  <el-container class="chat-container-right-container" :class="{ 'layout-docked': layoutDocked }">
+    <el-header class="chat-list-header" :class="{ 'in-popover': inPopover, 'layout-docked': layoutDocked }">
+      <div v-if="!inPopover && !layoutDocked" class="title">
         <div>{{ appName || t('qa.title') }}</div>
         <el-button link type="primary" class="icon-btn" @click="onClickSideBarBtn">
           <el-icon>
@@ -227,12 +188,6 @@ function onChatRenamed(chat: Chat) {
           </el-icon>
         </el-button>
       </div>
-      <el-button class="btn" type="primary" @click="createNewChat">
-        <el-icon style="margin-right: 6px">
-          <icon_new_chat_outlined />
-        </el-icon>
-        {{ t('qa.new_chat') }}
-      </el-button>
       <el-input
         v-model="search"
         :prefix-icon="Search"
@@ -273,6 +228,14 @@ function onChatRenamed(chat: Chat) {
 
   height: 100%;
 
+  &.layout-docked {
+    min-height: 0;
+
+    .chat-list {
+      padding: 2px 0 16px 0;
+    }
+  }
+
   .icon-btn {
     min-width: unset;
     width: 26px;
@@ -290,6 +253,12 @@ function onChatRenamed(chat: Chat) {
 
     &.in-popover {
       --ed-header-height: calc(16px + 40px + 16px + 32px + 16px);
+    }
+
+    &.layout-docked {
+      --ed-header-padding: 10px 12px 4px;
+      --ed-header-height: calc(10px + 4px + 32px + 4px);
+      gap: 0;
     }
 
     display: flex;
@@ -310,26 +279,35 @@ function onChatRenamed(chat: Chat) {
 
     .btn {
       width: 100%;
-      height: 40px;
+      height: 44px;
+      border-radius: 9999px;
 
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: -0.374px;
 
-      --ed-button-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-bg-color: var(--ed-color-primary-1a, #1cba901a);
-      --ed-button-border-color: var(--ed-color-primary-60, #a4e3d3);
-      --ed-button-hover-bg-color: var(--ed-color-primary-80, #d2f1e9);
-      --ed-button-hover-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-hover-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-active-bg-color: var(--ed-color-primary-60, #a4e3d3);
-      --ed-button-active-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-text-color: #0066cc;
+      --ed-button-bg-color: rgba(0, 102, 204, 0.1);
+      --ed-button-border-color: transparent;
+      --ed-button-hover-bg-color: rgba(0, 102, 204, 0.15);
+      --ed-button-hover-text-color: #0066cc;
+      --ed-button-hover-border-color: transparent;
+      --ed-button-active-bg-color: rgba(0, 102, 204, 0.2);
+      --ed-button-active-border-color: transparent;
     }
 
     .search {
       height: 32px;
       width: 100%;
       :deep(.ed-input__wrapper) {
-        background-color: #f5f6f7;
+        background-color: #f5f5f7;
+        border-radius: 9999px;
+      }
+    }
+
+    &.layout-docked .search {
+      :deep(.ed-input__wrapper) {
+        box-shadow: none;
       }
     }
   }

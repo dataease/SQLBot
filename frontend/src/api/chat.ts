@@ -492,6 +492,13 @@ export const chatApi = {
   recentQuestions: (datasource_id?: number): Promise<any> => {
     return request.get(`/chat/recent_questions/${datasource_id}`)
   },
+  popularQuestions: (
+    limit = 8
+  ): Promise<
+    Array<{ datasource_id: number; datasource_name: string; question: string; count: number }>
+  > => {
+    return request.get('/chat/popular_questions', { params: { limit } })
+  },
   checkLLMModel: () => request.get('/system/aimodel/default', { requestOptions: { silent: true } }),
   export2Excel: (record_id: number | undefined, chat_id: any) =>
     request.get(`/chat/record/${record_id}/excel/export/${chat_id}`, {

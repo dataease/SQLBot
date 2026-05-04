@@ -10,6 +10,8 @@ import redshift from '@/assets/datasource/icon_redshift.png'
 import es from '@/assets/datasource/icon_es.png'
 import kingbase from '@/assets/datasource/icon_kingbase.png'
 import starrocks from '@/assets/datasource/icon_starrocks.png'
+import sqlite_icon from '@/assets/datasource/icon_sqlite.png'
+import hive_icon from '@/assets/datasource/icon_hive.png'
 import { i18n } from '@/i18n'
 
 const t = i18n.global.t
@@ -26,6 +28,8 @@ export const dsType = [
   { label: 'Elasticsearch', value: 'es' },
   { label: 'Kingbase', value: 'kingbase' },
   { label: 'StarRocks', value: 'starrocks' },
+  { label: 'SQLite', value: 'sqlite' },
+  { label: 'Apache Hive', value: 'hive' },
 ]
 
 export const dsTypeWithImg = [
@@ -41,6 +45,8 @@ export const dsTypeWithImg = [
   { name: 'Elasticsearch', type: 'es', img: es },
   { name: 'Kingbase', type: 'kingbase', img: kingbase },
   { name: 'StarRocks', type: 'starrocks', img: starrocks },
+  { name: 'SQLite', type: 'sqlite', img: sqlite_icon },
+  { name: 'Apache Hive', type: 'hive', img: hive_icon },
 ]
 
 export const haveSchema = ['sqlServer', 'pg', 'oracle', 'dm', 'redshift', 'kingbase']

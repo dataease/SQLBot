@@ -18,6 +18,34 @@ class DataFormat:
         return df_copy
 
     @staticmethod
+    def normalize_qualified_sql_column_keys(row: dict) -> dict:
+        """Add unqualified keys for names like ``alias.column`` (Hive/MySQL return shape).
+
+        Chart bindings use the bare column name (``table_name``) while drivers may return
+        ``_u2.table_name``. Only adds ``short`` when absent to avoid clobbering real duplicates.
+        """
+        if not row:
+            return row
+        out = dict(row)
+        for k, v in row.items():
+            ks = str(k)
+            if "." not in ks:
+                continue
+            short = ks.rsplit(".", 1)[-1]
+            if short not in out:
+                out[short] = v
+        return out
+
+    @staticmethod
+    def normalize_qualified_sql_column_keys_in_object_array(obj_array: list) -> list:
+        if not obj_array:
+            return obj_array
+        return [
+            DataFormat.normalize_qualified_sql_column_keys(obj) if isinstance(obj, dict) else obj
+            for obj in obj_array
+        ]
+
+    @staticmethod
     def convert_large_numbers_in_object_array(obj_array, int_threshold=1e15, float_threshold=1e10):
         """处理对象数组，将每个对象中的大数字转换为字符串"""
 
