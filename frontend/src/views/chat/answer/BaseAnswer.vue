@@ -107,16 +107,19 @@ onMounted(() => {
   .thinking-btn {
     height: 32px;
     padding: 5px 12px;
+    border-radius: 9999px;
+    background: var(--chat-bubble-assistant-bg);
+    border: 1px solid var(--color-hairline);
 
-    --ed-button-text-color: rgba(31, 35, 41, 1);
-    --ed-button-hover-text-color: var(--ed-button-text-color);
-    --ed-button-active-text-color: var(--ed-button-text-color);
-    --ed-button-bg-color: rgba(255, 255, 255, 1);
-    --ed-button-hover-bg-color: rgba(245, 246, 247, 1);
-    --ed-button-active-bg-color: rgba(239, 240, 241, 1);
-    --ed-button-border-color: rgba(217, 220, 223, 1);
-    --ed-button-hover-border-color: var(--ed-button-border-color);
-    --ed-button-active-border-color: var(--ed-button-border-color);
+    --ed-button-text-color: var(--color-muted);
+    --ed-button-hover-text-color: var(--color-ink);
+    --ed-button-active-text-color: var(--color-ink);
+    --ed-button-bg-color: var(--chat-bubble-assistant-bg);
+    --ed-button-hover-bg-color: var(--overlay-hover);
+    --ed-button-active-bg-color: var(--overlay-pressed);
+    --ed-button-border-color: var(--color-hairline);
+    --ed-button-hover-border-color: var(--color-hairline);
+    --ed-button-active-border-color: var(--color-hairline);
 
     --ed-button-font-weight: 400;
 
@@ -125,9 +128,10 @@ onMounted(() => {
       flex-direction: row;
       align-items: center;
 
-      line-height: 22px;
+      line-height: 1.29;
       font-weight: 400;
       font-size: 14px;
+      letter-spacing: -0.224px;
     }
     .btn-icon {
       margin-left: 4px;
@@ -139,25 +143,26 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     padding-left: 9px;
-    border-left: 1px solid rgba(31, 35, 41, 0.15);
+    border-left: 1px solid var(--color-hairline);
     gap: 8px;
 
     .reasoning {
       width: 100%;
-      line-height: 22px;
+      line-height: 1.43;
       font-weight: 400;
       font-size: 14px;
-      color: rgba(143, 149, 158, 1) !important;
+      color: var(--color-muted) !important;
 
       .markdown-body {
-        color: rgba(143, 149, 158, 1) !important;
-        line-height: 22px;
+        color: var(--color-muted) !important;
+        line-height: 1.43;
         font-weight: 400;
         font-size: 14px;
+        letter-spacing: -0.224px;
       }
 
       padding-bottom: 8px;
-      border-bottom: 1px solid rgba(31, 35, 41, 0.15);
+      border-bottom: 1px solid var(--color-hairline-soft);
 
       &:last-child {
         padding-bottom: unset;
@@ -169,10 +174,11 @@ onMounted(() => {
   .answer-container {
     width: 100%;
 
-    line-height: 24px;
-    font-size: 16px;
+    line-height: 1.47;
+    font-size: 17px;
     font-weight: 400;
-    color: rgba(31, 35, 41, 1);
+    letter-spacing: -0.374px;
+    color: var(--color-body);
   }
 }
 </style>

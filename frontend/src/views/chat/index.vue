@@ -149,8 +149,7 @@
                   <div class="greeting">
                     <img v-if="loginBg" height="32" width="32" :src="loginBg" alt="" />
                     <el-icon v-else size="32"
-                      ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
-                      <LOGO_fold v-else></LOGO_fold
+                      ><custom_small></custom_small
                     ></el-icon>
                     {{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}
                   </div>
@@ -236,8 +235,7 @@
               alt=""
             />
             <el-icon v-else size="30"
-              ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
-              <LOGO_fold v-else></LOGO_fold
+              ><custom_small></custom_small
             ></el-icon>
             <span style="margin-left: 12px">{{ appearanceStore.name }}</span>
           </div>
@@ -486,7 +484,14 @@
             :disabled="isTyping"
             clearable
             class="input-area"
-            :class="!isCompletePage && !selectAssistantDs && 'is-assistant'"
+            :class="[
+              !isCompletePage && !selectAssistantDs && 'is-assistant',
+              computedMessages.length > 0 && currentChat.datasource && 'has-quick-question',
+              (isCompletePage || selectAssistantDs) &&
+                currentChat.datasource &&
+                currentChat.datasource_name &&
+                'has-datasource',
+            ]"
             type="textarea"
             :autosize="{ minRows: 1, maxRows: 8.583 }"
             :placeholder="t('qa.question_placeholder')"
@@ -537,7 +542,6 @@ import { dsTypeWithImg } from '@/views/ds/js/ds-type'
 import { useI18n } from 'vue-i18n'
 import { find, forEach } from 'lodash-es'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
-import LOGO_fold from '@/assets/LOGO-fold.svg'
 import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
 import icon_sidebar_outlined from '@/assets/svg/icon_sidebar_outlined.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
@@ -1487,20 +1491,18 @@ onMounted(() => {
 
   .home-quick-card {
     text-align: left;
-    padding: 14px 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(31, 35, 41, 0.12);
-    background: rgba(248, 249, 250, 1);
+    padding: 17px 16px;
+    border-radius: 18px;
+    border: 1px solid #e0e0e0;
+    background: #ffffff;
     cursor: pointer;
     transition:
       border-color 0.15s,
-      background 0.15s,
-      box-shadow 0.15s;
+      background 0.15s;
 
     &:hover {
-      border-color: var(--ed-color-primary, #1cba90);
-      background: rgba(28, 186, 144, 0.06);
-      box-shadow: 0 2px 8px rgba(31, 35, 41, 0.06);
+      border-color: #0066cc;
+      background: #ffffff;
     }
 
     &__row {
@@ -1520,44 +1522,46 @@ onMounted(() => {
       min-width: 0;
       word-break: break-word;
       text-align: left;
-      line-height: 22px;
+      line-height: 1.43;
     }
 
     &__ds {
-      color: var(--ed-color-primary, #1cba90);
+      color: #0066cc;
       font-weight: 600;
+      font-size: 17px;
     }
 
     &__sep {
-      color: rgba(100, 106, 115, 1);
-      font-weight: 500;
+      color: #86868b;
+      font-weight: 400;
     }
 
     &__title {
-      font-size: 14px;
-      font-weight: 500;
-      color: rgba(31, 35, 41, 1);
-      line-height: 22px;
+      font-size: 17px;
+      font-weight: 400;
+      color: #1d1d1f;
+      line-height: 1.43;
       flex: 1;
       min-width: 0;
       word-break: break-word;
       text-align: left;
+      letter-spacing: -0.374px;
     }
 
     &__count {
       flex-shrink: 0;
       font-size: 12px;
-      font-weight: 500;
-      line-height: 22px;
-      color: rgba(100, 106, 115, 1);
+      font-weight: 400;
+      line-height: 1.43;
+      color: #86868b;
       padding: 0 8px;
       border-radius: 10px;
-      background: rgba(31, 35, 41, 0.06);
+      background: rgba(0, 0, 0, 0.04);
     }
 
     &__desc {
       font-size: 12px;
-      color: rgba(100, 106, 115, 1);
+      color: #86868b;
       line-height: 20px;
     }
   }
@@ -1706,26 +1710,40 @@ onMounted(() => {
       }
 
       .input-area {
-        border-color: #d9dcdf;
+        border-color: var(--color-hairline);
 
         :deep(.ed-textarea__inner) {
-          padding: 42px 12px 52px 12px;
-          background: #f8f9fa;
-          border-radius: 16px;
-          line-height: 24px;
+          padding: 12px 60px 12px 20px;
+          background: var(--color-canvas);
+          border-radius: var(--radius-xl);
+          line-height: 1.47;
+          font-size: 16px;
+          border: 1px solid var(--color-hairline);
+
+          &::placeholder {
+            color: var(--color-muted-soft);
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0;
+            opacity: 0.75;
+          }
+        }
+
+        &.has-datasource :deep(.ed-textarea__inner) {
+          padding-top: 36px;
+        }
+
+        &.has-quick-question :deep(.ed-textarea__inner) {
+          padding-bottom: 64px;
         }
 
         &.is-assistant {
           :deep(.ed-textarea__inner) {
-            padding: 12px 12px 52px 12px;
             font-weight: 400;
             font-size: 16px;
-            line-height: 24px;
-            border-radius: 16px;
-
-            &::placeholder {
-              color: #8f959e;
-            }
+            line-height: 1.47;
+            border-radius: var(--radius-xl);
+            letter-spacing: -0.01em;
           }
         }
       }
@@ -1767,8 +1785,9 @@ onMounted(() => {
   .tool-btn {
     font-size: 14px;
     font-weight: 400;
-    line-height: 22px;
-    color: rgba(100, 106, 115, 1);
+    letter-spacing: -0.224px;
+    line-height: 1.29;
+    color: #86868b;
 
     .tool-btn-inner {
       display: flex;
@@ -1777,10 +1796,12 @@ onMounted(() => {
     }
 
     &:hover {
-      background: rgba(31, 35, 41, 0.1);
+      background: rgba(0, 0, 0, 0.04);
+      color: #1d1d1f;
     }
     &:active {
-      background: rgba(31, 35, 41, 0.1);
+      background: rgba(0, 0, 0, 0.08);
+      color: #1d1d1f;
     }
   }
 
@@ -1791,7 +1812,7 @@ onMounted(() => {
   .divider {
     width: 1px;
     height: 16px;
-    border-left: 1px solid rgba(31, 35, 41, 0.15);
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -1861,8 +1882,9 @@ onMounted(() => {
     .greeting-btn {
       width: 100%;
       height: 88px;
-      border-radius: 16px;
-      border-style: dashed;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
 
       .inner-icon {
         display: flex;
@@ -1872,19 +1894,21 @@ onMounted(() => {
         margin-right: 6px;
       }
 
-      font-size: 16px;
-      line-height: 24px;
-      font-weight: 500;
+      font-size: 17px;
+      line-height: 1.47;
+      font-weight: 400;
+      letter-spacing: -0.374px;
+      color: #1d1d1f;
 
-      --ed-button-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-hover-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-active-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-bg-color: rgba(248, 249, 250, 1);
-      --ed-button-hover-bg-color: var(--ed-color-primary-1a, #1cba901a);
-      --ed-button-border-color: rgba(217, 220, 223, 1);
-      --ed-button-hover-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-active-bg-color: var(--ed-color-primary-33, #1cba9033);
-      --ed-button-active-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-text-color: #0066cc;
+      --ed-button-hover-text-color: #0066cc;
+      --ed-button-active-text-color: #0066cc;
+      --ed-button-bg-color: #ffffff;
+      --ed-button-hover-bg-color: rgba(0, 102, 204, 0.06);
+      --ed-button-border-color: #e0e0e0;
+      --ed-button-hover-border-color: #0066cc;
+      --ed-button-active-bg-color: rgba(0, 102, 204, 0.1);
+      --ed-button-active-border-color: #0066cc;
     }
   }
 }
@@ -1902,9 +1926,10 @@ onMounted(() => {
 }
 
 .popover-chat_history {
-  box-shadow: 0px 4px 8px 0px #1f23291a !important;
-  border-radius: 12px !important;
+  border: 1px solid #e0e0e0;
+  border-radius: 18px !important;
   overflow: hidden;
+  box-shadow: none !important;
 }
 
 .popover-chat_history_small {

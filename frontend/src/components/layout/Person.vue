@@ -8,6 +8,7 @@ import icon_maybe_outlined from '@/assets/svg/icon-maybe_outlined.svg'
 import icon_key_outlined from '@/assets/svg/icon-key_outlined.svg'
 import icon_api_key from '@/assets/svg/icon-api_key.svg'
 import icon_translate_outlined from '@/assets/svg/icon_translate_outlined.svg'
+import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
 import icon_logout_outlined from '@/assets/svg/icon_logout_outlined.svg'
 import icon_right_outlined from '@/assets/svg/icon_right_outlined.svg'
 import AboutDialog from '@/components/about/index.vue'
@@ -20,6 +21,13 @@ import { useUserStore } from '@/stores/user'
 import { userApi } from '@/api/auth'
 import { toLoginPage } from '@/utils/utils'
 import { useCache } from '@/utils/useCache'
+import { ElMessage } from 'element-plus-secondary'
+import {
+  applyUiTheme,
+  getStoredUiTheme,
+  UI_THEME_ORDER,
+  type UiThemeId,
+} from '@/utils/uiTheme'
 
 const { wsCache } = useCache()
 const router = useRouter()
@@ -68,6 +76,17 @@ const languageList = computed(() => [
   },
 ])
 const popoverRef = ref()
+
+const currentUiTheme = ref<UiThemeId>(getStoredUiTheme())
+const themeList = computed(() =>
+  UI_THEME_ORDER.map((id) => ({ id, name: t(`theme.${id}`) }))
+)
+
+function selectUiTheme(id: UiThemeId) {
+  applyUiTheme(id)
+  currentUiTheme.value = id
+  ElMessage.success(t('common.switch_success'))
+}
 
 const toSystem = () => {
   popoverRef.value.hide()
@@ -137,7 +156,7 @@ const logout = async () => {
           <div :title="account" class="bottom ellipsis">{{ account }}</div>
         </div>
         <div v-if="isAdmin && !inSysmenu" class="popover-item" @click="toSystem">
-          <el-icon style="color: #646a73" size="16">
+          <el-icon style="color: var(--color-muted)" size="16">
             <icon_admin_outlined></icon_admin_outlined>
           </el-icon>
           <div class="datasource-name">{{ $t('common.system_manage') }}</div>
@@ -173,6 +192,33 @@ const logout = async () => {
               class="popover-item_language"
               :class="currentLanguage === ele.value && 'isActive'"
               @click="changeLanguage(ele.value)"
+            >
+              <div class="language-name">{{ ele.name }}</div>
+              <el-icon size="16" class="done">
+                <icon_done_outlined></icon_done_outlined>
+              </el-icon>
+            </div>
+          </div>
+        </el-popover>
+        <el-popover popper-class="system-language" placement="right">
+          <template #reference>
+            <div class="popover-item">
+              <el-icon size="16">
+                <icon_replace_outlined></icon_replace_outlined>
+              </el-icon>
+              <div class="datasource-name">{{ $t('common.ui_theme') }}</div>
+              <el-icon class="right" size="16">
+                <icon_right_outlined></icon_right_outlined>
+              </el-icon>
+            </div>
+          </template>
+          <div class="language-popover">
+            <div
+              v-for="ele in themeList"
+              :key="ele.id"
+              class="popover-item_language"
+              :class="currentUiTheme === ele.id && 'isActive'"
+              @click="selectUiTheme(ele.id)"
             >
               <div class="language-name">{{ ele.name }}</div>
               <el-icon size="16" class="done">
@@ -268,13 +314,13 @@ const logout = async () => {
   &:hover,
   &:focus {
     &::after {
-      background: #1f23291a;
+      background: var(--overlay-hover);
     }
   }
 
   &:active {
     &::after {
-      background: #1f232926;
+      background: var(--overlay-pressed);
     }
   }
 }
@@ -284,10 +330,11 @@ const logout = async () => {
 .system-person.system-person {
   padding: 0;
   width: 200px !important;
-  box-shadow: 0px 4px 8px 0px #1f23291a;
-  border: 1px solid #dee0e3;
+  box-shadow: var(--sqlbot-shadow-soft);
+  border: 1px solid var(--color-hairline);
   position: relative;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
 
   &::after {
     content: '';
@@ -296,7 +343,7 @@ const logout = async () => {
     left: 0;
     height: 1px;
     width: 100%;
-    background: #dee0e3;
+    background: var(--color-hairline);
   }
 
   &::before {
@@ -306,7 +353,7 @@ const logout = async () => {
     left: 0;
     height: 1px;
     width: 100%;
-    background: #dee0e3;
+    background: var(--color-hairline);
   }
 
   .popover {
@@ -347,10 +394,10 @@ const logout = async () => {
       margin: 0 4px;
       border-radius: 4px;
       &:hover {
-        background-color: #1f23291a;
+        background-color: var(--overlay-hover);
       }
       &:active {
-        background-color: #1f232926;
+        background-color: var(--overlay-pressed);
       }
       .datasource-name {
         margin-left: 8px;
@@ -371,8 +418,9 @@ const logout = async () => {
   z-index: 6000 !important;
   padding: 4px 4px 2px 4px;
   width: 240px !important;
-  box-shadow: 0px 4px 8px 0px #1f23291a;
-  border: 1px solid #dee0e3;
+  box-shadow: var(--sqlbot-shadow-soft);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-canvas);
 
   .language-popover {
     .popover-item_language {
@@ -386,7 +434,7 @@ const logout = async () => {
       border-radius: 4px;
       cursor: pointer;
       &:not(.empty):hover {
-        background: #1f23291a;
+        background: var(--overlay-hover);
       }
 
       .language-name {

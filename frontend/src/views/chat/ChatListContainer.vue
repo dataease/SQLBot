@@ -279,26 +279,29 @@ function onChatRenamed(chat: Chat) {
 
     .btn {
       width: 100%;
-      height: 40px;
+      height: 44px;
+      border-radius: 9999px;
 
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: -0.374px;
 
-      --ed-button-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-bg-color: var(--ed-color-primary-1a, #1cba901a);
-      --ed-button-border-color: var(--ed-color-primary-60, #a4e3d3);
-      --ed-button-hover-bg-color: var(--ed-color-primary-80, #d2f1e9);
-      --ed-button-hover-text-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-hover-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
-      --ed-button-active-bg-color: var(--ed-color-primary-60, #a4e3d3);
-      --ed-button-active-border-color: var(--ed-color-primary, rgba(28, 186, 144, 1));
+      --ed-button-text-color: #0066cc;
+      --ed-button-bg-color: rgba(0, 102, 204, 0.1);
+      --ed-button-border-color: transparent;
+      --ed-button-hover-bg-color: rgba(0, 102, 204, 0.15);
+      --ed-button-hover-text-color: #0066cc;
+      --ed-button-hover-border-color: transparent;
+      --ed-button-active-bg-color: rgba(0, 102, 204, 0.2);
+      --ed-button-active-border-color: transparent;
     }
 
     .search {
       height: 32px;
       width: 100%;
       :deep(.ed-input__wrapper) {
-        background-color: #f5f6f7;
+        background-color: #f5f5f7;
+        border-radius: 9999px;
       }
     }
 

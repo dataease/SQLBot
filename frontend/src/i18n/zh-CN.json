@@ -188,6 +188,7 @@
     "traditional_chinese": "繁體中文",
     "help": "帮助",
     "language": "语言",
+    "ui_theme": "界面主题",
     "english": "English",
     "re_upload": "重新上传",
     "not_exceed_50mb": "支持 XLS、XLSX、CSV 格式，文件大小不超过 50MB",
@@ -958,5 +959,11 @@
     "create": "创建",
     "to_doc": "查看 API",
     "trigger_limit": "最多支持创建 {0} 个 API Key"
+  },
+  "theme": {
+    "claude": "Claude",
+    "apple": "Apple",
+    "notion": "Notion",
+    "airbnb": "Airbnb"
   }
 }

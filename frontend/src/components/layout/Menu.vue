@@ -87,56 +87,71 @@ const routerList = computed(() => {
   border-right: none;
   .ed-menu-item {
     height: 40px !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     margin-bottom: 2px;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: -0.224px;
+    color: var(--color-muted);
     &.is-active {
-      background-color: #fff !important;
-      border-radius: 6px;
-      font-weight: 500;
+      background-color: rgba(0, 102, 204, 0.1) !important;
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--color-ink);
     }
   }
 
   .ed-sub-menu .ed-sub-menu__title {
-    border-radius: 6px;
+    border-radius: 8px;
+    color: var(--color-muted);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: -0.224px;
   }
 
   .ed-sub-menu.is-active:not(.is-opened) {
     .ed-sub-menu__title {
-      background-color: #fff !important;
-      color: var(--ed-color-primary) !important;
-      font-weight: 500;
+      background-color: rgba(0, 102, 204, 0.1) !important;
+      color: #0066cc !important;
+      font-weight: 600;
     }
   }
 
   .ed-sub-menu.is-active.is-opened {
     .ed-sub-menu__title {
-      color: var(--ed-color-primary) !important;
-      font-weight: 500;
+      color: #0066cc !important;
+      font-weight: 600;
     }
   }
 
   .ed-sub-menu .ed-icon {
     margin-right: 8px;
+    color: var(--color-muted);
   }
 }
 .ed-popper.is-light:has(.ed-menu--popup) {
-  border: 1px solid #dee0e3;
-  border-radius: 6px;
-  box-shadow: 0px 4px 8px 0px #1f23291a;
-  background: #eff1f0;
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px;
+  box-shadow: none;
+  background: var(--color-canvas);
   overflow: hidden;
 }
 .ed-menu--popup {
   padding: 8px;
-  background: #eff1f0;
+  background: var(--color-canvas);
 
   .ed-menu-item {
     padding: 9px 16px;
     height: 40px !important;
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: -0.224px;
+    color: var(--color-muted);
     &.is-active {
-      background-color: #fff !important;
-      font-weight: 500;
+      background-color: rgba(0, 102, 204, 0.1) !important;
+      font-weight: 600;
+      color: var(--color-ink);
     }
   }
 }
@@ -152,7 +167,7 @@ const routerList = computed(() => {
 }
 
 .ed-menu--popup-container .subTitleMenu {
-  color: #646a73 !important;
+  color: var(--color-muted) !important;
   pointer-events: none;
 }
 </style>

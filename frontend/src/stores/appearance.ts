@@ -4,6 +4,7 @@ import { store } from '@/stores/index'
 import { request } from '@/utils/request'
 
 import { setTitle, setCurrentColor } from '@/utils/utils'
+import { reapplyUiThemePrimary } from '@/utils/uiTheme'
 
 const basePath = import.meta.env.VITE_API_BASE_URL
 const baseUrl = basePath + '/system/appearance/picture/'
@@ -255,7 +256,8 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       // }
       const obj = LicenseGenerator.getLicense()
       if (obj?.status !== 'valid') {
-        setCurrentColor('#1CBA90')
+        setCurrentColor('#cc785c')
+        reapplyUiThemePrimary()
         document.title = 'SQLBot'
         setLinkIcon()
         return
@@ -263,7 +265,8 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       const resData = await request.get('/system/appearance/ui')
       this.loaded = true
       if (!resData?.length) {
-        setCurrentColor('#1CBA90')
+        setCurrentColor('#cc785c')
+        reapplyUiThemePrimary()
         setLinkIcon()
         return
       }
@@ -289,8 +292,9 @@ export const useAppearanceStore = defineStore('appearanceStore', {
           ? this.customColor
           : this.isBlue
             ? '#3370ff'
-            : '#1CBA90'
+            : '#cc785c'
       setCurrentColor(currentColor)
+      reapplyUiThemePrimary()
       this.bg = data.bg
       this.login = data.login
       this.slogan = data.slogan
@@ -311,13 +315,12 @@ export const useAppearanceStore = defineStore('appearanceStore', {
 
 const setLinkIcon = (linkWeb?: string) => {
   const link = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-  if (link) {
-    if (linkWeb) {
-      link['href'] = baseUrl + linkWeb
-    } else {
-      link['href'] = '/LOGO-fold.svg'
-    }
+  if (!link) return
+  if (linkWeb) {
+    link['href'] = baseUrl + linkWeb
+    link.removeAttribute('data-themed')
   }
+  /* If no server-uploaded favicon, leave the themed favicon (set by applyUiTheme) in place. */
 }
 
 export const useAppearanceStoreWithOut = () => {

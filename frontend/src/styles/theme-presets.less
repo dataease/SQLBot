@@ -1,0 +1,269 @@
+/**
+ * Theme presets — each html[data-ui-theme="…"] block mirrors the corresponding DESIGN_*.md
+ * (colors, surfaces, text, fonts, radii, shadows). Default `:root` (design-tokens.less) = Claude.
+ */
+
+/* ─────────────────────────  Claude  ─────────────────────────
+ * DESIGN_CLAUDE.md — warm cream canvas + coral (#cc785c) + slab serif display.
+ * Mirrors :root so switching back from another theme fully restores tokens.
+ */
+html[data-ui-theme='claude'] {
+  --color-primary: #cc785c;
+  --color-primary-active: #a9583e;
+  --color-primary-disabled: #e6dfd8;
+
+  --color-canvas: #faf9f5;
+  --color-canvas-parchment: #f5f0e8;
+  --color-surface-soft: #f5f0e8;
+  --color-surface-card: #efe9de;
+  --color-surface-cream-strong: #e8e0d2;
+  --color-surface-dark: #181715;
+  --color-surface-dark-elevated: #252320;
+  --color-surface-dark-soft: #1f1e1b;
+  --color-hairline: #e6dfd8;
+  --color-hairline-soft: #ebe6df;
+
+  --color-ink: #141413;
+  --color-body-strong: #252523;
+  --color-body: #3d3d3a;
+  --color-muted: #6c6a64;
+  --color-muted-soft: #8e8b82;
+  --color-on-primary: #ffffff;
+  --color-on-dark: #faf9f5;
+  --color-on-dark-soft: #a09d96;
+
+  --color-accent-secondary: #5db8a6; /* teal */
+  --color-accent-tertiary: #e8a55a; /* amber */
+
+  --color-success: #5db872;
+  --color-warning: #d4a017;
+  --color-error: #c64545;
+
+  --font-display: 'Cormorant Garamond', 'EB Garamond', Garamond, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --font-display-weight: 500;
+  --font-display-tracking: -0.02em;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  --overlay-hover: rgba(20, 20, 19, 0.08);
+  --overlay-pressed: rgba(20, 20, 19, 0.14);
+  --overlay-strong: rgba(20, 20, 19, 0.18);
+
+  --sqlbot-shadow-soft: 0 1px 3px rgba(20, 20, 19, 0.08);
+
+  --chat-bubble-user-bg: #efe9de;
+  --chat-bubble-user-text: var(--color-ink);
+  --chat-bubble-user-border: var(--color-hairline);
+  --chat-bubble-assistant-bg: #ffffff;
+}
+
+/* ─────────────────────────  Apple  ──────────────────────────
+ * DESIGN_APPLE.md — pure white + parchment, single Action Blue (#0066cc),
+ * SF Pro Display/Text via system-ui, 17px body, near-black ink #1d1d1f.
+ */
+html[data-ui-theme='apple'] {
+  --color-primary: #0066cc;
+  --color-primary-active: #004499;
+  --color-primary-focus: #0071e3;
+  --color-primary-on-dark: #2997ff;
+  --color-primary-disabled: #cccccc;
+
+  --color-canvas: #ffffff;
+  --color-canvas-parchment: #f5f5f7;
+  --color-surface-soft: #f5f5f7;
+  --color-surface-card: #fafafc;
+  --color-surface-cream-strong: #ebebed;
+  --color-surface-dark: #272729;
+  --color-surface-dark-elevated: #2a2a2c;
+  --color-surface-dark-soft: #252527;
+  --color-hairline: #e0e0e0;
+  --color-hairline-soft: #f0f0f0;
+
+  --color-ink: #1d1d1f;
+  --color-body-strong: #1d1d1f;
+  --color-body: #1d1d1f;
+  --color-muted: #86868b;
+  --color-muted-soft: #7a7a7a;
+  --color-on-primary: #ffffff;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: #cccccc;
+
+  --color-accent-secondary: #0071e3;
+  --color-accent-tertiary: #2997ff;
+
+  --color-success: #34c724;
+  --color-warning: #d4a017;
+  --color-error: #ff3b30;
+
+  --font-display: 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, 'Inter',
+    'Segoe UI', sans-serif;
+  --font-sans: 'SF Pro Text', system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI',
+    sans-serif;
+  --font-mono: 'SF Mono', 'JetBrains Mono', Consolas, monospace;
+  --font-display-weight: 600;
+  --font-display-tracking: -0.022em; /* Apple-tight */
+
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 18px;
+  --radius-xl: 18px;
+  --radius-pill: 9999px;
+
+  --overlay-hover: rgba(0, 0, 0, 0.06);
+  --overlay-pressed: rgba(0, 0, 0, 0.12);
+  --overlay-strong: rgba(0, 0, 0, 0.18);
+
+  /* Apple disallows UI shadows; reserve the lone product-image shadow only */
+  --sqlbot-shadow-soft: none;
+  --sqlbot-shadow-product: rgba(0, 0, 0, 0.22) 3px 5px 30px;
+
+  --chat-bubble-user-bg: #f5f5f7;
+  --chat-bubble-user-text: var(--color-ink);
+  --chat-bubble-user-border: transparent;
+  --chat-bubble-assistant-bg: #ffffff;
+}
+
+/* ─────────────────────────  Notion  ─────────────────────────
+ * DESIGN_NOTION.md — Notion-Sans (Inter-based), warm-charcoal ink #37352f,
+ * Notion Purple primary (rectangular 8px buttons), separate Link Blue for inline links.
+ */
+html[data-ui-theme='notion'] {
+  --color-primary: #7c66dc; /* Notion Purple */
+  --color-primary-active: #5a48b3;
+  --color-primary-disabled: #e3e2e0;
+  --color-link: #2383e2; /* Notion Link Blue (distinct from primary) */
+  --color-link-active: #1a6ec2;
+
+  --color-canvas: #ffffff;
+  --color-canvas-parchment: #f7f6f3;
+  --color-surface-soft: #f7f6f3;
+  --color-surface-card: #f1f1ef;
+  --color-surface-cream-strong: #e9e9e7;
+  --color-surface-dark: #1a1a1a; /* navy hero band */
+  --color-surface-dark-elevated: #232323;
+  --color-surface-dark-soft: #161616;
+  --color-hairline: #e9e9e7;
+  --color-hairline-soft: #f1f1ef;
+
+  --color-ink: #37352f; /* warm charcoal */
+  --color-body-strong: #2f2c27;
+  --color-body: #4a4844;
+  --color-muted: #787774;
+  --color-muted-soft: #9b9a97;
+  --color-on-primary: #ffffff;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: rgba(255, 255, 255, 0.7);
+
+  /* Notion pastel feature tints — exposed for cards/badges */
+  --color-tint-peach: #faebdd;
+  --color-tint-rose: #fbe4e4;
+  --color-tint-mint: #ddedea;
+  --color-tint-lavender: #eae4f2;
+  --color-tint-sky: #ddebf1;
+  --color-tint-yellow: #fbf3db;
+  --color-accent-secondary: #2383e2;
+  --color-accent-tertiary: #f3a93b;
+
+  --color-success: #448361;
+  --color-warning: #cb912f;
+  --color-error: #e03e3e;
+
+  --font-display: 'Inter', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --font-display-weight: 600;
+  --font-display-tracking: -0.01em;
+
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px; /* Notion buttons are 8px rects, not pills */
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px; /* reserved for badges/tabs only */
+
+  --overlay-hover: rgba(55, 53, 47, 0.08);
+  --overlay-pressed: rgba(55, 53, 47, 0.12);
+  --overlay-strong: rgba(55, 53, 47, 0.16);
+
+  --sqlbot-shadow-soft: rgba(15, 15, 15, 0.04) 0 0 0 1px, rgba(15, 15, 15, 0.04) 0 2px 4px;
+  --sqlbot-shadow-card: rgba(15, 15, 15, 0.08) 0 4px 12px;
+
+  --chat-bubble-user-bg: #f1f1ef;
+  --chat-bubble-user-text: var(--color-ink);
+  --chat-bubble-user-border: transparent;
+  --chat-bubble-assistant-bg: #ffffff;
+}
+
+/* ─────────────────────────  Airbnb  ─────────────────────────
+ * DESIGN_AIRBNB.md — Airbnb Cereal VF (Inter fallback), pure white canvas,
+ * single Rausch (#ff385c) accent; soft 8/14px radii, search/orb pill 9999px.
+ */
+html[data-ui-theme='airbnb'] {
+  --color-primary: #ff385c; /* Rausch */
+  --color-primary-active: #e00b41;
+  --color-primary-disabled: #ffd1da;
+
+  --color-canvas: #ffffff;
+  --color-canvas-parchment: #f7f7f7;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-card: #f7f7f7;
+  --color-surface-cream-strong: #f2f2f2;
+  --color-surface-dark: #222222;
+  --color-surface-dark-elevated: #2c2c2c;
+  --color-surface-dark-soft: #1a1a1a;
+  --color-hairline: #dddddd;
+  --color-hairline-soft: #ebebeb;
+
+  --color-ink: #222222; /* never pure black */
+  --color-body-strong: #222222;
+  --color-body: #3f3f3f;
+  --color-muted: #6a6a6a;
+  --color-muted-soft: #929292;
+  --color-on-primary: #ffffff;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: rgba(255, 255, 255, 0.72);
+
+  /* Sub-brands per spec — exposed but not used as primary */
+  --color-accent-secondary: #460479; /* Luxe purple */
+  --color-accent-tertiary: #92174d; /* Plus magenta */
+
+  --color-success: #008a05;
+  --color-warning: #e07912;
+  --color-error: #c13515;
+
+  --font-display: 'Airbnb Cereal VF', 'Cereal', 'Inter', 'Circular', -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-sans: 'Airbnb Cereal VF', 'Cereal', 'Inter', 'Circular', -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, monospace;
+  --font-display-weight: 600;
+  --font-display-tracking: -0.01em;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px; /* buttons */
+  --radius-md: 12px; /* cards */
+  --radius-lg: 14px;
+  --radius-xl: 32px; /* category strip */
+  --radius-pill: 9999px; /* search bar / orb */
+
+  --overlay-hover: rgba(0, 0, 0, 0.06);
+  --overlay-pressed: rgba(0, 0, 0, 0.12);
+  --overlay-strong: rgba(0, 0, 0, 0.16);
+
+  /* Airbnb's single shadow tier */
+  --sqlbot-shadow-soft: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px,
+    rgba(0, 0, 0, 0.1) 0 4px 8px;
+
+  --chat-bubble-user-bg: #f7f7f7;
+  --chat-bubble-user-text: var(--color-ink);
+  --chat-bubble-user-border: transparent;
+  --chat-bubble-assistant-bg: #ffffff;
+}

@@ -4,7 +4,6 @@ import Menu from './Menu.vue'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import Workspace from './Workspace.vue'
 import Person from './Person.vue'
-import LOGO_fold from '@/assets/LOGO-fold.svg'
 import icon_moments_categories_outlined from '@/assets/svg/icon_moments-categories_outlined.svg'
 import icon_side_fold_outlined from '@/assets/svg/icon_side-fold_outlined.svg'
 import icon_side_expand_outlined from '@/assets/svg/icon_side-expand_outlined.svg'
@@ -131,15 +130,10 @@ onBeforeMount(() => {
             @click="toChatIndex"
           />
           <custom_small
-            v-else-if="appearanceStore.themeColor !== 'default'"
-            :style="{ marginLeft: collapse ? '5px' : 0 }"
-            :class="!collapse && 'collapse-icon'"
-          ></custom_small>
-          <LOGO_fold
             v-else
             :style="{ marginLeft: collapse ? '5px' : 0 }"
             :class="!collapse && 'collapse-icon'"
-          ></LOGO_fold>
+          ></custom_small>
           <span v-if="!collapse">{{ $t('training.system_management') }}</span>
         </div>
       </template>
@@ -238,13 +232,13 @@ onBeforeMount(() => {
               appearanceStore.name
             }}</span>
           </div>
-          <LOGO_fold
+          <custom_small
             v-else-if="collapse"
             style="margin: 0 0 6px 5px; cursor: pointer"
             @click="toChatIndex"
-          ></LOGO_fold>
+          ></custom_small>
           <div v-else class="default-sqlbot">
-            <LOGO_fold class="collapse-icon" @click="toChatIndex"></LOGO_fold>
+            <custom_small class="collapse-icon" @click="toChatIndex"></custom_small>
             <span style="max-width: 150px" :title="appearanceStore.name" class="ellipsis">{{
               appearanceStore.name
             }}</span>
@@ -300,7 +294,7 @@ onBeforeMount(() => {
 .system-layout {
   width: 100vw;
   height: 100vh;
-  background-color: #f1f4f3;
+  background-color: var(--color-canvas-parchment);
   display: flex;
 
   @keyframes rotate {
@@ -318,12 +312,17 @@ onBeforeMount(() => {
     padding: 16px;
     position: relative;
     min-width: 240px;
+    background-color: var(--color-canvas);
+    border-right: 1px solid var(--color-hairline);
 
     .default-sqlbot {
       display: flex;
       align-items: center;
-      font-weight: 500;
-      font-size: 16px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.374px;
+      color: var(--color-ink);
       cursor: pointer;
       margin-bottom: 12px;
       .collapse-icon {
@@ -334,8 +333,11 @@ onBeforeMount(() => {
     .sys-management {
       display: flex;
       align-items: center;
-      font-weight: 500;
-      font-size: 16px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.374px;
+      color: var(--color-ink);
       cursor: pointer;
       margin-bottom: 12px;
       .collapse-icon {
@@ -355,19 +357,19 @@ onBeforeMount(() => {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
+        border-radius: 8px;
         height: 40px;
         cursor: pointer;
 
         &:not(.collapse) {
-          background: #1f23290a;
-          border: 1px solid #d9dcdf;
+          background: var(--overlay-hover);
+          border: 1px solid var(--color-hairline);
         }
         &:hover {
-          background-color: #1f23291a;
+          background-color: var(--overlay-hover);
         }
         &:active {
-          background-color: #1f232926;
+          background-color: var(--overlay-pressed);
         }
         .ed-icon {
           margin-right: 4.95px;
@@ -382,16 +384,16 @@ onBeforeMount(() => {
         .fold {
           cursor: pointer;
           margin-left: auto;
-          border-radius: 6px;
+          border-radius: 8px;
           width: 40px;
           height: 40px;
           &:hover,
           &:focus {
-            background: #1f23291a;
+            background: var(--overlay-hover);
           }
 
           &:active {
-            background: #1f232933;
+            background: var(--overlay-strong);
           }
         }
       }
@@ -401,7 +403,6 @@ onBeforeMount(() => {
       width: 64px;
       min-width: 64px;
       padding: 16px 12px;
-      // animation: rotate 0.1s ease-in-out;
 
       .ed-menu--collapse {
         --ed-menu-icon-width: 32px;
@@ -443,9 +444,10 @@ onBeforeMount(() => {
       width: 100%;
       height: 100%;
       padding: 16px 24px;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0px 2px 4px 0px #1f23291f;
+      background-color: var(--color-canvas);
+      border: 1px solid var(--color-hairline);
+      border-radius: 18px;
+      box-shadow: none;
       overflow-x: auto;
 
       &:has(.no-padding) {
@@ -469,7 +471,7 @@ onBeforeMount(() => {
     transition: background 0.15s;
 
     &:hover {
-      background: rgba(31, 35, 41, 0.08);
+      background: var(--overlay-hover);
     }
   }
 
@@ -505,7 +507,7 @@ onBeforeMount(() => {
       flex-shrink: 0;
       height: 1px;
       margin: 0 12px;
-      background: rgba(31, 35, 41, 0.12);
+      background: var(--color-hairline);
     }
 
     .layout-chat-history-heading {
@@ -514,7 +516,7 @@ onBeforeMount(() => {
       font-size: 12px;
       font-weight: 600;
       line-height: 18px;
-      color: rgba(100, 106, 115, 1);
+      color: var(--color-muted);
       letter-spacing: 0.02em;
     }
 

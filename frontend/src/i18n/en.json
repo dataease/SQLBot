@@ -188,6 +188,7 @@
     "traditional_chinese": "繁體中文",
     "help": "Help",
     "language": "Language",
+    "ui_theme": "Appearance",
     "english": "English",
     "re_upload": "Re-upload",
     "not_exceed_50mb": "Supports XLS, XLSX, CSV formats, file size does not exceed 50MB",
@@ -958,5 +959,11 @@
     "create": "Create",
     "to_doc": "View API",
     "trigger_limit": "Supports up to {0} API Keys"
+  },
+  "theme": {
+    "claude": "Claude",
+    "apple": "Apple",
+    "notion": "Notion",
+    "airbnb": "Airbnb"
   }
 }
