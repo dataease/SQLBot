@@ -397,7 +397,9 @@
       "low_version": "相容低版本",
       "ssl": "啟用 SSL"
     },
-    "sync_fields": "同步表結構"
+    "sync_fields": "同步表結構",
+    "sync_fields_success": "同步表結構成功",
+    "sync_fields_failed": "同步表結構失敗"
   },
   "datasource": {
     "recommended_question": "推薦問題",

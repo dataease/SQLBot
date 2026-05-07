@@ -397,7 +397,9 @@
       "low_version": "Compatible with lower versions",
       "ssl": "Enable SSL"
     },
-    "sync_fields": "Sync Fields"
+    "sync_fields": "Sync Fields",
+    "sync_fields_success": "Sync fields successfully",
+    "sync_fields_failed": "Sync fields failed"
   },
   "datasource": {
     "recommended_question": "Recommended Question",

@@ -397,7 +397,9 @@
       "low_version": "낮은 버전 호환",
       "ssl": "SSL 활성화"
     },
-    "sync_fields": "동기화된 테이블 구조"
+    "sync_fields": "동기화된 테이블 구조",
+    "sync_fields_success": "테이블 구조 동기화 성공",
+    "sync_fields_failed": "테이블 구조 동기화 실패"
   },
   "datasource": {
     "recommended_question": "추천 질문",

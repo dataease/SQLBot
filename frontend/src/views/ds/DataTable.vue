@@ -262,10 +262,12 @@ const syncFields = () => {
     .syncFields(currentTable.value.id)
     .then(() => {
       btnSelectClick('d')
+      ElMessage.success(t('ds.sync_fields_success'))
       loading.value = false
     })
     .catch(() => {
       loading.value = false
+      ElMessage.warning(t('ds.sync_fields_failed'))
     })
 }
 
@@ -546,6 +548,7 @@ const btnSelectClick = (val: any) => {
             <el-button
               v-if="ds.type !== 'excel'"
               :icon="Refresh"
+              secondary
               style="margin-left: 12px"
               @click="syncFields()"
             >
