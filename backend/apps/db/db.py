@@ -256,21 +256,17 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                     return False
         elif equals_ignore_case(ds.type, 'hive'):
-            try:
-                conn = hive.connect(host=conf.host, port=conf.port, username=conf.username,
-                                    database=conf.database, **extra_config_dict)
-                cursor = conn.cursor()
-                cursor.execute('select 1')
-                cursor.fetchall()
-                cursor.close()
-                conn.close()
-                SQLBotLogUtil.info("success")
-                return True
-            except Exception as e:
-                SQLBotLogUtil.error(f"Datasource {ds.id} connection failed: {e}")
-                if is_raise:
-                    raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
-                return False
+            with hive.connect(host=conf.host, port=conf.port, username=conf.username,
+                              database=conf.database, **extra_config_dict) as conn, conn.cursor() as cursor:
+                try:
+                    cursor.execute('select 1')
+                    SQLBotLogUtil.info("success")
+                    return True
+                except Exception as e:
+                    SQLBotLogUtil.error(f"Datasource {ds.id} connection failed: {e}")
+                    if is_raise:
+                        raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
+                    return False
 
         elif equals_ignore_case(ds.type, 'es'):
             es_conn = get_es_connect(conf)
