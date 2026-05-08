@@ -22,11 +22,17 @@ const loadData = () => {
     if (res) {
       res.forEach((item: any) => {
         if (
-          (item.pkey?.startsWith('chat') && item.pkey !== 'chat.sqlbot_name') ||
+          item.pkey?.startsWith('chat') ||
           item.pkey?.startsWith('login') ||
           item.pkey?.startsWith('platform')
         ) {
-          state.parameterForm[item.pkey] = formatArg(item.pval)
+          if (item.pkey !== 'chat.sqlbot_name') {
+            if (item.pval && item.pval.trim().length > 0) {
+              state.parameterForm[item.pkey] = item.pval
+            }
+          } else {
+            state.parameterForm[item.pkey] = formatArg(item.pval)
+          }
         }
       })
       console.log(state.parameterForm)
