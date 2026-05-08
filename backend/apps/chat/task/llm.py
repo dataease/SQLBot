@@ -186,6 +186,9 @@ class LLMService:
 
         chat_params: list[SysArgModel] = await get_groups(args[0], "chat")
         for config in chat_params:
+            if config.pkey == 'chat.sqlbot_name':
+                if config.pval.strip():
+                    instance.chat_question.sqlbot_name = config.pval
             if config.pkey == 'chat.limit_rows':
                 if config.pval.lower().strip() == 'true':
                     instance.enable_sql_row_limit = True

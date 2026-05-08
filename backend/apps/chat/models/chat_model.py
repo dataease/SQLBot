@@ -230,6 +230,7 @@ class AiModelQuestion(BaseModel):
     error_msg: str = ""
     regenerate_record_id: Optional[int] = None
     sample_data: str = ""
+    sqlbot_name: str = "SQLBot"
 
     def sql_sys_question(self, db_type: Union[str, DB], enable_query_limit: bool = True):
         templates: dict[str, str] = {}
@@ -249,8 +250,9 @@ class AiModelQuestion(BaseModel):
         _example_answer_3 = _sql_template['example_answer_3_with_limit'] if enable_query_limit else _sql_template[
             'example_answer_3']
 
-        templates['system'] = _base_template['system'].format(lang=self.lang, process_check=_process_check)
+        templates['system'] = _base_template['system'].format(lang=self.lang, process_check=_process_check, sqlbot_name=self.sqlbot_name)
         templates['rules'] = _base_template['generate_rules'].format(lang=self.lang,
+                                                                     sqlbot_name = self.sqlbot_name,
                                                                      base_sql_rules=_base_sql_rules,
                                                                      basic_sql_examples=_sql_examples,
                                                                      example_engine=_example_engine,
@@ -284,7 +286,7 @@ class AiModelQuestion(BaseModel):
 
     def chart_sys_question(self):
         templates: dict[str, str] = {
-            'system': get_chart_template()['system'].format(lang=self.lang),
+            'system': get_chart_template()['system'].format(lang=self.lang, sqlbot_name=self.sqlbot_name),
             'rules': get_chart_template()['generate_rules'].format(lang=self.lang)
         }
         return templates
@@ -295,38 +297,38 @@ class AiModelQuestion(BaseModel):
 
     def analysis_sys_question(self):
         return get_analysis_template()['system'].format(lang=self.lang, terminologies=self.terminologies,
-                                                        custom_prompt=self.custom_prompt)
+                                                        custom_prompt=self.custom_prompt, sqlbot_name=self.sqlbot_name)
 
     def analysis_user_question(self):
         return get_analysis_template()['user'].format(fields=self.fields, data=self.data)
 
     def predict_sys_question(self):
-        return get_predict_template()['system'].format(lang=self.lang, custom_prompt=self.custom_prompt)
+        return get_predict_template()['system'].format(lang=self.lang, custom_prompt=self.custom_prompt, sqlbot_name=self.sqlbot_name)
 
     def predict_user_question(self):
         return get_predict_template()['user'].format(fields=self.fields, data=self.data)
 
     def datasource_sys_question(self):
-        return get_datasource_template()['system'].format(lang=self.lang)
+        return get_datasource_template()['system'].format(lang=self.lang, sqlbot_name=self.sqlbot_name)
 
     def datasource_user_question(self, datasource_list: str = "[]"):
         return get_datasource_template()['user'].format(lang=self.lang, question=self.question, data=datasource_list)
 
     def guess_sys_question(self, articles_number: int = 4):
-        return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number)
+        return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number, sqlbot_name=self.sqlbot_name)
 
     def guess_user_question(self, old_questions: str = "[]"):
         return get_guess_question_template()['user'].format(question=self.question, schema=self.db_schema,
                                                             old_questions=old_questions)
 
     def filter_sys_question(self):
-        return get_permissions_template()['system'].format(lang=self.lang, engine=self.engine)
+        return get_permissions_template()['system'].format(lang=self.lang, engine=self.engine, sqlbot_name=self.sqlbot_name)
 
     def filter_user_question(self):
         return get_permissions_template()['user'].format(sql=self.sql, filter=self.filter)
 
     def dynamic_sys_question(self):
-        return get_dynamic_template()['system'].format(lang=self.lang, engine=self.engine)
+        return get_dynamic_template()['system'].format(lang=self.lang, engine=self.engine, sqlbot_name=self.sqlbot_name)
 
     def dynamic_user_question(self):
         return get_dynamic_template()['user'].format(sql=self.sql, sub_query=self.sub_query)

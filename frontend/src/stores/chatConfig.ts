@@ -4,6 +4,7 @@ import { request } from '@/utils/request.ts'
 import { formatArg } from '@/utils/utils.ts'
 
 interface ChatConfig {
+  sqlbot_name: string
   expand_thinking_block: boolean
   limit_rows: boolean
 }
@@ -11,11 +12,15 @@ interface ChatConfig {
 export const chatConfigStore = defineStore('chatConfigStore', {
   state: (): ChatConfig => {
     return {
+      sqlbot_name: 'SQLBot',
       expand_thinking_block: false,
       limit_rows: true,
     }
   },
   getters: {
+    getSQLBotName(): string {
+      return this.sqlbot_name
+    },
     getExpandThinkingBlock(): boolean {
       return this.expand_thinking_block
     },
@@ -33,6 +38,11 @@ export const chatConfigStore = defineStore('chatConfigStore', {
             }
             if (item.pkey === 'chat.limit_rows') {
               this.limit_rows = formatArg(item.pval)
+            }
+            if (item.pkey === 'chat.sqlbot_name') {
+              if (item.pval && item.pval.trim().length > 0) {
+                this.sqlbot_name = item.pval
+              }
             }
           })
         }

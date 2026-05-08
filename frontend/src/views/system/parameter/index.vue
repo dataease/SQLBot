@@ -9,6 +9,7 @@ const { t } = useI18n()
 
 const state = reactive({
   parameterForm: reactive<any>({
+    'chat.sqlbot_name': 'SQLBot',
     'chat.expand_thinking_block': false,
     'chat.limit_rows': false,
   }),
@@ -19,7 +20,7 @@ const loadData = () => {
     if (res) {
       res.forEach((item: any) => {
         if (
-          item.pkey?.startsWith('chat') ||
+          (item.pkey?.startsWith('chat') && item.pkey !== 'chat.sqlbot_name') ||
           item.pkey?.startsWith('login') ||
           item.pkey?.startsWith('platform')
         ) {
@@ -96,6 +97,14 @@ onMounted(() => {
           {{ t('parameter.question_count_settings') }}
         </div>
         <el-row>
+          <div class="card-item" style="width: 100%">
+            <div class="label">
+              {{ t('parameter.sqlbot_name') }}
+            </div>
+            <div class="value">
+              <el-input v-model="state.parameterForm['chat.sqlbot_name']" />
+            </div>
+          </div>
           <div class="card-item">
             <div class="label">
               {{ t('parameter.model_thinking_process') }}
