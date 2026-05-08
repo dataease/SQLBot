@@ -54,7 +54,7 @@ dependencies = [
     "ldap3>=2.9.1",
     "sqlglot>=28.6.0",
     "numpy==2.3.5",
-    "pyhive[hive]>=0.7.0",
+    "pyhive[hive_pure_sasl]>=0.7.0",
     "thrift-sasl"
 ]
 

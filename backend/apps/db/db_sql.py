@@ -29,9 +29,7 @@ def get_version_sql(ds: CoreDatasource, conf: DatasourceConf):
         return """
                 SELECT * FROM v$version
                 """
-    elif equals_ignore_case(ds.type, "redshift"):
-        return ''
-    elif equals_ignore_case(ds.type, "sqlite"):
+    elif equals_ignore_case(ds.type, "redshift", "sqlite", "hive"):
         return ''
 
 
