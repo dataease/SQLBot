@@ -71,6 +71,8 @@
     "platform_user_roles": "第三方平台用户角色",
     "excessive_data_volume": "关闭1000行的数据限制后，数据量过大，可能会造成系统卡顿",
     "sqlbot_name": "问数小助手名称",
+    "hide_sql": "隐藏展示SQL按钮",
+    "hide_log": "隐藏执行日志",
     "prompt": "提示",
     "disabling_successfully": "关闭成功",
     "closed_by_default": "在问数窗口中，控制模型思考过程默认展开或者关闭",

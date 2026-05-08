@@ -26,7 +26,10 @@ import { useAssistantStore } from '@/stores/assistant'
 import AddViewDashboard from '@/views/dashboard/common/AddViewDashboard.vue'
 import html2canvas from 'html2canvas'
 import { chatApi } from '@/api/chat'
+import { useChatConfigStore } from '@/stores/chatConfig.ts'
 
+const chatConfig = useChatConfigStore()
+const showSQLBtn = !chatConfig.getHideSQL
 const props = withDefaults(
   defineProps<{
     recordId?: number
@@ -420,7 +423,7 @@ watch(
           </el-tooltip>
         </div>
 
-        <div v-if="message?.record?.sql">
+        <div v-if="message?.record?.sql && showSQLBtn">
           <el-tooltip effect="dark" :offset="8" :content="t('chat.show_sql')" placement="top">
             <el-button class="tool-btn" text @click="showSql">
               <el-icon size="16">

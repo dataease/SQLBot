@@ -12,6 +12,8 @@ const state = reactive({
     'chat.sqlbot_name': 'SQLBot',
     'chat.expand_thinking_block': false,
     'chat.limit_rows': false,
+    'chat.hide_sql': false,
+    'chat.hide_log': false,
   }),
 })
 provide('parameterForm', state.parameterForm)
@@ -105,6 +107,8 @@ onMounted(() => {
               <el-input v-model="state.parameterForm['chat.sqlbot_name']" />
             </div>
           </div>
+        </el-row>
+        <el-row>
           <div class="card-item">
             <div class="label">
               {{ t('parameter.model_thinking_process') }}
@@ -137,6 +141,24 @@ onMounted(() => {
                 v-model="state.parameterForm['chat.limit_rows']"
                 :before-change="beforeChange"
               />
+            </div>
+          </div>
+        </el-row>
+        <el-row>
+          <div class="card-item">
+            <div class="label">
+              {{ t('parameter.hide_sql') }}
+            </div>
+            <div class="value">
+              <el-switch v-model="state.parameterForm['chat.hide_sql']" />
+            </div>
+          </div>
+          <div class="card-item" style="margin-left: 16px">
+            <div class="label">
+              {{ t('parameter.hide_log') }}
+            </div>
+            <div class="value">
+              <el-switch v-model="state.parameterForm['chat.hide_log']" />
             </div>
           </div>
         </el-row>
