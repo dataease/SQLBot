@@ -306,6 +306,10 @@ function onChatRenamed(chat: Chat) {
       align-items: center;
       justify-content: space-between;
       font-weight: 500;
+
+      > div {
+        color: red;
+      }
     }
 
     .btn {
