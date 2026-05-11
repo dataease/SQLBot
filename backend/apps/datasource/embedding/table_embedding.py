@@ -45,7 +45,7 @@ def calc_table_embedding(tables: list[dict], question: str):
     for table in tables:
         _list.append(
             {"id": table.get('id'), "schema_table": table.get('schema_table'), "embedding": table.get('embedding'),
-             "cosine_similarity": 0.0})
+             "cosine_similarity": 0.0, "table_name": table.get('table_name')})
 
     if _list:
         try:
@@ -70,7 +70,7 @@ def calc_table_embedding(tables: list[dict], question: str):
             end_time = time.time()
             SQLBotLogUtil.info(str(end_time - start_time))
             SQLBotLogUtil.info(json.dumps([{"id": ele.get('id'), "schema_table": ele.get('schema_table'),
-                                            "cosine_similarity": ele.get('cosine_similarity')}
+                                            "cosine_similarity": ele.get('cosine_similarity'), "table_name": ele.get('table_name')}
                                            for ele in _list]))
             return _list
         except Exception:

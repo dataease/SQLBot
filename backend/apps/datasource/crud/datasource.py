@@ -65,6 +65,7 @@ def check_name(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDat
         if ds_list is not None and len(ds_list) > 0:
             raise HTTPException(status_code=500, detail=trans('i18n_ds_name_exist'))
 
+
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.DS_ID_LIST, keyExpression="user.oid")
 async def create_ds(session: SessionDep, trans: Trans, user: CurrentUser, create_ds: CreateDatasource):
     ds = CoreDatasource()
@@ -490,7 +491,7 @@ def get_table_sample_data(ds: CoreDatasource, table_name: str, fields: list) -> 
 
 
 def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource,
-                          table_list: list[str] = None) -> str:
+                           table_list: list[str] = None) -> str:
     """Get sample data (3 rows) for all tables to help AI understand the data"""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -508,15 +509,16 @@ def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: C
 
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
-                     embedding: bool = True, table_list: list[str] = None) -> str:
+                     embedding: bool = True, table_list: list[str] = None) -> tuple[str, list]:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
-        return schema_str
+        return schema_str, []
     db_name = table_objs[0].schema
     schema_str += f"【DB_ID】 {db_name}\n【Schema】\n"
     tables = []
     all_tables = []  # temp save all tables
+    table_name_list = []
     for obj in table_objs:
         # 如果传入了table_list，则只处理在列表中的表
         if table_list is not None and obj.table.table_name not in table_list:
@@ -546,13 +548,14 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
             schema_table += ",\n".join(field_list)
         schema_table += '\n]\n'
 
-        t_obj = {"id": obj.table.id, "schema_table": schema_table, "embedding": obj.table.embedding}
+        t_obj = {"id": obj.table.id, "table_name": obj.table.table_name, "schema_table": schema_table,
+                 "embedding": obj.table.embedding}
         tables.append(t_obj)
         all_tables.append(t_obj)
 
     # 如果没有符合过滤条件的表，直接返回
     if not tables:
-        return schema_str
+        return schema_str, []
 
     # do table embedding
     if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
@@ -561,6 +564,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
     if tables:
         for s in tables:
             schema_str += s.get('schema_table')
+            table_name_list.append(s.get('table_name'))
 
     # field relation
     if tables and ds.table_relation:
@@ -592,6 +596,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
             if lost_tables:
                 for s in lost_tables:
                     schema_str += s.get('schema_table')
+                    table_name_list.append(s.get('table_name'))
 
             # get field dict
             relation_field_ids = []
@@ -609,13 +614,16 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
                 for ele in all_relations:
                     schema_str += f"{table_dict.get(int(ele.get('source').get('cell')))}.{field_dict.get(int(ele.get('source').get('port')))}={table_dict.get(int(ele.get('target').get('cell')))}.{field_dict.get(int(ele.get('target').get('port')))}\n"
 
-    return schema_str
+    return schema_str, table_name_list
+
 
 @cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.DS_ID_LIST, keyExpression="oid")
 async def get_ws_ds(session, oid) -> list:
     stmt = select(CoreDatasource.id).distinct().where(CoreDatasource.oid == oid)
     db_list = session.exec(stmt).all()
     return db_list
+
+
 @clear_cache(namespace=CacheNamespace.AUTH_INFO, cacheName=CacheName.DS_ID_LIST, keyExpression="oid")
 async def clear_ws_ds_cache(oid):
     SQLBotLogUtil.info(f"ds cache for ws [{oid}] has been cleaned")

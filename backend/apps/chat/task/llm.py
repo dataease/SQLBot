@@ -380,7 +380,7 @@ class LLMService:
                                                                   operate=OperationEnum.CHOOSE_TABLE,
                                                                   record_id=self.record.id,
                                                                   local_operation=True)
-        self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
+        self.chat_question.db_schema, tables = self.out_ds_instance.get_db_schema(
             self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
             session=_session,
             current_user=self.current_user,
@@ -392,7 +392,8 @@ class LLMService:
             self.chat_question.sample_data = get_tables_sample_data(
                 session=_session,
                 current_user=self.current_user,
-                ds=self.ds)
+                ds=self.ds,
+                table_list=tables)
 
         self.current_logs[OperationEnum.CHOOSE_TABLE] = end_log(session=_session,
                                                                 log=self.current_logs[OperationEnum.CHOOSE_TABLE],
@@ -508,7 +509,7 @@ class LLMService:
 
         # get schema
         if self.ds and not self.chat_question.db_schema:
-            self.chat_question.db_schema = self.out_ds_instance.get_db_schema(
+            self.chat_question.db_schema, tables = self.out_ds_instance.get_db_schema(
                 self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
                 session=_session,
                 current_user=self.current_user, ds=self.ds,
@@ -516,11 +517,11 @@ class LLMService:
                 embedding=False)
 
             # Get sample data for all tables
-            if not self.out_ds_instance:
-                self.chat_question.sample_data = get_tables_sample_data(
-                    session=_session,
-                    current_user=self.current_user,
-                    ds=self.ds)
+            # if not self.out_ds_instance:
+            #     self.chat_question.sample_data = get_tables_sample_data(
+            #         session=_session,
+            #         current_user=self.current_user,
+            #         ds=self.ds)
 
         guess_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         guess_msg.append(SystemPromptMessage(content=self.chat_question.guess_sys_question(self.articles_number)))
@@ -1356,7 +1357,7 @@ class LLMService:
                 return
 
             # generate chart
-            used_tables_schema = self.out_ds_instance.get_db_schema(
+            used_tables_schema, used_tables = self.out_ds_instance.get_db_schema(
                 self.ds.id, self.chat_question.question, embedding=False,
                 table_list=tables) if self.out_ds_instance else get_table_schema(
                 session=_session,

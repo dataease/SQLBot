@@ -181,7 +181,7 @@ class AssistantOutDs:
             raise Exception("Datasource list is not found.")
 
     def get_db_schema(self, ds_id: int, question: str = '', embedding: bool = True,
-                      table_list: list[str] = None) -> str:
+                      table_list: list[str] = None) -> tuple[str, list]:
         ds = self.get_ds(ds_id)
         schema_str = ""
         db_name = ds.db_schema if ds.db_schema is not None and ds.db_schema != "" else ds.dataBase
@@ -222,7 +222,7 @@ class AssistantOutDs:
             for s in tables:
                 schema_str += s.get('schema_table')
 
-        return schema_str
+        return schema_str, []
 
     def get_ds(self, ds_id: int, trans: Trans = None):
         if self.ds_list:
