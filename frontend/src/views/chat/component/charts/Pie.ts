@@ -1,7 +1,7 @@
 import { BaseG2Chart } from '@/views/chat/component/BaseG2Chart.ts'
 import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
-import { checkIsPercent, getAxesWithFilter } from '@/views/chat/component/charts/utils.ts'
+import { checkIsPercent, formatNumber, getAxesWithFilter } from '@/views/chat/component/charts/utils.ts'
 
 export class Pie extends BaseG2Chart {
   constructor(id: string) {
@@ -48,7 +48,7 @@ export class Pie extends BaseG2Chart {
             {
               position: 'spider',
               text: (data: any) => {
-                return `${data[series[0].value]}: ${data[y[0].value]}${_data.isPercent ? '%' : ''}`
+                return `${data[series[0].value]}: ${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`
               },
             },
           ]
@@ -59,7 +59,7 @@ export class Pie extends BaseG2Chart {
           (data: any) => {
             return {
               name: y[0].name,
-              value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}`,
+              value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
             }
           },
         ],

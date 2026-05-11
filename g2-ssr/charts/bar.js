@@ -1,4 +1,4 @@
-const { checkIsPercent, getAxesWithFilter, processMultiQuotaData } = require('./utils')
+const { checkIsPercent, formatNumber, getAxesWithFilter, processMultiQuotaData } = require('./utils')
 
 function getBarOptions(baseOptions, axis, data) {
 
@@ -78,7 +78,12 @@ function getBarOptions(baseOptions, axis, data) {
         labelAutoWrap: true,
         labelAutoEllipsis: true,
       },
-      y: { title: false },
+      y: {
+        title: false,
+        labelFormatter: (value) => {
+          return String(formatNumber(value))
+        },
+      },
     },
     scale: {
       x: {
@@ -96,10 +101,10 @@ function getBarOptions(baseOptions, axis, data) {
       if (series.length > 0) {
         return {
           name: data[series[0].value],
-          value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}`,
+          value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
         }
       } else {
-        return { name: y[0].name, value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}` }
+        return { name: y[0].name, value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}` }
       }
     },
     labels: [
@@ -109,7 +114,7 @@ function getBarOptions(baseOptions, axis, data) {
           if (value === undefined || value === null) {
             return ''
           }
-          return `${value}${_data.isPercent ? '%' : ''}`
+          return `${formatNumber(value)}${_data.isPercent ? '%' : ''}`
         },
         position: (data) => {
           if (data[y[0].value] < 0) {

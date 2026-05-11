@@ -3,6 +3,7 @@ import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
 import {
   checkIsPercent,
+  formatNumber,
   getAxesWithFilter,
   processMultiQuotaData,
 } from '@/views/chat/component/charts/utils.ts'
@@ -95,6 +96,9 @@ export class Column extends BaseG2Chart {
         },
         y: {
           title: false, // y[0].name,
+          labelFormatter: (value: any) => {
+            return String(formatNumber(value))
+          },
         },
       },
       scale: {
@@ -114,10 +118,13 @@ export class Column extends BaseG2Chart {
         if (series.length > 0) {
           return {
             name: data[series[0].value],
-            value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}`,
+            value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
           }
         } else {
-          return { name: y[0].name, value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}` }
+          return {
+            name: y[0].name,
+            value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+          }
         }
       },
       labels: this.showLabel
@@ -128,7 +135,7 @@ export class Column extends BaseG2Chart {
                 if (value === undefined || value === null) {
                   return ''
                 }
-                return `${value}${_data.isPercent ? '%' : ''}`
+                return `${formatNumber(value)}${_data.isPercent ? '%' : ''}`
               },
               position: (data: any) => {
                 if (data[y[0].value] < 0) {

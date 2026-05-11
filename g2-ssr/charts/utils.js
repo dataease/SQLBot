@@ -1,5 +1,38 @@
 const { endsWith, filter, replace } = require('lodash')
 
+/**
+ * 为数值添加千分符，保持原有小数位数不变
+ * 纯字符串处理，避免精度丢失
+ * 支持：正负整数、小数、字符串格式的数值
+ */
+function formatNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return value
+  }
+
+  let str
+  if (typeof value === 'string') {
+    str = value.trim()
+  } else if (typeof value === 'number') {
+    str = String(value)
+  } else {
+    return value
+  }
+
+  const match = str.match(/^([+-])?(\d+)(\.(\d+))?$/)
+  if (!match) {
+    return value
+  }
+
+  const sign = match[1] || ''
+  const intPart = match[2]
+  const decPart = match[3] || ''
+
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+
+  return sign + formattedInt + decPart
+}
+
 function getAxesWithFilter(axes) {
   const groups = {
     x: [],
@@ -115,4 +148,4 @@ function checkIsPercent(valueAxes, data) {
   return result
 }
 
-module.exports = { checkIsPercent, getAxesWithFilter, processMultiQuotaData }
+module.exports = { checkIsPercent, formatNumber, getAxesWithFilter, processMultiQuotaData }

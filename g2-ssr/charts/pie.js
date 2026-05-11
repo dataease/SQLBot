@@ -1,4 +1,4 @@
-const { checkIsPercent, getAxesWithFilter } = require('./utils')
+const { checkIsPercent, formatNumber, getAxesWithFilter } = require('./utils')
 
 function getPieOptions(baseOptions, axis, data) {
 
@@ -35,7 +35,7 @@ function getPieOptions(baseOptions, axis, data) {
       {
         position: 'spider',
         text: (data) =>
-          `${data[series[0].value]}: ${data[y[0].value]}${_data.isPercent ? '%' : ''}`,
+          `${data[series[0].value]}: ${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
       },
     ],
     tooltip: {
@@ -44,7 +44,7 @@ function getPieOptions(baseOptions, axis, data) {
         (data) => {
           return {
             name: y[0].name,
-            value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}`,
+            value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
           }
         },
       ],

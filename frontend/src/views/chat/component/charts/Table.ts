@@ -11,6 +11,7 @@ import {
 } from '@antv/s2'
 import { debounce, filter } from 'lodash-es'
 import { i18n } from '@/i18n'
+import { formatNumber } from '@/views/chat/component/charts/utils.ts'
 import '@antv/s2/dist/s2.min.css'
 
 const { t } = i18n.global
@@ -120,6 +121,10 @@ export class Table extends BaseChart {
           return {
             field: a.value,
             name: a.name,
+            formatter: (value: any) => {
+              const formatted = formatNumber(value)
+              return String(formatted)
+            },
           }
         }) ?? [],
       data: this.data,
@@ -196,7 +201,8 @@ export class Table extends BaseChart {
             container.style.fontSize = '14px'
             container.style.whiteSpace = 'pre-wrap'
 
-            const text = document.createTextNode(meta.fieldValue)
+            const formattedValue = formatNumber(meta.fieldValue)
+            const text = document.createTextNode(String(formattedValue))
             container.appendChild(text)
 
             return container
@@ -207,7 +213,7 @@ export class Table extends BaseChart {
       interaction: {
         copy: {
           enable: true,
-          withFormat: true,
+          withFormat: false,
           withHeader: true,
         },
         brushSelection: {

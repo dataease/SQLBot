@@ -1,4 +1,4 @@
-const { checkIsPercent, getAxesWithFilter, processMultiQuotaData } = require('./utils')
+const { checkIsPercent, formatNumber, getAxesWithFilter, processMultiQuotaData } = require('./utils')
 
 function getLineOptions(baseOptions, axis, data) {
 
@@ -51,7 +51,12 @@ function getLineOptions(baseOptions, axis, data) {
         labelAutoWrap: true,
         labelAutoEllipsis: true,
       },
-      y: { title: y[0].name },
+      y: {
+        title: y[0].name,
+        labelFormatter: (value) => {
+          return String(formatNumber(value))
+        },
+      },
     },
     scale: {
       x: {
@@ -75,7 +80,7 @@ function getLineOptions(baseOptions, axis, data) {
               if (value === undefined || value === null) {
                 return ''
               }
-              return `${value}${_data.isPercent ? '%' : ''}`
+              return `${formatNumber(value)}${_data.isPercent ? '%' : ''}`
             },
             style: {
               dx: -10,
@@ -92,10 +97,10 @@ function getLineOptions(baseOptions, axis, data) {
           if (series.length > 0) {
             return {
               name: data[series[0].value],
-              value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}`,
+              value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
             }
           } else {
-            return { name: y[0].name, value: `${data[y[0].value]}${_data.isPercent ? '%' : ''}` }
+            return { name: y[0].name, value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}` }
           }
         },
       },
