@@ -75,6 +75,11 @@ function selectDsInDialog(ds: any) {
   innerDs.value = ds.id
 }
 
+function selectDsDirectlyInDialog(ds: any) {
+  innerDs.value = ds.id
+  confirmSelectDs()
+}
+
 function confirmSelectDs() {
   if (innerDs.value) {
     if (assistantStore.getType == 1) {
@@ -207,6 +212,7 @@ defineExpose({
               :is-selected="ele.id === innerDs"
               :description="ele.description"
               @select-ds="selectDsInDialog(ele)"
+              @select-ds-directly="selectDsDirectlyInDialog(ele)"
             ></Card>
           </el-col>
         </el-row>

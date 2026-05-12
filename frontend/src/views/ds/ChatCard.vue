@@ -23,7 +23,7 @@ const props = withDefaults(
   }
 )
 
-const emits = defineEmits(['selectDs'])
+const emits = defineEmits(['selectDs', 'selectDsDirectly'])
 const icon = computed(() => {
   return (dsTypeWithImg.find((ele) => props.type === ele.type) || {}).img
 })
@@ -31,10 +31,19 @@ const icon = computed(() => {
 const SelectDs = () => {
   emits('selectDs')
 }
+
+const SelectDsDirectly = () => {
+  emits('selectDsDirectly')
+}
 </script>
 
 <template>
-  <div class="card" :class="isSelected && 'is-selected'" @click="SelectDs">
+  <div
+    class="card"
+    :class="isSelected && 'is-selected'"
+    @dblclick="SelectDsDirectly"
+    @click="SelectDs"
+  >
     <div class="name-icon">
       <img :src="icon" width="32px" height="32px" />
       <div class="info">
