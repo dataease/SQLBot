@@ -429,3 +429,21 @@ strong {
 .ed-tree-node__content {
   border-radius: 4px;
 }
+
+
+.login-content {
+  /* 针对 Webkit 浏览器的自动填充样式重置 */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    /* 1. 使用足够大的内阴影来覆盖背景色，把 #ffffff 替换成你输入框原本的背景色 */
+    -webkit-box-shadow: 0 0 0px 1000px #f5f7fa inset !important;
+
+    /* 2. 由于常规的 color 属性也会失效，需要用这个属性修改文字颜色 */
+    -webkit-text-fill-color: #333333 !important;
+
+    /* 3. 保留光标的正常颜色 */
+    caret-color: #333333;
+  }
+}
