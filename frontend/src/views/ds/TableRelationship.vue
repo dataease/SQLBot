@@ -509,8 +509,6 @@ const save = () => {
   touch-action: none;
   box-sizing: border-box;
   position: relative;
-  min-width: 400px;
-  min-height: 600px;
   width: 100%;
   height: 100%;
   background-color: #f5f6f7;
