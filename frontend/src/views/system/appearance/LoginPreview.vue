@@ -129,7 +129,7 @@ const pageWeb = computed(() => {
   return !props.web
     ? props.isBlue
       ? logoHeader
-      : '/LOGO-fold.svg'
+      : `${location.pathname}LOGO-fold.svg`
     : props.web.startsWith('blob')
       ? props.web
       : baseUrl + props.web

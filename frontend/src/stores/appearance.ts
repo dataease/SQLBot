@@ -315,7 +315,7 @@ const setLinkIcon = (linkWeb?: string) => {
     if (linkWeb) {
       link['href'] = baseUrl + linkWeb
     } else {
-      link['href'] = '/LOGO-fold.svg'
+      link['href'] = `${location.pathname}LOGO-fold.svg`
     }
   }
 }
