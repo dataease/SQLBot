@@ -467,7 +467,7 @@ const save = () => {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   outline: none;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 5px 11px;
   font-size: 12px;
   line-height: 20px;

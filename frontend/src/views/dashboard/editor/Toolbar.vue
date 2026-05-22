@@ -298,7 +298,7 @@ const previewInner = () => {
         outline: none;
         font-size: 16px;
         border: 1px solid var(--ed-color-primary);
-        border-radius: 4px;
+        border-radius: 6px;
         padding-left: 4px;
         height: 100%;
       }
@@ -347,7 +347,7 @@ const previewInner = () => {
   width: 26px !important;
   height: 26px !important;
   color: rgba(255, 255, 255, 1);
-  border-radius: 4px;
+  border-radius: 6px;
 
   &:hover {
     background: rgba(235, 235, 235, 0.1);

@@ -82,7 +82,7 @@ const handleModelClick = (item: any) => {
       display: flex;
       align-items: center;
       padding-left: 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       .name {
         margin-left: 8px;

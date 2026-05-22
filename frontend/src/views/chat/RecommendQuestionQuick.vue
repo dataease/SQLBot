@@ -207,7 +207,7 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop, getRecomme
     font-weight: 400;
     cursor: pointer;
     height: 32px;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 5px 8px;
     line-height: 22px;
     white-space: nowrap; /* 禁止换行 */

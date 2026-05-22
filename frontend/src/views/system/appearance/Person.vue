@@ -219,7 +219,7 @@ const account = computed(() => userStore.getAccount)
       padding-right: 8px;
       margin-bottom: 2px;
       position: relative;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       &:not(.empty):hover {
         background: #1f23291a;

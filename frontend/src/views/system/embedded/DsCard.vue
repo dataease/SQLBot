@@ -119,7 +119,7 @@ const handlePublic = () => {
     .default {
       background: var(--ed-color-primary-33, #1cba9033);
       padding: 0 4px;
-      border-radius: 4px;
+      border-radius: 6px;
       color: var(--ed-color-primary-dark-2);
       font-weight: 400;
       font-size: 12px;
@@ -213,7 +213,7 @@ const handlePublic = () => {
 <style lang="less">
 .popover-card_ds_copy.popover-card_ds_copy.popover-card_ds_copy {
   box-shadow: 0px 4px 8px 0px #1f23291a;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #dee0e3;
   width: fit-content !important;
   min-width: 120px !important;
@@ -250,7 +250,7 @@ const handlePublic = () => {
         content: '';
         width: calc(100% - 8px);
         height: 32px;
-        border-radius: 4px;
+        border-radius: 6px;
         position: absolute;
         top: 50%;
         left: 50%;

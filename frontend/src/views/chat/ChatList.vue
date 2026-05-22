@@ -399,7 +399,7 @@ const handleConfirmPassword = () => {
 <style lang="less">
 .popover-card_chat.popover-card_chat.popover-card_chat {
   box-shadow: 0px 4px 8px 0px #1f23291a;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #dee0e3;
   width: fit-content !important;
   min-width: 120px !important;
@@ -436,7 +436,7 @@ const handleConfirmPassword = () => {
         content: '';
         width: calc(100% - 8px);
         height: 32px;
-        border-radius: 4px;
+        border-radius: 6px;
         position: absolute;
         top: 50%;
         left: 50%;

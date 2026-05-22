@@ -818,7 +818,7 @@ const btnSelectClick = (val: any) => {
           display: flex;
           align-items: center;
           padding-left: 8px;
-          border-radius: 4px;
+          border-radius: 6px;
           cursor: pointer;
 
           &:not(:last-child) {
@@ -970,7 +970,7 @@ const btnSelectClick = (val: any) => {
           background: #ffffff;
           align-items: center;
           border: 1px solid #d0d3d6;
-          border-radius: 4px;
+          border-radius: 6px;
 
           .is-active {
             background: var(--ed-color-primary-1a, #1cba901a);

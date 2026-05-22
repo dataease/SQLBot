@@ -37,7 +37,7 @@ withDefaults(
 .datasource-card {
   height: 120px;
   padding: 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.12);
   .description {
     display: flex;

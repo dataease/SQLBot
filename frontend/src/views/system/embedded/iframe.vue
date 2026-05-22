@@ -1469,7 +1469,7 @@ const saveHandler = () => {
       padding-left: 8px;
       padding-right: 8px;
       position: relative;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       padding-top: 8px;
 

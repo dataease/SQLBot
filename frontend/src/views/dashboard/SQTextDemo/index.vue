@@ -16,6 +16,6 @@ const articleContent = ref('<p>这里是默认内容...</p>')
   margin-top: 20px;
   padding: 15px;
   border: 1px solid #eee;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 </style>

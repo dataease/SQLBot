@@ -1103,7 +1103,7 @@ const columnRules = {
       padding-left: 12px;
       padding-right: 8px;
       position: relative;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       &:hover {
         background: #1f23291a;

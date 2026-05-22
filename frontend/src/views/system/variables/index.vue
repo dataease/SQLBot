@@ -670,7 +670,7 @@ const handleCurrentChange = (val: number) => {
     .preview-or-schema {
       .system-flag {
         background-color: var(--ed-color-primary-33, #1cba9033);
-        border-radius: 4px;
+        border-radius: 6px;
         height: 16px;
         line-height: 16px;
         padding: 0 4px;

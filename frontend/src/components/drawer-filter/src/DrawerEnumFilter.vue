@@ -84,7 +84,7 @@ useEmitt({
       padding: 1px 6px;
       background: var(--deTextPrimary5, #f5f6f7);
       color: var(--deTextPrimary, #1f2329);
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       display: inline-block;
       margin-bottom: 12px;

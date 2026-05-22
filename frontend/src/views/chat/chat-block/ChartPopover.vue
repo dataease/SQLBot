@@ -110,7 +110,7 @@ const handleDefaultChatChange = (val: any) => {
       padding-right: 8px;
       margin-bottom: 2px;
       position: relative;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       &:last-child {
         margin-bottom: 0;
@@ -148,7 +148,7 @@ const handleDefaultChatChange = (val: any) => {
 .chat-select_type {
   width: 40px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: 6px;
   padding-left: 4px;
   display: flex;
   align-items: center;

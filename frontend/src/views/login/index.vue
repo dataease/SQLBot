@@ -202,7 +202,7 @@ const switchTab = (name: string) => {
           width: 100%;
           height: 40px;
           font-size: 16px;
-          border-radius: 4px;
+          border-radius: 6px;
         }
 
         .agreement {

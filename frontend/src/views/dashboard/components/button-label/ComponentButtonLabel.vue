@@ -40,7 +40,7 @@ const emits = defineEmits(['customClick'])
   cursor: pointer;
   justify-content: center;
   align-items: center;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #1f2329;
 
   span {

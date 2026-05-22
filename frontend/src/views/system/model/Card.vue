@@ -140,7 +140,7 @@ defineExpose({ showErrorMask })
       margin-left: auto;
       background: var(--ed-color-primary-33, #1cba9033);
       padding: 0 4px;
-      border-radius: 4px;
+      border-radius: 6px;
       color: var(--ed-color-primary-dark-2);
       font-weight: 400;
       font-size: 12px;

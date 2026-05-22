@@ -218,7 +218,7 @@ init(true)
             .card-status {
               margin-left: 8px;
               padding: 0 4px;
-              border-radius: 4px;
+              border-radius: 6px;
               background-color: #f54a4533;
               color: #d03f3b;
               line-height: 20px;

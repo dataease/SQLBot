@@ -114,7 +114,7 @@ defineProps<{
   right: 20px;
   top: 18px;
   padding: 3px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   display: flex;

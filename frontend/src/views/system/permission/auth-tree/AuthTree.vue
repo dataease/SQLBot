@@ -172,7 +172,7 @@ const del = (index: any, child: any) => {
       transform: translate(-50%, -50%);
       background: #1f23291a;
       z-index: 1;
-      border-radius: 4px;
+      border-radius: 6px;
       user-select: none;
       pointer-events: none;
     }

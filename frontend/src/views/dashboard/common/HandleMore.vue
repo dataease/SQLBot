@@ -62,7 +62,7 @@ const emit = defineEmits(['handleCommand'])
 <style lang="less">
 .menu-more_popper {
   box-shadow: 0px 4px 8px 0px #1f23291a !important;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #dee0e3 !important;
   width: 120px !important;
   min-width: 120px !important;
@@ -94,7 +94,7 @@ const emit = defineEmits(['handleCommand'])
         content: '';
         width: 112px;
         height: 32px;
-        border-radius: 4px;
+        border-radius: 6px;
         position: absolute;
         top: 50%;
         left: 50%;

@@ -631,7 +631,7 @@ watch(
       padding-right: 8px;
       margin-bottom: 2px;
       position: relative;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
 
       &:last-child {
