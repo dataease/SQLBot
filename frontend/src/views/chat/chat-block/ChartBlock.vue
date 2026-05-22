@@ -29,7 +29,7 @@ import { chatApi } from '@/api/chat'
 import { useChatConfigStore } from '@/stores/chatConfig.ts'
 
 const chatConfig = useChatConfigStore()
-const showSQLBtn = !chatConfig.getHideSQL
+const showSQLBtn = chatConfig.getShowSQL
 const props = withDefaults(
   defineProps<{
     recordId?: number

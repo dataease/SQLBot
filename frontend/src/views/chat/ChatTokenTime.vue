@@ -9,7 +9,7 @@ const props = defineProps<{
   totalTokens?: number | undefined
 }>()
 const chatConfig = useChatConfigStore()
-const showLogBtn = !chatConfig.getHideLog
+const showLogBtn = chatConfig.getShowLog
 const executionDetailsRef = ref()
 function getLogList() {
   executionDetailsRef.value.getLogList(props.recordId)
