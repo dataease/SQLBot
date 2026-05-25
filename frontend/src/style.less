@@ -25,11 +25,15 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --ed-border-radius-base: 6px !important;
   --ed-border-color: #d9dcdf !important;
+}
+
+:root:root {
   --ed-color-primary-light-7: #d2f1e9 !important;
   --ed-border-color: #d9dcdf !important;
   --ed-disabled-border-color: #d9dcdf !important;
   --ed-border-color-light: #dee0e3 !important;
   --ed-border-color-lighter: #dee0e3 !important;
+  --ed-border-radius-base: 6px !important;
 }
 
 a {
@@ -430,7 +434,6 @@ strong {
   border-radius: 6px;
 }
 
-
 .login-content {
   /* 针对 Webkit 浏览器的自动填充样式重置 */
   input:-webkit-autofill,
@@ -438,7 +441,7 @@ strong {
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
     /* 1. 使用足够大的内阴影来覆盖背景色，把 #ffffff 替换成你输入框原本的背景色 */
-    -webkit-box-shadow: 0 0 0px 1000px #f5f7fa inset !important;
+    -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
 
     /* 2. 由于常规的 color 属性也会失效，需要用这个属性修改文字颜色 */
     -webkit-text-fill-color: #333333 !important;

@@ -217,9 +217,7 @@ const switchTab = (name: string) => {
 .hide-login-container {
   display: none;
 }
-:deep(.ed-input__wrapper) {
-  background-color: #f5f7fa;
-}
+
 .xpack-login-handler-mask {
   position: fixed;
   width: 100vw;
