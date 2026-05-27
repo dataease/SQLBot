@@ -186,7 +186,7 @@ onBeforeMount(async () => {
       if (rawData.logo) {
         logo.value = baseUrl + rawData.logo
       }
-
+      rawData['name'] = rawData['name'] || res['name']
       for (const key in customSet) {
         if (
           Object.prototype.hasOwnProperty.call(customSet, key) &&
