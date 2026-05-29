@@ -52,7 +52,7 @@ const { copy } = useClipboard({ legacy: true })
 const loading = ref<boolean>(false)
 const { t } = useI18n()
 const addViewRef = ref(null)
-const emits = defineEmits(['exitFullScreen', 'enterFullScreen'])
+const emits = defineEmits(['exitFullScreen'])
 
 const dataObject = computed<{
   fields: Array<string>
