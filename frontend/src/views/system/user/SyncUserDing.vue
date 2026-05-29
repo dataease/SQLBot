@@ -1,13 +1,17 @@
 <template>
-  <el-dialog
-    v-model="centerDialogVisible"
-    :title="$t(dialogTitle)"
-    modal-class="sync-user_ding"
-    width="840"
-  >
+  <el-dialog v-model="centerDialogVisible" modal-class="sync-user_ding" width="840">
+    <template #header>
+      <div class="dialog-header">
+        <span style="margin-right: 12px">{{ $t(dialogTitle) }}</span>
+        <el-checkbox v-model="isLazy" class="lazy-checkbox">
+          {{ $t('sync.lazy_load') }}
+        </el-checkbox>
+      </div>
+    </template>
     <div v-loading="loading" class="flex border" style="height: 428px; border-radius: 6px">
       <div class="p-16 border-r">
         <el-input
+          v-if="!isLazy"
           v-model="search"
           :validate-event="false"
           :placeholder="$t('datasource.search')"
@@ -20,19 +24,26 @@
             </el-icon>
           </template>
         </el-input>
-        <div class="mt-8 max-height_workspace">
+        <div
+          class="max-height_workspace"
+          :class="{ 'mt-8': !isLazy }"
+          :style="isLazy ? { maxHeight: '100%' } : {}"
+        >
           <el-tree
+            :key="`${treeKey}-${isLazy}`"
             ref="organizationUserRef"
             style="max-width: 426px"
             class="checkbox-group-block"
-            :data="organizationUserList"
+            :data="isLazy ? EMPTY_DATA : organizationUserList"
             :filter-node-method="filterNode"
             show-checkbox
             :default-checked-keys="defaultCheckedKeys"
             :props="defaultProps"
             node-key="id"
-            default-expand-all
+            :default-expand-all="!isLazy"
             :expand-on-click-node="false"
+            :lazy="isLazy"
+            :load="isLazy ? loadNode : undefined"
             @check="handleCheck"
           >
             <template #default="{ node, data }">
@@ -112,16 +123,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, nextTick } from 'vue'
 import { modelApi } from '@/api/system'
-import { ElLoading } from 'element-plus-secondary'
-import avatar_personal from '@/assets/svg/avatar_personal.svg'
 import avatar_organize from '@/assets/svg/avatar_organize.svg'
+import avatar_personal from '@/assets/svg/avatar_personal.svg'
 import Close from '@/assets/svg/icon_close_outlined_w.svg'
 import Search from '@/assets/svg/icon_search-outline_outlined.svg'
-import type { CheckboxValueType } from 'element-plus-secondary'
-import type { FilterNodeMethodFunction } from 'element-plus-secondary'
+import type { CheckboxValueType, FilterNodeMethodFunction } from 'element-plus-secondary'
+import { ElLoading } from 'element-plus-secondary'
 import { cloneDeep } from 'lodash-es'
+import { computed, nextTick, ref, watch } from 'vue'
 const checkAll = ref(false)
 const existingUser = ref(false)
 const isIndeterminate = ref(false)
@@ -134,12 +144,17 @@ const defaultCheckedKeys = ref<any[]>([])
 const defaultProps = {
   children: 'children',
   label: 'name',
+  isLeaf: (data: any) => data.options?.is_user,
 }
 let rawTree: any = []
 const organizationUserList = ref<any[]>([])
 const loading = ref(false)
 const centerDialogVisible = ref(false)
 const checkTableList = ref([] as any[])
+const EMPTY_DATA: any[] = []
+const isLazy = ref(true)
+const treeKey = ref(0)
+const wecomDeptCache = ref(new Map<string, any[]>())
 
 const workspaceWithKeywords = computed(() => {
   return workspace.value.filter((ele: any) =>
@@ -183,6 +198,21 @@ watch(search, () => {
   nextTick(() => {
     organizationUserRef.value.setCheckedKeys(checkTableList.value.map((ele: any) => ele.id))
   })
+})
+
+watch(isLazy, async () => {
+  search.value = ''
+  checkTableList.value = []
+  checkedWorkspace.value = []
+  defaultCheckedKeys.value = []
+  wecomDeptCache.value.clear()
+  loading.value = true
+  const systemWorkspaceList = await modelApi.platform(oid, isLazy.value ? 1 : 0)
+  organizationUserList.value = isLazy.value
+    ? stripDeptChildren(systemWorkspaceList.tree || [])
+    : systemWorkspaceList.tree || []
+  rawTree = cloneDeep(systemWorkspaceList.tree)
+  loading.value = false
 })
 
 const filterNode: FilterNodeMethodFunction = (value: string, data: any) => {
@@ -230,7 +260,61 @@ const handleCheckedWorkspaceChange = (value: CheckboxValueType[]) => {
 }
 let oid: any = null
 
+const buildWecomDeptCache = (tree: any[]) => {
+  const cache = new Map<string, any[]>()
+  const stack = [...tree]
+  while (stack.length) {
+    const node = stack.pop()!
+    if (!node.options?.is_user && node.children?.length) {
+      cache.set(
+        node.id,
+        node.children.map((c: any) => ({ ...c, children: [] }))
+      )
+      stack.push(...node.children)
+    }
+  }
+  wecomDeptCache.value = cache
+}
+
+const stripDeptChildren = (nodes: any[]) => {
+  return nodes.map((node: any) => {
+    if (!node.options?.is_user) {
+      const { children, ...rest } = node
+      void children
+      return rest
+    }
+    return { ...node }
+  })
+}
+
+const loadNode = (node: any, resolve: any) => {
+  if (node.level === 0) {
+    modelApi.platform(oid, 1).then((res: any) => {
+      resolve(stripDeptChildren(res.tree || []))
+    })
+    return
+  }
+  if (oid === 6) {
+    const deptChildren = wecomDeptCache.value.get(node.data.id) || []
+    modelApi.platform(oid, 1, node.data.id).then((res: any) => {
+      resolve(stripDeptChildren([...(res.tree || []), ...deptChildren]))
+      nextTick(() => {
+        organizationUserRef.value?.setChecked(node.data.id, false, true)
+      })
+    })
+    return
+  }
+  modelApi.platform(oid, 1, node.data.id).then((res: any) => {
+    resolve(stripDeptChildren(res.tree || []))
+    nextTick(() => {
+      organizationUserRef.value?.setChecked(node.data.id, false, true)
+    })
+  })
+}
+
 const open = async (id: any, title: any) => {
+  isLazy.value = true
+  treeKey.value++
   dialogTitle.value = title
   loading.value = true
   search.value = ''
@@ -240,8 +324,15 @@ const open = async (id: any, title: any) => {
   checkAll.value = false
   isIndeterminate.value = false
   const loadingInstance = ElLoading.service({ fullscreen: true })
-  const systemWorkspaceList = await modelApi.platform(id)
-  organizationUserList.value = systemWorkspaceList.tree || []
+  const systemWorkspaceList = await modelApi.platform(id, isLazy.value ? 1 : 0)
+  if (isLazy.value && id === 6) {
+    buildWecomDeptCache(systemWorkspaceList.tree)
+    organizationUserList.value = stripDeptChildren(systemWorkspaceList.tree || [])
+  } else {
+    organizationUserList.value = isLazy.value
+      ? stripDeptChildren(systemWorkspaceList.tree || [])
+      : systemWorkspaceList.tree || []
+  }
   rawTree = cloneDeep(systemWorkspaceList.tree)
   loadingInstance?.close()
   loading.value = false
@@ -283,6 +374,16 @@ defineExpose({
 </script>
 <style lang="less">
 .sync-user_ding {
+  .dialog-header {
+    display: flex;
+    align-items: center;
+
+    .lazy-checkbox {
+      font-size: 12px;
+      color: #8f959e;
+    }
+  }
+
   .mb-8 {
     margin-bottom: 8px;
   }

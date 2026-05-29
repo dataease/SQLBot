@@ -38,6 +38,7 @@
     "field_details": "필드 세부 정보",
     "integration": "플랫폼 통합을 활성화해야 합니다.",
     "the_existing_user": "해당 사용자가 이미 존재하는 경우 기존 사용자를 덮어씁니다.",
+    "lazy_load": "지연 로딩",
     "sync_users": "사용자 동기화",
     "sync_wechat_users": "위챗 사용자 동기화",
     "sync_dingtalk_users": "딩톡 사용자 동기화",

@@ -27,6 +27,7 @@ export const modelApi = {
   query: (id: number) => request.get(`/system/aimodel/${id}`),
   setDefault: (id: number) => request.put(`/system/aimodel/default/${id}`),
   check: (data: any) => request.fetchStream('/system/aimodel/status', data),
-  platform: (id: number) => request.get(`/system/platform/org/${id}`),
+  platform: (id: number, lazy?: number, pid?: string) =>
+    request.get(`/system/platform/org/${id}`, { params: { lazy, pid } }),
   userSync: (data: any) => request.post(`/system/platform/user/sync`, data),
 }
