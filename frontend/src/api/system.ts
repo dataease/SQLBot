@@ -28,6 +28,6 @@ export const modelApi = {
   setDefault: (id: number) => request.put(`/system/aimodel/default/${id}`),
   check: (data: any) => request.fetchStream('/system/aimodel/status', data),
   platform: (id: number, lazy?: number, pid?: string) =>
-    request.get(`/system/platform/org/${id}`, { params: { lazy, pid } }),
+    request.post(`/system/platform/org/${id}`, { lazy, pid }),
   userSync: (data: any) => request.post(`/system/platform/user/sync`, data),
 }
