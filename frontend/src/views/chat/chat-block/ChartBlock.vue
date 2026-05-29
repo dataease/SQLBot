@@ -52,7 +52,7 @@ const { copy } = useClipboard({ legacy: true })
 const loading = ref<boolean>(false)
 const { t } = useI18n()
 const addViewRef = ref(null)
-const emits = defineEmits(['exitFullScreen'])
+const emits = defineEmits(['exitFullScreen', 'enterFullScreen'])
 
 const dataObject = computed<{
   fields: Array<string>
@@ -199,7 +199,15 @@ function reloadChart() {
 
 const dialogVisible = ref(false)
 
+function setHiddenSidebarBtnZIndex(value: string) {
+  const sidebarBtns = document.querySelectorAll('.hidden-sidebar-btn')
+  sidebarBtns.forEach((btn) => {
+    ;(btn as HTMLElement).style.zIndex = value
+  })
+}
+
 function openFullScreen() {
+  setHiddenSidebarBtnZIndex('0')
   dialogVisible.value = true
 }
 
@@ -209,6 +217,7 @@ function closeFullScreen() {
 
 function onExitFullScreen() {
   dialogVisible.value = false
+  setHiddenSidebarBtnZIndex('11')
 }
 
 const sqlShow = ref(false)
