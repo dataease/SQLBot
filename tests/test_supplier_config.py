@@ -65,10 +65,9 @@ class TestMiniMaxSupplierConfig(unittest.TestCase):
         self.assertIn("range: '[0, 1]'", minimax_section)
 
     def test_minimax_model_options(self):
-        """MiniMax should have M2.7, M2.5, and M2.5-highspeed models."""
+        """MiniMax should have M3 and M2.7 models."""
+        self.assertIn("name: 'MiniMax-M3'", self.supplier_content)
         self.assertIn("name: 'MiniMax-M2.7'", self.supplier_content)
-        self.assertIn("name: 'MiniMax-M2.5'", self.supplier_content)
-        self.assertIn("name: 'MiniMax-M2.5-highspeed'", self.supplier_content)
 
     def test_minimax_has_model_config_type_0(self):
         """MiniMax should have model_config with type 0 (LLM)."""
@@ -87,9 +86,9 @@ class TestMiniMaxSupplierConfig(unittest.TestCase):
         minimax_section = self.supplier_content[
             self.supplier_content.index("id: 13") :
         ]
-        # Get just the MiniMax entry (roughly 20 lines)
-        lines = minimax_section.split("\n")[:20]
-        minimax_text = "\n".join(lines)
+        # Limit to just MiniMax section (up to next id:)
+        next_id = minimax_section.index("id: 11", 10) if "id: 11" in minimax_section[10:] else len(minimax_section)
+        minimax_text = minimax_section[:next_id]
         self.assertNotIn("type: 'vllm'", minimax_text)
         self.assertNotIn("type: 'azure'", minimax_text)
 

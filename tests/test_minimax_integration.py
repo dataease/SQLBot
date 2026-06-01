@@ -35,7 +35,7 @@ class TestMiniMaxAPIConnectivity(unittest.TestCase):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "MiniMax-M2.5-highspeed",
+                "model": "MiniMax-M3",
                 "messages": [{"role": "user", "content": "Hi"}],
                 "max_tokens": 1,
             },
@@ -53,7 +53,7 @@ class TestMiniMaxAPIConnectivity(unittest.TestCase):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "MiniMax-M2.5-highspeed",
+                "model": "MiniMax-M3",
                 "messages": [{"role": "user", "content": "Say hello in one word."}],
                 "temperature": 0.7,
                 "max_tokens": 10,
@@ -77,7 +77,7 @@ class TestMiniMaxAPIConnectivity(unittest.TestCase):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "MiniMax-M2.5-highspeed",
+                "model": "MiniMax-M3",
                 "messages": [{"role": "user", "content": "Reply with OK."}],
                 "temperature": 0,
                 "max_tokens": 5,
