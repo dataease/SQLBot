@@ -41,6 +41,7 @@ from apps.datasource.crud.permission import get_row_permission_filters, is_norma
 from apps.datasource.embedding.ds_embedding import get_ds_embedding
 from apps.datasource.models.datasource import CoreDatasource
 from apps.db.db import exec_sql, get_version, check_connection
+from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_ds
 from apps.system.crud.parameter_manage import get_groups
 from apps.system.schemas.system_schema import AssistantOutDsSchema
@@ -176,11 +177,16 @@ class LLMService:
     @classmethod
     async def create(cls, *args, **kwargs):
         specialized_model_id = None
+        _ai_model_list = []
         if args[3]:
+            if args[1]:
+                ws_id = args[1].oid
+                _ai_model_list = get_ai_model_list_by_workspace(args[0], ws_id)
             if args[3].enable_custom_model:
                 if args[3].custom_model:
-                    specialized_model_id = args[3].custom_model
-                    print("use custom model: id[" + args[3].custom_model + "]")
+                    if any(str(model.id) == str(args[3].custom_model) for model in _ai_model_list):
+                        specialized_model_id = args[3].custom_model
+                        print("use custom model: id[" + specialized_model_id + "]")
         config: LLMConfig = await get_default_config(specialized_model_id)
         instance = cls(*args, **kwargs, config=config)
 

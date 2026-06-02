@@ -249,11 +249,11 @@ async def update_model_ws_mapping_by_id(
     return [str(ws_id) for ws_id in ws_ids]
 
 
-@router.get("/list_by_ws", response_model=AiModelBrief, summary=f"{PLACEHOLDER_PREFIX}system_model_query",
+@router.get("/list/by_ws", response_model=List[AiModelBrief], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
             description=f"{PLACEHOLDER_PREFIX}system_model_query")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def get_model_by_ws(
         session: SessionDep,
         current_user: CurrentUser
 ):
-    return get_ai_model_list_by_workspace(session, current_user.workspace_id)
+    return get_ai_model_list_by_workspace(session, current_user.oid)

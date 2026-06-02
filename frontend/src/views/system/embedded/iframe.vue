@@ -101,25 +101,23 @@ const dsListOptions = ref<any[]>([])
 const embeddedListWithSearch = computed(() => {
   if (!keywords.value) return embeddedList.value
   return embeddedList.value.filter((ele: any) =>
-    ele.name.toLowerCase().includes(keywords.value.toLowerCase()),
+    ele.name.toLowerCase().includes(keywords.value.toLowerCase())
   )
 })
 
 interface Model {
+  id: number
   name: string
-  model_type: string
-  base_model: string
-  id: string
   default_model: boolean
   supplier: number
 }
 
-const modelList =ref<Array<Model>>([])
+const modelList = ref<Array<Model>>([])
 
 const searchModels = () => {
   searchLoading.value = true
   modelApi
-    .queryAll()
+    .list_by_ws()
     .then((res: any) => {
       modelList.value = res
     })
@@ -307,8 +305,8 @@ const validateUrl = (_: any, value: any, callback: any) => {
   if (value === '') {
     callback(
       new Error(
-        t('datasource.please_enter') + t('common.empty') + t('embedded.cross_domain_settings'),
-      ),
+        t('datasource.please_enter') + t('common.empty') + t('embedded.cross_domain_settings')
+      )
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
@@ -352,7 +350,7 @@ const dsRules = {
 const validatePass = (_: any, value: any, callback: any) => {
   if (value === '') {
     callback(
-      new Error(t('datasource.please_enter') + t('common.empty') + t('embedded.interface_url')),
+      new Error(t('datasource.please_enter') + t('common.empty') + t('embedded.interface_url'))
     )
   } else {
     // var Expression = /(https?:\/\/)?([\da-z\.-]+)\.([a-z]{2,6})(:\d{1,5})?([\/\w\.-]*)*\/?(#[\S]+)?/ // eslint-disable-line
@@ -470,7 +468,7 @@ const saveEmbedded = () => {
       if (!currentEmbedded.id) {
         delete obj.id
       }
-      if (obj.custom_model == undefined){
+      if (obj.custom_model == undefined) {
         obj.custom_model = ''
       }
       req(obj).then(() => {
@@ -526,29 +524,29 @@ const handleEmbedded = (row: any) => {
 }
 const copyJsCode = () => {
   copy(jsCodeElement.value)
-    .then(function() {
+    .then(function () {
       ElMessage.success(t('embedded.copy_successful'))
     })
-    .catch(function() {
+    .catch(function () {
       ElMessage.error(t('embedded.copy_failed'))
     })
 }
 
 const copyJsCodeFull = () => {
   copy(jsCodeElementFull.value)
-    .then(function() {
+    .then(function () {
       ElMessage.success(t('embedded.copy_successful'))
     })
-    .catch(function() {
+    .catch(function () {
       ElMessage.error(t('embedded.copy_failed'))
     })
 }
 const copyCode = () => {
   copy(scriptElement.value)
-    .then(function() {
+    .then(function () {
       ElMessage.success(t('embedded.copy_successful'))
     })
-    .catch(function() {
+    .catch(function () {
       ElMessage.error(t('embedded.copy_failed'))
     })
 }
@@ -821,13 +819,16 @@ const saveHandler = () => {
               </el-form-item>
 
               <el-form-item prop="enable_custom_model">
-                <el-checkbox v-model="currentEmbedded.enable_custom_model" >
-                  {{t('embedded.enableCustomModel')}}
+                <el-checkbox v-model="currentEmbedded.enable_custom_model">
+                  {{ t('embedded.enableCustomModel') }}
                 </el-checkbox>
               </el-form-item>
 
-              <el-form-item prop="custom_model" :label="t('modelType.llm')"
-                            v-if="currentEmbedded.enable_custom_model">
+              <el-form-item
+                v-if="currentEmbedded.enable_custom_model"
+                prop="custom_model"
+                :label="t('modelType.llm')"
+              >
                 <el-select v-model="currentEmbedded.custom_model" clearable filterable>
                   <el-option
                     v-for="item in modelList"
@@ -837,7 +838,6 @@ const saveHandler = () => {
                   />
                 </el-select>
               </el-form-item>
-
             </el-form>
           </div>
         </el-scrollbar>
@@ -1013,7 +1013,7 @@ const saveHandler = () => {
                   <div class="private-list">
                     {{ t('embedded.set_data_source') }}
                     <span :title="$t('embedded.open_the_query')" class="open-the_query ellipsis"
-                    >{{ $t('embedded.open_the_query') }}
+                      >{{ $t('embedded.open_the_query') }}
                     </span>
                   </div>
                 </template>
