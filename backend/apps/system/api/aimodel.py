@@ -8,7 +8,7 @@ from sqlmodel import func, select, update, delete
 from apps.ai_model.model_factory import LLMConfig, LLMFactory
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
-from apps.system.models.system_model import AiModelDetail, AiModelWorkspaceMapping
+from apps.system.models.system_model import AiModelDetail, AiModelWorkspaceMapping, AiModelBrief
 from apps.system.schemas.ai_model_schema import AiModelConfigItem, AiModelCreator, AiModelEditor, AiModelGridItem
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import SessionDep, Trans, CurrentUser
@@ -192,7 +192,7 @@ async def delete_model(
     session.commit()
 
 
-@router.get("/{id}/ws_mapping", response_model=AiModelEditor, summary=f"{PLACEHOLDER_PREFIX}system_model_query",
+@router.get("/{id}/ws_mapping", response_model=List[int], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
             description=f"{PLACEHOLDER_PREFIX}system_model_query")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def get_model_ws_mapping_by_id(
@@ -214,7 +214,7 @@ async def get_model_ws_mapping_by_id(
     return ws_ids
 
 
-@router.put("/{id}/ws_mapping", response_model=AiModelEditor, summary=f"{PLACEHOLDER_PREFIX}system_model_query",
+@router.put("/{id}/ws_mapping", response_model=List[int], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
             description=f"{PLACEHOLDER_PREFIX}system_model_query")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def update_model_ws_mapping_by_id(
@@ -249,9 +249,9 @@ async def update_model_ws_mapping_by_id(
     return ws_ids
 
 
-@router.get("/list_by_ws", response_model=AiModelEditor, summary=f"{PLACEHOLDER_PREFIX}system_model_query",
+@router.get("/list_by_ws", response_model=AiModelBrief, summary=f"{PLACEHOLDER_PREFIX}system_model_query",
             description=f"{PLACEHOLDER_PREFIX}system_model_query")
-@require_permissions(permission=SqlbotPermission(role=['admin']))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def get_model_by_ws(
         session: SessionDep,
         current_user: CurrentUser
