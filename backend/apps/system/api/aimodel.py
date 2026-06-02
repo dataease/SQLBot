@@ -192,7 +192,7 @@ async def delete_model(
     session.commit()
 
 
-@router.get("/{id}/ws_mapping", response_model=List[int], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
+@router.get("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
             description=f"{PLACEHOLDER_PREFIX}system_model_query")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def get_model_ws_mapping_by_id(
@@ -211,21 +211,21 @@ async def get_model_ws_mapping_by_id(
     )
     ws_ids: List[int] = session.exec(stmt).all()
 
-    return ws_ids
+    return [str(ws_id) for ws_id in ws_ids]
 
 
-@router.put("/{id}/ws_mapping", response_model=List[int], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
+@router.put("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
             description=f"{PLACEHOLDER_PREFIX}system_model_query")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def update_model_ws_mapping_by_id(
         session: SessionDep,
         id: int = Path(description="ID"),
-        ws_ids: List[int] = Body(description="workspace id list"),
+        ws_ids: List[str] = Body(description="workspace id list"),
 ):
     if ws_ids is None:
         ws_ids = []
     # 提前去重
-    ws_ids = list(set(ws_ids))
+    ws_ids = list({int(ws_id) for ws_id in ws_ids})
 
     db_model = session.get(AiModelDetail, id)
     if not db_model:
@@ -246,7 +246,7 @@ async def update_model_ws_mapping_by_id(
 
     session.commit()
 
-    return ws_ids
+    return [str(ws_id) for ws_id in ws_ids]
 
 
 @router.get("/list_by_ws", response_model=AiModelBrief, summary=f"{PLACEHOLDER_PREFIX}system_model_query",
