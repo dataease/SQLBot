@@ -21,8 +21,16 @@ class AiModelDetail(SnowflakeBase, AiModelBase, table=True):
    status: int = Field(nullable=False, default = 1)
    create_time: int = Field(default=0, sa_type=BigInteger())
    
+class AiModelWorkspaceMapping(SnowflakeBase, table=True):
+    __tablename__ = "ai_model_workspace_mapping"
+    ai_model_id: int = Field(default=None, nullable=True, sa_type=BigInteger())
+    workspace_id: int = Field(default=None, nullable=True, sa_type=BigInteger())
 
-
+class AiModelBrief(SQLModel):
+    id: int
+    name: str
+    default_model: bool
+    supplier: int
 
 class WorkspaceBase(SQLModel):
     name: str = Field(max_length=255, nullable=False)
