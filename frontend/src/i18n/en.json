@@ -32,6 +32,16 @@
     "enter_variable_name": "Please Enter Variable Name",
     "enter_variable_value": "Please Enter Variable Value"
   },
+  "authorized_space": {
+    "authorized_space": "Authorized Space",
+    "authorized_space_list": "Authorized Space List",
+    "select_space": "Select Space",
+    "modify_authorized_space": "Modify Authorized Space",
+    "workspaces_authorized": "Authorized {num} Workspaces",
+    "number_of_members": "Number of Members",
+    "delete_selected_workspaces": "Are you sure you want to delete the selected {msg} workspaces?",
+    "delete_workspace": "Are you sure you want to delete the workspace: {msg}?"
+  },
   "sync": {
     "records": "Displaying {num} records out of {total}",
     "confirm_upload": "Confirm Upload",

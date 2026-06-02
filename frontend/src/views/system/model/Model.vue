@@ -16,6 +16,7 @@ import { getModelTypeName } from '@/entity/CommonEntity.ts'
 import { useI18n } from 'vue-i18n'
 import { get_supplier } from '@/entity/supplier'
 import { highlightKeyword } from '@/utils/xss'
+import AuthorizedWorkspaceDialogForModel from '@/views/system/workspace/AuthorizedWorkspaceDialogForModel.vue'
 
 interface Model {
   name: string
@@ -249,6 +250,15 @@ const deleteHandler = (item: any) => {
   })
 }
 
+const AuthorizedWorkspaceDialogForModelRef = ref()
+
+const handleAuthorizedSpace = (item: any) => {
+  AuthorizedWorkspaceDialogForModelRef.value.open(item.id)
+}
+const handleEditWorkspaceList = (item: any) => {
+  AuthorizedWorkspaceDialogForModelRef.value.open(item.id)
+}
+
 const clickModel = (ele: any) => {
   activeStep.value = 1
   supplierChang(ele)
@@ -394,6 +404,8 @@ const submit = (item: any) => {
             @edit="handleEditModel(ele)"
             @del="deleteHandler"
             @default="handleDefault(ele)"
+            @authorized-space="handleAuthorizedSpace(ele)"
+            @edit-workspace-list="handleEditWorkspaceList(ele)"
           ></card>
         </el-col>
       </el-row>
@@ -468,6 +480,7 @@ const submit = (item: any) => {
       </template>
     </el-drawer>
   </div>
+  <AuthorizedWorkspaceDialogForModel ref="AuthorizedWorkspaceDialogForModelRef" @refresh="search" />
 </template>
 
 <style lang="less" scoped>

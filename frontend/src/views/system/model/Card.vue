@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import delIcon from '@/assets/svg/icon_delete.svg'
+import icon_more_outlined from '@/assets/svg/icon_more_outlined.svg'
+import icon_moments_categories_outlined from '@/assets/svg/icon_moments-categories_outlined.svg'
 import icon_admin_outlined from '@/assets/svg/icon_admin_outlined.svg'
+import icon_describe_outlined from '@/assets/svg/icon_describe_outlined.svg'
 import edit from '@/assets/svg/icon_edit_outlined.svg'
 import { get_supplier } from '@/entity/supplier'
-import { computed, ref } from 'vue'
+import { computed, ref, unref } from 'vue'
 const props = withDefaults(
   defineProps<{
     name: string
@@ -12,6 +15,7 @@ const props = withDefaults(
     id?: string
     isDefault?: boolean
     supplier?: number
+    num?: number
   }>(),
   {
     name: '-',
@@ -20,6 +24,7 @@ const props = withDefaults(
     id: '-',
     isDefault: false,
     supplier: 0,
+    num: 0,
   }
 )
 const errorMsg = ref('')
@@ -38,7 +43,7 @@ const showErrorMask = (msg?: string) => {
     errorMsg.value = ''
   }, 3000)
 }
-const emits = defineEmits(['edit', 'del', 'default'])
+const emits = defineEmits(['edit', 'del', 'default', 'authorizedSpace', 'editworkspaceList'])
 
 const handleDefault = () => {
   emits('default')
@@ -50,6 +55,18 @@ const handleDel = () => {
 
 const handleEdit = () => {
   emits('edit')
+}
+
+const handleEditWorkspaceList = () => {
+  emits('editworkspaceList')
+}
+const handleAuthorizedSpace = () => {
+  emits('authorizedSpace')
+}
+const buttonRef = ref()
+const popoverRef = ref()
+const onClickOutside = () => {
+  unref(popoverRef).popperRef?.delayHide?.()
 }
 
 defineExpose({ showErrorMask })
@@ -76,6 +93,27 @@ defineExpose({ showErrorMask })
     <div class="type-value">
       <span class="type">{{ $t('model.basic_model') }}</span>
       <span class="value"> {{ baseModel }}</span>
+    </div>
+    <div v-if="false" class="type-value">
+      <span class="type">{{ $t('authorized_space.authorized_space') }}</span>
+      <span class="value" style="display: flex; align-items: center">
+        {{ $t('permission.2', { msg: num }) }}
+        <el-tooltip
+          effect="dark"
+          :content="$t('authorized_space.authorized_space_list')"
+          placement="top"
+          offset="12"
+        >
+          <el-icon
+            class="hover-icon_with_bg"
+            style="cursor: pointer; margin-left: 8px"
+            size="16"
+            @click="handleEditWorkspaceList"
+          >
+            <icon_describe_outlined></icon_describe_outlined>
+          </el-icon>
+        </el-tooltip>
+      </span>
     </div>
     <div class="methods">
       <el-tooltip
@@ -104,12 +142,41 @@ defineExpose({ showErrorMask })
         </el-icon>
         {{ $t('dashboard.edit') }}
       </el-button>
-      <el-button secondary @click="handleDel">
-        <el-icon style="margin-right: 4px" size="16">
-          <delIcon></delIcon>
-        </el-icon>
-        {{ $t('dashboard.delete') }}
-      </el-button>
+
+      <el-icon
+        ref="buttonRef"
+        v-click-outside="onClickOutside"
+        class="more"
+        size="16"
+        style="color: #646a73"
+        @click.stop
+      >
+        <icon_more_outlined></icon_more_outlined>
+      </el-icon>
+      <el-popover
+        ref="popoverRef"
+        :virtual-ref="buttonRef"
+        virtual-triggering
+        trigger="click"
+        :teleported="false"
+        popper-class="popover-card_workspace"
+        placement="bottom-start"
+      >
+        <div class="content">
+          <div class="item" @click.stop="handleAuthorizedSpace">
+            <el-icon size="16">
+              <icon_moments_categories_outlined></icon_moments_categories_outlined>
+            </el-icon>
+            {{ $t('authorized_space.authorized_space') }}
+          </div>
+          <div class="item" @click.stop="handleDel">
+            <el-icon size="16">
+              <delIcon></delIcon>
+            </el-icon>
+            {{ $t('dashboard.delete') }}
+          </div>
+        </div>
+      </el-popover>
     </div>
   </div>
 </template>
@@ -167,13 +234,44 @@ defineExpose({ showErrorMask })
   .methods {
     margin-top: 16px;
     align-items: center;
-    display: none;
+    display: flex;
 
     .divide {
       height: 14px;
       width: 1px;
       background-color: #1f232926;
       margin: 0 12px;
+    }
+    .more {
+      position: relative;
+      cursor: pointer;
+      margin-left: 12px;
+      width: 32px;
+      height: 32px;
+
+      svg {
+        position: relative;
+        z-index: 10;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        border-radius: 6px;
+        width: 30px;
+        height: 30px;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+        background: #fff;
+        border: 1px solid #d9dcdf;
+      }
+
+      &:hover {
+        &::after {
+          background-color: #f5f6f7;
+        }
+      }
     }
   }
 
@@ -204,6 +302,64 @@ defineExpose({ showErrorMask })
     p {
       text-align: left;
       color: var(--ed-color-danger);
+    }
+  }
+}
+</style>
+
+<style lang="less">
+.popover-card_workspace.popover-card_workspace.popover-card_workspace {
+  box-shadow: 0px 4px 8px 0px #1f23291a;
+  border-radius: 6px;
+  border: 1px solid #dee0e3;
+  width: fit-content !important;
+  min-width: 120px !important;
+  padding: 0;
+
+  .content {
+    position: relative;
+
+    &::after {
+      position: absolute;
+      content: '';
+      top: 39px !important;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #dee0e3;
+    }
+
+    .item {
+      position: relative;
+      padding: 0 12px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+
+      .ed-icon {
+        margin-right: 8px;
+        color: #646a73;
+      }
+
+      &:hover {
+        &::after {
+          display: block;
+        }
+      }
+
+      &::after {
+        content: '';
+        width: calc(100% - 8px);
+        height: 32px;
+        border-radius: 6px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1f23291a;
+        display: none;
+      }
     }
   }
 }

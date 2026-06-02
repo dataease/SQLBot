@@ -32,6 +32,16 @@
     "enter_variable_name": "請輸入變數名稱",
     "enter_variable_value": "請輸入變數值"
   },
+  "authorized_space": {
+    "authorized_space": "授權空間",
+    "authorized_space_list": "授權空間列表",
+    "select_space": "選擇空間",
+    "modify_authorized_space": "修改授權空間",
+    "workspaces_authorized": "已授權 {num} 個工作空間",
+    "number_of_members": "成員數量",
+    "delete_selected_workspaces": "是否刪除選中的 {msg} 個工作空間？",
+    "delete_workspace": "是否刪除工作空間：{msg}？"
+  },
   "sync": {
     "records": "顯示 {num} 筆資料，共 {total} 筆",
     "confirm_upload": "確定上傳",

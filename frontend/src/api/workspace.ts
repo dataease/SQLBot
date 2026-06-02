@@ -15,3 +15,8 @@ export const workspaceDelete = (id: any) => request.delete(`/system/workspace/${
 export const workspaceList = () => request.get('/system/workspace')
 export const workspaceDetail = (id: any) => request.get(`/system/workspace/${id}`)
 export const uwsOption = (params: any) => request.get('system/workspace/uws/option', { params })
+
+export const workspaceModelMapping = (aiModelId: any) =>
+  request.get(`/system/aimodel/${aiModelId}/ws_mapping`)
+export const workspaceModelMappingUpdate = (aiModelId: any, data: any) =>
+  request.put(`/system/aimodel/${aiModelId}/ws_mapping`, data)

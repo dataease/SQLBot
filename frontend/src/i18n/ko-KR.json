@@ -32,6 +32,16 @@
     "enter_variable_name": "변수 이름을 입력하세요",
     "enter_variable_value": "변수 값을 입력하세요"
   },
+  "authorized_space": {
+    "authorized_space": "권한 있는 공간",
+    "authorized_space_list": "권한 있는 공간 목록",
+    "select_space": "공간 선택",
+    "modify_authorized_space": "권한 있는 공간 수정",
+    "workspaces_authorized": "{num}개의 권한 있는 작업 공간",
+    "number_of_members": "회원 수",
+    "delete_selected_workspaces": "선택한 {msg}개의 작업 공간을 삭제하시겠습니까?",
+    "delete_workspace": "작업 공간을 삭제하시겠습니까: {msg}?"
+  },
   "sync": {
     "records": "{total}개 중 {num}개의 레코드 표시",
     "confirm_upload": "업로드 확인",

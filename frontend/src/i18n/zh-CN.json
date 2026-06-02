@@ -32,6 +32,16 @@
     "enter_variable_name": "请输入变量名称",
     "enter_variable_value": "请输入变量值"
   },
+  "authorized_space": {
+    "authorized_space": "授权空间",
+    "authorized_space_list": "授权空间列表",
+    "select_space": "选择空间",
+    "modify_authorized_space": "修改授权空间",
+    "workspaces_authorized": "已授权 {num} 个工作空间",
+    "number_of_members": "成员数量",
+    "delete_selected_workspaces": "是否删除选中的 {msg} 个工作空间？",
+    "delete_workspace": "是否删除工作空间：{msg}？"
+  },
   "sync": {
     "records": "显示 {num} 条数据，共 {total} 条",
     "confirm_upload": "确定上传",
