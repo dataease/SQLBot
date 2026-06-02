@@ -222,6 +222,8 @@ def get_db_type(type):
 async def query(session: SessionDep, current_user: CurrentUser):
     list_result = session.exec(select(AssistantModel).where(AssistantModel.oid == current_user.oid, AssistantModel.type != 4).order_by(AssistantModel.name,
                                                                                                AssistantModel.create_time)).all()
+    for model in list_result:
+        model.enable_custom_model = model.enable_custom_model or False
     return list_result
 
 
