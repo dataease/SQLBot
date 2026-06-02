@@ -200,7 +200,7 @@ const emits = defineEmits(['refresh'])
 const handleConfirm = () => {
   workspaceModelMappingUpdate(
     oid,
-    checkTableList.value.map((ele: any) => ele.id)
+    checkTableList.value.map((ele: any) => `${ele.id}`)
   ).then(() => {
     beforeClose()
     emits('refresh')
