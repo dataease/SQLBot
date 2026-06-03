@@ -1529,6 +1529,9 @@ const saveHandler = () => {
       display: flex;
       align-items: center;
       flex-direction: column;
+      &:hover {
+        box-shadow: 0px 6px 24px 0px #1f232914;
+      }
 
       .title {
         font-weight: 500;
