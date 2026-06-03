@@ -52,6 +52,7 @@ const saveLoading = ref<boolean>(false)
 const uploadLoading = ref(false)
 const { t } = useI18n()
 const schemaList = ref<any>([])
+const isDmSchemaManualInput = computed(() => form.value.type === 'dm')
 
 const rules = reactive<FormRules>({
   name: [
@@ -762,6 +763,8 @@ defineExpose({
             <el-select
               v-model="form.dbSchema"
               filterable
+              :allow-create="isDmSchemaManualInput"
+              :reserve-keyword="!isDmSchemaManualInput"
               :placeholder="$t('datasource.please_enter') + $t('common.empty') + 'Schema'"
             >
               <el-option
