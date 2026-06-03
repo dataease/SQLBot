@@ -59,7 +59,7 @@
       <div class="p-16 w-full">
         <div class="flex-between mb-16" style="margin: 0 16px">
           <span class="lighter">
-            {{ $t('workspace.selected_2_people', { msg: checkTableList.length }) }}
+            {{ $t('workspace.selected_number', { msg: checkTableList.length }) }}
           </span>
 
           <el-button text @click="clearWorkspaceAll">
@@ -183,11 +183,11 @@ const open = async (id: any) => {
       : []
   checkedWorkspace.value =
     workspaceMappingResult.status === 'fulfilled'
-      ? workspace.value.filter((ele: any) => workspaceMappingResult.value.includes(ele.id))
+      ? workspace.value.filter((ele: any) => workspaceMappingResult.value.includes(`${ele.id}`))
       : []
   handleCheckedWorkspaceChange(
     workspaceMappingResult.status === 'fulfilled'
-      ? workspace.value.filter((ele: any) => workspaceMappingResult.value.includes(ele.id))
+      ? workspace.value.filter((ele: any) => workspaceMappingResult.value.includes(`${ele.id}`))
       : []
   )
   loading.value = false

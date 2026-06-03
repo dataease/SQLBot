@@ -582,6 +582,7 @@
     "member_feng_yibudao": "Do you want to remove the member: {msg}?",
     "select_member": "Select member",
     "selected_2_people": "Selected: {msg} people",
+    "selected_number": "Selected: {msg} items",
     "clear": "Clear",
     "historical_dialogue": "No historical dialogue",
     "rename_a_workspace": "Rename a workspace",

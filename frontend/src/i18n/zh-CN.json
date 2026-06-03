@@ -582,6 +582,7 @@
     "member_feng_yibudao": "是否移除成员：{msg}？",
     "select_member": "选择成员",
     "selected_2_people": "已选：{msg} 人",
+    "selected_number": "已选：{msg} 个",
     "clear": "清空",
     "historical_dialogue": "暂无历史对话",
     "rename_a_workspace": "重命名工作空间",

@@ -582,6 +582,7 @@
     "member_feng_yibudao": "멤버를 제거하시겠습니까: {msg}?",
     "select_member": "멤버 선택",
     "selected_2_people": "선택됨: {msg}명",
+    "selected_number": "선택됨: {msg}개",
     "clear": "지우기",
     "historical_dialogue": "과거 대화가 없습니다",
     "rename_a_workspace": "작업 공간 이름 바꾸기",
