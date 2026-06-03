@@ -91,10 +91,7 @@
       <el-button secondary @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
-      <el-button v-if="!checkedWorkspace.length" disabled type="info">{{
-        $t('common.confirm2')
-      }}</el-button>
-      <el-button v-else type="primary" @click="handleConfirm">
+      <el-button type="primary" @click="handleConfirm">
         {{ $t('common.confirm2') }}
       </el-button>
     </template>
