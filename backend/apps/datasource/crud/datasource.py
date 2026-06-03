@@ -328,18 +328,19 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
     if fields is None or len(fields) == 0:
         return {"fields": [], "data": [], "sql": ''}
 
+    table = session.query(CoreTable).filter(CoreTable.id == data.table.id).first()
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
     sql: str = ""
     if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks" or ds.type == "hive":
-        sql = f"""SELECT `{"`, `".join(fields)}` FROM `{data.table.table_name}` 
+        sql = f"""SELECT `{"`, `".join(fields)}` FROM `{table.table_name}` 
             {where} 
             LIMIT 100"""
     elif ds.type == "sqlServer":
-        sql = f"""SELECT TOP 100 [{"], [".join(fields)}] FROM [{conf.dbSchema}].[{data.table.table_name}]
+        sql = f"""SELECT TOP 100 [{"], [".join(fields)}] FROM [{conf.dbSchema}].[{table.table_name}]
             {where} 
             """
     elif ds.type == "pg" or ds.type == "excel" or ds.type == "redshift" or ds.type == "kingbase":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}" 
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{table.table_name}" 
             {where} 
             LIMIT 100"""
     elif ds.type == "oracle":
@@ -348,25 +349,25 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
         #     ORDER BY "{fields[0]}"
         #     OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY"""
         sql = f"""SELECT * FROM
-                    (SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}"
+                    (SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{table.table_name}"
                     {where} 
                     ORDER BY "{fields[0]}")
                     WHERE ROWNUM <= 100
                     """
     elif ds.type == "ck":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}" 
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{table.table_name}" 
             {where} 
             LIMIT 100"""
     elif ds.type == "dm":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{data.table.table_name}"
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{conf.dbSchema}"."{table.table_name}"
             {where}
             LIMIT 100"""
     elif ds.type == "es":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}"
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{table.table_name}"
             {where}
             LIMIT 100"""
     elif ds.type == "sqlite":
-        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{data.table.table_name}"
+        sql = f"""SELECT "{'", "'.join(fields)}" FROM "{table.table_name}"
             {where}
             LIMIT 100"""
     return exec_sql(ds, sql, True)
