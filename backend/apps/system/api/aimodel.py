@@ -192,8 +192,8 @@ async def delete_model(
     session.commit()
 
 
-@router.get("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
-            description=f"{PLACEHOLDER_PREFIX}system_model_query")
+@router.get("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping",
+            description=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def get_model_ws_mapping_by_id(
         session: SessionDep,
@@ -214,8 +214,8 @@ async def get_model_ws_mapping_by_id(
     return [str(ws_id) for ws_id in ws_ids]
 
 
-@router.put("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
-            description=f"{PLACEHOLDER_PREFIX}system_model_query")
+@router.put("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_update",
+            description=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_update")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def update_model_ws_mapping_by_id(
         session: SessionDep,
@@ -249,8 +249,8 @@ async def update_model_ws_mapping_by_id(
     return [str(ws_id) for ws_id in ws_ids]
 
 
-@router.get("/list/by_ws", response_model=List[AiModelBrief], summary=f"{PLACEHOLDER_PREFIX}system_model_query",
-            description=f"{PLACEHOLDER_PREFIX}system_model_query")
+@router.get("/list/by_ws", response_model=List[AiModelBrief], summary=f"{PLACEHOLDER_PREFIX}system_model_list_by_ws",
+            description=f"{PLACEHOLDER_PREFIX}system_model_list_by_ws")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def get_model_by_ws(
         session: SessionDep,

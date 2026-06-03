@@ -65,6 +65,8 @@ const defaultForm = {
   type: 4,
   configuration: null,
   description: null,
+  enable_custom_model: false,
+  custom_model: null,
 }
 const pageForm = ref<Form>(cloneDeep(defaultForm))
 
