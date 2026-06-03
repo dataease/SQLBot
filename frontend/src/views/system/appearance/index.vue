@@ -89,7 +89,7 @@
                         :name="ele.type"
                         :show-file-list="false"
                         class="upload-demo"
-                        accept=".jpeg,.jpg,.png,.gif,.svg"
+                        accept=".jpeg,.jpg,.png"
                         :before-upload="(e: any) => beforeUpload(e, ele)"
                         :http-request="uploadImg"
                       >
@@ -378,7 +378,7 @@ const defaultTopForm = {
   showDoc: '0',
   showAbout: '0',
   pc_welcome: t('embedded.i_am_sqlbot'),
-  pc_welcome_desc: t("qa.hint_description"),
+  pc_welcome_desc: t('qa.hint_description'),
 }
 
 const topForm = reactive<{

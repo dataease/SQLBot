@@ -15,7 +15,7 @@ async def get_groups(session: SessionDep, flag: str) -> list[SysArgModel]:
 
 async def save_parameter_args(session: SessionDep, request: Request):
     allow_file_mapping = {
-        """ "test_logo": { "types": [".jpg", ".jpeg", ".png", ".svg"], "size": 5 * 1024 * 1024 } """
+        """ "test_logo": { "types": [".jpg", ".jpeg", ".png"], "size": 5 * 1024 * 1024 } """
     }
     form_data = await request.form()
     files = form_data.getlist("files")
