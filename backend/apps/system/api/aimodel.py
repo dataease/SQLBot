@@ -359,4 +359,4 @@ async def get_model_by_ws(
         session: SessionDep,
         current_user: CurrentUser
 ):
-    return get_ai_model_list_by_workspace(session, current_user.oid)
+    return get_ai_model_list_by_workspace(session, current_user.oid, False)
