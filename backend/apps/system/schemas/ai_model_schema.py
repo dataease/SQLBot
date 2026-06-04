@@ -14,7 +14,7 @@ class AiModelItem(BaseModel):
     default_model: bool = Field(default=False, description=f"{PLACEHOLDER_PREFIX}default_model")
 
 class AiModelGridItem(AiModelItem, BaseCreatorDTO):
-    pass
+    ws_mapping_count: int = Field(default=0, description="workspace mapping count")
 
 class AiModelConfigItem(BaseModel):
     key: str = Field(description=f"{PLACEHOLDER_PREFIX}arg_name")

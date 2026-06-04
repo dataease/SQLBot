@@ -90,13 +90,28 @@ async def query(
         session: SessionDep,
         keyword: Union[str, None] = Query(default=None, max_length=255, description=f"{PLACEHOLDER_PREFIX}keyword")
 ):
-    statement = select(AiModelDetail.id,
-                       AiModelDetail.name,
-                       AiModelDetail.model_type,
-                       AiModelDetail.base_model,
-                       AiModelDetail.supplier,
-                       AiModelDetail.protocol,
-                       AiModelDetail.default_model)
+    # 子查询：统计每个 model 绑定的 workspace 数量
+    count_sub = (
+        select(
+            AiModelWorkspaceMapping.ai_model_id,
+            func.count().label("ws_mapping_count")
+        )
+        .group_by(AiModelWorkspaceMapping.ai_model_id)
+        .subquery()
+    )
+    statement = (
+        select(
+            AiModelDetail.id,
+            AiModelDetail.name,
+            AiModelDetail.model_type,
+            AiModelDetail.base_model,
+            AiModelDetail.supplier,
+            AiModelDetail.protocol,
+            AiModelDetail.default_model,
+            func.coalesce(count_sub.c.ws_mapping_count, 0).label("ws_mapping_count"),
+        )
+        .outerjoin(count_sub, AiModelDetail.id == count_sub.c.ai_model_id)
+    )
     if keyword is not None:
         statement = statement.where(AiModelDetail.name.like(f"%{keyword}%"))
     statement = statement.order_by(AiModelDetail.default_model.desc(), AiModelDetail.name, AiModelDetail.create_time)
