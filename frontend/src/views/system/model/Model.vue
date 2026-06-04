@@ -19,6 +19,7 @@ import { highlightKeyword } from '@/utils/xss'
 import AuthorizedWorkspaceDialogForModel from '@/views/system/workspace/AuthorizedWorkspaceDialogForModel.vue'
 
 interface Model {
+  ws_mapping_count: number | undefined
   name: string
   model_type: string
   base_model: string
@@ -397,6 +398,7 @@ const submit = (item: any) => {
             :ref="(el: any) => setCardRef(el, index)"
             :key="ele.id"
             :name="ele.name"
+            :num="ele.ws_mapping_count"
             :supplier="ele.supplier"
             :model-type="getModelTypeName(ele['model_type'])"
             :base-model="ele['base_model']"

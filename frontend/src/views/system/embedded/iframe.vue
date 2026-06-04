@@ -336,6 +336,18 @@ const rules = {
       trigger: 'blur',
     },
   ],
+  custom_model: [
+    {
+      validator: (_: any, value: any, callback: any) => {
+        if (currentEmbedded.enable_custom_model && !value) {
+          callback(new Error(t('datasource.please_enter') + t('common.empty') + t('modelType.llm')))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
+  ],
 }
 
 const dsRules = {
@@ -818,16 +830,18 @@ const saveHandler = () => {
                 />
               </el-form-item>
 
-              <el-form-item prop="enable_custom_model">
-                <el-checkbox v-model="currentEmbedded.enable_custom_model">
-                  {{ t('embedded.enableCustomModel') }}
-                </el-checkbox>
+              <el-form-item prop="enable_custom_model" :label="t('embedded.useModel')">
+                <el-radio-group v-model="currentEmbedded.enable_custom_model">
+                  <el-radio :value="false">{{ t('embedded.defaultModel') }}</el-radio>
+                  <el-radio :value="true">{{ t('embedded.customModel') }}</el-radio>
+                </el-radio-group>
               </el-form-item>
 
               <el-form-item
                 v-if="currentEmbedded.enable_custom_model"
                 prop="custom_model"
                 :label="t('modelType.llm')"
+                required
               >
                 <el-select v-model="currentEmbedded.custom_model" clearable filterable>
                   <el-option

@@ -94,11 +94,12 @@ defineExpose({ showErrorMask })
       <span class="type">{{ $t('model.basic_model') }}</span>
       <span class="value"> {{ baseModel }}</span>
     </div>
-    <div v-if="false" class="type-value">
+    <div class="type-value">
       <span class="type">{{ $t('authorized_space.authorized_space') }}</span>
       <span class="value" style="display: flex; align-items: center">
         {{ $t('permission.2', { msg: num }) }}
         <el-tooltip
+          v-if="false"
           effect="dark"
           :content="$t('authorized_space.authorized_space_list')"
           placement="top"
@@ -184,7 +185,7 @@ defineExpose({ showErrorMask })
 <style lang="less" scoped>
 .card {
   width: 100%;
-  height: 176px;
+  height: 206px;
   border: 1px solid #dee0e3;
   padding: 16px;
   border-radius: 12px;
