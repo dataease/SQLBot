@@ -214,7 +214,7 @@ export class Table extends BaseChart {
         copy: {
           enable: true,
           withFormat: false,
-          withHeader: true,
+          withHeader: false,
         },
         brushSelection: {
           dataCell: true,
