@@ -96,6 +96,8 @@
   "custom_model": "Custom Model",
   "system_model_ws_mapping": "Query Model-Workspace Authorization Relationships",
   "system_model_ws_mapping_update": "Update Model-Workspace Authorization Relationships",
+  "system_model_ws_mapping_add": "Add Model-Workspace Authorization Relationships",
+  "system_model_ws_mapping_delete": "Delete Model-Workspace Authorization Relationships",
   "system_model_list_by_ws": "Get Model List by Workspace",
   "model_name": "Name",
   "model_type": "Type",

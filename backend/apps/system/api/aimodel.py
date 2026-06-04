@@ -264,6 +264,94 @@ async def update_model_ws_mapping_by_id(
     return [str(ws_id) for ws_id in ws_ids]
 
 
+# 新增映射（在已有基础上追加）
+@router.post("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_add",
+             description=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_add")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def add_model_ws_mapping_by_id(
+        session: SessionDep,
+        id: int = Path(description="ID"),
+        ws_ids: List[str] = Body(description="workspace id list"),
+):
+    if ws_ids is None:
+        ws_ids = []
+    ws_ids = list({int(ws_id) for ws_id in ws_ids})
+
+    db_model = session.get(AiModelDetail, id)
+    if not db_model:
+        raise ValueError(f"AiModelDetail with id {id} not found")
+
+    # 查询已存在的映射，过滤掉重复的
+    existing_stmt = (
+        select(AiModelWorkspaceMapping.workspace_id)
+        .where(
+            AiModelWorkspaceMapping.ai_model_id == id,
+            AiModelWorkspaceMapping.workspace_id.in_(ws_ids),
+        )
+    )
+    existing_ws_ids = set(session.exec(existing_stmt).all())
+
+    # 只插入不存在的映射
+    new_ws_ids = [ws_id for ws_id in ws_ids if ws_id not in existing_ws_ids]
+    for ws_id in new_ws_ids:
+        session.add(
+            AiModelWorkspaceMapping(ai_model_id=id, workspace_id=ws_id)
+        )
+
+    session.commit()
+
+    # 返回完整的映射列表
+    all_stmt = (
+        select(AiModelWorkspaceMapping.workspace_id)
+        .where(AiModelWorkspaceMapping.ai_model_id == id)
+        .distinct()
+    )
+    all_ws_ids: List[int] = session.exec(all_stmt).all()
+
+    return [str(ws_id) for ws_id in all_ws_ids]
+
+
+# 删除指定映射
+@router.delete("/{id}/ws_mapping", response_model=List[str],
+               summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_delete",
+               description=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_delete")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def delete_model_ws_mapping_by_id(
+        session: SessionDep,
+        id: int = Path(description="ID"),
+        ws_ids: List[str] = Body(description="workspace id list"),
+):
+    if ws_ids is None:
+        ws_ids = []
+    ws_ids = list({int(ws_id) for ws_id in ws_ids})
+
+    db_model = session.get(AiModelDetail, id)
+    if not db_model:
+        raise ValueError(f"AiModelDetail with id {id} not found")
+
+    # 只删除指定的映射
+    if ws_ids:
+        session.execute(
+            delete(AiModelWorkspaceMapping)
+            .where(
+                AiModelWorkspaceMapping.ai_model_id == id,
+                AiModelWorkspaceMapping.workspace_id.in_(ws_ids),
+            )
+        )
+
+    session.commit()
+
+    # 返回剩余的映射列表
+    stmt = (
+        select(AiModelWorkspaceMapping.workspace_id)
+        .where(AiModelWorkspaceMapping.ai_model_id == id)
+        .distinct()
+    )
+    remaining_ws_ids: List[int] = session.exec(stmt).all()
+
+    return [str(ws_id) for ws_id in remaining_ws_ids]
+
+
 @router.get("/list/by_ws", response_model=List[AiModelBrief], summary=f"{PLACEHOLDER_PREFIX}system_model_list_by_ws",
             description=f"{PLACEHOLDER_PREFIX}system_model_list_by_ws")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))

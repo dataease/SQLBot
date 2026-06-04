@@ -96,6 +96,8 @@
   "custom_model": "自定义模型",
   "system_model_ws_mapping": "查询模型授权工作空间的关联关系",
   "system_model_ws_mapping_update": "更新模型授权工作空间的关联关系",
+  "system_model_ws_mapping_add": "新增模型授权工作空间的关联关系",
+  "system_model_ws_mapping_delete": "删除模型授权工作空间的关联关系",
   "system_model_list_by_ws": "根据工作空间获取模型列表",
   "model_name": "名称",
   "model_type": "类型",
