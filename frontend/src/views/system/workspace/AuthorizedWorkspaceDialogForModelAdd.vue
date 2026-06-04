@@ -1,16 +1,12 @@
 <template>
   <el-dialog
     v-model="centerDialogVisible"
-    :title="$t('workspace.add_member')"
+    :title="$t('authorized_space.authorized_space')"
     modal-class="authorized-workspace"
     width="840"
+    :before-close="beforeClose"
   >
-    <p class="mb-8 lighter">{{ $t('workspace.member_type') }}</p>
-    <el-radio-group v-model="listType">
-      <el-radio :value="0">{{ $t('workspace.ordinary_member') }}</el-radio>
-      <el-radio :value="1">{{ $t('workspace.administrator') }}</el-radio>
-    </el-radio-group>
-    <p class="mb-8 lighter mt-16">{{ $t('workspace.select_member') }}</p>
+    <p class="mb-8 lighter" style="margin-top: 8px">{{ $t('authorized_space.select_space') }}</p>
     <div v-loading="loading" class="flex border" style="height: 428px; border-radius: 6px">
       <div class="p-16 border-r">
         <el-input
@@ -56,9 +52,6 @@
                 <span class="ml-4 ellipsis" style="max-width: 40%" :title="space.name">
                   {{ space.name }}</span
                 >
-                <span class="account ellipsis" style="max-width: 40%" :title="space.account"
-                  >({{ space.account }})</span
-                >
               </div>
             </el-checkbox>
           </el-checkbox-group>
@@ -67,7 +60,7 @@
       <div class="p-16 w-full">
         <div class="flex-between mb-16" style="margin: 0 16px">
           <span class="lighter">
-            {{ $t('workspace.selected_2_people', { msg: checkTableList.length }) }}
+            {{ $t('workspace.selected_number', { msg: checkTableList.length }) }}
           </span>
 
           <el-button text @click="clearWorkspaceAll">
@@ -80,20 +73,13 @@
           style="margin: 0 16px; position: relative"
           class="flex-between align-center hover-bg_select"
         >
-          <div
-            :title="`${ele.name}(${ele.account})`"
-            class="flex align-center ellipsis"
-            style="width: 100%"
-          >
+          <div :title="ele.name" class="flex align-center ellipsis" style="width: 100%">
             <el-icon size="28">
               <avatar_personal></avatar_personal>
             </el-icon>
             <span class="ml-4 lighter ellipsis" style="max-width: 40%" :title="ele.name">{{
               ele.name
             }}</span>
-            <span class="account ellipsis" style="max-width: 40%" :title="ele.account"
-              >({{ ele.account }})</span
-            >
           </div>
           <el-button class="close-btn" text>
             <el-icon size="16" @click="clearWorkspace(ele)"><Close /></el-icon>
@@ -106,26 +92,27 @@
       <el-button secondary @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
-      <el-button v-if="!checkedWorkspace.length" disabled type="info">{{
-        $t('model.add')
-      }}</el-button>
-      <el-button v-else type="primary" @click="handleConfirm"> {{ $t('model.add') }} </el-button>
+      <el-button type="primary" @click="handleConfirm">
+        {{ $t('common.confirm2') }}
+      </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
-import { workspaceOptionUserList, workspaceUwsCreate } from '@/api/workspace'
-import avatar_personal from '@/assets/svg/avatar_personal.svg'
+import { workspaceList, workspaceModelMappingAdd } from '@/api/workspace'
+import avatar_personal from '@/assets/svg/workspace-white.svg'
 import Close from '@/assets/svg/icon_close_outlined_w.svg'
 import Search from '@/assets/svg/icon_search-outline_outlined.svg'
 import type { CheckboxValueType } from 'element-plus-secondary'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const checkAll = ref(false)
 const isIndeterminate = ref(false)
 const checkedWorkspace = ref<any[]>([])
 const workspace = ref<any[]>([])
-const listType = ref(0)
 const search = ref('')
 const loading = ref(false)
 const centerDialogVisible = ref(false)
@@ -187,23 +174,32 @@ const open = async (id: any) => {
   checkTableList.value = []
   checkAll.value = false
   isIndeterminate.value = false
-  const systemWorkspaceList = await workspaceOptionUserList({ oid }, 1, 1000)
-  workspace.value = JSON.parse(
-    JSON.stringify(systemWorkspaceList.items.filter((ele: any) => +ele.id !== 1) as any)
-  )
+  const workspaceListResult = await workspaceList()
+  workspace.value = JSON.parse(JSON.stringify(workspaceListResult))
   loading.value = false
   centerDialogVisible.value = true
 }
 const emits = defineEmits(['refresh'])
 const handleConfirm = () => {
-  workspaceUwsCreate({
-    uid_list: checkTableList.value.map((ele: any) => ele.id),
+  workspaceModelMappingAdd(
     oid,
-    weight: listType.value,
-  }).then(() => {
-    centerDialogVisible.value = false
+    checkTableList.value.map((ele: any) => `${ele.id}`)
+  ).then(() => {
+    beforeClose()
     emits('refresh')
+    ElMessage({
+      type: 'success',
+      message: t('common.operation_success'),
+    })
   })
+}
+
+const beforeClose = () => {
+  checkedWorkspace.value = []
+  workspace.value = []
+  oid = null
+  checkTableList.value = []
+  centerDialogVisible.value = false
 }
 
 const clearWorkspace = (val: any) => {

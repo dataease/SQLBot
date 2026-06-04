@@ -40,7 +40,8 @@
     "workspaces_authorized": "{num}개의 권한 있는 작업 공간",
     "number_of_members": "회원 수",
     "delete_selected_workspaces": "선택한 {msg}개의 작업 공간을 삭제하시겠습니까?",
-    "delete_workspace": "작업 공간을 삭제하시겠습니까: {msg}?"
+    "delete_workspace": "작업 공간을 삭제하시겠습니까: {msg}?",
+    "no_workspace": "작업 공간 없음"
   },
   "sync": {
     "records": "{total}개 중 {num}개의 레코드 표시",
@@ -189,6 +190,7 @@
     "system_manage": "시스템 관리",
     "update_success": "업데이트 성공",
     "save_success": "저장 성공",
+    "operation_success": "작업 성공",
     "next": "다음 단계",
     "save": "저장",
     "logout": "로그아웃",

@@ -17,6 +17,7 @@ import { useI18n } from 'vue-i18n'
 import { get_supplier } from '@/entity/supplier'
 import { highlightKeyword } from '@/utils/xss'
 import AuthorizedWorkspaceDialogForModel from '@/views/system/workspace/AuthorizedWorkspaceDialogForModel.vue'
+import AuthorizedWorkspaceDraw from '@/views/system/workspace/AuthorizedWorkspaceDraw.vue'
 
 interface Model {
   ws_mapping_count: number | undefined
@@ -252,12 +253,13 @@ const deleteHandler = (item: any) => {
 }
 
 const AuthorizedWorkspaceDialogForModelRef = ref()
+const AuthorizedWorkspaceDrawRef = ref()
 
 const handleAuthorizedSpace = (item: any) => {
   AuthorizedWorkspaceDialogForModelRef.value.open(item.id)
 }
 const handleEditWorkspaceList = (item: any) => {
-  AuthorizedWorkspaceDialogForModelRef.value.open(item.id)
+  AuthorizedWorkspaceDrawRef.value.open(item.id)
 }
 
 const clickModel = (ele: any) => {
@@ -483,6 +485,7 @@ const submit = (item: any) => {
     </el-drawer>
   </div>
   <AuthorizedWorkspaceDialogForModel ref="AuthorizedWorkspaceDialogForModelRef" @refresh="search" />
+  <AuthorizedWorkspaceDraw ref="AuthorizedWorkspaceDrawRef" @refresh="search" />
 </template>
 
 <style lang="less" scoped>

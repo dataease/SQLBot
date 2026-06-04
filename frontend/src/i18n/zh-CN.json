@@ -39,8 +39,9 @@
     "modify_authorized_space": "修改授权空间",
     "workspaces_authorized": "已授权 {num} 个工作空间",
     "number_of_members": "成员数量",
-    "delete_selected_workspaces": "是否删除选中的 {msg} 个工作空间？",
-    "delete_workspace": "是否删除工作空间：{msg}？"
+    "delete_selected_workspaces": "是否移除选中的 {msg} 个工作空间？",
+    "delete_workspace": "是否移除工作空间：{msg}？",
+    "no_workspace": "暂无工作空间"
   },
   "sync": {
     "records": "显示 {num} 条数据，共 {total} 条",
@@ -189,6 +190,7 @@
     "system_manage": "系统管理",
     "update_success": "更新成功",
     "save_success": "保存成功",
+    "operation_success": "操作成功",
     "next": "下一步",
     "save": "保存",
     "logout": "退出登录",

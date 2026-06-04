@@ -24,6 +24,7 @@
         </el-input>
         <div class="mt-8 max-height_workspace">
           <el-checkbox
+            v-if="workspaceWithKeywords.length"
             v-model="checkAll"
             class="mb-8"
             style="margin-left: 16px"
