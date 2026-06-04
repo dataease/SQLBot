@@ -20,3 +20,7 @@ export const workspaceModelMapping = (aiModelId: any) =>
   request.get(`/system/aimodel/${aiModelId}/ws_mapping`)
 export const workspaceModelMappingUpdate = (aiModelId: any, data: any) =>
   request.put(`/system/aimodel/${aiModelId}/ws_mapping`, data)
+export const workspaceModelMappingAdd = (aiModelId: any, data: any) =>
+  request.post(`/system/aimodel/${aiModelId}/ws_mapping`, data)
+export const workspaceModelMappingDelete = (aiModelId: any, data: any) =>
+  request.delete(`/system/aimodel/${aiModelId}/ws_mapping`, { data })

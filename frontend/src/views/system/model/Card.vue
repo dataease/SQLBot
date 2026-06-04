@@ -43,7 +43,7 @@ const showErrorMask = (msg?: string) => {
     errorMsg.value = ''
   }, 3000)
 }
-const emits = defineEmits(['edit', 'del', 'default', 'authorizedSpace', 'editworkspaceList'])
+const emits = defineEmits(['edit', 'del', 'default', 'authorizedSpace', 'editWorkspaceList'])
 
 const handleDefault = () => {
   emits('default')
@@ -58,7 +58,7 @@ const handleEdit = () => {
 }
 
 const handleEditWorkspaceList = () => {
-  emits('editworkspaceList')
+  emits('editWorkspaceList')
 }
 const handleAuthorizedSpace = () => {
   emits('authorizedSpace')
@@ -99,7 +99,6 @@ defineExpose({ showErrorMask })
       <span class="value" style="display: flex; align-items: center">
         {{ $t('permission.2', { msg: num }) }}
         <el-tooltip
-          v-if="false"
           effect="dark"
           :content="$t('authorized_space.authorized_space_list')"
           placement="top"

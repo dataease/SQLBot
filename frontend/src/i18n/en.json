@@ -40,7 +40,8 @@
     "workspaces_authorized": "Authorized {num} Workspaces",
     "number_of_members": "Number of Members",
     "delete_selected_workspaces": "Are you sure you want to delete the selected {msg} workspaces?",
-    "delete_workspace": "Are you sure you want to delete the workspace: {msg}?"
+    "delete_workspace": "Are you sure you want to delete the workspace: {msg}?",
+    "no_workspace": "No Workspaces"
   },
   "sync": {
     "records": "Displaying {num} records out of {total}",
@@ -189,6 +190,7 @@
     "system_manage": "System Management",
     "update_success": "Update",
     "save_success": "Save Successful",
+    "operation_success": "Operation successful",
     "next": "Next",
     "save": "Save",
     "logout": "Logout",
