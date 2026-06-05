@@ -83,7 +83,7 @@
     "platform_user_roles": "Third-Party Platform User Roles",
     "excessive_data_volume": "Disabling the 1000-row data limit may cause system lag due to excessive data volume.",
     "sqlbot_name": "Data Query Assistant Name",
-    "show_sql": "Show SQL Button",
+    "show_sql": "Allow Viewing SQL Statements",
     "show_log": "Show Execution Log",
     "prompt": "Prompt",
     "disabling_successfully": "Disabling Successfully",

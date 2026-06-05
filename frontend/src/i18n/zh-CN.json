@@ -83,7 +83,7 @@
     "platform_user_roles": "第三方平台用户角色",
     "excessive_data_volume": "关闭1000行的数据限制后，数据量过大，可能会造成系统卡顿",
     "sqlbot_name": "问数小助手名称",
-    "show_sql": "显示展示SQL按钮",
+    "show_sql": "允许查看SQL语句",
     "show_log": "显示执行日志",
     "prompt": "提示",
     "disabling_successfully": "关闭成功",
