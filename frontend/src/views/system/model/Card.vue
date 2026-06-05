@@ -61,7 +61,7 @@ const handleEditWorkspaceList = () => {
   emits('editWorkspaceList')
 }
 const handleAuthorizedSpace = () => {
-  emits('authorizedSpace')
+  emits('editWorkspaceList')
 }
 const buttonRef = ref()
 const popoverRef = ref()
