@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pandas as pd
 
 from apps.chat.models.chat_model import AxisObj
@@ -53,7 +55,7 @@ class DataFormat:
             """格式化浮点数，避免科学记数法"""
             if value == 0:
                 return "0"
-            formatted = f"{value:.15f}"
+            formatted = str(Decimal(str(value)))
             if '.' in formatted:
                 formatted = formatted.rstrip('0').rstrip('.')
             return formatted

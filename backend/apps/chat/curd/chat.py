@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from typing import List, Optional, Union, Dict, Any
 
 import orjson
@@ -207,7 +208,7 @@ def format_json_list_data(origin_data: list[dict]):
                         value = str(value)
                     # 小数且超过15位有效数字 → 转字符串并标记为文本列
                     elif isinstance(value, float):
-                        decimal_str = format(value, '.16f').rstrip('0').rstrip('.')
+                        decimal_str = str(Decimal(str(value))).rstrip('0').rstrip('.')
                         if len(decimal_str) > 15:
                             value = str(value)
             _row[key] = value
