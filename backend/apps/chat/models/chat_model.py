@@ -250,16 +250,18 @@ class AiModelQuestion(BaseModel):
         _example_answer_3 = _sql_template['example_answer_3_with_limit'] if enable_query_limit else _sql_template[
             'example_answer_3']
 
-        templates['system'] = _base_template['system'].format(lang=self.lang, process_check=_process_check, sqlbot_name=self.sqlbot_name)
+        templates['system'] = _base_template['system'].format(lang=self.lang, process_check=_process_check,
+                                                              sqlbot_name=self.sqlbot_name)
         templates['rules'] = _base_template['generate_rules'].format(lang=self.lang,
-                                                                     sqlbot_name = self.sqlbot_name,
+                                                                     sqlbot_name=self.sqlbot_name,
                                                                      base_sql_rules=_base_sql_rules,
                                                                      basic_sql_examples=_sql_examples,
                                                                      example_engine=_example_engine,
                                                                      example_answer_1=_example_answer_1,
                                                                      example_answer_2=_example_answer_2,
                                                                      example_answer_3=_example_answer_3)
-        templates['schema'] = _base_template['generate_basic_info'].format(engine=self.engine, schema=self.db_schema, sample_data=self.sample_data)
+        templates['schema'] = _base_template['generate_basic_info'].format(engine=self.engine, schema=self.db_schema,
+                                                                           sample_data=self.sample_data)
 
         if self.terminologies:
             templates['terminologies'] = _base_template['generate_terminologies_info'].format(
@@ -303,7 +305,8 @@ class AiModelQuestion(BaseModel):
         return get_analysis_template()['user'].format(fields=self.fields, data=self.data)
 
     def predict_sys_question(self):
-        return get_predict_template()['system'].format(lang=self.lang, custom_prompt=self.custom_prompt, sqlbot_name=self.sqlbot_name)
+        return get_predict_template()['system'].format(lang=self.lang, custom_prompt=self.custom_prompt,
+                                                       sqlbot_name=self.sqlbot_name)
 
     def predict_user_question(self):
         return get_predict_template()['user'].format(fields=self.fields, data=self.data)
@@ -315,14 +318,16 @@ class AiModelQuestion(BaseModel):
         return get_datasource_template()['user'].format(lang=self.lang, question=self.question, data=datasource_list)
 
     def guess_sys_question(self, articles_number: int = 4):
-        return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number, sqlbot_name=self.sqlbot_name)
+        return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number,
+                                                              sqlbot_name=self.sqlbot_name)
 
     def guess_user_question(self, old_questions: str = "[]"):
         return get_guess_question_template()['user'].format(question=self.question, schema=self.db_schema,
                                                             old_questions=old_questions)
 
     def filter_sys_question(self):
-        return get_permissions_template()['system'].format(lang=self.lang, engine=self.engine, sqlbot_name=self.sqlbot_name)
+        return get_permissions_template()['system'].format(lang=self.lang, engine=self.engine,
+                                                           sqlbot_name=self.sqlbot_name)
 
     def filter_user_question(self):
         return get_permissions_template()['user'].format(sql=self.sql, filter=self.filter)
@@ -353,9 +358,12 @@ class ChatStart(BaseModel):
     password: str = Body(description='密码')
 
 
-class McpQuestion(BaseModel):
+class ChatQuestionBase(BaseModel):
     question: str = Body(description='用户提问')
     chat_id: int = Body(description='会话ID')
+
+
+class McpQuestion(ChatQuestionBase):
     token: str = Body(description='token')
     stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)
     lang: Optional[str] = Body(description='语言：zh-CN|zh-TW|en|ko-KR', default='zh-CN')

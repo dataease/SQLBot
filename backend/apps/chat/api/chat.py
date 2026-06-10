@@ -16,7 +16,7 @@ from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user,
     format_json_data, format_json_list_data, get_chart_config, list_recent_questions, get_chat as get_chat_exec, \
     rename_chat_with_user, get_chat_log_history, get_chart_data_with_user_live
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
-    ChatInfo, Chat, ChatFinishStep
+    ChatInfo, Chat, ChatFinishStep, ChatQuestionBase
 from apps.chat.task.llm import LLMService
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
@@ -269,9 +269,10 @@ def find_base_question(record_id: int, session: SessionDep):
 
 @router.post("/question", summary=f"{PLACEHOLDER_PREFIX}ask_question")
 @require_permissions(permission=SqlbotPermission(type='chat', keyExpression="request_question.chat_id"))
-async def question_answer(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
+async def question_answer(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestionBase,
                           current_assistant: CurrentAssistant):
-    return await question_answer_inner(session, current_user, request_question, current_assistant, embedding=True)
+    question = ChatQuestion(chat_id=request_question.chat_id, question=request_question.question)
+    return await question_answer_inner(session, current_user, question, current_assistant, embedding=True)
 
 
 async def question_answer_inner(session: SessionDep, current_user: CurrentUser, request_question: ChatQuestion,
