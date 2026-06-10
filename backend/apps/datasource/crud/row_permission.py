@@ -9,6 +9,21 @@ from apps.system.models.system_variable_model import SystemVariable
 from common.core.deps import SessionDep, CurrentUser
 
 
+def _escape_sql_value(value: str) -> str:
+    """Escape a string value for safe inclusion in a SQL literal.
+
+    Replaces single quotes with two single quotes (standard SQL escaping)
+    and strips characters that could break out of the string context.
+    """
+    if value is None:
+        return value
+    # Standard SQL escaping: double any embedded single-quote characters
+    escaped = str(value).replace("'", "''")
+    # Remove backslashes that some drivers interpret as escape characters
+    escaped = escaped.replace("\\", "\\\\")
+    return escaped
+
+
 def transFilterTree(session: SessionDep, current_user: CurrentUser, tree_list: List[any],
                     ds: CoreDatasource) -> str | None:
     if tree_list is None:
@@ -24,10 +39,16 @@ def transFilterTree(session: SessionDep, current_user: CurrentUser, tree_list: L
     return " AND ".join(res)
 
 
+_VALID_LOGIC_OPS = {"AND", "OR"}
+
+
 def transTreeToWhere(session: SessionDep, current_user: CurrentUser, tree: any, ds: CoreDatasource) -> str | None:
     if tree is None:
         return None
     logic = tree['logic']
+    # Validate the logic operator to prevent injection via this field
+    if logic.upper() not in _VALID_LOGIC_OPS:
+        return None
 
     items = tree['items']
     list: List[str] = []
@@ -56,11 +77,12 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
 
     if item['filter_type'] == 'enum':
         if len(item['enum_value']) > 0:
+            escaped_values = [_escape_sql_value(v) for v in item['enum_value']]
             if ds['type'] == 'sqlServer' and (
                     field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                res = "(" + whereName + " IN (N'" + "',N'".join(item['enum_value']) + "'))"
+                res = "(" + whereName + " IN (N'" + "',N'".join(escaped_values) + "'))"
             else:
-                res = "(" + whereName + " IN ('" + "','".join(item['enum_value']) + "'))"
+                res = "(" + whereName + " IN ('" + "','".join(escaped_values) + "'))"
     else:
         # if system variable, do check and get value
         # new field: value_type(variable or normal), variable_id
@@ -119,23 +141,26 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
                         elif item['term'] == 'not_empty':
                             whereValue = "''"
                         elif item['term'] == 'in' or item['term'] == 'not in':
+                            escaped_values = [_escape_sql_value(v) for v in values]
                             if ds.type == 'sqlServer' and (
                                     field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                                whereValue = "(N'" + "', N'".join(values) + "')"
+                                whereValue = "(N'" + "', N'".join(escaped_values) + "')"
                             else:
-                                whereValue = "('" + "', '".join(values) + "')"
+                                whereValue = "('" + "', '".join(escaped_values) + "')"
                         elif item['term'] == 'like' or item['term'] == 'not like':
+                            escaped_v = _escape_sql_value(values[0])
                             if ds.type == 'sqlServer' and (
                                     field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                                whereValue = f"N'%{values[0]}%'"
+                                whereValue = f"N'%{escaped_v}%'"
                             else:
-                                whereValue = f"'%{values[0]}%'"
+                                whereValue = f"'%{escaped_v}%'"
                         else:
+                            escaped_v = _escape_sql_value(values[0])
                             if ds.type == 'sqlServer' and (
                                     field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                                whereValue = f"N'{values[0]}'"
+                                whereValue = f"N'{escaped_v}'"
                             else:
-                                whereValue = f"'{values[0]}'"
+                                whereValue = f"'{escaped_v}'"
 
                         res = whereName + whereTerm + whereValue
             else:
@@ -153,23 +178,26 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
             elif item['term'] == 'not_empty':
                 whereValue = "''"
             elif item['term'] == 'in' or item['term'] == 'not in':
+                escaped_values = [_escape_sql_value(v) for v in value.split(",")]
                 if ds.type == 'sqlServer' and (
                         field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                    whereValue = "(N'" + "', N'".join(value.split(",")) + "')"
+                    whereValue = "(N'" + "', N'".join(escaped_values) + "')"
                 else:
-                    whereValue = "('" + "', '".join(value.split(",")) + "')"
+                    whereValue = "('" + "', '".join(escaped_values) + "')"
             elif item['term'] == 'like' or item['term'] == 'not like':
+                escaped_v = _escape_sql_value(value)
                 if ds.type == 'sqlServer' and (
                         field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                    whereValue = f"N'%{value}%'"
+                    whereValue = f"N'%{escaped_v}%'"
                 else:
-                    whereValue = f"'%{value}%'"
+                    whereValue = f"'%{escaped_v}%'"
             else:
+                escaped_v = _escape_sql_value(value)
                 if ds.type == 'sqlServer' and (
                         field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-                    whereValue = f"N'{value}'"
+                    whereValue = f"N'{escaped_v}'"
                 else:
-                    whereValue = f"'{value}'"
+                    whereValue = f"'{escaped_v}'"
 
             res = whereName + whereTerm + whereValue
     return res
@@ -226,6 +254,8 @@ def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser,
     if sys_variable.value[0] == 'email':
         v = current_user.email
 
+    escaped_v = _escape_sql_value(v) if v is not None else v
+
     whereValue = ''
     if item['term'] == 'null':
         whereValue = ''
@@ -238,20 +268,20 @@ def getSysVariableValue(sys_variable: SystemVariable, current_user: CurrentUser,
     elif item['term'] == 'in' or item['term'] == 'not in':
         if ds.type == 'sqlServer' and (
                 field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-            whereValue = f"(N'{v}')"
+            whereValue = f"(N'{escaped_v}')"
         else:
-            whereValue = f"('{v}')"
+            whereValue = f"('{escaped_v}')"
     elif item['term'] == 'like' or item['term'] == 'not like':
         if ds.type == 'sqlServer' and (
                 field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-            whereValue = f"N'%{v}%'"
+            whereValue = f"N'%{escaped_v}%'"
         else:
-            whereValue = f"'%{v}%'"
+            whereValue = f"'%{escaped_v}%'"
     else:
         if ds.type == 'sqlServer' and (
                 field.field_type == 'nchar' or field.field_type == 'NCHAR' or field.field_type == 'nvarchar' or field.field_type == 'NVARCHAR'):
-            whereValue = f"N'{v}'"
+            whereValue = f"N'{escaped_v}'"
         else:
-            whereValue = f"'{v}'"
+            whereValue = f"'{escaped_v}'"
 
     return whereValue
