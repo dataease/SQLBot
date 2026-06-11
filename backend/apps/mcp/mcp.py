@@ -111,7 +111,7 @@ async def datasource_list(session: SessionDep, trans: Trans, mcp_ds: McpDs):
         w_list = await user_ws_options(session, session_user.id, trans)
         oid_list = [item.id for item in w_list]
         if int(mcp_ds.oid) not in oid_list:
-            raise HTTPException(status_code=400, detail="This user not in current workspace")
+            raise HTTPException(status_code=400, detail="The current user is not in the selected workspace")
 
         session_user.oid = int(mcp_ds.oid)
     ds_list = get_datasource_list(session=session, user=session_user)
@@ -143,7 +143,7 @@ async def mcp_question(session: SessionDep, trans: Trans, chat: McpQuestion):
         w_list = await user_ws_options(session, session_user.id, trans)
         oid_list = [item.id for item in w_list]
         if int(chat.oid) not in oid_list:
-            raise HTTPException(status_code=400, detail="This user not in current workspace")
+            raise HTTPException(status_code=400, detail="The current user is not in the selected workspace")
 
         session_user.oid = int(chat.oid)
     ds_id: Optional[int] = None
