@@ -111,6 +111,10 @@ class Settings(BaseSettings):
     GENERATE_SQL_QUERY_LIMIT_ENABLED: bool = True
     GENERATE_SQL_QUERY_HISTORY_ROUND_COUNT: int = 3
 
+    # 安全配置：是否允许元数据查询（SHOW/DESCRIBE/DESC/EXPLAIN）
+    # 默认关闭，防止通过元数据查询泄露数据库结构
+    SQLBOT_ALLOW_METADATA_QUERIES: bool = False
+
     PARSE_REASONING_BLOCK_ENABLED: bool = True
     DEFAULT_REASONING_CONTENT_START: str = '<think>'
     DEFAULT_REASONING_CONTENT_END: str = '</think>'

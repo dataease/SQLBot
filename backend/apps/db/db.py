@@ -586,8 +586,9 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
     while sql.endswith(';'):
         sql = sql[:-1]
     # check execute sql only contain read operations
-    if not check_sql_read(sql, ds):
-        raise ValueError(f"SQL can only contain read operations")
+    is_safe, error_reason = check_sql_read(sql, ds)
+    if not is_safe:
+        raise ValueError(f"SQL can only contain read operations: {error_reason}")
 
     db = DB.get_db(ds.type)
     if db.connect_type == ConnectType.sqlalchemy:
@@ -716,11 +717,78 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     raise ParseSQLResultError(str(ex))
 
 
-def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
+def get_sqlglot_dialect(ds_type: str) -> str:
+    """根据数据源类型获取 sqlglot dialect"""
+    if equals_ignore_case(ds_type, 'mysql', 'doris', 'starrocks'):
+        return 'mysql'
+    elif equals_ignore_case(ds_type, 'sqlServer'):
+        return 'tsql'
+    elif equals_ignore_case(ds_type, 'hive'):
+        return 'hive'
+    return None
+
+
+# 通用危险函数（适用于所有数据库）
+COMMON_DANGEROUS_FUNCTIONS = {'version', 'current_user', 'user', 'database'}
+
+# 特定数据库的危险函数
+DS_SPECIFIC_DANGEROUS_FUNCTIONS = {
+    'mysql': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
+    'doris': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
+    'starrocks': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
+    'postgresql': {'pg_read_file', 'pg_write_file', 'lo_import', 'lo_export'},
+    'sqlserver': {'EXEC', 'xp_cmdshell', 'sp_executesql'},
+    'oracle': {'UTL_FILE', 'DBMS_PIPE', 'DBMS_LOCK'},
+    'hive': {'ADD FILE', 'ADD JAR'},
+}
+
+# 危险模式正则表达式（用于检查特殊语法）
+import re
+DANGEROUS_PATTERNS = [
+    r'\bINTO\s+OUTFILE\b',
+    r'\bINTO\s+DUMPFILE\b',
+    r'\bEXEC\s*\(',
+    r'\bCOPY\s+.*\bTO\s+PROGRAM\b',
+]
+
+
+def get_dangerous_functions(ds_type: str) -> set:
+    """获取危险函数（通用 + 特定数据源）"""
+    functions = COMMON_DANGEROUS_FUNCTIONS.copy()
+    ds_key = ds_type.lower() if ds_type else ''
+    if ds_key in DS_SPECIFIC_DANGEROUS_FUNCTIONS:
+        functions.update(DS_SPECIFIC_DANGEROUS_FUNCTIONS[ds_key])
+    return functions
+
+
+def check_dangerous_functions(statements: list, ds_type: str) -> bool:
+    """检查是否使用了危险函数，返回 True 表示安全"""
+    dangerous_functions = get_dangerous_functions(ds_type)
+    dangerous_functions_upper = {f.upper() for f in dangerous_functions}
+    
+    for stmt in statements:
+        if stmt:
+            for func in stmt.find_all(exp.Anonymous):
+                if func.name.upper() in dangerous_functions_upper:
+                    return False
+    return True
+
+
+def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema) -> tuple[bool, str]:
+    """
+    检查 SQL 是否为安全的只读查询
+    返回: (是否安全, 错误原因)
+    """
     try:
         normalized_sql = sql.strip().lstrip("(").strip()
         first_keyword = normalized_sql.split(None, 1)[0].upper() if normalized_sql else ""
-        allowed_read_commands = {"SELECT", "WITH", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"}
+
+        # 根据配置决定是否允许元数据查询
+        if settings.SQLBOT_ALLOW_METADATA_QUERIES:
+            allowed_read_commands = {"SELECT", "WITH", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"}
+        else:
+            allowed_read_commands = {"SELECT", "WITH"}
+
         denied_write_commands = {
             "INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER",
             "TRUNCATE", "MERGE", "COPY", "REPLACE", "GRANT", "REVOKE",
@@ -730,21 +798,29 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
         if not first_keyword:
             raise ValueError("Parse SQL Error")
         if first_keyword in denied_write_commands:
-            return False
+            return False, f"Write operation '{first_keyword}' is not allowed"
 
-        dialect = None
-        if equals_ignore_case(ds.type, 'mysql', 'doris', 'starrocks'):
-            dialect = 'mysql'
-        elif equals_ignore_case(ds.type, 'sqlServer'):
-            dialect = 'tsql'
-        elif equals_ignore_case(ds.type, 'hive'):
-            dialect = 'hive'
+        # 1. 使用正则检查特殊模式
+        for pattern in DANGEROUS_PATTERNS:
+            if re.search(pattern, sql, re.IGNORECASE):
+                return False, f"SQL contains dangerous pattern: {pattern}"
 
+        dialect = get_sqlglot_dialect(ds.type)
         statements = sqlglot.parse(sql, dialect=dialect)
 
         if not statements:
             raise ValueError("Parse SQL Error")
 
+        # 2. 使用 sqlglot 检查函数调用
+        dangerous_functions = get_dangerous_functions(ds.type)
+        dangerous_functions_upper = {f.upper() for f in dangerous_functions}
+        for stmt in statements:
+            if stmt:
+                for func in stmt.find_all(exp.Anonymous):
+                    if func.name.upper() in dangerous_functions_upper:
+                        return False, f"SQL contains dangerous function: {func.name}"
+
+        # 3. 检查写操作类型
         write_types = (
             exp.Insert, exp.Update, exp.Delete,
             exp.Create, exp.Drop, exp.Alter,
@@ -755,9 +831,12 @@ def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema):
             if stmt is None:
                 continue
             if isinstance(stmt, write_types):
-                return False
+                return False, f"SQL contains write operation: {type(stmt).__name__}"
 
-        return first_keyword in allowed_read_commands
+        if first_keyword not in allowed_read_commands:
+            return False, f"SQL command '{first_keyword}' is not allowed. Only SELECT and WITH are permitted"
+
+        return True, ""
 
     except Exception as e:
         raise ValueError(f"Parse SQL Error: {e}")

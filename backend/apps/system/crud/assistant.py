@@ -187,6 +187,7 @@ class AssistantOutDs:
         db_name = ds.db_schema if ds.db_schema is not None and ds.db_schema != "" else ds.dataBase
         schema_str += f"【DB_ID】 {db_name}\n【Schema】\n"
         tables = []
+        table_name_list = []
         i = 0
         for table in ds.tables:
             # 如果传入了 table_list，则只处理在列表中的表
@@ -213,6 +214,7 @@ class AssistantOutDs:
             schema_table += '\n]\n'
             t_obj = {"id": i, "schema_table": schema_table}
             tables.append(t_obj)
+            table_name_list.append(table.name)
 
         # do table embedding
         # if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
@@ -222,7 +224,7 @@ class AssistantOutDs:
             for s in tables:
                 schema_str += s.get('schema_table')
 
-        return schema_str, []
+        return schema_str, table_name_list
 
     def get_ds(self, ds_id: int, trans: Trans = None):
         if self.ds_list:

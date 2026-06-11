@@ -13,6 +13,8 @@ import orjson
 import pandas as pd
 import requests
 import sqlparse
+import sqlglot
+from sqlglot import exp
 from langchain.chat_models.base import BaseChatModel
 from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, BaseMessageChunk
@@ -40,7 +42,7 @@ from apps.datasource.crud.datasource import get_table_schema, get_tables_sample_
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
 from apps.datasource.embedding.ds_embedding import get_ds_embedding
 from apps.datasource.models.datasource import CoreDatasource
-from apps.db.db import exec_sql, get_version, check_connection
+from apps.db.db import exec_sql, get_version, check_connection, get_sqlglot_dialect
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_ds
 from apps.system.crud.parameter_manage import get_groups
@@ -64,6 +66,23 @@ dynamic_subsql_prefix = 'select * from sqlbot_dynamic_temp_table_'
 session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 
 i18n = I18n()
+
+
+
+def extract_tables_from_sql(sql: str, ds_type: str = None) -> set:
+    """从 SQL 中提取表名（使用 sqlglot 解析，可信）"""
+    tables = set()
+    dialect = get_sqlglot_dialect(ds_type)
+    try:
+        statements = sqlglot.parse(sql, dialect=dialect)
+        for stmt in statements:
+            if stmt:
+                for table in stmt.find_all(exp.Table):
+                    if table.name:
+                        tables.add(table.name)
+    except Exception:
+        pass
+    return tables
 
 
 class LLMService:
@@ -106,6 +125,9 @@ class LLMService:
         self.chunk_list = []
         self.current_user = current_user
         self.current_assistant = current_assistant
+
+        self.table_name_list = []
+
         chat_id = chat_question.chat_id
         chat: Chat | None = session.get(Chat, chat_id)
         if not chat:
@@ -222,7 +244,7 @@ class LLMService:
 
     def init_messages(self, session: Session):
 
-        self.choose_table_schema(session)
+        self.table_name_list = self.choose_table_schema(session)
 
         last_sql_messages: List[dict[str, Any]] = self.generate_sql_logs[-1].messages if len(
             self.generate_sql_logs) > 0 else []
@@ -404,6 +426,7 @@ class LLMService:
         self.current_logs[OperationEnum.CHOOSE_TABLE] = end_log(session=_session,
                                                                 log=self.current_logs[OperationEnum.CHOOSE_TABLE],
                                                                 full_message=self.chat_question.db_schema)
+        return tables
 
     def generate_analysis(self, _session: Session):
         fields = self.get_fields_from_chart(_session)
@@ -1266,6 +1289,22 @@ class LLMService:
 
             sql_operate = OperationEnum.GENERATE_SQL
             sql, tables = self.check_sql(session=_session, res=full_sql_text, operate=sql_operate)
+
+            # 表名安全检查：用 sqlglot 解析真实 SQL，不信任 AI 返回的 tables
+            actual_tables = extract_tables_from_sql(sql, ds_type=self.ds.type)
+            if not actual_tables:
+                raise SingleMessageError(
+                    "SQL parsing failed: unable to extract table names. "
+                    "This may indicate an unsupported SQL syntax or a security issue."
+                )
+            allowed_tables = set(self.table_name_list)
+            unauthorized_tables = actual_tables - allowed_tables
+            if unauthorized_tables:
+                raise SingleMessageError(
+                    f"SQL contains unauthorized tables: {', '.join(unauthorized_tables)}. "
+                    f"Allowed tables: {', '.join(allowed_tables)}"
+                )
+
             if ((not self.current_assistant or is_page_embedded) and is_normal_user(
                     self.current_user)) or use_dynamic_ds:
                 sql_result = None
