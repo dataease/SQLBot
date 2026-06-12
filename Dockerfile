@@ -43,6 +43,13 @@ COPY ./backend ${APP_HOME}
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra cpu
 
+# Install Amazon Bedrock SDK separately with --no-deps to avoid the langchain-aws
+# transitive numpy<2 constraint clashing with the pinned numpy==2.3.5.
+# ChatBedrockConverse only needs boto3 + langchain-core (already present) at runtime.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install "boto3>=1.34.0" && \
+    uv pip install "langchain-aws>=0.2.0,<0.3.0" --no-deps
+
 # Build g2-ssr
 FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS ssr-builder
 

@@ -385,15 +385,8 @@ export const supplierList: Array<{
           { key: 'region_name', val: 'us-east-1', type: 'string' },
           { key: 'temperature', val: 0.6, type: 'number', range: '[0, 1]' },
         ],
-        model_options: [
-          { name: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0' },
-          { name: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0' },
-          { name: 'us.anthropic.claude-3-5-haiku-20241022-v1:0' },
-          { name: 'us.amazon.nova-pro-v1:0' },
-          { name: 'us.amazon.nova-lite-v1:0' },
-          { name: 'us.meta.llama3-3-70b-instruct-v1:0' },
-          { name: 'us.deepseek.r1-v1:0' },
-        ],
+        // model_options are fetched dynamically via the Bedrock list API
+        model_options: [],
       },
     },
   },
@@ -411,12 +404,8 @@ export const supplierList: Array<{
           { key: 'region_name', val: 'us-east-1', type: 'string' },
           { key: 'temperature', val: 0.6, type: 'number', range: '[0, 1]' },
         ],
-        model_options: [
-          { name: 'openai.gpt-oss-120b' },
-          { name: 'openai.gpt-oss-20b' },
-          { name: 'anthropic.claude-3-7-sonnet-20250219-v1:0' },
-          { name: 'anthropic.claude-3-5-sonnet-20241022-v2:0' },
-        ],
+        // model_options are fetched dynamically via the Bedrock list API
+        model_options: [],
       },
     },
   },
