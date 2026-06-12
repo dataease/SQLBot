@@ -947,7 +947,9 @@
     "tencent_cloud": "텐센트 클라우드",
     "volcano_engine": "볼케이노 엔진",
     "minimax": "MiniMax",
-    "generic_openai": "범용 OpenAI"
+    "generic_openai": "범용 OpenAI",
+    "aws_bedrock": "Amazon Bedrock",
+    "aws_bedrock_mantle": "Amazon Bedrock (OpenAI 호환)"
   },
   "modelType": {
     "llm": "대형 언어 모델"

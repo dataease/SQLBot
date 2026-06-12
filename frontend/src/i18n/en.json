@@ -947,7 +947,9 @@
     "tencent_cloud": "Tencent Cloud",
     "volcano_engine": "Volcano Engine",
     "minimax": "MiniMax",
-    "generic_openai": "Generic OpenAI"
+    "generic_openai": "Generic OpenAI",
+    "aws_bedrock": "Amazon Bedrock",
+    "aws_bedrock_mantle": "Amazon Bedrock (OpenAI-compatible)"
   },
   "modelType": {
     "llm": "Large Language Model"

@@ -370,6 +370,56 @@ export const supplierList: Array<{
       },
     },
   },
+  {
+    id: 16,
+    name: 'Amazon Bedrock',
+    i18nKey: 'supplier.aws_bedrock',
+    icon: icon_common_openai,
+    type: 'bedrock',
+    is_private: true,
+    model_config: {
+      0: {
+        api_domain: 'https://bedrock-runtime.us-east-1.amazonaws.com',
+        common_args: [
+          { key: 'endpoint_type', val: 'runtime', type: 'string' },
+          { key: 'region_name', val: 'us-east-1', type: 'string' },
+          { key: 'temperature', val: 0.6, type: 'number', range: '[0, 1]' },
+        ],
+        model_options: [
+          { name: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0' },
+          { name: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0' },
+          { name: 'us.anthropic.claude-3-5-haiku-20241022-v1:0' },
+          { name: 'us.amazon.nova-pro-v1:0' },
+          { name: 'us.amazon.nova-lite-v1:0' },
+          { name: 'us.meta.llama3-3-70b-instruct-v1:0' },
+          { name: 'us.deepseek.r1-v1:0' },
+        ],
+      },
+    },
+  },
+  {
+    id: 17,
+    name: 'Amazon Bedrock (OpenAI 兼容)',
+    i18nKey: 'supplier.aws_bedrock_mantle',
+    icon: icon_common_openai,
+    type: 'bedrock',
+    model_config: {
+      0: {
+        api_domain: 'https://bedrock-mantle.us-east-1.api.aws/v1',
+        common_args: [
+          { key: 'endpoint_type', val: 'mantle', type: 'string' },
+          { key: 'region_name', val: 'us-east-1', type: 'string' },
+          { key: 'temperature', val: 0.6, type: 'number', range: '[0, 1]' },
+        ],
+        model_options: [
+          { name: 'openai.gpt-oss-120b' },
+          { name: 'openai.gpt-oss-20b' },
+          { name: 'anthropic.claude-3-7-sonnet-20250219-v1:0' },
+          { name: 'anthropic.claude-3-5-sonnet-20241022-v2:0' },
+        ],
+      },
+    },
+  },
 ]
 
 export const base_model_options = (supplier_id: number, model_type?: number) => {

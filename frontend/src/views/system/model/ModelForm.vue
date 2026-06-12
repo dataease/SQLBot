@@ -177,7 +177,13 @@ const supplierChang = (supplier: any) => {
   const config = supplier.model_config[modelForm.model_type || 0]
   modelForm.api_domain = config.api_domain
   modelForm.base_model = ''
-  modelForm.protocol = supplier.type === 'vllm' ? 2 : 1
+  if (supplier.type === 'vllm') {
+    modelForm.protocol = 2
+  } else if (supplier.type === 'bedrock') {
+    modelForm.protocol = 3
+  } else {
+    modelForm.protocol = 1
+  }
   advancedSetting.value = []
 }
 let curId = +new Date()

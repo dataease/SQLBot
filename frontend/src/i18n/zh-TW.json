@@ -947,7 +947,9 @@
     "tencent_cloud": "騰訊雲",
     "volcano_engine": "火山引擎",
     "minimax": "MiniMax",
-    "generic_openai": "通用OpenAI"
+    "generic_openai": "通用OpenAI",
+    "aws_bedrock": "Amazon Bedrock",
+    "aws_bedrock_mantle": "Amazon Bedrock (OpenAI 相容)"
   },
   "modelType": {
     "llm": "大語言模型"

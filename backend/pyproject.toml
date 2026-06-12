@@ -24,6 +24,7 @@ dependencies = [
     "langchain-openai>=0.3,<0.4",
     "langchain-community>=0.3,<0.4",
     "langchain-huggingface>=0.2.0",
+    "langchain-aws>=0.2.0,<0.3.0",
     "sentence-transformers>=4.0.2",
     "langgraph>=0.3,<0.4",
     "pgvector>=0.4.1",

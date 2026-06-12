@@ -5,7 +5,7 @@ from fastapi import APIRouter, Path, Query, Body
 from fastapi.responses import StreamingResponse
 from sqlmodel import func, select, update, delete
 
-from apps.ai_model.model_factory import LLMConfig, LLMFactory
+from apps.ai_model.model_factory import LLMConfig, LLMFactory, get_model_type_by_protocol
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.models.system_model import AiModelDetail, AiModelWorkspaceMapping, AiModelBrief
@@ -29,7 +29,7 @@ async def check_llm(info: AiModelCreator, trans: Trans):
             additional_params = {item.key: prepare_model_arg(item.val) for item in info.config_list if
                                  item.key and item.val}
             config = LLMConfig(
-                model_type="openai" if info.protocol == 1 else "vllm",
+                model_type=get_model_type_by_protocol(info.protocol),
                 model_name=info.base_model,
                 api_key=info.api_key,
                 api_base_url=info.api_domain,
