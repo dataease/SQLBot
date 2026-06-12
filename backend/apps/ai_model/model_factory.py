@@ -1,5 +1,6 @@
 from functools import lru_cache
 import json
+import re
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, Type
 
@@ -17,6 +18,36 @@ from langchain_openai import AzureChatOpenAI
 
 
 # from langchain_community.llms import Tongyi, VLLM
+
+# protocol(int) stored on the model record -> internal model_type used by the factory
+PROTOCOL_OPENAI = 1
+PROTOCOL_VLLM = 2
+PROTOCOL_BEDROCK = 3
+
+_PROTOCOL_MODEL_TYPE: Dict[int, str] = {
+    PROTOCOL_OPENAI: "openai",
+    PROTOCOL_VLLM: "vllm",
+    PROTOCOL_BEDROCK: "bedrock",
+}
+
+
+def get_model_type_by_protocol(protocol: Optional[int]) -> str:
+    """Map the stored protocol value to the factory model_type.
+
+    Falls back to the legacy behaviour (1 -> openai, everything else -> vllm)
+    for any unknown value so existing records keep working.
+    """
+    if protocol == PROTOCOL_OPENAI:
+        return "openai"
+    return _PROTOCOL_MODEL_TYPE.get(protocol, "vllm")
+
+
+def _region_from_bedrock_url(url: Optional[str]) -> Optional[str]:
+    """Extract the AWS region from a bedrock-runtime / bedrock-mantle endpoint url."""
+    if not url:
+        return None
+    match = re.search(r"bedrock(?:-runtime|-mantle)?\.([a-z0-9-]+)\.(?:amazonaws\.com|api\.aws)", url)
+    return match.group(1) if match else None
 
 class LLMConfig(BaseModel):
     """Base configuration class for large language models"""
@@ -109,6 +140,71 @@ class OpenAILLM(BaseLLM):
         return self.llm.invoke(prompt)
 
 
+class BedrockLLM(BaseLLM):
+    """Amazon Bedrock support for both available endpoint families:
+
+    - ``bedrock-runtime`` (default): native Bedrock inference via the Converse
+      API. Authenticates with SigV4 using the standard AWS credential chain
+      (IAM role / profile / env vars) or explicit keys passed as advanced args.
+    - ``bedrock-mantle``: OpenAI-compatible endpoint (Chat Completions). Reuses
+      the OpenAI client with the mantle base url and a Bedrock API key.
+
+    Control args are read from ``additional_params``:
+      - ``endpoint_type``: ``runtime`` (default) or ``mantle``
+      - ``region_name``: e.g. ``us-east-1`` (inferred from the url when omitted)
+      - ``aws_access_key_id`` / ``aws_secret_access_key`` / ``aws_session_token``
+      - ``provider``: optional explicit Bedrock provider for the model
+    Any remaining params (``temperature``, ``max_tokens`` ...) are forwarded to
+    the underlying model.
+    """
+
+    def _init_llm(self) -> BaseChatModel:
+        params = dict(self.config.additional_params or {})
+        endpoint_type = str(params.pop("endpoint_type", "") or "runtime").lower()
+        region_name = params.pop("region_name", None) or _region_from_bedrock_url(self.config.api_base_url)
+
+        if endpoint_type == "mantle":
+            # OpenAI-compatible endpoint, served by the bedrock-mantle endpoint.
+            base_url = self.config.api_base_url
+            if not base_url and region_name:
+                base_url = f"https://bedrock-mantle.{region_name}.api.aws/v1"
+            return BaseChatOpenAI(
+                model=self.config.model_name,
+                api_key=self.config.api_key or 'Empty',
+                base_url=base_url,
+                stream_usage=True,
+                **params,
+            )
+
+        # default: native bedrock-runtime endpoint via the Converse API
+        from langchain_aws import ChatBedrockConverse
+
+        aws_access_key_id = params.pop("aws_access_key_id", None)
+        aws_secret_access_key = params.pop("aws_secret_access_key", None)
+        aws_session_token = params.pop("aws_session_token", None)
+        provider = params.pop("provider", None)
+
+        kwargs: Dict[str, Any] = {}
+        if region_name:
+            kwargs["region_name"] = region_name
+        # api_domain may hold a custom/private bedrock-runtime endpoint url
+        if self.config.api_base_url and "bedrock-mantle" not in self.config.api_base_url:
+            kwargs["endpoint_url"] = self.config.api_base_url
+        if aws_access_key_id and aws_secret_access_key:
+            kwargs["aws_access_key_id"] = aws_access_key_id
+            kwargs["aws_secret_access_key"] = aws_secret_access_key
+            if aws_session_token:
+                kwargs["aws_session_token"] = aws_session_token
+        if provider:
+            kwargs["provider"] = provider
+
+        return ChatBedrockConverse(
+            model=self.config.model_name,
+            **kwargs,
+            **params,
+        )
+
+
 class LLMFactory:
     """Large Language Model Factory Class"""
 
@@ -117,6 +213,7 @@ class LLMFactory:
         "tongyi": OpenAILLM,
         "vllm": OpenAIvLLM,
         "azure": OpenAIAzureLLM,
+        "bedrock": BedrockLLM,
     }
 
     @classmethod
@@ -173,7 +270,7 @@ async def get_default_config(custom_model_id: Optional[int] = None) -> LLMConfig
         # 构造 LLMConfig
         return LLMConfig(
             model_id=db_model.id,
-            model_type="openai" if db_model.protocol == 1 else "vllm",
+            model_type=get_model_type_by_protocol(db_model.protocol),
             model_name=db_model.base_model,
             api_key=db_model.api_key,
             api_base_url=db_model.api_domain,

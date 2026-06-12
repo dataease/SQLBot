@@ -370,6 +370,45 @@ export const supplierList: Array<{
       },
     },
   },
+  {
+    id: 16,
+    name: 'Amazon Bedrock',
+    i18nKey: 'supplier.aws_bedrock',
+    icon: icon_common_openai,
+    type: 'bedrock',
+    is_private: true,
+    model_config: {
+      0: {
+        api_domain: 'https://bedrock-runtime.us-east-1.amazonaws.com',
+        common_args: [
+          { key: 'endpoint_type', val: 'runtime', type: 'string' },
+          { key: 'region_name', val: 'us-east-1', type: 'string' },
+          { key: 'temperature', val: 0.6, type: 'number', range: '[0, 1]' },
+        ],
+        // model_options are fetched dynamically via the Bedrock list API
+        model_options: [],
+      },
+    },
+  },
+  {
+    id: 17,
+    name: 'Amazon Bedrock (OpenAI 兼容)',
+    i18nKey: 'supplier.aws_bedrock_mantle',
+    icon: icon_common_openai,
+    type: 'bedrock',
+    model_config: {
+      0: {
+        api_domain: 'https://bedrock-mantle.us-east-1.api.aws/v1',
+        common_args: [
+          { key: 'endpoint_type', val: 'mantle', type: 'string' },
+          { key: 'region_name', val: 'us-east-1', type: 'string' },
+          { key: 'temperature', val: 0.6, type: 'number', range: '[0, 1]' },
+        ],
+        // model_options are fetched dynamically via the Bedrock list API
+        model_options: [],
+      },
+    },
+  },
 ]
 
 export const base_model_options = (supplier_id: number, model_type?: number) => {

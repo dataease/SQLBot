@@ -8,6 +8,7 @@ import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import ParamsForm from './ParamsForm.vue'
 import { modelTypeOptions } from '@/entity/CommonEntity.ts'
 import { base_model_options, get_supplier } from '@/entity/supplier'
+import { modelApi } from '@/api/system'
 import { useI18n } from 'vue-i18n'
 
 withDefaults(
@@ -63,6 +64,46 @@ const modelList = computed(() => {
   }
   return base_model_options(modelForm.supplier, modelForm.model_type)
 })
+
+// ---- Amazon Bedrock dynamic model listing ----
+const isBedrock = computed(() => currentSupplier.value?.type === 'bedrock')
+const bedrockGroups = ref([] as Array<{ label: string; options: Array<{ label: string; value: string }> }>)
+const bedrockLoading = ref(false)
+
+const getBedrockRegion = () => {
+  const fromArg = advancedSetting.value.find((a: any) => a.key === 'region_name')?.val
+  if (fromArg) return fromArg
+  const m = (modelForm.api_domain || '').match(
+    /bedrock(?:-runtime|-mantle)?\.([a-z0-9-]+)\.(?:amazonaws\.com|api\.aws)/
+  )
+  return m ? m[1] : 'us-east-1'
+}
+
+const getBedrockEndpointType = () => {
+  const fromArg = advancedSetting.value.find((a: any) => a.key === 'endpoint_type')?.val
+  if (fromArg) return fromArg
+  return (modelForm.api_domain || '').includes('mantle') ? 'mantle' : 'runtime'
+}
+
+const fetchBedrockModels = async () => {
+  if (!isBedrock.value) return
+  bedrockLoading.value = true
+  try {
+    const data: any = await modelApi.bedrockModels({
+      region_name: getBedrockRegion(),
+      endpoint_type: getBedrockEndpointType(),
+    })
+    bedrockGroups.value = Array.isArray(data) ? data : []
+    if (!bedrockGroups.value.length) {
+      ElMessage.warning(t('model.bedrock_no_models'))
+    }
+  } catch (e: any) {
+    bedrockGroups.value = []
+    ElMessage.error(e?.message || t('model.bedrock_list_failed'))
+  } finally {
+    bedrockLoading.value = false
+  }
+}
 const handleParamsEdite = (ele?: any) => {
   isCreate.value = false
   paramsFormDrawer.value = true
@@ -177,8 +218,18 @@ const supplierChang = (supplier: any) => {
   const config = supplier.model_config[modelForm.model_type || 0]
   modelForm.api_domain = config.api_domain
   modelForm.base_model = ''
-  modelForm.protocol = supplier.type === 'vllm' ? 2 : 1
+  if (supplier.type === 'vllm') {
+    modelForm.protocol = 2
+  } else if (supplier.type === 'bedrock') {
+    modelForm.protocol = 3
+  } else {
+    modelForm.protocol = 1
+  }
   advancedSetting.value = []
+  bedrockGroups.value = []
+  if (supplier.type === 'bedrock') {
+    fetchBedrockModels()
+  }
 }
 let curId = +new Date()
 const initForm = (item?: any) => {
@@ -199,6 +250,9 @@ const initForm = (item?: any) => {
       advancedSetting.value = []
     }
     tempConfigMap.set(`${modelForm.supplier}-${modelForm.base_model}`, [...advancedSetting.value])
+  }
+  if (isBedrock.value) {
+    fetchBedrockModels()
   }
 }
 const formatAdvancedSetting = (list: Array<any>) => {
@@ -317,7 +371,17 @@ defineExpose({
           <el-form-item class="custom-require" prop="base_model">
             <template #label
               ><span class="custom-require_danger">{{ t('model.basic_model') }}</span>
-              <span class="enter">{{ t('model.enter_to_add') }}</span>
+              <span v-if="!isBedrock" class="enter">{{ t('model.enter_to_add') }}</span>
+              <el-button
+                v-if="isBedrock"
+                text
+                type="primary"
+                :loading="bedrockLoading"
+                style="margin-left: 8px; height: 22px"
+                @click="fetchBedrockModels"
+              >
+                {{ t('model.refresh_models') }}
+              </el-button>
             </template>
             <el-select
               v-model="modelForm['base_model']"
@@ -326,14 +390,31 @@ defineExpose({
               allow-create
               default-first-option
               :reserve-keyword="false"
+              :loading="bedrockLoading"
               @change="baseModelChange"
             >
-              <el-option
-                v-for="item in modelList"
-                :key="item.name"
-                :label="item.name"
-                :value="item.name"
-              />
+              <template v-if="isBedrock">
+                <el-option-group
+                  v-for="group in bedrockGroups"
+                  :key="group.label"
+                  :label="group.label"
+                >
+                  <el-option
+                    v-for="m in group.options"
+                    :key="m.value"
+                    :label="m.label"
+                    :value="m.value"
+                  />
+                </el-option-group>
+              </template>
+              <template v-else>
+                <el-option
+                  v-for="item in modelList"
+                  :key="item.name"
+                  :label="item.name"
+                  :value="item.name"
+                />
+              </template>
             </el-select>
           </el-form-item>
           <el-form-item v-if="modelSelected" prop="api_domain" :label="t('model.api_domain_name')">

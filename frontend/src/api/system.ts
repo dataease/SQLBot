@@ -31,4 +31,5 @@ export const modelApi = {
     request.post(`/system/platform/org/${id}`, { lazy, pid }),
   userSync: (data: any) => request.post(`/system/platform/user/sync`, data),
   list_by_ws: () => request.get(`/system/aimodel/list/by_ws`),
+  bedrockModels: (data: any) => request.post('/system/aimodel/bedrock/models', data),
 }

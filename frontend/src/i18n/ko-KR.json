@@ -484,6 +484,9 @@
     "model_name": "모델 이름",
     "custom_model_name": "사용자 정의 모델 이름",
     "enter_to_add": "목록에 없는 모델은 모델 이름을 직접 입력한 후 Enter 키를 눌러 추가할 수 있습니다",
+    "refresh_models": "모델 목록 새로 고침",
+    "bedrock_no_models": "이 리전에서 호출 가능한 Bedrock 모델을 찾을 수 없습니다. 리전과 모델 액세스 권한을 확인하세요.",
+    "bedrock_list_failed": "Bedrock 모델 목록을 가져오지 못했습니다. 모델 ID를 직접 입력하세요.",
     "api_domain_name": "API 도메인명",
     "advanced_settings": "고급 설정",
     "model_parameters": "모델 매개변수",
@@ -947,7 +950,9 @@
     "tencent_cloud": "텐센트 클라우드",
     "volcano_engine": "볼케이노 엔진",
     "minimax": "MiniMax",
-    "generic_openai": "범용 OpenAI"
+    "generic_openai": "범용 OpenAI",
+    "aws_bedrock": "Amazon Bedrock",
+    "aws_bedrock_mantle": "Amazon Bedrock (OpenAI 호환)"
   },
   "modelType": {
     "llm": "대형 언어 모델"

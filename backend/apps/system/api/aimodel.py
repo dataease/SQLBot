@@ -5,11 +5,12 @@ from fastapi import APIRouter, Path, Query, Body
 from fastapi.responses import StreamingResponse
 from sqlmodel import func, select, update, delete
 
-from apps.ai_model.model_factory import LLMConfig, LLMFactory
+from apps.ai_model.model_factory import LLMConfig, LLMFactory, get_model_type_by_protocol
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.models.system_model import AiModelDetail, AiModelWorkspaceMapping, AiModelBrief
-from apps.system.schemas.ai_model_schema import AiModelConfigItem, AiModelCreator, AiModelEditor, AiModelGridItem
+from apps.system.schemas.ai_model_schema import AiModelConfigItem, AiModelCreator, AiModelEditor, AiModelGridItem, \
+    BedrockModelListReq
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import SessionDep, Trans, CurrentUser
 from common.utils.crypto import sqlbot_decrypt
@@ -29,7 +30,7 @@ async def check_llm(info: AiModelCreator, trans: Trans):
             additional_params = {item.key: prepare_model_arg(item.val) for item in info.config_list if
                                  item.key and item.val}
             config = LLMConfig(
-                model_type="openai" if info.protocol == 1 else "vllm",
+                model_type=get_model_type_by_protocol(info.protocol),
                 model_name=info.base_model,
                 api_key=info.api_key,
                 api_base_url=info.api_domain,
@@ -49,6 +50,95 @@ async def check_llm(info: AiModelCreator, trans: Trans):
             yield json.dumps({"error": error_msg}) + "\n"
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+
+# Cross-region "geo" inference profile prefixes (route across multiple countries)
+_BEDROCK_GEO_PREFIXES = {"us", "eu", "apac"}
+
+
+@router.post("/bedrock/models", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def list_bedrock_models(info: BedrockModelListReq, trans: Trans):
+    """List invocable Amazon Bedrock models for the given region, grouped by scope.
+
+    Groups: In-Region (single country/region profiles), Cross-Region (Geo)
+    (us/eu/apac multi-country profiles), Global, and direct on-demand
+    Foundation Models. Uses the standard AWS credential chain (instance role)
+    unless explicit keys are provided.
+    """
+    try:
+        import boto3
+    except ImportError:
+        raise Exception("boto3 is not installed; Amazon Bedrock support is unavailable")
+
+    client_kwargs = {"region_name": info.region_name}
+    if info.aws_access_key_id and info.aws_secret_access_key:
+        client_kwargs["aws_access_key_id"] = info.aws_access_key_id
+        client_kwargs["aws_secret_access_key"] = info.aws_secret_access_key
+        if info.aws_session_token:
+            client_kwargs["aws_session_token"] = info.aws_session_token
+
+    try:
+        client = boto3.client("bedrock", **client_kwargs)
+
+        groups: dict[str, list] = {
+            "In-Region": [],
+            "Cross-Region (Geo)": [],
+            "Global": [],
+            "Foundation Models (On-demand)": [],
+        }
+
+        # 1) system-defined inference profiles (the canonical invocable ids)
+        next_token = None
+        while True:
+            kwargs = {"typeEquals": "SYSTEM_DEFINED", "maxResults": 100}
+            if next_token:
+                kwargs["nextToken"] = next_token
+            resp = client.list_inference_profiles(**kwargs)
+            for p in resp.get("inferenceProfileSummaries", []):
+                if p.get("status") != "ACTIVE":
+                    continue
+                pid = p.get("inferenceProfileId")
+                if not pid:
+                    continue
+                prefix = pid.split(".")[0]
+                if prefix == "global":
+                    grp = "Global"
+                elif prefix in _BEDROCK_GEO_PREFIXES:
+                    grp = "Cross-Region (Geo)"
+                else:
+                    grp = "In-Region"
+                name = p.get("inferenceProfileName") or pid
+                groups[grp].append({"label": f"{name}  ({pid})", "value": pid})
+            next_token = resp.get("nextToken")
+            if not next_token:
+                break
+
+        # 2) directly-invokable on-demand text foundation models
+        try:
+            fm = client.list_foundation_models(byOutputModality="TEXT", byInferenceType="ON_DEMAND")
+            for m in fm.get("modelSummaries", []):
+                if m.get("modelLifecycle", {}).get("status") != "ACTIVE":
+                    continue
+                mid = m.get("modelId")
+                if not mid:
+                    continue
+                name = m.get("modelName") or mid
+                groups["Foundation Models (On-demand)"].append({"label": f"{name}  ({mid})", "value": mid})
+        except Exception as e:
+            SQLBotLogUtil.warning(f"list_foundation_models failed: {e}")
+
+    except Exception as e:
+        SQLBotLogUtil.error(f"Error listing Bedrock models: {e}")
+        raise Exception(str(e))
+
+    order = ["In-Region", "Cross-Region (Geo)", "Global", "Foundation Models (On-demand)"]
+    result = []
+    for g in order:
+        opts = sorted(groups[g], key=lambda x: x["value"])
+        if opts:
+            result.append({"label": g, "options": opts})
+    return result
 
 
 @router.get("/default", include_in_schema=False)

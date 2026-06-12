@@ -484,6 +484,9 @@
     "model_name": "模型名称",
     "custom_model_name": "自定义的模型名称",
     "enter_to_add": "列表中未列出的模型，直接输入模型名称，回车即可添加",
+    "refresh_models": "刷新模型列表",
+    "bedrock_no_models": "该区域未找到可调用的 Bedrock 模型，请检查区域和模型访问权限。",
+    "bedrock_list_failed": "获取 Bedrock 模型列表失败，可手动输入模型 ID。",
     "api_domain_name": "API 域名",
     "advanced_settings": "高级设置",
     "model_parameters": "模型参数",
@@ -947,7 +950,9 @@
     "tencent_cloud": "腾讯云",
     "volcano_engine": "火山引擎",
     "minimax": "MiniMax",
-    "generic_openai": "通用OpenAI"
+    "generic_openai": "通用OpenAI",
+    "aws_bedrock": "Amazon Bedrock",
+    "aws_bedrock_mantle": "Amazon Bedrock (OpenAI 兼容)"
   },
   "modelType": {
     "llm": "大语言模型"

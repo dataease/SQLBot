@@ -28,3 +28,10 @@ class AiModelCreator(AiModelItem):
     
 class AiModelEditor(AiModelCreator, BaseCreatorDTO):
     pass
+
+class BedrockModelListReq(BaseModel):
+    region_name: str = Field(default="us-east-1", description="AWS region, e.g. ap-northeast-1")
+    endpoint_type: str = Field(default="runtime", description="runtime or mantle")
+    aws_access_key_id: str | None = Field(default=None, description="optional explicit AK")
+    aws_secret_access_key: str | None = Field(default=None, description="optional explicit SK")
+    aws_session_token: str | None = Field(default=None, description="optional session token")

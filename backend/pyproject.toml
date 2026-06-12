@@ -78,7 +78,7 @@ explicit = true
 
 [[tool.uv.index]]
 name = "default"
-url = "http://mirrors.aliyun.com/pypi/simple"
+url = "https://pypi.org/simple"
 default = true
 
 [[tool.uv.index]]
