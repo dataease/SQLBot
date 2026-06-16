@@ -10,6 +10,7 @@ from sqlalchemy.orm import aliased
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.models.datasource import CoreDatasource
+from apps.system.models.system_model import AssistantModel
 from apps.template.generate_chart.generator import get_base_terminology_template
 from apps.terminology.models.terminology_model import Terminology, TerminologyInfo
 from common.core.config import settings
@@ -141,7 +142,9 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
             Terminology.datasource_ids,
             children_subquery.c.other_words,
             func.jsonb_agg(CoreDatasource.name).filter(CoreDatasource.id.isnot(None)).label('datasource_names'),
-            Terminology.enabled
+            Terminology.enabled,
+            Terminology.advanced_application,
+            AssistantModel.name.label('advanced_application_name'),
         )
         .outerjoin(
             children_subquery,
@@ -155,6 +158,8 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
             CoreDatasource,
             CoreDatasource.id == datasource_names_subquery.c.ds_id
         )
+        .outerjoin(AssistantModel,
+                   and_(Terminology.advanced_application == AssistantModel.id, AssistantModel.type == 1))
         .where(and_(Terminology.id.in_(paginated_parent_ids), Terminology.oid == oid))
         .group_by(
             Terminology.id,
@@ -163,6 +168,8 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
             Terminology.description,
             Terminology.specific_ds,
             Terminology.datasource_ids,
+            Terminology.advanced_application,
+            AssistantModel.name,
             children_subquery.c.other_words,
             Terminology.enabled
         )
@@ -190,6 +197,8 @@ def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfo
             datasource_ids=row.datasource_ids if row.datasource_ids is not None else [],
             datasource_names=row.datasource_names if row.datasource_names is not None else [],
             enabled=row.enabled if row.enabled is not None else False,
+            advanced_application=str(row.advanced_application) if row.advanced_application else None,
+            advanced_application_name=row.advanced_application_name,
         ))
 
     return _list
@@ -240,8 +249,8 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     datasource_ids = info.datasource_ids if info.datasource_ids is not None else []
 
     if specific_ds:
-        if not datasource_ids:
-            raise Exception(trans("i18n_terminology.datasource_cannot_be_none"))
+        if not datasource_ids and info.advanced_application is None:
+            raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
 
     parent = Terminology(
         word=info.word.strip(),
@@ -250,7 +259,8 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         oid=oid,
         specific_ds=specific_ds,
         enabled=info.enabled,
-        datasource_ids=datasource_ids
+        datasource_ids=datasource_ids,
+        advanced_application=info.advanced_application,
     )
 
     words = [info.word.strip()]
@@ -267,30 +277,63 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     # 基础查询条件（word 和 oid 必须满足）
     base_query = and_(
         Terminology.word.in_(words),
-        Terminology.oid == oid
+        Terminology.oid == oid,
     )
 
     # 构建查询
     query = session.query(Terminology).filter(base_query)
 
-    if specific_ds:
-        # 仅当 specific_ds=False 时，检查数据源条件
-        query = query.where(
-            or_(
-                or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)),
-                and_(
-                    Terminology.specific_ds == True,
-                    Terminology.datasource_ids.isnot(None),
-                    text("""
-                        EXISTS (
-                            SELECT 1 FROM jsonb_array_elements(datasource_ids) AS elem
-                            WHERE elem::text::int = ANY(:datasource_ids)
-                        )
-                    """)
+    # 作用域重复检查
+    scope_conditions = []
+
+    if not specific_ds:
+        # 全部数据源：与有数据源的记录冲突，也与同为全部数据源的记录冲突
+        scope_conditions.append(
+            and_(
+                Terminology.specific_ds == True,
+                Terminology.datasource_ids.isnot(None),
+                func.jsonb_array_length(Terminology.datasource_ids) > 0,
+            )
+        )
+        scope_conditions.append(
+            Terminology.specific_ds == False,
+        )
+    elif specific_ds and datasource_ids:
+        # 指定数据源：与全部数据源冲突，也与有数据源重叠的记录冲突
+        scope_conditions.append(
+            Terminology.specific_ds == False,
+        )
+        ds_overlap_conditions = [
+            Terminology.datasource_ids.contains([ds_id])
+            for ds_id in datasource_ids
+        ]
+        scope_conditions.append(
+            and_(
+                Terminology.specific_ds == True,
+                Terminology.datasource_ids.isnot(None),
+                or_(*ds_overlap_conditions)
+            )
+        )
+    else:
+        # 不选数据源：仅与同为不选数据源的记录冲突
+        scope_conditions.append(
+            and_(
+                Terminology.specific_ds == True,
+                or_(
+                    Terminology.datasource_ids.is_(None),
+                    func.jsonb_array_length(Terminology.datasource_ids) == 0,
                 )
             )
         )
-        query = query.params(datasource_ids=datasource_ids)
+
+    # 高级应用重复检查：advanced_application 相同时同名即重复
+    if info.advanced_application is not None:
+        scope_conditions.append(
+            Terminology.advanced_application == info.advanced_application
+        )
+
+    if scope_conditions:
+        query = query.where(or_(*scope_conditions))
 
     # 转换为 EXISTS 查询并获取结果
     exists = session.query(query.exists()).scalar()
@@ -396,6 +439,14 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
     for ds in datasource_result:
         datasource_name_to_id[ds.name.strip()] = ds.id
 
+    # 预加载高级应用名称到ID的映射
+    assistant_name_to_id = {}
+    assistant_stmt = select(AssistantModel.id, AssistantModel.name).where(
+        and_(AssistantModel.oid == oid, AssistantModel.type == 1))
+    assistant_result = session.execute(assistant_stmt).all()
+    for a in assistant_result:
+        assistant_name_to_id[a.name.strip()] = a.id
+
     # 验证和转换数据源名称
     valid_records = []
     for info in deduplicated_list:
@@ -411,6 +462,7 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
         # 根据specific_ds决定是否验证数据源
         specific_ds = info.specific_ds if info.specific_ds is not None else False
         datasource_ids = []
+        advanced_application = info.advanced_application
 
         if specific_ds:
             # specific_ds为True时需要验证数据源
@@ -424,12 +476,21 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
                     else:
                         error_messages.append(trans("i18n_terminology.datasource_not_found").format(ds_name))
 
-            # 检查specific_ds为True时必须有数据源
-            if not datasource_ids:
-                error_messages.append(trans("i18n_terminology.datasource_cannot_be_none"))
+            # 解析高级应用名称到ID
+            if advanced_application is None and info.advanced_application_name:
+                if info.advanced_application_name.strip() in assistant_name_to_id:
+                    advanced_application = assistant_name_to_id[info.advanced_application_name.strip()]
+                else:
+                    error_messages.append(trans("i18n_data_training.advanced_application_not_found").format(
+                        info.advanced_application_name))
+
+            # 检查specific_ds为True时datasource_ids和advanced_application不能同时为空
+            if specific_ds and not datasource_ids and advanced_application is None:
+                error_messages.append(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
         else:
             # specific_ds为False时忽略数据源名称
             datasource_ids = []
+            advanced_application = None
 
         # 检查主词和其他词是否重复（过滤空字符串）
         words = [info.word.strip().lower()]
@@ -456,11 +517,13 @@ def batch_create_terminology(session: SessionDep, info_list: List[TerminologyInf
         processed_info = TerminologyInfo(
             word=info.word.strip(),
             description=info.description.strip(),
-            other_words=[w for w in info.other_words if w and w.strip()],  # 过滤空字符串
+            other_words=[w for w in info.other_words if w and w.strip()],
             datasource_ids=datasource_ids,
             datasource_names=info.datasource_names,
             specific_ds=specific_ds,
-            enabled=info.enabled if info.enabled is not None else True
+            enabled=info.enabled if info.enabled is not None else True,
+            advanced_application=advanced_application,
+            advanced_application_name=info.advanced_application_name,
         )
 
         valid_records.append(processed_info)
@@ -512,8 +575,8 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     datasource_ids = info.datasource_ids if info.datasource_ids is not None else []
 
     if specific_ds:
-        if not datasource_ids:
-            raise Exception(trans("i18n_terminology.datasource_cannot_be_none"))
+        if not datasource_ids and info.advanced_application is None:
+            raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
 
     words = [info.word.strip()]
     for child in info.other_words:
@@ -536,24 +599,57 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     # 构建查询
     query = session.query(Terminology).filter(base_query)
 
-    if specific_ds:
-        # 仅当 specific_ds=False 时，检查数据源条件
-        query = query.where(
-            or_(
-                or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)),
-                and_(
-                    Terminology.specific_ds == True,
-                    Terminology.datasource_ids.isnot(None),
-                    text("""
-                        EXISTS (
-                            SELECT 1 FROM jsonb_array_elements(datasource_ids) AS elem
-                            WHERE elem::text::int = ANY(:datasource_ids)
-                        )
-                    """)  # 检查是否包含任意目标值
+    # 作用域重复检查
+    scope_conditions = []
+
+    if not specific_ds:
+        # 全部数据源：与有数据源的记录冲突，也与同为全部数据源的记录冲突
+        scope_conditions.append(
+            and_(
+                Terminology.specific_ds == True,
+                Terminology.datasource_ids.isnot(None),
+                func.jsonb_array_length(Terminology.datasource_ids) > 0,
+            )
+        )
+        scope_conditions.append(
+            Terminology.specific_ds == False,
+        )
+    elif specific_ds and datasource_ids:
+        # 指定数据源：与全部数据源冲突，也与有数据源重叠的记录冲突
+        scope_conditions.append(
+            Terminology.specific_ds == False,
+        )
+        ds_overlap_conditions = [
+            Terminology.datasource_ids.contains([ds_id])
+            for ds_id in datasource_ids
+        ]
+        scope_conditions.append(
+            and_(
+                Terminology.specific_ds == True,
+                Terminology.datasource_ids.isnot(None),
+                or_(*ds_overlap_conditions)
+            )
+        )
+    else:
+        # 不选数据源：仅与同为不选数据源的记录冲突
+        scope_conditions.append(
+            and_(
+                Terminology.specific_ds == True,
+                or_(
+                    Terminology.datasource_ids.is_(None),
+                    func.jsonb_array_length(Terminology.datasource_ids) == 0,
                 )
             )
         )
-        query = query.params(datasource_ids=datasource_ids)
+
+    # 高级应用重复检查：advanced_application 相同时同名即重复
+    if info.advanced_application is not None:
+        scope_conditions.append(
+            Terminology.advanced_application == info.advanced_application
+        )
+
+    if scope_conditions:
+        query = query.where(or_(*scope_conditions))
 
     # 转换为 EXISTS 查询并获取结果
     exists = session.query(query.exists()).scalar()
@@ -567,6 +663,7 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         specific_ds=specific_ds,
         datasource_ids=datasource_ids,
         enabled=info.enabled,
+        advanced_application=info.advanced_application,
     )
     session.execute(stmt)
     session.commit()
@@ -590,7 +687,8 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                     oid=oid,
                     enabled=info.enabled,
                     specific_ds=specific_ds,
-                    datasource_ids=datasource_ids
+                    datasource_ids=datasource_ids,
+                    advanced_application=info.advanced_application,
                 )
             )
 
@@ -711,8 +809,22 @@ ORDER BY similarity DESC
 LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
 """
 
+embedding_sql_with_advanced_application = f"""
+SELECT id, pid, word, similarity
+FROM
+(SELECT id, pid, word, oid, specific_ds, advanced_application, enabled,
+( 1 - (embedding <=> :embedding_array) ) AS similarity
+FROM terminology AS child
+) TEMP
+WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid AND enabled = true
+AND advanced_application = :advanced_application_id
+ORDER BY similarity DESC
+LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
+"""
 
-def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasource: int = None):
+
+def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasource: int = None,
+                               advanced_application_id: Optional[int] = None):
     if word.strip() == "":
         return []
 
@@ -729,7 +841,9 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
         )
     )
 
-    if datasource is not None:
+    if advanced_application_id is not None:
+        stmt = stmt.where(Terminology.advanced_application == advanced_application_id)
+    elif datasource is not None:
         stmt = stmt.where(
             or_(
                 or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)),
@@ -760,7 +874,11 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
 
                 embedding = model.embed_query(word)
 
-                if datasource is not None:
+                if advanced_application_id is not None:
+                    results = session.execute(text(embedding_sql_with_advanced_application),
+                                              {'embedding_array': str(embedding), 'oid': oid,
+                                               'advanced_application_id': advanced_application_id}).fetchall()
+                elif datasource is not None:
                     results = session.execute(text(embedding_sql_with_datasource),
                                               {'embedding_array': str(embedding), 'oid': oid,
                                                'datasource': datasource}).fetchall()
@@ -846,10 +964,11 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'terminologies') -> str:
 
 
 def get_terminology_template(session: SessionDep, question: str, oid: Optional[int] = 1,
-                             datasource: Optional[int] = None) -> tuple[str, list[dict]]:
+                             datasource: Optional[int] = None,
+                             advanced_application_id: Optional[int] = None) -> tuple[str, list[dict]]:
     if not oid:
         oid = 1
-    _results = select_terminology_by_word(session, question, oid, datasource)
+    _results = select_terminology_by_word(session, question, oid, datasource, advanced_application_id)
     if _results and len(_results) > 0:
         terminology = to_xml_string(_results)
         template = get_base_terminology_template().format(terminologies=terminology)

@@ -15,6 +15,7 @@ import { convertFilterText, FilterText } from '@/components/filter-text'
 import { DrawerMain } from '@/components/drawer-main'
 import iconFilter from '@/assets/svg/icon-filter_outlined.svg'
 import Uploader from '@/views/system/excel-upload/Uploader.vue'
+import { getAdvancedApplicationList } from '@/api/embedded.ts'
 
 interface Form {
   id?: string | null
@@ -23,6 +24,8 @@ interface Form {
   specific_ds: boolean
   datasource_ids: number[]
   datasource_names: string[]
+  advanced_application: string | null
+  advanced_application_name: string | null
   description: string | null
 }
 
@@ -33,13 +36,16 @@ const keywords = ref('')
 const oldKeywords = ref('')
 const searchLoading = ref(false)
 const drawerMainRef = ref()
-
+const adv_options = ref<any[]>([])
 const selectable = () => {
   return true
 }
 onMounted(() => {
   datasourceApi.list().then((res) => {
     filterOption.value[0].option = [...res]
+  })
+  getAdvancedApplicationList().then((res: any) => {
+    adv_options.value = res || []
   })
   search()
 })
@@ -69,6 +75,8 @@ const defaultForm = {
   datasource_ids: [],
   other_words: [''],
   datasource_names: [],
+  advanced_application: null,
+  advanced_application_name: null,
 }
 const pageForm = ref<Form>(cloneDeep(defaultForm))
 
@@ -252,13 +260,13 @@ const search = ($event: any = {}) => {
 
 const termFormRef = ref()
 
-const validatePass = (_: any, value: any, callback: any) => {
-  if (pageForm.value.specific_ds && !value.length) {
-    callback(new Error(t('datasource.Please_select') + t('common.empty') + t('ds.title')))
-  } else {
-    callback()
-  }
-}
+// const validatePass = (_: any, value: any, callback: any) => {
+//   if (pageForm.value.specific_ds && !value.length) {
+//     callback(new Error(t('datasource.Please_select') + t('common.empty') + t('ds.title')))
+//   } else {
+//     callback()
+//   }
+// }
 
 const rules = {
   word: [
@@ -274,12 +282,12 @@ const rules = {
         t('datasource.please_enter') + t('common.empty') + t('professional.term_description'),
     },
   ],
-  datasource_ids: [
-    {
-      validator: validatePass,
-      trigger: 'blur',
-    },
-  ],
+  // datasource_ids: [
+  //   {
+  //     validator: validatePass,
+  //     trigger: 'blur',
+  //   },
+  // ],
 }
 
 const handleChange = () => {
@@ -516,6 +524,11 @@ const changeStatus = (id: any, val: any) => {
               <div v-else>{{ t('training.all_data_sources') }}</div>
             </template>
           </el-table-column>
+          <el-table-column
+            prop="advanced_application_name"
+            :label="$t('embedded.advanced_application')"
+            min-width="180"
+          />
           <el-table-column :label="t('ds.status')" width="180">
             <template #default="scope">
               <div style="display: flex; align-items: center" @click.stop>
@@ -650,7 +663,6 @@ const changeStatus = (id: any, val: any) => {
         />
       </el-form-item>
       <el-form-item
-        class="is-required"
         :class="!pageForm.specific_ds && 'no-error'"
         prop="datasource_ids"
         :label="t('training.effective_data_sources')"
@@ -671,7 +683,26 @@ const changeStatus = (id: any, val: any) => {
           <el-option v-for="item in allDsList" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
       </el-form-item>
-
+      <el-form-item prop="advanced_application" :label="t('embedded.advanced_application')">
+        <el-select
+          v-model="pageForm.advanced_application"
+          filterable
+          clearable
+          :placeholder="
+            $t('datasource.Please_select') +
+            $t('common.empty') +
+            $t('embedded.advanced_application')
+          "
+          style="width: 100%"
+        >
+          <el-option
+            v-for="item in adv_options"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <template #label>
           <div style="display: flex; align-items: center">
@@ -751,6 +782,11 @@ const changeStatus = (id: any, val: any) => {
               ? pageForm.datasource_names.join(',')
               : t('training.all_data_sources')
           }}
+        </div>
+      </el-form-item>
+      <el-form-item :label="t('embedded.advanced_application')">
+        <div class="content">
+          {{ pageForm.advanced_application_name }}
         </div>
       </el-form-item>
       <el-form-item :label="t('professional.term_description')">

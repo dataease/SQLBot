@@ -17,6 +17,7 @@ import { convertFilterText, FilterText } from '@/components/filter-text'
 import { DrawerMain } from '@/components/drawer-main'
 import iconFilter from '@/assets/svg/icon-filter_outlined.svg'
 import Uploader from '@/views/system/excel-upload/Uploader.vue'
+import { getAdvancedApplicationList } from '@/api/embedded.ts'
 
 interface Form {
   id?: string | null
@@ -25,6 +26,8 @@ interface Form {
   specific_ds: boolean
   datasource_ids: number[]
   datasource_names: string[]
+  advanced_application: string | null
+  advanced_application_name: string | null
   name: string | null
 }
 const drawerMainRef = ref()
@@ -35,7 +38,7 @@ const keywords = ref('')
 const oldKeywords = ref('')
 const searchLoading = ref(false)
 const currentType = ref('GENERATE_SQL')
-
+const adv_options = ref<any[]>([])
 const options = ref<any[]>([])
 const selectable = () => {
   return true
@@ -49,6 +52,9 @@ const state = reactive<any>({
 onMounted(() => {
   datasourceApi.list().then((res) => {
     filterOption.value[0].option = [...res]
+  })
+  getAdvancedApplicationList().then((res: any) => {
+    adv_options.value = res || []
   })
   search()
 })
@@ -74,6 +80,8 @@ const defaultForm = {
   datasource_names: [],
   name: null,
   specific_ds: false,
+  advanced_application: null,
+  advanced_application_name: null,
 }
 const pageForm = ref<Form>(cloneDeep(defaultForm))
 const copyCode = () => {
@@ -269,13 +277,13 @@ const search = ($event: any = {}) => {
 }
 
 const termFormRef = ref()
-const validatePass = (_: any, value: any, callback: any) => {
-  if (pageForm.value.specific_ds && !value.length) {
-    callback(new Error(t('datasource.Please_select') + t('common.empty') + t('ds.title')))
-  } else {
-    callback()
-  }
-}
+// const validatePass = (_: any, value: any, callback: any) => {
+//   if (pageForm.value.specific_ds && !value.length) {
+//     callback(new Error(t('datasource.Please_select') + t('common.empty') + t('ds.title')))
+//   } else {
+//     callback()
+//   }
+// }
 const rules = {
   name: [
     {
@@ -283,12 +291,12 @@ const rules = {
       message: t('datasource.please_enter') + t('common.empty') + t('prompt.prompt_word_name'),
     },
   ],
-  datasource_ids: [
-    {
-      validator: validatePass,
-      trigger: 'blur',
-    },
-  ],
+  // datasource_ids: [
+  //   {
+  //     validator: validatePass,
+  //     trigger: 'blur',
+  //   },
+  // ],
   prompt: [
     {
       required: true,
@@ -542,6 +550,11 @@ const drawerMainClose = () => {
             </template>
           </el-table-column>
           <el-table-column
+            prop="advanced_application_name"
+            :label="$t('embedded.advanced_application')"
+            min-width="180"
+          />
+          <el-table-column
             prop="create_time"
             sortable
             :label="$t('dashboard.create_time')"
@@ -678,7 +691,6 @@ const drawerMainClose = () => {
       </el-form-item>
 
       <el-form-item
-        class="is-required"
         :class="!pageForm.specific_ds && 'no-error'"
         prop="datasource_ids"
         :label="t('training.effective_data_sources')"
@@ -697,6 +709,26 @@ const drawerMainClose = () => {
           @change="handleChange"
         >
           <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item prop="advanced_application" :label="t('embedded.advanced_application')">
+        <el-select
+          v-model="pageForm.advanced_application"
+          filterable
+          clearable
+          :placeholder="
+            $t('datasource.Please_select') +
+            $t('common.empty') +
+            $t('embedded.advanced_application')
+          "
+          style="width: 100%"
+        >
+          <el-option
+            v-for="item in adv_options"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
         </el-select>
       </el-form-item>
     </el-form>
@@ -742,6 +774,11 @@ const drawerMainClose = () => {
               ? pageForm.datasource_names.join()
               : t('training.all_data_sources')
           }}
+        </div>
+      </el-form-item>
+      <el-form-item :label="t('embedded.advanced_application')">
+        <div class="content">
+          {{ pageForm.advanced_application_name }}
         </div>
       </el-form-item>
     </el-form>

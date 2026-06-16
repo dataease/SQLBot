@@ -12,9 +12,8 @@ from typing import Any, List, Optional, Union, Dict, Iterator
 import orjson
 import pandas as pd
 import requests
-import sqlparse
 import sqlglot
-from sqlglot import exp
+import sqlparse
 from langchain.chat_models.base import BaseChatModel
 from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, BaseMessageChunk
@@ -24,6 +23,7 @@ from sqlbot_xpack.config.model import SysArgModel
 from sqlbot_xpack.custom_prompt.curd.custom_prompt import find_custom_prompts
 from sqlbot_xpack.custom_prompt.models.custom_prompt_model import CustomPromptTypeEnum
 from sqlbot_xpack.license.license_manage import SQLBotLicenseUtil
+from sqlglot import exp
 from sqlmodel import Session
 
 from apps.ai_model.model_factory import LLMConfig, LLMFactory, get_default_config
@@ -66,7 +66,6 @@ dynamic_subsql_prefix = 'select * from sqlbot_dynamic_temp_table_'
 session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 
 i18n = I18n()
-
 
 
 def extract_tables_from_sql(sql: str, ds_type: str = None) -> set:
@@ -340,18 +339,26 @@ class LLMService:
         return format_chart_fields(chart_info)
 
     def filter_terminology_template(self, _session: Session, oid: int = None, ds_id: int = None):
+        self.current_logs[OperationEnum.FILTER_TERMS] = start_log(session=_session,
+                                                                  operate=OperationEnum.FILTER_TERMS,
+                                                                  record_id=self.record.id, local_operation=True)
         calculate_oid = oid
         calculate_ds_id = ds_id
         if self.current_assistant:
             calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
             if self.current_assistant.type == 1:
                 calculate_ds_id = None
-        self.current_logs[OperationEnum.FILTER_TERMS] = start_log(session=_session,
-                                                                  operate=OperationEnum.FILTER_TERMS,
-                                                                  record_id=self.record.id, local_operation=True)
+        if self.current_assistant and self.current_assistant.type == 1:
+            self.chat_question.terminologies, term_list = get_terminology_template(_session,
+                                                                                   self.chat_question.question,
+                                                                                   calculate_oid,
+                                                                                   None, self.current_assistant.id)
+        else:
+            self.chat_question.terminologies, term_list = get_terminology_template(_session,
+                                                                                   self.chat_question.question,
+                                                                                   calculate_oid,
+                                                                                   calculate_ds_id)
 
-        self.chat_question.terminologies, term_list = get_terminology_template(_session, self.chat_question.question,
-                                                                               calculate_oid, calculate_ds_id)
         self.current_logs[OperationEnum.FILTER_TERMS] = end_log(session=_session,
                                                                 log=self.current_logs[OperationEnum.FILTER_TERMS],
                                                                 full_message=term_list)
@@ -359,19 +366,26 @@ class LLMService:
     def filter_custom_prompts(self, _session: Session, custom_prompt_type: CustomPromptTypeEnum, oid: int = None,
                               ds_id: int = None):
         if SQLBotLicenseUtil.valid():
+            self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = start_log(session=_session,
+                                                                              operate=OperationEnum.FILTER_CUSTOM_PROMPT,
+                                                                              record_id=self.record.id,
+                                                                              local_operation=True)
             calculate_oid = oid
             calculate_ds_id = ds_id
             if self.current_assistant:
                 calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
                 if self.current_assistant.type == 1:
                     calculate_ds_id = None
-            self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = start_log(session=_session,
-                                                                              operate=OperationEnum.FILTER_CUSTOM_PROMPT,
-                                                                              record_id=self.record.id,
-                                                                              local_operation=True)
-            self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session, custom_prompt_type,
-                                                                                calculate_oid,
-                                                                                calculate_ds_id)
+            if self.current_assistant and self.current_assistant.type == 1:
+                self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session,
+                                                                                    custom_prompt_type,
+                                                                                    calculate_oid,
+                                                                                    None, self.current_assistant.id)
+            else:
+                self.chat_question.custom_prompt, prompt_list = find_custom_prompts(_session,
+                                                                                    custom_prompt_type,
+                                                                                    calculate_oid,
+                                                                                    calculate_ds_id)
             self.current_logs[OperationEnum.FILTER_CUSTOM_PROMPT] = end_log(session=_session,
                                                                             log=self.current_logs[
                                                                                 OperationEnum.FILTER_CUSTOM_PROMPT],
