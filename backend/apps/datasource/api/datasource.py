@@ -243,8 +243,9 @@ async def preview_data(session: SessionDep, trans: Trans, current_user: CurrentU
 
 
 # not used
-@router.post("/fieldEnum/{id}", include_in_schema=False)
-async def field_enum(session: SessionDep, id: int):
+@router.post("/fieldEnum/{ds_id}/{id}", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(type='ds', keyExpression="ds_id"))
+async def field_enum(session: SessionDep, ds_id: int, id: int):
     def inner():
         return fieldEnum(session, id)
 
