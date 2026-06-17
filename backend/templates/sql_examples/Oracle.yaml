@@ -116,6 +116,7 @@ template:
             COUNT("t1"."订单ID") AS "total_orders",
             TO_CHAR("t1"."折扣率" * 100, '990.99') || '%' AS "discount_percent"
           FROM "TEST"."ORDERS" "t1"
+          GROUP BY "t1"."订单ID", "t1"."金额", "t1"."折扣率"
           WHERE ROWNUM <= 100
         </output-good>
       </example>

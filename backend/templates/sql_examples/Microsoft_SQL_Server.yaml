@@ -52,6 +52,7 @@ template:
             COUNT([o].[订单ID]) AS [total_orders],
             CONVERT(VARCHAR, ROUND([o].[折扣率] * 100, 2)) + '%' AS [discount_percent]
           FROM [Sales].[Orders] [o]
+          GROUP BY [o].[订单ID], [o].[金额], [o].[折扣率]
         </output-good>
       </example>
 

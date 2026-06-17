@@ -53,6 +53,7 @@ template:
             COUNT(`t1`.`订单ID`) AS `total_orders`,
             CONCAT(ROUND(`t1`.`折扣率` * 100, 2), '%') AS `discount_percent`
           FROM `test`.`orders` `t1`
+          GROUP BY `t1`.`订单ID`, `t1`.`金额`, `t1`.`折扣率`
           LIMIT 100
         </output-good>
       </example>
