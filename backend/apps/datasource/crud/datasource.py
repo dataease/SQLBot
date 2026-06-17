@@ -555,7 +555,8 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         return schema_str, []
 
     # do table embedding
-    if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
+    if (embedding and tables and settings.TABLE_EMBEDDING_ENABLED
+            and not equals_ignore_case(ds.type, "excel")):
         tables = calc_table_embedding(tables, question)
     # splice schema
     if tables:
