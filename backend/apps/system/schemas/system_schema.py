@@ -197,6 +197,7 @@ class AssistantOutDsSchema(AssistantOutDsBase):
     db_schema: Optional[str] = None
     extraParams: Optional[str] = None
     mode: Optional[str] = None
+    lowVersion: Optional[bool] = False
     tables: Optional[list[AssistantTableSchema]] = None
 
 

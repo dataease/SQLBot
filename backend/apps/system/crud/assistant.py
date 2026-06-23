@@ -94,7 +94,7 @@ def init_dynamic_cors(app: FastAPI):
                     response_middleware = middleware
                 if cors_middleware and response_middleware:
                     break
-                
+
             updated_origins = list(set(settings.all_cors_origins + unique_domains))
             if cors_middleware:
                 cors_middleware.kwargs['allow_origins'] = updated_origins
@@ -238,11 +238,11 @@ class AssistantOutDs:
 
     def convert2schema(self, ds_dict: dict, config: dict[any]) -> AssistantOutDsSchema:
         id_marker: str = ''
-        attr_list = ['name', 'type', 'host', 'port', 'user', 'dataBase', 'schema', 'mode']
+        attr_list = ['name', 'type', 'host', 'port', 'user', 'dataBase', 'schema', 'mode', 'lowVersion']
         if config.get('encrypt', False):
             key = config.get('aes_key', None)
             iv = config.get('aes_iv', None)
-            aes_attrs = ['host', 'user', 'password', 'dataBase', 'db_schema', 'schema', 'mode']
+            aes_attrs = ['host', 'user', 'password', 'dataBase', 'db_schema', 'schema', 'mode', 'lowVersion']
             for attr in aes_attrs:
                 if attr in ds_dict and ds_dict[attr]:
                     try:
@@ -250,7 +250,7 @@ class AssistantOutDs:
                     except Exception as e:
                         raise Exception(
                             f"Failed to encrypt {attr} for datasource {ds_dict.get('name')}, error: {str(e)}")
-        
+
         id = ds_dict.get('id', None)
         if not id:
             for attr in attr_list:
@@ -279,7 +279,8 @@ def get_out_ds_conf(ds: AssistantOutDsSchema, timeout: int = 30) -> str:
         "extraJdbc": ds.extraParams or '',
         "dbSchema": ds.db_schema or '',
         "timeout": timeout or 30,
-        "mode": ds.mode or ''
+        "mode": ds.mode or '',
+        "lowVersion": ds.lowVersion or False,
     }
     conf["extraJdbc"] = ''
     return aes_encrypt(json.dumps(conf))
