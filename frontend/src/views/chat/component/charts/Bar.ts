@@ -13,8 +13,8 @@ export class Bar extends BaseG2Chart {
     super(id, 'bar')
   }
 
-  init(axis: Array<ChartAxis>, data: Array<ChartData>) {
-    super.init(axis, data)
+  init(axis: Array<ChartAxis>, data: Array<ChartData>, formatNumberFields: Array<string>) {
+    super.init(axis, data, formatNumberFields)
 
     const axes = getAxesWithFilter(this.axis)
 
@@ -106,7 +106,8 @@ export class Bar extends BaseG2Chart {
           labelAutoWrap: true,
           labelAutoEllipsis: true,
           labelFormatter: (value: any) => {
-            return String(formatNumber(value))
+            const formatted = axes.y[0].formatNumber ? formatNumber(value) : value
+            return String(formatted)
           },
         },
       },
@@ -124,15 +125,19 @@ export class Bar extends BaseG2Chart {
         tooltip: { series: series.length > 0, shared: true },
       },
       tooltip: (data: any) => {
+        const v = y[0].formatNumber ? formatNumber(data[y[0].value]) : data[y[0].value]
         if (series.length > 0) {
+          const s = series[0].formatNumber
+            ? formatNumber(data[series[0].value])
+            : data[series[0].value]
           return {
-            name: data[series[0].value],
-            value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+            name: s,
+            value: `${v}${_data.isPercent ? '%' : ''}`,
           }
         } else {
           return {
             name: y[0].name,
-            value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+            value: `${v}${_data.isPercent ? '%' : ''}`,
           }
         }
       },
@@ -144,7 +149,8 @@ export class Bar extends BaseG2Chart {
                 if (value === undefined || value === null) {
                   return ''
                 }
-                return `${formatNumber(value)}${_data.isPercent ? '%' : ''}`
+                const v = y[0].formatNumber ? formatNumber(value) : value
+                return `${v}${_data.isPercent ? '%' : ''}`
               },
               position: (data: any) => {
                 if (data[y[0].value] < 0) {

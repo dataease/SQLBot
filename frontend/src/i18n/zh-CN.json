@@ -788,6 +788,8 @@
     "no_data": "暂无数据",
     "loading_data": "加载中...",
     "show_error_detail": "查看具体信息",
+    "thousands_separator_setting": "千分位符设置",
+    "thousands_separator_display": "应用千分位符展示",
     "log": {
       "GENERATE_SQL": "生成 SQL",
       "GENERATE_CHART": "生成图表结构",

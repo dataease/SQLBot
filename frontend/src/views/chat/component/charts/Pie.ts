@@ -1,15 +1,19 @@
 import { BaseG2Chart } from '@/views/chat/component/BaseG2Chart.ts'
 import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
-import { checkIsPercent, formatNumber, getAxesWithFilter } from '@/views/chat/component/charts/utils.ts'
+import {
+  checkIsPercent,
+  formatNumber,
+  getAxesWithFilter,
+} from '@/views/chat/component/charts/utils.ts'
 
 export class Pie extends BaseG2Chart {
   constructor(id: string) {
     super(id, 'pie')
   }
 
-  init(axis: Array<ChartAxis>, data: Array<ChartData>) {
-    super.init(axis, data)
+  init(axis: Array<ChartAxis>, data: Array<ChartData>, formatNumberFields: Array<string>) {
+    super.init(axis, data, formatNumberFields)
     const { y, series } = getAxesWithFilter(this.axis)
 
     if (series.length == 0 || y.length == 0) {
@@ -48,18 +52,25 @@ export class Pie extends BaseG2Chart {
             {
               position: 'spider',
               text: (data: any) => {
-                return `${data[series[0].value]}: ${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`
+                const v = y[0].formatNumber ? formatNumber(data[y[0].value]) : data[y[0].value]
+                return `${data[series[0].value]}: ${v}${_data.isPercent ? '%' : ''}`
               },
             },
           ]
         : [],
       tooltip: {
-        title: (data: any) => data[series[0].value],
+        title: (data: any) => {
+          const s = series[0].formatNumber
+            ? formatNumber(data[series[0].value])
+            : data[series[0].value]
+          return s
+        },
         items: [
           (data: any) => {
+            const v = y[0].formatNumber ? formatNumber(data[y[0].value]) : data[y[0].value]
             return {
               name: y[0].name,
-              value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+              value: `${v}${_data.isPercent ? '%' : ''}`,
             }
           },
         ],

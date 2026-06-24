@@ -4,6 +4,7 @@ export interface ChartAxis {
   type?: 'x' | 'y' | 'series' | 'other-info'
   'multi-quota'?: boolean
   hidden?: boolean
+  formatNumber?: boolean
 }
 
 export interface ChartData {
@@ -18,15 +19,17 @@ export abstract class BaseChart {
   axis: Array<ChartAxis> = []
   data: Array<ChartData> = []
   showLabel: boolean = false
+  formatNumberFields: Array<string> = []
 
   constructor(id: string, name: string) {
     this.id = id
     this._name = name
   }
 
-  init(axis: Array<ChartAxis>, data: Array<ChartData>): void {
+  init(axis: Array<ChartAxis>, data: Array<ChartData>, formatNumberFields: Array<string>): void {
     this.axis = axis
     this.data = data
+    this.formatNumberFields = formatNumberFields
   }
 
   abstract render(): void

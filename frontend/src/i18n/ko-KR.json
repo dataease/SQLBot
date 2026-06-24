@@ -788,6 +788,8 @@
     "no_data": "데이터가 없습니다",
     "loading_data": "로딩 중 ...",
     "show_error_detail": "구체적인 정보 보기",
+    "thousands_separator_setting": "천 단위 구분 기호 설정",
+    "thousands_separator_display": "천 단위 구분 기호 표시 적용",
     "log": {
       "GENERATE_SQL": "SQL 생성",
       "GENERATE_CHART": "차트 구조 생성",

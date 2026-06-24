@@ -788,6 +788,8 @@
     "no_data": "No Data",
     "loading_data": "Loading ...",
     "show_error_detail": "Show error info",
+    "thousands_separator_setting": "Thousands Separator Setting",
+    "thousands_separator_display": "Apply Thousands Separator Display",
     "log": {
       "GENERATE_SQL": "Generate SQL",
       "GENERATE_CHART": "Generate Chart Structure",

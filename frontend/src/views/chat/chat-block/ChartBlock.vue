@@ -20,6 +20,7 @@ import icon_window_max_outlined from '@/assets/svg/icon_window-max_outlined.svg'
 import icon_window_mini_outlined from '@/assets/svg/icon_window-mini_outlined.svg'
 import icon_copy_outlined from '@/assets/svg/icon_copy_outlined.svg'
 import ICON_STYLE from '@/assets/svg/icon_style-set_outlined.svg'
+import THOUSAND_SEPARATOR from '@/assets/svg/chart/icon-thousand-separator.svg'
 import { useI18n } from 'vue-i18n'
 import SQLComponent from '@/views/chat/component/SQLComponent.vue'
 import { useAssistantStore } from '@/stores/assistant'
@@ -38,6 +39,7 @@ const props = withDefaults(
     chatType?: ChartTypes
     enlarge?: boolean
     loadingData?: boolean
+    thousandsSeparatorList?: Array<string>
   }>(),
   {
     recordId: undefined,
@@ -45,6 +47,7 @@ const props = withDefaults(
     chatType: undefined,
     enlarge: false,
     loadingData: false,
+    thousandsSeparatorList: () => [],
   }
 )
 
@@ -52,7 +55,7 @@ const { copy } = useClipboard({ legacy: true })
 const loading = ref<boolean>(false)
 const { t } = useI18n()
 const addViewRef = ref(null)
-const emits = defineEmits(['exitFullScreen'])
+const emits = defineEmits(['exitFullScreen', 'update:thousandsSeparatorList'])
 
 const dataObject = computed<{
   fields: Array<string>
@@ -364,6 +367,20 @@ watch(
     }
   }
 )
+
+const enableThousandsSeparatorList = computed({
+  get() {
+    return props.thousandsSeparatorList
+  },
+  set(v) {
+    emits('update:thousandsSeparatorList', v)
+  },
+})
+
+const optionList = ref<Array<{ name: string; value: string }>>([])
+function getBaseAxis() {
+  optionList.value = chartRef.value?.getBaseAxis()
+}
 </script>
 
 <template>
@@ -390,7 +407,7 @@ watch(
               :chart-type="chartType"
               :title="t('chat.type')"
               @type-change="onTypeChange"
-            ></ChartPopover>
+            />
           </el-tooltip>
 
           <el-tooltip
@@ -412,23 +429,58 @@ watch(
           </el-tooltip>
         </div>
 
-        <div v-if="currentChartType !== 'table'" class="chart-select-container">
+        <div class="chart-select-container">
+          <template v-if="currentChartType !== 'table'">
+            <el-tooltip
+              effect="dark"
+              :offset="8"
+              :content="showLabel ? t('chat.hide_label') : t('chat.show_label')"
+              placement="top"
+            >
+              <el-button
+                class="tool-btn"
+                :class="{ 'chart-active': showLabel }"
+                text
+                @click="showLabel = !showLabel"
+              >
+                <el-icon size="16">
+                  <ICON_STYLE />
+                </el-icon>
+              </el-button>
+            </el-tooltip>
+          </template>
           <el-tooltip
             effect="dark"
             :offset="8"
-            :content="showLabel ? t('chat.hide_label') : t('chat.show_label')"
+            :content="t('chat.thousands_separator_setting')"
             placement="top"
           >
-            <el-button
-              class="tool-btn"
-              :class="{ 'chart-active': showLabel }"
-              text
-              @click="showLabel = !showLabel"
-            >
-              <el-icon size="16">
-                <ICON_STYLE />
-              </el-icon>
-            </el-button>
+            <div>
+              <el-popover placement="bottom" trigger="click">
+                <template #reference>
+                  <el-button class="tool-btn" text @click="getBaseAxis">
+                    <el-icon size="16">
+                      <THOUSAND_SEPARATOR />
+                    </el-icon>
+                  </el-button>
+                </template>
+                <label style="font-weight: 500; line-height: 28px">
+                  {{ t('chat.thousands_separator_display') }}
+                </label>
+                <el-checkbox-group
+                  v-model="enableThousandsSeparatorList"
+                  style="display: flex; flex-direction: column"
+                >
+                  <el-checkbox
+                    v-for="option in optionList"
+                    :key="option.value"
+                    size="large"
+                    :label="option.name"
+                    :value="option.value"
+                  />
+                </el-checkbox-group>
+              </el-popover>
+            </div>
           </el-tooltip>
         </div>
 
@@ -538,6 +590,7 @@ watch(
           :data="data"
           :loading-data="loadingData"
           :show-label="showLabel"
+          :thousands-separator-list="enableThousandsSeparatorList"
         />
       </div>
       <div v-if="dataObject.limit" class="over-limit-hint">
@@ -556,7 +609,8 @@ watch(
       body-class="chart-fullscreen-dialog-body"
     >
       <ChartBlock
-        v-if="dialogVisible"
+        v-if="dialogVisible && !enlarge"
+        v-model:thousands-separator-list="enableThousandsSeparatorList"
         :message="message"
         :record-id="recordId"
         :is-predict="isPredict"

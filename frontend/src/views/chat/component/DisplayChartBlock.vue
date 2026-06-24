@@ -5,14 +5,21 @@ import { computed, nextTick, ref } from 'vue'
 import type { ChartTypes } from '@/views/chat/component/BaseChart.ts'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{
-  id?: number | string
-  chartType: ChartTypes
-  message: ChatMessage
-  data: Array<{ [key: string]: any }>
-  loadingData?: boolean
-  showLabel?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    id?: number | string
+    chartType: ChartTypes
+    message: ChatMessage
+    data: Array<{ [key: string]: any }>
+    loadingData?: boolean
+    showLabel?: boolean
+    thousandsSeparatorList?: Array<string>
+  }>(),
+  {
+    id: 'default_chat_id',
+    thousandsSeparatorList: () => [],
+  }
+)
 
 const { t } = useI18n()
 
@@ -102,6 +109,9 @@ defineExpose({
   onTypeChange,
   getViewInfo,
   getExcelData,
+  getBaseAxis: () => {
+    return chartRef.value?.getBaseAxis() ?? []
+  },
 })
 </script>
 
@@ -119,6 +129,7 @@ defineExpose({
       :data="data"
       :multi-quota-name="multiQuotaName"
       :show-label="showLabel"
+      :thousands-separator-list="thousandsSeparatorList"
     />
     <el-empty v-else :description="loadingData ? t('chat.loading_data') : t('chat.no_data')" />
   </div>

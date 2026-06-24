@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { getChartInstance } from '@/views/chat/component/index.ts'
 import type { BaseChart, ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import { useEmitt } from '@/utils/useEmitt.ts'
+import { filter, includes } from 'lodash-es'
 
 const params = withDefaults(
   defineProps<{
@@ -15,6 +16,7 @@ const params = withDefaults(
     series?: Array<ChartAxis>
     multiQuotaName?: string | undefined
     showLabel?: boolean
+    thousandsSeparatorList?: Array<string>
   }>(),
   {
     data: () => [],
@@ -24,6 +26,7 @@ const params = withDefaults(
     series: () => [],
     multiQuotaName: undefined,
     showLabel: false,
+    thousandsSeparatorList: () => [],
   }
 )
 
@@ -34,10 +37,19 @@ const chartId = computed(() => {
 const axis = computed(() => {
   const _list: Array<ChartAxis> = []
   params.columns.forEach((column) => {
-    _list.push({ name: column.name, value: column.value })
+    _list.push({
+      name: column.name,
+      value: column.value,
+      formatNumber: includes(params.thousandsSeparatorList, column.value),
+    })
   })
   params.x.forEach((column) => {
-    _list.push({ name: column.name, value: column.value, type: 'x' })
+    _list.push({
+      name: column.name,
+      value: column.value,
+      type: 'x',
+      formatNumber: includes(params.thousandsSeparatorList, column.value),
+    })
   })
   params.y.forEach((column) => {
     _list.push({
@@ -45,10 +57,16 @@ const axis = computed(() => {
       value: column.value,
       type: 'y',
       'multi-quota': column['multi-quota'],
+      formatNumber: includes(params.thousandsSeparatorList, column.value),
     })
   })
   params.series.forEach((column) => {
-    _list.push({ name: column.name, value: column.value, type: 'series' })
+    _list.push({
+      name: column.name,
+      value: column.value,
+      type: 'series',
+      formatNumber: includes(params.thousandsSeparatorList, column.value),
+    })
   })
   if (params.multiQuotaName) {
     _list.push({
@@ -67,16 +85,17 @@ function renderChart() {
   chartInstance = getChartInstance(params.type, chartId.value)
   if (chartInstance) {
     chartInstance.showLabel = params.showLabel
-    chartInstance.init(axis.value, params.data)
+    chartInstance.init(axis.value, params.data, params.thousandsSeparatorList)
     chartInstance.render()
   }
 }
 
 watch(
-  () => params.showLabel,
+  () => [params.showLabel, params.thousandsSeparatorList],
   () => {
     renderChart()
-  }
+  },
+  { deep: true }
 )
 
 function destroyChart() {
@@ -93,6 +112,10 @@ function getExcelData() {
   }
 }
 
+function getBaseAxis() {
+  return filter(axis.value, (a) => !a.hidden)
+}
+
 useEmitt({
   name: 'view-render-all',
   callback: renderChart,
@@ -107,6 +130,7 @@ defineExpose({
   renderChart,
   destroyChart,
   getExcelData,
+  getBaseAxis,
 })
 
 onMounted(() => {

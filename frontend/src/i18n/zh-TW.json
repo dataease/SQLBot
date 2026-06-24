@@ -788,6 +788,8 @@
     "no_data": "暫無資料",
     "loading_data": "載入中...",
     "show_error_detail": "檢視具體資訊",
+    "thousands_separator_setting": "千分位符設定",
+    "thousands_separator_display": "套用千分位符顯示",
     "log": {
       "GENERATE_SQL": "產生 SQL",
       "GENERATE_CHART": "產生圖表結構",

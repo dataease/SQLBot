@@ -9,7 +9,7 @@ import {
   TableSheet,
   type SortFuncParam,
 } from '@antv/s2'
-import { debounce, filter } from 'lodash-es'
+import { debounce, filter, includes } from 'lodash-es'
 import { i18n } from '@/i18n'
 import { formatNumber } from '@/views/chat/component/charts/utils.ts'
 import '@antv/s2/dist/s2.min.css'
@@ -100,10 +100,11 @@ export class Table extends BaseChart {
     }
   }
 
-  init(axis: Array<ChartAxis>, data: Array<ChartData>) {
+  init(axis: Array<ChartAxis>, data: Array<ChartData>, formatNumberFields: Array<string>) {
     super.init(
       filter(axis, (a) => !a.hidden), //隐藏多指标的other-info列
-      data
+      data,
+      formatNumberFields
     )
 
     const s2DataConfig: S2DataConfig = {
@@ -122,7 +123,7 @@ export class Table extends BaseChart {
             field: a.value,
             name: a.name,
             formatter: (value: any) => {
-              const formatted = formatNumber(value)
+              const formatted = a.formatNumber ? formatNumber(value) : value
               return String(formatted)
             },
           }
@@ -201,7 +202,9 @@ export class Table extends BaseChart {
             container.style.fontSize = '14px'
             container.style.whiteSpace = 'pre-wrap'
 
-            const formattedValue = formatNumber(meta.fieldValue)
+            const formattedValue = includes(this.formatNumberFields, meta.valueField)
+              ? formatNumber(meta.fieldValue)
+              : meta.fieldValue
             const text = document.createTextNode(String(formattedValue))
             container.appendChild(text)
 
