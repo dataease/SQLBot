@@ -258,6 +258,7 @@ function stop() {
 }
 
 const enableThousandsSeparatorList = ref<Array<string>>([])
+const showLabel = ref<boolean>(false)
 
 onBeforeUnmount(() => {
   stop()
@@ -278,6 +279,7 @@ defineExpose({ sendMessage, index: () => index.value, chatList: () => _chatList,
     <ChartBlock
       v-if="message.record?.predict_data?.length > 0 && message.record?.data"
       ref="chartBlockRef"
+      v-model:show-label="showLabel"
       v-model:thousands-separator-list="enableThousandsSeparatorList"
       style="margin-top: 12px"
       :record-id="recordId"

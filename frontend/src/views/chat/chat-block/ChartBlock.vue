@@ -39,7 +39,8 @@ const props = withDefaults(
     chatType?: ChartTypes
     enlarge?: boolean
     loadingData?: boolean
-    thousandsSeparatorList?: Array<string>
+    thousandsSeparatorList: Array<string>
+    showLabel: boolean
   }>(),
   {
     recordId: undefined,
@@ -48,6 +49,7 @@ const props = withDefaults(
     enlarge: false,
     loadingData: false,
     thousandsSeparatorList: () => [],
+    showLabel: false,
   }
 )
 
@@ -55,7 +57,7 @@ const { copy } = useClipboard({ legacy: true })
 const loading = ref<boolean>(false)
 const { t } = useI18n()
 const addViewRef = ref(null)
-const emits = defineEmits(['exitFullScreen', 'update:thousandsSeparatorList'])
+const emits = defineEmits(['exitFullScreen', 'update:thousandsSeparatorList', 'update:showLabel'])
 
 const dataObject = computed<{
   fields: Array<string>
@@ -229,8 +231,6 @@ function showSql() {
   sqlShow.value = true
 }
 
-const showLabel = ref(false)
-
 function addToDashboard() {
   const recordeInfo = {
     id: '1-1',
@@ -368,6 +368,15 @@ watch(
   }
 )
 
+const _showLabel = computed({
+  get() {
+    return props.showLabel
+  },
+  set(v) {
+    emits('update:showLabel', v)
+  },
+})
+
 const enableThousandsSeparatorList = computed({
   get() {
     return props.thousandsSeparatorList
@@ -434,14 +443,14 @@ function getBaseAxis() {
             <el-tooltip
               effect="dark"
               :offset="8"
-              :content="showLabel ? t('chat.hide_label') : t('chat.show_label')"
+              :content="_showLabel ? t('chat.hide_label') : t('chat.show_label')"
               placement="top"
             >
               <el-button
                 class="tool-btn"
-                :class="{ 'chart-active': showLabel }"
+                :class="{ 'chart-active': _showLabel }"
                 text
-                @click="showLabel = !showLabel"
+                @click="_showLabel = !_showLabel"
               >
                 <el-icon size="16">
                   <ICON_STYLE />
@@ -589,7 +598,7 @@ function getBaseAxis() {
           :message="message"
           :data="data"
           :loading-data="loadingData"
-          :show-label="showLabel"
+          :show-label="_showLabel"
           :thousands-separator-list="enableThousandsSeparatorList"
         />
       </div>
@@ -610,6 +619,7 @@ function getBaseAxis() {
     >
       <ChartBlock
         v-if="dialogVisible && !enlarge"
+        v-model:show-label="_showLabel"
         v-model:thousands-separator-list="enableThousandsSeparatorList"
         :message="message"
         :record-id="recordId"
