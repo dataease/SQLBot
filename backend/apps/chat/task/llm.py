@@ -6,7 +6,6 @@ import urllib.parse
 import warnings
 from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime
-from dis import specialized
 from typing import Any, List, Optional, Union, Dict, Iterator
 
 import orjson
@@ -46,6 +45,7 @@ from apps.db.db import exec_sql, get_version, check_connection, get_sqlglot_dial
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_ds
 from apps.system.crud.parameter_manage import get_groups
+from apps.system.crud.user import user_ws_list
 from apps.system.schemas.system_schema import AssistantOutDsSchema
 from apps.terminology.curd.terminology import get_terminology_template
 from common.core.config import settings
@@ -87,6 +87,7 @@ def extract_tables_from_sql(sql: str, ds_type: str = None) -> set:
 class LLMService:
     ds: CoreDatasource
     chat_question: ChatQuestion
+    oid: int
     record: ChatRecord
     config: LLMConfig
     llm: BaseChatModel
@@ -127,15 +128,27 @@ class LLMService:
 
         self.table_name_list = []
 
+        chat_question.lang = get_lang_name(current_user.language)
+        self.trans = i18n(lang=current_user.language)
+
         chat_id = chat_question.chat_id
         chat: Chat | None = session.get(Chat, chat_id)
         if not chat:
             raise SingleMessageError(f"Chat with id {chat_id} not found")
+        self.oid = chat.oid
+
+        if self.oid:
+            w_list = user_ws_list(session, self.current_user.id)
+            oid_list = [item.id for item in w_list]
+            if int(self.oid) not in oid_list:
+                raise SingleMessageError("Current user cannot not access this chat")
+
+        self.current_user.oid = chat.oid
         ds: CoreDatasource | AssistantOutDsSchema | None = None
         if not chat.datasource and chat_question.datasource_id:
             _ds = session.get(CoreDatasource, chat_question.datasource_id)
             if _ds:
-                if _ds.oid != current_user.oid:
+                if _ds.oid != self.oid:
                     raise SingleMessageError(
                         f"Datasource with id {chat_question.datasource_id} does not belong to current workspace")
                 chat.datasource = _ds.id
@@ -164,9 +177,6 @@ class LLMService:
         self.generate_chart_logs = list_generate_chart_logs(session=session, chart_id=chat_id)
 
         self.change_title = not get_chat_brief_generate(session=session, chat_id=chat_id)
-
-        chat_question.lang = get_lang_name(current_user.language)
-        self.trans = i18n(lang=current_user.language)
 
         self.ds = (
             ds if isinstance(ds, AssistantOutDsSchema) else CoreDatasource(**ds.model_dump())) if ds else None
@@ -345,7 +355,7 @@ class LLMService:
         calculate_oid = oid
         calculate_ds_id = ds_id
         if self.current_assistant:
-            calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
+            calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
             if self.current_assistant.type == 1:
                 calculate_ds_id = None
         if self.current_assistant and self.current_assistant.type == 1:
@@ -373,7 +383,7 @@ class LLMService:
             calculate_oid = oid
             calculate_ds_id = ds_id
             if self.current_assistant:
-                calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
+                calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
                 if self.current_assistant.type == 1:
                     calculate_ds_id = None
             if self.current_assistant and self.current_assistant.type == 1:
@@ -399,7 +409,7 @@ class LLMService:
         calculate_oid = oid
         calculate_ds_id = ds_id
         if self.current_assistant:
-            calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.current_user.oid
+            calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
             if self.current_assistant.type == 1:
                 calculate_ds_id = None
         if self.current_assistant and self.current_assistant.type == 1:
@@ -451,9 +461,9 @@ class LLMService:
 
         ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
-        self.filter_terminology_template(_session, self.current_user.oid, ds_id)
+        self.filter_terminology_template(_session, self.oid, ds_id)
 
-        self.filter_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS, self.current_user.oid, ds_id)
+        self.filter_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS, self.oid, ds_id)
 
         analysis_msg.append(SystemPromptMessage(content=self.chat_question.analysis_sys_question()))
         analysis_msg.append(HumanMessage(content=self.chat_question.analysis_user_question()))
@@ -504,7 +514,7 @@ class LLMService:
         self.chat_question.data = orjson.dumps(data.get('data')).decode()
 
         ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-        self.filter_custom_prompts(_session, CustomPromptTypeEnum.PREDICT_DATA, self.current_user.oid, ds_id)
+        self.filter_custom_prompts(_session, CustomPromptTypeEnum.PREDICT_DATA, self.oid, ds_id)
 
         predict_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         predict_msg.append(SystemPromptMessage(content=self.chat_question.predict_sys_question()))
@@ -624,7 +634,7 @@ class LLMService:
             _ds_list = get_assistant_ds(session=_session, llm_service=self)
         else:
             stmt = select(CoreDatasource.id, CoreDatasource.name, CoreDatasource.description).where(
-                and_(CoreDatasource.oid == self.current_user.oid))
+                and_(CoreDatasource.oid == self.oid))
             _ds_list = [
                 {
                     "id": ds.id,
@@ -643,7 +653,7 @@ class LLMService:
         if not ignore_auto_select:
             if settings.TABLE_EMBEDDING_ENABLED and (
                     not self.current_assistant or (self.current_assistant and self.current_assistant.type != 1)):
-                _ds_list = get_ds_embedding(_session, self.current_user, _ds_list, self.out_ds_instance,
+                _ds_list = get_ds_embedding(_session, _ds_list, self.out_ds_instance,
                                             self.chat_question.question, self.current_assistant)
                 # yield {'content': '{"id":' + str(ds.get('id')) + '}'}
 

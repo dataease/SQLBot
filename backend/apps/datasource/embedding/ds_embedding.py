@@ -11,11 +11,11 @@ from apps.datasource.models.datasource import CoreDatasource
 from apps.system.crud.assistant import AssistantOutDs
 from common.core.config import settings
 from common.core.deps import CurrentAssistant
-from common.core.deps import SessionDep, CurrentUser
+from common.core.deps import SessionDep
 from common.utils.utils import SQLBotLogUtil
 
 
-def get_ds_embedding(session: SessionDep, current_user: CurrentUser, _ds_list, out_ds: AssistantOutDs,
+def get_ds_embedding(session: SessionDep, _ds_list, out_ds: AssistantOutDs,
                      question: str,
                      current_assistant: Optional[CurrentAssistant] = None):
     _list = []
