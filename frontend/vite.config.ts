@@ -5,6 +5,8 @@ import Components from 'unplugin-vue-components-secondary/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components-secondary/resolvers'
 import path from 'path'
 import svgLoader from 'vite-svg-loader'
+import legacy from '@vitejs/plugin-legacy'
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   console.info(mode)
@@ -26,6 +28,11 @@ export default defineConfig(({ mode }) => {
         svgo: false,
         defaultImport: 'component', // or 'raw'
       }),
+      legacy({
+        targets: ['Chrome >= 81'],
+        polyfills: true,
+        modernPolyfills: true,
+      }),
     ],
     resolve: {
       alias: {
@@ -40,6 +47,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      target: 'chrome81',
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
@@ -47,6 +55,11 @@ export default defineConfig(({ mode }) => {
             'element-plus-secondary': ['element-plus-secondary'],
           },
         },
+      },
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        target: 'chrome81',
       },
     },
     esbuild: {

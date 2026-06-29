@@ -1,3 +1,5 @@
+import 'core-js/features/object/has-own'
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './style.less'
