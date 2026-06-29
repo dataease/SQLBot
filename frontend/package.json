@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "vue-tsc -b && vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc -b &&NODE_OPTIONS=--max_old_space_size=4096 vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix"
   },
