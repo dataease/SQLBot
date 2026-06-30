@@ -6,6 +6,7 @@ import { formatArg } from '@/utils/utils.ts'
 interface ChatConfig {
   sqlbot_name: string
   expand_thinking_block: boolean
+  hide_thinking_block: boolean
   limit_rows: boolean
   show_sql: boolean
   show_log: boolean
@@ -16,6 +17,7 @@ export const chatConfigStore = defineStore('chatConfigStore', {
     return {
       sqlbot_name: 'SQLBot',
       expand_thinking_block: false,
+      hide_thinking_block: false,
       limit_rows: true,
       show_sql: true,
       show_log: true,
@@ -27,6 +29,9 @@ export const chatConfigStore = defineStore('chatConfigStore', {
     },
     getExpandThinkingBlock(): boolean {
       return this.expand_thinking_block
+    },
+    getHideThinkingBlock(): boolean {
+      return this.hide_thinking_block
     },
     getShowSQL(): boolean {
       return this.show_sql
@@ -43,6 +48,9 @@ export const chatConfigStore = defineStore('chatConfigStore', {
       request.get('/system/parameter/chat').then((res: any) => {
         if (res) {
           res.forEach((item: any) => {
+            if (item.pkey === 'chat.hide_thinking_block') {
+              this.hide_thinking_block = formatArg(item.pval)
+            }
             if (item.pkey === 'chat.expand_thinking_block') {
               this.expand_thinking_block = formatArg(item.pval)
             }

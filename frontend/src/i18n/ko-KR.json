@@ -76,6 +76,7 @@
     "context_record_count": "컨텍스트 기록 수",
     "context_record_count_hint": "사용자 질문 라운드 수",
     "model_thinking_process": "모델 사고 프로세스 확장",
+    "hide_model_thinking_process": "모델 사고 과정 숨기기",
     "rows_of_data": "데이터 1,000행 제한",
     "third_party_platform_settings": "로그인 인증 설정",
     "by_third_party_platform": "자동 사용자 생성",

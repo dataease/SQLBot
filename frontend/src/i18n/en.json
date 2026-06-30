@@ -76,6 +76,7 @@
     "context_record_count": "Context Record Count",
     "context_record_count_hint": "Number of user question rounds",
     "model_thinking_process": "Expand Model Thinking Process",
+    "hide_model_thinking_process": "Hide Model Thinking Process",
     "rows_of_data": "Limit 1000 Rows of Data",
     "third_party_platform_settings": "Authentication Settings",
     "by_third_party_platform": "Automatic User Creation",

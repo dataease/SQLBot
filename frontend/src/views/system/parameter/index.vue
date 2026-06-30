@@ -10,6 +10,7 @@ const { t } = useI18n()
 const state = reactive({
   parameterForm: reactive<any>({
     'chat.sqlbot_name': 'SQLBot',
+    'chat.hide_thinking_block': false,
     'chat.expand_thinking_block': false,
     'chat.limit_rows': false,
     'chat.show_sql': false,
@@ -114,8 +115,16 @@ onMounted(() => {
             </div>
           </div>
         </el-row>
-        <el-row>
+        <div style="display: grid; grid-template-columns: 1fr 1fr">
           <div class="card-item">
+            <div class="label">
+              {{ t('parameter.hide_model_thinking_process') }}
+            </div>
+            <div class="value">
+              <el-switch v-model="state.parameterForm['chat.hide_thinking_block']" />
+            </div>
+          </div>
+          <div v-if="!state.parameterForm['chat.hide_thinking_block']" class="card-item">
             <div class="label">
               {{ t('parameter.model_thinking_process') }}
 
@@ -129,7 +138,7 @@ onMounted(() => {
               <el-switch v-model="state.parameterForm['chat.expand_thinking_block']" />
             </div>
           </div>
-          <div class="card-item" style="margin-left: 16px">
+          <div class="card-item">
             <div class="label">
               {{ t('parameter.rows_of_data') }}
               <el-tooltip
@@ -149,8 +158,6 @@ onMounted(() => {
               />
             </div>
           </div>
-        </el-row>
-        <el-row>
           <div class="card-item">
             <div class="label">
               {{ t('parameter.show_sql') }}
@@ -159,7 +166,7 @@ onMounted(() => {
               <el-switch v-model="state.parameterForm['chat.show_sql']" />
             </div>
           </div>
-          <div class="card-item" style="margin-left: 16px">
+          <div class="card-item">
             <div class="label">
               {{ t('parameter.show_log') }}
             </div>
@@ -167,8 +174,6 @@ onMounted(() => {
               <el-switch v-model="state.parameterForm['chat.show_log']" />
             </div>
           </div>
-        </el-row>
-        <el-row>
           <div class="card-item">
             <div class="label">
               {{ t('parameter.context_record_count') }}
@@ -191,7 +196,7 @@ onMounted(() => {
               />
             </div>
           </div>
-        </el-row>
+        </div>
       </div>
 
       <platform-param />

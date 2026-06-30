@@ -50,10 +50,12 @@ const reasoningContent = computed<Array<string>>(() => {
 })
 
 const hasReasoning = computed<boolean>(() => {
-  if (reasoningContent.value.length > 0) {
-    for (let i = 0; i < reasoningContent.value.length; i++) {
-      if (reasoningContent.value[i] && reasoningContent.value[i].trim() !== '') {
-        return true
+  if (!chatConfig.getHideThinkingBlock) {
+    if (reasoningContent.value.length > 0) {
+      for (let i = 0; i < reasoningContent.value.length; i++) {
+        if (reasoningContent.value[i] && reasoningContent.value[i].trim() !== '') {
+          return true
+        }
       }
     }
   }

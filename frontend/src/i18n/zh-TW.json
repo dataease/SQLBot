@@ -76,6 +76,7 @@
     "context_record_count": "上下文記錄數",
     "context_record_count_hint": "使用者提問輪數",
     "model_thinking_process": "展開模型思考過程",
+    "hide_model_thinking_process": "隱藏模型思考過程",
     "rows_of_data": "限制 1000 列資料",
     "third_party_platform_settings": "登入認證設定",
     "by_third_party_platform": "自動建立使用者",
