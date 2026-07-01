@@ -21,6 +21,9 @@ from apps.system.models.system_model import UserWsModel
 from apps.system.models.user import UserModel
 from apps.system.schemas.system_schema import BaseUserDTO, AssistantHeader
 from apps.system.schemas.system_schema import UserInfoDTO
+from common.audit.models.log_model import OperationType, OperationModules
+from common.audit.schemas.logger_decorator import LogConfig, system_log
+from common.audit.schemas.request_context import RequestContext
 from common.core import security
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
@@ -84,6 +87,12 @@ def get_user(session: SessionDep, token: str):
 
 
 @router.post("/mcp_start", operation_id="mcp_start")
+@system_log(LogConfig(
+    operation_type=OperationType.CREATE,
+    module=OperationModules.CHAT,
+    result_id_expr="id",
+    save_on_success_only=True
+))
 async def mcp_start(session: SessionDep, trans: Trans, chat: ChatStart):
     res_token = None
     user = None
@@ -111,6 +120,9 @@ async def mcp_start(session: SessionDep, trans: Trans, chat: ChatStart):
             raise HTTPException(status_code=400, detail="The current user is not in the selected workspace")
 
         user.oid = int(chat.oid)
+
+    request = RequestContext.get_request()
+    request.state.current_user = user
 
     c = create_chat(session, user, CreateChat(origin=1), False)
     return {"access_token": res_token, "chat_id": c.id}
