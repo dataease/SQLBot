@@ -39,7 +39,7 @@ const copyCode = () => {
 </script>
 
 <template>
-  <div class="question">
+  <div class="question flex-gap-fallback">
     <span v-if="message?.record?.analysis_record_id" class="prefix-title" @click="clickAnalysis">
       {{ t('qa.data_analysis') }}
     </span>
@@ -64,6 +64,7 @@ const copyCode = () => {
 .question {
   display: flex;
   flex-direction: row;
+  --gap-size: 8px;
   gap: 8px;
   border-radius: 16px;
   min-height: 48px;

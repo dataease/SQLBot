@@ -403,12 +403,12 @@ function getBaseAxis() {
     class="chart-component-container"
     :class="{ 'full-screen': enlarge }"
   >
-    <div class="header-bar">
+    <div class="header-bar flex-gap-fallback">
       <div class="title">
         {{ chartObject.title }}
       </div>
-      <div class="buttons-bar">
-        <div class="chart-select-container">
+      <div class="buttons-bar flex-gap-fallback">
+        <div class="chart-select-container flex-gap-fallback">
           <el-tooltip effect="dark" :offset="8" :content="t('chat.type')" placement="top">
             <ChartPopover
               v-if="chartTypeList.length > 0"
@@ -438,7 +438,7 @@ function getBaseAxis() {
           </el-tooltip>
         </div>
 
-        <div class="chart-select-container">
+        <div class="chart-select-container flex-gap-fallback">
           <template v-if="currentChartType !== 'table'">
             <el-tooltip
               effect="dark"
@@ -773,6 +773,7 @@ function getBaseAxis() {
 
     align-items: center;
     flex-direction: row;
+    --gap-size: 16px;
     gap: 16px;
 
     .tool-btn {
@@ -839,6 +840,7 @@ function getBaseAxis() {
       flex-direction: row;
       align-items: center;
 
+      --gap-size: 16px;
       gap: 16px;
 
       .divider {
@@ -852,6 +854,7 @@ function getBaseAxis() {
       padding: 3px;
       display: flex;
       flex-direction: row;
+      --gap-size: 4px;
       gap: 4px;
       border-radius: 6px;
 

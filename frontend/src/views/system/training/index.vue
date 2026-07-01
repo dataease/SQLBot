@@ -356,7 +356,7 @@ const onRowFormClose = () => {
   <div v-loading="searchLoading" class="training">
     <div class="tool-left">
       <span class="page-title">{{ $t('training.data_training') }}</span>
-      <div class="tool-row">
+      <div class="tool-row flex-gap-fallback">
         <el-input
           v-model="keywords"
           style="width: 240px"
@@ -683,6 +683,7 @@ const onRowFormClose = () => {
     display: flex;
     align-items: center;
     flex-direction: row;
+    --gap-size: 8px;
     gap: 8px;
   }
 

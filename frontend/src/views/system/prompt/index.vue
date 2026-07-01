@@ -471,7 +471,7 @@ const drawerMainClose = () => {
           {{ $t('prompt.data_prediction') }}
         </el-button>
       </div>
-      <div class="tool-row">
+      <div class="tool-row flex-gap-fallback">
         <el-input
           v-model="keywords"
           style="width: 240px; margin-right: 12px"
@@ -812,6 +812,7 @@ const drawerMainClose = () => {
     display: flex;
     align-items: center;
     flex-direction: row;
+    --gap-size: 8px;
     gap: 8px;
   }
 

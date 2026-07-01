@@ -435,7 +435,7 @@ const changeStatus = (id: any, val: any) => {
   <div v-loading="searchLoading" class="professional">
     <div class="tool-left">
       <span class="page-title">{{ $t('professional.professional_terminology') }}</span>
-      <div class="tool-row">
+      <div class="tool-row flex-gap-fallback">
         <el-input
           v-model="keywords"
           style="width: 240px; margin-right: 12px"
@@ -836,6 +836,7 @@ const changeStatus = (id: any, val: any) => {
       display: flex;
       align-items: center;
       flex-direction: row;
+      --gap-size: 8px;
       gap: 8px;
     }
   }

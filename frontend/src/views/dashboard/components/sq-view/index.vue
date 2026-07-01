@@ -124,12 +124,12 @@ defineExpose({
 
 <template>
   <div class="chart-base-container">
-    <div class="header-bar">
+    <div class="header-bar flex-gap-fallback">
       <div class="title">
         {{ viewInfo.chart.title }}
       </div>
-      <div v-if="showPosition === 'multiplexing'" class="buttons-bar">
-        <div class="chart-select-container">
+      <div v-if="showPosition === 'multiplexing'" class="buttons-bar flex-gap-fallback">
+        <div class="chart-select-container flex-gap-fallback">
           <el-tooltip effect="dark" :content="t('chat.type')" placement="top">
             <ChartPopover
               v-if="chartTypeList.length > 0"
@@ -291,6 +291,7 @@ defineExpose({
       display: flex;
       flex-direction: row;
       align-items: center;
+      --gap-size: 16px;
       gap: 16px;
       margin-right: 36px;
       .divider {
@@ -304,6 +305,7 @@ defineExpose({
       padding: 3px;
       display: flex;
       flex-direction: row;
+      --gap-size: 4px;
       gap: 4px;
       border-radius: 6px;
 
@@ -345,6 +347,7 @@ defineExpose({
   flex-direction: row;
   align-items: center;
 
+  --gap-size: 16px;
   gap: 16px;
 
   .divider {
@@ -358,6 +361,7 @@ defineExpose({
   padding: 3px;
   display: flex;
   flex-direction: row;
+  --gap-size: 4px;
   gap: 4px;
   border-radius: 6px;
 

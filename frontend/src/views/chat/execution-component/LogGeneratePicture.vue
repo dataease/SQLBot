@@ -50,6 +50,7 @@ const title = computed(() => {
 .item-list {
   display: flex;
   flex-direction: column;
+  --gap-size: 8px;
   gap: 8px;
   align-items: stretch;
   flex-wrap: nowrap;
@@ -57,6 +58,7 @@ const title = computed(() => {
     border: 1px solid #dee0e3;
     display: flex;
     flex-direction: column;
+    --gap-size: 8px;
     gap: 8px;
     border-radius: 12px;
     padding: 16px;

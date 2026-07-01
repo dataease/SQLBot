@@ -200,7 +200,7 @@ const handleConfirmPassword = () => {
 
 <template>
   <el-scrollbar ref="chatListRef">
-    <div class="chat-list-inner">
+    <div class="chat-list-inner flex-gap-fallback flex-col">
       <div v-for="group in computedChatList" :key="group.key" class="group">
         <div
           class="group-title"
@@ -301,6 +301,7 @@ const handleConfirmPassword = () => {
   display: flex;
   flex-direction: column;
 
+  --gap-size: 16px;
   gap: 16px;
 
   .group {

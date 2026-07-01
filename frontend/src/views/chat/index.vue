@@ -112,15 +112,15 @@
         }"
       >
         <div v-if="computedMessages.length == 0 && !loading" class="welcome-content-block">
-          <div class="welcome-content">
+          <div class="welcome-content flex-gap-fallback flex-col">
             <template v-if="isCompletePage">
-              <div class="greeting">
+              <div class="greeting flex-gap-fallback">
                 <img v-if="loginBg" height="32" width="32" :src="loginBg" alt="" />
                 <el-icon v-else size="32"
                   ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
                   <LOGO_fold v-else></LOGO_fold
                 ></el-icon>
-                {{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}
+                <span>{{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}</span>
               </div>
               <div class="sub">
                 {{
@@ -1390,6 +1390,7 @@ onMounted(() => {
     width: 100%;
     max-width: 800px;
     display: flex;
+    --gap-size: 16px;
     gap: 16px;
     padding: 0 16px;
     align-items: center;
@@ -1428,6 +1429,7 @@ onMounted(() => {
     .greeting {
       display: flex;
       align-items: center;
+      --gap-size: 16px;
       gap: 16px;
       line-height: 32px;
       font-size: 24px;

@@ -1,3 +1,23 @@
+/* ==========================================
+   老旧浏览器 Flex Gap 完美物理隔离补丁
+   ========================================== */
+
+/* 1. 当浏览器【不支持 flex gap】时，激活此特定命名空间 */
+:root[data-no-flex-gap='true'] .flex-gap-fallback {
+  display: flex;
+}
+
+/* 2. 仅对标记了该 class 的容器下的【相邻子元素】水平方向加间距 */
+:root[data-no-flex-gap='true'] .flex-gap-fallback > * + * {
+  margin-left: var(--gap-size, 16px); /* 默认 16px，可通过变量动态修改 */
+}
+
+/* 3. 如果需要处理垂直排列（flex-direction: column） */
+:root[data-no-flex-gap='true'] .flex-gap-fallback.flex-col > * + * {
+  margin-left: 0;
+  margin-top: var(--gap-size, 16px);
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

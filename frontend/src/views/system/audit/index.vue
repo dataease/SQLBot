@@ -257,7 +257,7 @@ const initOptions = () => {
   <div v-loading="searchLoading" class="professional">
     <div class="tool-left">
       <span class="page-title">{{ $t('audit.system_log') }}</span>
-      <div class="tool-row">
+      <div class="tool-row flex-gap-fallback">
         <el-button secondary @click="exportExcel">
           <template #icon>
             <icon_export_outlined />
@@ -416,6 +416,7 @@ const initOptions = () => {
       display: flex;
       align-items: center;
       flex-direction: row;
+      --gap-size: 8px;
       gap: 8px;
     }
   }

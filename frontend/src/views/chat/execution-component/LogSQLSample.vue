@@ -33,8 +33,8 @@ const title = computed(() => {
     </template>
     <template v-else>
       <div class="inner-title">{{ title }}</div>
-      <div v-if="list.length > 0" style="margin-top: 8px" class="item-list">
-        <div v-for="(ele, index) in list" :key="index" class="inner-item">
+      <div v-if="list.length > 0" style="margin-top: 8px" class="item-list flex-gap-fallback flex-col">
+        <div v-for="(ele, index) in list" :key="index" class="inner-item flex-gap-fallback flex-col">
           <div class="inner-item-title">
             {{ ele.question }}
           </div>
@@ -58,6 +58,7 @@ const title = computed(() => {
 .item-list {
   display: flex;
   flex-direction: column;
+  --gap-size: 8px;
   gap: 8px;
   align-items: stretch;
   flex-wrap: nowrap;
@@ -65,6 +66,7 @@ const title = computed(() => {
     border: 1px solid #dee0e3;
     display: flex;
     flex-direction: column;
+    --gap-size: 8px;
     gap: 8px;
     border-radius: 12px;
     padding: 16px;

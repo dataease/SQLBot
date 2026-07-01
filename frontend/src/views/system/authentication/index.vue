@@ -2,7 +2,7 @@
   <div class="authentication">
     <p class="router-title">{{ t('system.authentication_settings') }}</p>
     <div v-loading="loading" class="authentication-content">
-      <div class="auth-card-container">
+      <div class="auth-card-container flex-gap-fallback">
         <div v-for="item in showInfos" :key="item.name" class="authentication-card">
           <div class="inner-card">
             <div class="inner-card-info">
@@ -178,6 +178,7 @@ init(true)
     height: initial;
     display: flex;
     flex-wrap: wrap;
+    --gap-size: 16px;
     gap: 16px;
 
     .authentication-card {

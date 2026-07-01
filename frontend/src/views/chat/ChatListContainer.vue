@@ -218,7 +218,10 @@ function onChatRenamed(chat: Chat) {
 
 <template>
   <el-container class="chat-container-right-container">
-    <el-header class="chat-list-header" :class="{ 'in-popover': inPopover }">
+    <el-header
+      class="chat-list-header flex-gap-fallback flex-col"
+      :class="{ 'in-popover': inPopover }"
+    >
       <div v-if="!inPopover" class="title">
         <div>{{ appName || t('qa.title') }}</div>
         <el-button link type="primary" class="icon-btn" @click="onClickSideBarBtn">
@@ -296,6 +299,7 @@ function onChatRenamed(chat: Chat) {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    --gap-size: 16px;
     gap: 16px;
 
     .title {

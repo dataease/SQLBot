@@ -78,9 +78,9 @@ const filteredAndGroupedData = computed(() => {
       </template>
     </el-input>
     <el-scrollbar ref="chatListRef" class="custom-chart-list">
-      <div class="chat-list-inner">
+      <div class="chat-list-inner flex-gap-fallback flex-col">
         <!-- today -->
-        <div v-if="filteredAndGroupedData.today.length > 0" class="time-group">
+        <div v-if="filteredAndGroupedData.today.length > 0" class="time-group flex-gap-fallback flex-col">
           <div class="time-group-title">{{ t('dashboard.today') }}</div>
           <div
             v-for="chat in filteredAndGroupedData.today"
@@ -94,7 +94,7 @@ const filteredAndGroupedData = computed(() => {
         </div>
 
         <!-- this week -->
-        <div v-if="filteredAndGroupedData.thisWeek.length > 0" class="time-group">
+        <div v-if="filteredAndGroupedData.thisWeek.length > 0" class="time-group flex-gap-fallback flex-col">
           <div class="time-group-title">{{ t('dashboard.this_week') }}</div>
           <div
             v-for="chat in filteredAndGroupedData.thisWeek"
@@ -108,7 +108,7 @@ const filteredAndGroupedData = computed(() => {
         </div>
 
         <!-- earlier -->
-        <div v-if="filteredAndGroupedData.earlier.length > 0" class="time-group">
+        <div v-if="filteredAndGroupedData.earlier.length > 0" class="time-group flex-gap-fallback flex-col">
           <div class="time-group-title">{{ t('dashboard.earlier') }}</div>
           <div
             v-for="chat in filteredAndGroupedData.earlier"
@@ -149,11 +149,13 @@ const filteredAndGroupedData = computed(() => {
   display: flex;
   flex-direction: column;
 
+  --gap-size: 8px;
   gap: 8px;
 
   .time-group {
     display: flex;
     flex-direction: column;
+    --gap-size: 8px;
     gap: 8px;
     margin-top: 12px;
 

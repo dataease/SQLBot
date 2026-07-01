@@ -179,14 +179,14 @@
                         </el-icon>
                       </div>
                     </div>
-                    <div class="welcome-content">
-                      <div class="greeting">
+                    <div class="welcome-content flex-gap-fallback flex-col">
+                      <div class="greeting flex-gap-fallback">
                         <img v-if="pageLogin" height="32" width="32" :src="pageLogin" alt="" />
                         <el-icon v-else size="32"
                           ><custom_small v-if="themeColor !== 'default'"></custom_small>
                           <LOGO_fold v-else></LOGO_fold
                         ></el-icon>
-                        {{ topForm.pc_welcome }}
+                        <span>{{ topForm.pc_welcome }}</span>
                       </div>
                       <div class="sub">
                         {{ topForm.pc_welcome_desc }}
@@ -909,6 +909,7 @@ onUnmounted(() => {
               .welcome-content {
                 width: calc(100% - 240px);
                 display: flex;
+                --gap-size: 16px;
                 gap: 16px;
                 align-items: center;
                 flex-direction: column;
@@ -920,6 +921,7 @@ onUnmounted(() => {
                 .greeting {
                   display: flex;
                   align-items: center;
+                  --gap-size: 16px;
                   gap: 16px;
                   line-height: 32px;
                   font-size: 24px;

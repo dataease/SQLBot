@@ -37,7 +37,7 @@ const dialogVisible = ref(false)
       <span class="title">Select data source</span>
       <el-button text @click="dialogVisible = true">View more</el-button>
     </div>
-    <div class="datasource-content">
+    <div class="datasource-content flex-gap-fallback">
       <DatasourceCard
         v-for="ele in datasourceList"
         :key="ele.id"
@@ -62,7 +62,7 @@ const dialogVisible = ref(false)
         placeholder="Please input"
       />
     </div>
-    <div class="datasource-content">
+    <div class="datasource-content flex-gap-fallback">
       <DatasourceCard
         v-for="ele in datasourceListComputed"
         :key="ele.id"
@@ -103,6 +103,7 @@ const dialogVisible = ref(false)
     margin: 12px 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    --gap-size: 16px;
     gap: 16px;
   }
 }
@@ -117,6 +118,7 @@ const dialogVisible = ref(false)
   .datasource-content {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
+    --gap-size: 16px;
     gap: 16px;
     margin-top: 16px;
   }

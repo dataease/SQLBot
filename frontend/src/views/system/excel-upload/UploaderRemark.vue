@@ -185,7 +185,7 @@ const submitUpload = () => {
     modal-class="up-loader_dialog"
     @close="close"
   >
-    <div class="import-container">
+    <div class="import-container flex-gap-fallback flex-col">
       <div class="down-template">
         <span class="icon-span">
           <el-icon>
@@ -307,6 +307,7 @@ const submitUpload = () => {
 .import-container {
   display: flex;
   flex-direction: column;
+  --gap-size: 16px;
   gap: 16px;
 
   :deep(.ed-upload) {

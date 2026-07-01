@@ -164,7 +164,7 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
 </script>
 
 <template>
-  <div v-if="computedQuestions.length > 0 || loading" class="recommend-questions">
+  <div v-if="computedQuestions.length > 0 || loading" class="recommend-questions flex-gap-fallback flex-col">
     <template v-if="position === 'chat'">
       <div v-if="firstChat" style="margin-bottom: 8px">{{ t('qa.guess_u_ask') }}</div>
       <div v-else class="continue-ask">{{ t('qa.continue_to_ask') }}</div>
@@ -209,6 +209,7 @@ defineExpose({ getRecommendQuestions, id: () => props.recordId, stop })
   line-height: 22px;
   display: flex;
   flex-direction: column;
+  --gap-size: 4px;
   gap: 4px;
 
   .continue-ask {

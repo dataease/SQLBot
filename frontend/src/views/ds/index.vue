@@ -27,7 +27,7 @@
       >
     </div>
 
-    <div class="connections-container">
+    <div class="connections-container flex-gap-fallback">
       <template v-for="ds in dsList" :key="ds">
         <DatasourceItemCard :ds="ds">
           <div class="connection-actions">
@@ -142,6 +142,7 @@ onMounted(() => {
 .connections-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  --gap-size: 24px;
   gap: 24px;
 
   .connection-actions {
