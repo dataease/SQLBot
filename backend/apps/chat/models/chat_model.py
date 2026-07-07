@@ -175,6 +175,9 @@ class RenameChat(BaseModel):
     brief: str = ''
     brief_generate: bool = True
 
+class SimpleChat(BaseModel):
+    id: int = None
+    brief: str = ''
 
 class ChatInfo(BaseModel):
     id: Optional[int] = None

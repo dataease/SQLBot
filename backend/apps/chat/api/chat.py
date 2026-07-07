@@ -11,20 +11,20 @@ from sqlalchemy import and_, select
 from starlette.responses import JSONResponse
 
 from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user, get_chat_predict_data_with_user, \
-    list_chats, get_chat_with_records, create_chat, rename_chat, \
-    delete_chat, get_chat_chart_data, get_chat_predict_data, get_chat_with_records_with_data, get_chat_record_by_id, \
-    format_json_data, format_json_list_data, get_chart_config, list_recent_questions, get_chat as get_chat_exec, \
-    rename_chat_with_user, get_chat_log_history, get_chart_data_with_user_live
+    list_chats, get_chat_with_records, create_chat, get_chat_chart_data, get_chat_predict_data, \
+    get_chat_with_records_with_data, get_chat_record_by_id, \
+    format_json_data, format_json_list_data, get_chart_config, list_recent_questions, rename_chat_with_user, \
+    get_chat_log_history, get_chart_data_with_user_live
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
-    ChatInfo, Chat, ChatFinishStep, ChatQuestionBase
+    ChatInfo, Chat, ChatFinishStep, ChatQuestionBase, SimpleChat
 from apps.chat.task.llm import LLMService
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
+from common.audit.models.log_model import OperationType, OperationModules
+from common.audit.schemas.logger_decorator import LogConfig, system_log
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.command_utils import parse_quick_command
 from common.utils.data_format import DataFormat
-from common.audit.models.log_model import OperationType, OperationModules
-from common.audit.schemas.logger_decorator import LogConfig, system_log
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
@@ -116,22 +116,6 @@ async def chat_record_usage(session: SessionDep, current_user: CurrentUser, chat
     return await asyncio.to_thread(inner)
 
 
-""" @router.post("/rename", response_model=str, summary=f"{PLACEHOLDER_PREFIX}rename_chat")
-@system_log(LogConfig(
-    operation_type=OperationType.UPDATE,
-    module=OperationModules.CHAT,
-    resource_id_expr="chat.id"
-))
-async def rename(session: SessionDep, chat: RenameChat):
-    try:
-        return rename_chat(session=session, rename_object=chat)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        ) """
-
-
 @router.post("/rename", response_model=str, summary=f"{PLACEHOLDER_PREFIX}rename_chat")
 @system_log(LogConfig(
     operation_type=OperationType.UPDATE,
@@ -148,31 +132,14 @@ async def rename(session: SessionDep, current_user: CurrentUser, chat: RenameCha
         )
 
 
-""" @router.delete("/{chart_id}/{brief}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
+@router.delete("/{chart_id}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
 @system_log(LogConfig(
     operation_type=OperationType.DELETE,
     module=OperationModules.CHAT,
     resource_id_expr="chart_id",
-    remark_expr="brief"
+    remark_expr="chat.brief"
 ))
-async def delete(session: SessionDep, chart_id: int, brief: str):
-    try:
-        return delete_chat(session=session, chart_id=chart_id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        ) """
-
-
-@router.delete("/{chart_id}/{brief}", response_model=str, summary=f"{PLACEHOLDER_PREFIX}delete_chat")
-@system_log(LogConfig(
-    operation_type=OperationType.DELETE,
-    module=OperationModules.CHAT,
-    resource_id_expr="chart_id",
-    remark_expr="brief"
-))
-async def delete(session: SessionDep, current_user: CurrentUser, chart_id: int, brief: str):
+async def delete(session: SessionDep, current_user: CurrentUser, chart_id: int, chat: SimpleChat):
     try:
         return delete_chat_with_user(session=session, current_user=current_user, chart_id=chart_id)
     except Exception as e:

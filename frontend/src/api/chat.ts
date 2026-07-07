@@ -474,7 +474,7 @@ export const chatApi = {
     return request.post('/chat/rename', { id: chat_id, brief: brief })
   },
   deleteChat: (id: number | undefined, brief: any): Promise<string> => {
-    return request.delete(`/chat/${id}/${brief}`)
+    return request.delete(`/chat/${id}`, { data: { id: id, brief: brief } })
   },
   analysis: (record_id: number | undefined, controller?: AbortController) => {
     return request.fetchStream(`/chat/record/${record_id}/analysis`, {}, controller)
