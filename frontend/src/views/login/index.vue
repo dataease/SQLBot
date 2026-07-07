@@ -7,9 +7,13 @@
     element-loading-background="#F5F6F7"
   ></div>
 
-  <div class="login-container" :class="{ 'hide-login-container': showLoading }">
-    <div class="login-left">
-      <img :src="bg" alt="" />
+  <div
+    ref="loginContainer"
+    class="login-container"
+    :class="{ 'hide-login-container': showLoading }"
+  >
+    <div v-if="showLoginImage" class="login-image-content">
+      <el-image class="login-image" fit="cover" :src="bg" />
     </div>
     <div class="login-content">
       <div class="login-right">
@@ -74,7 +78,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
@@ -85,6 +89,7 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import loginImage from '@/assets/blue/login-image_blue.png'
 import Handler from './xpack/Handler.vue'
 import { toLoginSuccess } from '@/utils/utils'
+import elementResizeDetectorMaker from 'element-resize-detector'
 
 const showLoading = ref(true)
 const router = useRouter()
@@ -105,7 +110,20 @@ const bg = computed(() => {
 const loginBg = computed(() => {
   return appearanceStore.getLogin
 })
+const loginContainerWidth = ref(0)
+const loginContainer = ref()
+const showLoginImage = computed<boolean>(() => {
+  return !(loginContainerWidth.value < 889)
+})
 
+onMounted(async () => {
+  const erd = elementResizeDetectorMaker()
+  erd.listenTo(loginContainer.value, () => {
+    nextTick(() => {
+      loginContainerWidth.value = loginContainer.value?.offsetWidth
+    })
+  })
+})
 const rules = {
   username: [{ required: true, message: t('common.your_account_email_address'), trigger: 'blur' }],
   password: [{ required: true, message: t('common.the_correct_password'), trigger: 'blur' }],
@@ -136,17 +154,20 @@ const switchTab = (name: string) => {
   align-items: center;
   justify-content: center;
 
-  .login-left {
-    display: flex;
+  .login-image-content {
+    overflow: hidden;
     height: 100%;
     width: 40%;
-    img {
+    min-width: 400px;
+    .login-image {
+      background-size: 100% 100%;
+      width: 100%;
       height: 100%;
-      max-width: 100%;
     }
   }
 
   .login-content {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
