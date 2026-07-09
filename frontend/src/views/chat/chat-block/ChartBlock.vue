@@ -465,7 +465,12 @@ function getBaseAxis() {
             placement="top"
           >
             <div>
-              <el-popover placement="bottom" trigger="click">
+              <el-popover
+                popper-class="thousands-separator_popover"
+                :teleported="false"
+                placement="bottom"
+                trigger="click"
+              >
                 <template #reference>
                   <el-button class="tool-btn" text @click="getBaseAxis">
                     <el-icon size="16">
@@ -476,18 +481,26 @@ function getBaseAxis() {
                 <label style="font-weight: 500; line-height: 28px">
                   {{ t('chat.thousands_separator_display') }}
                 </label>
-                <el-checkbox-group
-                  v-model="enableThousandsSeparatorList"
-                  style="display: flex; flex-direction: column"
-                >
-                  <el-checkbox
-                    v-for="option in optionList"
-                    :key="option.value"
-                    size="large"
-                    :label="option.name"
-                    :value="option.value"
-                  />
-                </el-checkbox-group>
+                <el-scrollbar max-height="300px">
+                  <el-checkbox-group
+                    v-model="enableThousandsSeparatorList"
+                    style="display: flex; flex-direction: column"
+                  >
+                    <el-checkbox
+                      v-for="option in optionList"
+                      :key="option.value"
+                      size="large"
+                      :value="option.value"
+                    >
+                      <span
+                        :title="option.name"
+                        class="ellipsis"
+                        style="display: inline-block; width: 100%"
+                        >{{ option.name }}</span
+                      >
+                    </el-checkbox>
+                  </el-checkbox-group>
+                </el-scrollbar>
               </el-popover>
             </div>
           </el-tooltip>
@@ -661,6 +674,12 @@ function getBaseAxis() {
 
 .chart-fullscreen-dialog-header {
   display: none;
+}
+
+.thousands-separator_popover {
+  .ed-checkbox__label {
+    max-width: 100%;
+  }
 }
 
 .chart-fullscreen-dialog-body {
