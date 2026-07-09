@@ -4,7 +4,7 @@ import DisplayChartBlock from '@/views/chat/component/DisplayChartBlock.vue'
 import ChartPopover from '@/views/chat/chat-block/ChartPopover.vue'
 import { computed, ref, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
-import { concat } from 'lodash-es'
+import { concat, filter, includes, map } from 'lodash-es'
 import type { ChartTypes } from '@/views/chat/component/BaseChart.ts'
 import ICON_BAR from '@/assets/svg/chart/icon_bar_outlined.svg'
 import ICON_COLUMN from '@/assets/svg/chart/icon_dashboard_outlined.svg'
@@ -61,6 +61,7 @@ const emits = defineEmits(['exitFullScreen', 'update:thousandsSeparatorList', 'u
 
 const dataObject = computed<{
   fields: Array<string>
+  fields_info: Array<{ name: string; is_numeric: boolean }>
   data: Array<{ [key: string]: any }>
   limit: number | undefined
   datasource: number | undefined
@@ -388,7 +389,13 @@ const enableThousandsSeparatorList = computed({
 
 const optionList = ref<Array<{ name: string; value: string }>>([])
 function getBaseAxis() {
-  optionList.value = chartRef.value?.getBaseAxis()
+  const _list = chartRef.value?.getBaseAxis()
+  if (dataObject.value.fields_info) {
+    const numberList = map(filter(dataObject.value.fields_info, { is_numeric: true }), 'name')
+    optionList.value = filter(_list, (obj) => includes(numberList, obj.value))
+  } else {
+    optionList.value = _list
+  }
 }
 </script>
 

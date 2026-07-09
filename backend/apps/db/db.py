@@ -19,7 +19,7 @@ if platform.system() != "Darwin":
     import dmPython
 import pymysql
 import redshift_connector
-from sqlalchemy import create_engine, text, Engine
+from sqlalchemy import create_engine, text, Engine, types
 from sqlalchemy.orm import sessionmaker
 
 from apps.datasource.models.datasource import DatasourceConf, CoreDatasource, TableSchema, ColumnSchema
@@ -596,12 +596,35 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
             with session.execute(text(sql)) as result:
                 try:
                     columns = result.keys()._keys if origin_column else [item.lower() for item in result.keys()._keys]
+
+                    fields_info = []
+                    for col_info in result.cursor.description:
+                        # col_info 是 (name, type_code, display_size, internal_size, precision, scale, null_ok)
+                        col_name = col_info[0]
+
+                        # 根据 type_code 判断是否为数值类型
+                        # psycopg2 的类型 OID 常量
+                        is_numeric = col_info[1] in (
+                            20,  # int8
+                            21,  # int2
+                            23,  # int4
+                            700,  # float4
+                            701,  # float8
+                            1700,  # numeric
+                            16,  # boolean
+                        )
+
+                        fields_info.append({
+                            "name": col_name if origin_column else col_name.lower(),
+                            "is_numeric": is_numeric
+                        })
+
                     res = result.fetchall()
                     result_list = [
                         {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
-                    return {"fields": columns, "data": result_list,
+                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
@@ -617,11 +640,12 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
                                                                                                 field in
                                                                                                 cursor.description]
+                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'dm')
                     result_list = [
                         {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
-                    return {"fields": columns, "data": result_list,
+                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
@@ -637,11 +661,12 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
                                                                                                 field in
                                                                                                 cursor.description]
+                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'mysql')
                     result_list = [
                         {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
-                    return {"fields": columns, "data": result_list,
+                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
@@ -655,11 +680,12 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
                                                                                                 field in
                                                                                                 cursor.description]
+                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'postgresql')
                     result_list = [
                         {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
-                    return {"fields": columns, "data": result_list,
+                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
@@ -674,25 +700,28 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
                                                                                                 field in
                                                                                                 cursor.description]
+                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'postgresql')
                     result_list = [
                         {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
-                    return {"fields": columns, "data": result_list,
+                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
                             "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
         elif equals_ignore_case(ds.type, 'es'):
             try:
-                res, columns = get_es_data_by_http(conf, sql)
-                columns = [field.get('name') for field in columns] if origin_column else [field.get('name').lower() for
-                                                                                          field in
-                                                                                          columns]
+                res, raw_columns = get_es_data_by_http(conf, sql)
+                columns = [field.get('name') for field in raw_columns] if origin_column else [field.get('name').lower()
+                                                                                              for
+                                                                                              field in
+                                                                                              raw_columns]
+                fields_info = build_fields_info_from_es(raw_columns, origin_column)
                 result_list = [
                     {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                     res
                 ]
-                return {"fields": columns, "data": result_list,
+                return {"fields": columns, "data": result_list, "fields_info": fields_info,
                         "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
             except Exception as ex:
                 raise Exception(str(ex))
@@ -707,14 +736,118 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                     columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
                                                                                                 field in
                                                                                                 cursor.description]
+                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'hive')
                     result_list = [
                         {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
-                    return {"fields": columns, "data": result_list,
+                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
                             "sql": bytes.decode(base64.b64encode(bytes(hive_sql, 'utf-8')))}
                 except Exception as ex:
                     raise ParseSQLResultError(str(ex))
+
+
+def build_fields_info_from_cursor(cursor, origin_column, db_type='postgresql'):
+    """
+    根据数据库游标的 description 构建字段信息列表
+
+    Args:
+        cursor: 数据库游标对象
+        origin_column: 是否保留原始列名大小写
+        db_type: 数据库类型，支持 'mysql', 'postgresql', 'redshift', 'kingbase', 'dm', 'hive'
+
+    Returns:
+        list: 包含字段名和是否数值类型的字典列表
+    """
+    fields_info = []
+
+    for col_info in cursor.description:
+        col_name = col_info[0]
+
+        if db_type == 'mysql':
+            # MySQL/pymysql 类型码
+            is_numeric = col_info[1] in (
+                1,  # TINYINT
+                2,  # SMALLINT
+                3,  # INT
+                4,  # FLOAT
+                5,  # DOUBLE
+                8,  # BIGINT
+                9,  # MEDIUMINT
+                16,  # BIT
+                246,  # DECIMAL
+            )
+        elif db_type in ('postgresql', 'redshift', 'kingbase'):
+            # PostgreSQL/psycopg2 类型 OID
+            is_numeric = col_info[1] in (
+                20,  # int8
+                21,  # int2
+                23,  # int4
+                700,  # float4
+                701,  # float8
+                1700,  # numeric
+                16,  # boolean
+            )
+        elif db_type == 'dm':
+            # 达梦数据库类型码
+            is_numeric = col_info[1] in (
+                3,  # DECIMAL/NUMERIC
+                2,  # NUMBER
+                4,  # INTEGER
+                5,  # INT
+                6,  # BIGINT
+                7,  # TINYINT
+                8,  # BYTE
+                9,  # FLOAT
+                10,  # DOUBLE
+                11,  # REAL
+                12,  # BOOLEAN
+            )
+        elif db_type == 'hive':
+            # Hive 类型对象转字符串判断
+            type_str = str(col_info[1]).lower()
+            NUMERIC_PREFIXES = ('tinyint', 'smallint', 'int', 'bigint', 'float', 'double', 'decimal', 'numeric')
+            is_numeric = type_str == 'boolean' or any(type_str.startswith(p) for p in NUMERIC_PREFIXES)
+        else:
+            is_numeric = False
+
+        fields_info.append({
+            "name": col_name if origin_column else col_name.lower(),
+            "is_numeric": is_numeric
+        })
+
+    return fields_info
+
+
+def build_fields_info_from_es(raw_columns, origin_column):
+    """
+    专门为 Elasticsearch 构建字段信息
+
+    Args:
+        raw_columns: ES 返回的列信息列表
+        origin_column: 是否保留原始列名大小写
+
+    Returns:
+        list: 包含字段名和是否数值类型的字典列表
+    """
+    fields_info = []
+
+    for field in raw_columns:
+        field_name = field.get('name') if origin_column else field.get('name').lower()
+        field_type = field.get('type', '').lower()
+
+        is_numeric = field_type in (
+            'long', 'integer', 'short', 'byte',
+            'double', 'float', 'half_float', 'scaled_float',
+            'unsigned_long', 'boolean'
+        )
+
+        fields_info.append({
+            "name": field_name,
+            "is_numeric": is_numeric
+        })
+
+    return fields_info
 
 
 def get_sqlglot_dialect(ds_type: str) -> str:
@@ -744,6 +877,7 @@ DS_SPECIFIC_DANGEROUS_FUNCTIONS = {
 
 # 危险模式正则表达式（用于检查特殊语法）
 import re
+
 DANGEROUS_PATTERNS = [
     r'\bINTO\s+OUTFILE\b',
     r'\bINTO\s+DUMPFILE\b',
@@ -765,7 +899,7 @@ def check_dangerous_functions(statements: list, ds_type: str) -> bool:
     """检查是否使用了危险函数，返回 True 表示安全"""
     dangerous_functions = get_dangerous_functions(ds_type)
     dangerous_functions_upper = {f.upper() for f in dangerous_functions}
-    
+
     for stmt in statements:
         if stmt:
             for func in stmt.find_all(exp.Anonymous):
