@@ -217,7 +217,7 @@ function getChatPredictData(recordId?: number) {
           has = true
           record.predict_data = response ?? []
 
-          if (record.predict_data.length > 1) {
+          if (record.predict_data.length > 0) {
             getChatData(recordId)
           } else {
             loadingData.value = false
