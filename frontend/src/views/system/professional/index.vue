@@ -326,6 +326,9 @@ const list = () => {
   datasourceApi.list().then((res) => {
     allDsList.value = res
   })
+  getAdvancedApplicationList().then((res: any) => {
+    adv_options.value = res || []
+  })
 }
 const editHandler = (row: any) => {
   pageForm.value.id = null
@@ -335,11 +338,12 @@ const editHandler = (row: any) => {
       pageForm.value.other_words = ['']
     }
   }
+  console.log(pageForm.value)
+  list()
   dialogTitle.value = row?.id
     ? t('professional.editing_terminology')
     : t('professional.create_new_term')
   dialogFormVisible.value = true
-  list()
 }
 
 const onFormClose = () => {

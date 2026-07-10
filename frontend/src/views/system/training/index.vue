@@ -304,6 +304,7 @@ const editHandler = (row: any) => {
   if (row) {
     pageForm.value = cloneDeep(row)
   }
+  console.log(pageForm.value)
   list()
 
   dialogTitle.value = row?.id ? t('training.edit_training_data') : t('training.add_training_data')

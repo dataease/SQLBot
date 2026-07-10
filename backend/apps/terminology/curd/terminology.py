@@ -12,7 +12,7 @@ from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.models.datasource import CoreDatasource
 from apps.system.models.system_model import AssistantModel
 from apps.template.generate_chart.generator import get_base_terminology_template
-from apps.terminology.models.terminology_model import Terminology, TerminologyInfo
+from apps.terminology.models.terminology_model import Terminology, TerminologyInfo, TerminologyInfoResult
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
 from common.utils.embedding_threads import run_save_terminology_embeddings
@@ -179,7 +179,7 @@ def build_terminology_query(session: SessionDep, oid: int, name: Optional[str] =
     return stmt, total_count, total_pages, current_page, page_size
 
 
-def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfo]:
+def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfoResult]:
     """
     执行查询并返回术语信息列表
     """
@@ -187,7 +187,7 @@ def execute_terminology_query(session: SessionDep, stmt) -> List[TerminologyInfo
     result = session.execute(stmt)
 
     for row in result:
-        _list.append(TerminologyInfo(
+        _list.append(TerminologyInfoResult(
             id=row.id,
             word=row.word,
             create_time=row.create_time,

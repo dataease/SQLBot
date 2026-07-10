@@ -309,6 +309,9 @@ const list = () => {
   datasourceApi.list().then((res: any) => {
     options.value = res || []
   })
+  getAdvancedApplicationList().then((res: any) => {
+    adv_options.value = res || []
+  })
 }
 
 const saveHandler = () => {
@@ -342,6 +345,7 @@ const editHandler = (row: any) => {
   if (row) {
     pageForm.value = cloneDeep(row)
   }
+  console.log(pageForm.value)
   list()
   dialogTitle.value = row?.id ? t('prompt.edit_prompt_word') : t('prompt.add_prompt_word')
   dialogFormVisible.value = true
