@@ -6,7 +6,7 @@
     size="20"
     @click="showFloatPopover"
   >
-    <icon_sidebar_outlined></icon_sidebar_outlined>
+    <icon_sidebar_outlined_nofill />
   </el-icon>
   <el-container class="chat-container no-padding">
     <el-aside
@@ -469,6 +469,7 @@ import custom_small from '@/assets/svg/logo-custom_small.svg'
 import LOGO_fold from '@/assets/LOGO-fold.svg'
 import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
 import icon_sidebar_outlined from '@/assets/svg/icon_sidebar_outlined.svg'
+import icon_sidebar_outlined_nofill from '@/assets/embedded/icon_sidebar_outlined_nofill.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
 import icon_screen_outlined from '@/assets/svg/icon_screen_outlined.svg'
 import icon_start_outlined from '@/assets/svg/icon_start_outlined.svg'
