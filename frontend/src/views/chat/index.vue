@@ -1508,6 +1508,8 @@ onMounted(() => {
   top: 18px;
   left: 16px;
   z-index: 199;
+  color: var(--ed-text-color-primary);
+
   &::after {
     content: '';
     background-color: #1f23291a;
