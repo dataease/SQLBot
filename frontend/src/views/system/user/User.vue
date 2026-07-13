@@ -96,6 +96,7 @@
         :data="state.tableData"
         style="width: 100%"
         @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="name" show-overflow-tooltip :label="$t('user.name')" width="280" />
@@ -651,6 +652,8 @@ const state = reactive<any>({
     currentPage: 1,
     pageSize: 20,
     total: 0,
+    sortColumn: '',
+    sortOrder: '',  // 'ascending' | 'descending' | ''
   },
 })
 
@@ -1004,6 +1007,11 @@ const configParams = () => {
     })
   })
 
+  if (state.pageInfo.sortColumn) {
+    str += str ? `&order_by=${state.pageInfo.sortColumn}` : `order_by=${state.pageInfo.sortColumn}`
+    str += `&desc=${state.pageInfo.sortOrder === 'descending'}`
+  }
+
   if (str.length) {
     str = `?${str}`
   }
@@ -1144,6 +1152,12 @@ const handleSizeChange = (val: number) => {
 }
 const handleCurrentChange = (val: number) => {
   state.pageInfo.currentPage = val
+  search()
+}
+const handleSortChange = ({ prop, order }: any) => {
+  state.pageInfo.sortColumn = order ? prop : ''
+  state.pageInfo.sortOrder = order || ''
+  state.pageInfo.currentPage = 1
   search()
 }
 const formatSpaceName = (row_oid_list: Array<any>) => {

@@ -58,17 +58,34 @@ async def pager(
     status: Optional[int] = Query(None, description=f"{PLACEHOLDER_PREFIX}status"),
     origins: Optional[list[int]] = Query(None, description=f"{PLACEHOLDER_PREFIX}origin"),
     oidlist: Optional[list[int]] = Query(None, description=f"{PLACEHOLDER_PREFIX}oid"),
+    order_by: Optional[str] = Query(None, description="排序字段"),
+    desc: Optional[bool] = Query(False, description="是否降序"),
 ):
     pagination = PaginationParams(page=pageNum, size=pageSize)
     paginator = Paginator(session)
-    filters = {}
-    
+
+    # 允许排序的字段白名单（防止 SQL 注入）
+    SORT_COLUMNS = {
+        'account': UserModel.account,
+        'create_time': UserModel.create_time,
+        'name': UserModel.name,
+        'email': UserModel.email,
+        'status': UserModel.status,
+    }
+    sort_field = SORT_COLUMNS.get(order_by, UserModel.account)
+    sort_clause = sort_field.desc() if desc else sort_field.asc()
+
+    # SELECT 列必须包含 ORDER BY 列（PostgreSQL DISTINCT 约束）
+    select_columns = [UserModel.id, UserModel.account]
+    if order_by and order_by != 'account':
+        select_columns.append(sort_field)
+
     origin_stmt = (
-        select(UserModel.id, UserModel.account)
+        select(*select_columns)
         .join(UserWsModel, UserModel.id == UserWsModel.uid, isouter=True)
         .where(UserModel.id != 1)
         .distinct()
-        .order_by(UserModel.account)
+        .order_by(sort_clause)
     )
     
     if oidlist:
@@ -89,8 +106,7 @@ async def pager(
         
     user_page = await paginator.get_paginated_response(
         stmt=origin_stmt,
-        pagination=pagination,
-        **filters)
+        pagination=pagination)
     uid_list = [item.get('id') for item in user_page.items]
     if not uid_list:
         return user_page
@@ -98,7 +114,7 @@ async def pager(
         select(UserModel, UserWsModel.oid.label('ws_oid'))
         .join(UserWsModel, UserModel.id == UserWsModel.uid, isouter=True)
         .where(UserModel.id.in_(uid_list))
-        .order_by(UserModel.account, UserModel.create_time)
+        .order_by(sort_clause)
     )
     user_workspaces = session.exec(stmt).all()
     merged = defaultdict(list)
