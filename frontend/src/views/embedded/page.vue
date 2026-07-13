@@ -22,6 +22,7 @@ import { assistantApi } from '@/api/assistant'
 import { useAssistantStore } from '@/stores/assistant'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useI18n } from 'vue-i18n'
+import { i18n } from '@/i18n'
 import { request } from '@/utils/request'
 import { setCurrentColor } from '@/utils/utils'
 import { useUserStore } from '@/stores/user'
@@ -41,6 +42,24 @@ const customSet = reactive({
   theme: '#1CBA90',
   header_font_color: '#1F2329',
 }) as { [key: string]: any }
+
+// 记录哪些字段被服务端 API 配置覆盖过，避免被 locale watcher 覆盖
+const configuredKeys = new Set<string>()
+
+// 监听 locale 变化，动态更新未被子定义覆盖的翻译字段
+watch(
+  () => i18n.global.locale.value,
+  () => {
+    if (!configuredKeys.has('welcome')) {
+      customSet.welcome = t('embedded.i_am_sqlbot')
+    }
+    if (!configuredKeys.has('welcome_desc')) {
+      customSet.welcome_desc = t('embedded.data_analysis_now')
+    }
+  },
+  { immediate: true }
+)
+
 const logo = ref()
 const basePath = import.meta.env.VITE_API_BASE_URL
 const baseUrl = basePath + '/system/assistant/picture/'
@@ -65,7 +84,12 @@ const communicationCb = async (event: any) => {
       if (type === 4) {
         assistantStore.setToken(certificate)
         assistantStore.setAssistant(true)
-        await userStore.info()
+        try {
+          await userStore.info()
+        } catch (e) {
+          console.error('Failed to fetch user info in embedded page:', e)
+        }
+        setParamLanguage()
         loading.value = false
         return
       }
@@ -83,6 +107,9 @@ const communicationCb = async (event: any) => {
     }
     if (event.data?.busi == 'createConversation') {
       createChat()
+    }
+    if (event.data?.busi == 'setLang') {
+      userStore.setLanguage(event.data.lang)
     }
   }
 }
@@ -132,8 +159,15 @@ const setPageCustomColor = (val: any) => {
   setCurrentColor(val, ele)
 }
 
+const setParamLanguage = () => {
+  const lang = route.query.lang
+  if (lang) {
+    userStore.setLanguage(lang as string)
+  }
+}
 onBeforeMount(async () => {
   const assistantId = route.query.id
+  setParamLanguage()
   if (!assistantId) {
     ElMessage.error('Miss embedded id, please check embedded url')
     return
@@ -193,6 +227,7 @@ onBeforeMount(async () => {
           ![null, undefined].includes(rawData[key])
         ) {
           customSet[key] = rawData[key]
+          configuredKeys.add(key)
         }
       }
 

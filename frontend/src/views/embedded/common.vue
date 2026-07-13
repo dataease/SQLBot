@@ -30,6 +30,13 @@ const divLoading = ref(true)
 const eventName = 'sqlbot_embedded_event'
 const busiFlag = ref('ds')
 
+const setParamLanguage = () => {
+  const lang = route.query.lang
+  if (lang) {
+    userStore.setLanguage(lang as string)
+  }
+}
+
 const isWsAdmin = computed(() => {
   return userStore.isAdmin || userStore.isSpaceAdmin
 })
@@ -49,12 +56,20 @@ const communicationCb = async (event: any) => {
       assistantStore.setType(type)
       assistantStore.setToken(certificate)
       assistantStore.setAssistant(true)
-      await userStore.info()
+      try {
+        await userStore.info()
+      } catch (e) {
+        console.error('Failed to fetch user info in common embedded:', e)
+      }
+      setParamLanguage()
       loading.value = false
       return
     }
     if (event.data?.hostOrigin) {
       assistantStore.setHostOrigin(event.data?.hostOrigin)
+    }
+    if (event.data?.busi == 'setLang') {
+      userStore.setLanguage(event.data.lang)
     }
   }
 }
@@ -82,6 +97,7 @@ const registerReady = (assistantId: any) => {
 }
 
 onBeforeMount(async () => {
+  setParamLanguage()
   const assistantId = route.query.id
   if (!assistantId) {
     ElMessage.error('Miss embedded id, please check embedded url')

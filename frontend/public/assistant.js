@@ -1,4 +1,4 @@
-; (function () {
+;(function () {
   window.sqlbot_assistant_handler = window.sqlbot_assistant_handler || {}
   const defaultData = {
     id: '1',
@@ -73,6 +73,9 @@
     }
     if (data.history) {
       srcUrl += `&history=${data.history}`
+    }
+    if (data.lang) {
+      srcUrl += `&lang=${data.lang}`
     }
     return `
 <div id="sqlbot-assistant-chat-container">
@@ -171,12 +174,12 @@
     }
     chat_button_img.style.display = 'block'
     function resizeImg() {
-      const rate = window.outerWidth / window.innerWidth;
-      chat_button_img.style.width = `${30 * (1 / rate)}px`;
-      chat_button_img.style.height = `${30 * (1 / rate)}px`;
+      const rate = window.outerWidth / window.innerWidth
+      chat_button_img.style.width = `${30 * (1 / rate)}px`
+      chat_button_img.style.height = `${30 * (1 / rate)}px`
     }
     resizeImg()
-    window.addEventListener('resize', resizeImg);
+    window.addEventListener('resize', resizeImg)
     //  对话框元素
     const chat_container = root.querySelector('#sqlbot-assistant-chat-container')
     // 引导层
@@ -567,6 +570,7 @@
     const online = getParam(src, 'online')
     const userFlag = getParam(src, 'userFlag')
     const history = getParam(src, 'history')
+    const lang = getParam(src, 'lang')
     let url = `${domain_url}/api/v1/system/assistant/info/${id}`
     if (domain_url.includes('5173')) {
       url = url.replace('5173', '8000')
@@ -605,6 +609,7 @@
         tempData['online'] = online && online.toString().toLowerCase() == 'true'
         tempData['userFlag'] = userFlag
         tempData['history'] = history
+        tempData['lang'] = lang
         initsqlbot_assistant(tempData)
         registerMessageEvent(id, tempData)
       })
@@ -769,6 +774,24 @@
         const params = {
           busi: 'setOnline',
           online,
+          eventName,
+          messageId: id,
+        }
+        const contentWindow = iframe.contentWindow
+        contentWindow.postMessage(params, url)
+      }
+    }
+    window.sqlbot_assistant_handler[id]['setLang'] = (lang) => {
+      if (lang != null && typeof lang != 'string') {
+        throw new Error('The parameter can only be of type string')
+      }
+      const iframe = document.getElementById(`sqlbot-assistant-chat-iframe-${id}`)
+      if (iframe) {
+        const url = iframe.src
+        const eventName = 'sqlbot_assistant_event'
+        const params = {
+          busi: 'setLang',
+          lang,
           eventName,
           messageId: id,
         }
