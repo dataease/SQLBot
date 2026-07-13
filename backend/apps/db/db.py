@@ -35,7 +35,6 @@ from apps.db.es_engine import get_es_connect, get_es_index, get_es_fields, get_e
 from common.core.config import settings
 import sqlglot
 from sqlglot import expressions as exp
-from sqlalchemy.pool import NullPool
 from pyhive import hive
 
 try:
@@ -144,25 +143,35 @@ def get_engine(ds: CoreDatasource, timeout: int = 0) -> Engine:
     if timeout > 0:
         conf.timeout = timeout
 
+    db_config = {
+        'pool_size': conf.poolSize if conf.poolSize else 5,
+        'max_overflow': 20,
+        'pool_recycle': 3600
+    }
+
     if equals_ignore_case(ds.type, "pg"):
         if conf.dbSchema is not None and conf.dbSchema != "":
             engine = create_engine(get_uri(ds),
                                    connect_args={"options": f"-c search_path={urllib.parse.quote(conf.dbSchema)}",
-                                                 "connect_timeout": conf.timeout}, poolclass=NullPool)
+                                                 "connect_timeout": conf.timeout}, **db_config)
         else:
-            engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, poolclass=NullPool)
+            engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, **db_config)
     elif equals_ignore_case(ds.type, 'sqlServer'):
         engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds.type, conf),
-                               poolclass=NullPool)
+                               **db_config)
     elif equals_ignore_case(ds.type, 'oracle'):
-        engine = create_engine(get_uri(ds), poolclass=NullPool)
+        engine = create_engine(get_uri(ds), **db_config)
     elif equals_ignore_case(ds.type, 'mysql'):  # mysql
         ssl_mode = {"require": True} if conf.ssl else None
         engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout, "ssl": ssl_mode},
-                               poolclass=NullPool)
+                               **db_config)
     else:  # ck
-        engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, poolclass=NullPool)
+        engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, **db_config)
     return engine
+
+
+def get_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config):
+    pass
 
 
 def get_session(ds: CoreDatasource | AssistantOutDsSchema):
@@ -171,10 +180,12 @@ def get_session(ds: CoreDatasource | AssistantOutDsSchema):
         out_conf = get_out_ds_conf(ds, 30)
         ds.configuration = out_conf
 
-    engine = get_engine(ds)
-    session_maker = sessionmaker(bind=engine)
-    session = session_maker()
-    return session
+    # engine = get_engine(ds)
+    # session_maker = sessionmaker(bind=engine)
+
+    # get session from pool
+    session = pool_manager.get_pool(ds=ds, **{})
+    return session()
 
 
 def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDsSchema, is_raise: bool = False):
@@ -992,3 +1003,53 @@ def checkParams(extraParams: str, illegalParams: List[str]):
             k, v = kv.split('=')
             if k in illegalParams:
                 raise HTTPException(status_code=500, detail=f'Illegal Parameter: {k}')
+
+
+import threading
+from collections import OrderedDict
+
+
+class ConnectionPoolManager:
+    def __init__(self, max_pools=500):
+        """
+        init
+        :param max_pools: max pool
+        """
+        self.max_pools = max_pools
+        self._pools = OrderedDict()  # 使用有序字典实现 LRU
+        self._lock = threading.Lock()  # 保证多线程安全
+
+    def get_pool(self, ds: CoreDatasource | AssistantOutDsSchema, **db_config):
+        """
+        get connection pool（lazy load + LRU update）
+        """
+        with self._lock:
+            if ds.id:
+                # 1. 如果连接池已存在，将其移动到字典末尾（标记为最近使用）
+                if ds.id in self._pools:
+                    self._pools.move_to_end(ds.id)
+                    print(f"[LRU] return: {ds.id}")
+                    return self._pools[ds.id]
+
+                # 2. 如果连接池不存在，检查是否达到上限，若达到则淘汰最久未使用的（字典头部）
+                if len(self._pools) >= self.max_pools:
+                    oldest_id, oldest_pool = self._pools.popitem(last=False)
+                    oldest_pool.close()  # 安全关闭被驱逐的连接池
+                    print(f"[LRU] remove oldest: {oldest_id}")
+
+            # 3. 创建新连接池并放入字典末尾
+            engine = get_engine(ds)
+            new_pool = sessionmaker(bind=engine)
+            self._pools[ds.id] = new_pool
+            print(f"[LRU] create: {ds.id}")
+            return new_pool
+
+    def close_all(self):
+        """stop"""
+        with self._lock:
+            for pool in self._pools.values():
+                pool.close()
+            self._pools.clear()
+
+
+pool_manager = ConnectionPoolManager(max_pools=500)
