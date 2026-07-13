@@ -127,12 +127,34 @@ class SystemLogger:
         user_agent = None
 
         if request:
-            # Obtain IP address
-            if request.client:
+            # Prefer real client IP headers, then fallback to socket peer IP.
+            header_candidates = [
+                "x-forwarded-for",
+                "x-real-ip",
+                "cf-connecting-ip",
+                "x-client-ip",
+                "x-forwarded",
+                "forwarded",
+            ]
+            for key in header_candidates:
+                value = request.headers.get(key)
+                if value:
+                    if key == "x-forwarded-for":
+                        ip_address = value.split(",")[0].strip()
+                    elif key == "forwarded":
+                        # RFC 7239 format, e.g. for=203.0.113.43;proto=https;by=203.0.113.1
+                        parts = [part.strip() for part in value.split(";")]
+                        for part in parts:
+                            if part.lower().startswith("for="):
+                                ip_address = part.split("=", 1)[1].strip().strip('"')
+                                break
+                    else:
+                        ip_address = value.strip()
+                if ip_address:
+                    break
+
+            if not ip_address and request.client:
                 ip_address = request.client.host
-            # Attempt to obtain the real IP from X-Forwarded-For
-            if "x-forwarded-for" in request.headers:
-                ip_address = request.headers["x-forwarded-for"].split(",")[0].strip()
 
             # Get User Agent
             user_agent = request.headers.get("user-agent")

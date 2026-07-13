@@ -10,8 +10,10 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 from fastapi_mcp import FastApiMCP
+from starlette.datastructures import MutableHeaders
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from alembic import command
 from apps.api import api_router
@@ -76,6 +78,20 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None
 )
+
+
+class McpClientIpForwardMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        client_host = request.client.host if request.client else None
+        if client_host:
+            headers = MutableHeaders(scope=request.scope)
+            if not headers.get("x-real-ip"):
+                headers["x-real-ip"] = client_host
+            if not headers.get("x-forwarded-for"):
+                headers["x-forwarded-for"] = client_host
+            if not headers.get("x-client-ip"):
+                headers["x-client-ip"] = client_host
+        return await call_next(request)
 
 # cache docs for different text
 _openapi_cache: Dict[str, Dict[str, Any]] = {}
@@ -174,6 +190,7 @@ if settings.SQLBOT_DOC_ENABLED:
 
 
 mcp_app = FastAPI()
+mcp_app.add_middleware(McpClientIpForwardMiddleware)
 # mcp server, images path
 images_path = settings.MCP_IMAGE_PATH
 os.makedirs(images_path, exist_ok=True)
