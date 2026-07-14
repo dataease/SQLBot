@@ -208,8 +208,6 @@ onBeforeMount(async () => {
   const history: boolean = route.query.history !== 'false'
   assistantStore.setHistory(history)
 
-  const now = Date.now()
-  assistantStore.setFlag(now)
   assistantStore.setId(assistantId?.toString() || '')
   /* const param = {
     id: assistantId,

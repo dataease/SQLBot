@@ -191,3 +191,5 @@ test.py
 !/.venv/
 
 sqlbot-xpack
+
+.claude

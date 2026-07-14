@@ -1,10 +1,6 @@
 import { defineStore } from 'pinia'
 import { store } from './index'
 import { chatApi, ChatInfo } from '@/api/chat'
-import { useCache } from '@/utils/useCache'
-
-const { wsCache } = useCache()
-const flagKey = 'sqlbit-assistant-flag'
 type Resolver<T = any> = (value: T | PromiseLike<T>) => void
 type Rejecter = (reason?: any) => void
 interface PendingRequest<T = any> {
@@ -16,7 +12,6 @@ interface AssistantState {
   id: string
   token: string
   assistant: boolean
-  flag: number
   type: number
   certificate: string
   online: boolean
@@ -35,7 +30,6 @@ export const AssistantStore = defineStore('assistant', {
       id: '',
       token: '',
       assistant: false,
-      flag: 0,
       type: 0,
       certificate: '',
       online: false,
@@ -60,9 +54,6 @@ export const AssistantStore = defineStore('assistant', {
     },
     getAssistant(): boolean {
       return this.assistant
-    },
-    getFlag(): number {
-      return this.flag
     },
     getType(): number {
       return this.type
@@ -176,14 +167,6 @@ export const AssistantStore = defineStore('assistant', {
     setAssistant(assistant: boolean) {
       this.assistant = assistant
     },
-    setFlag(flag: number) {
-      if (wsCache.get(flagKey)) {
-        this.flag = wsCache.get(flagKey)
-      } else {
-        this.flag = flag
-        wsCache.set(flagKey, flag)
-      }
-    },
     setPageEmbedded(embedded?: boolean) {
       this.pageEmbedded = !!embedded
     },
@@ -208,7 +191,6 @@ export const AssistantStore = defineStore('assistant', {
       return chat
     },
     clear() {
-      wsCache.delete(flagKey)
       this.$reset()
     },
   },

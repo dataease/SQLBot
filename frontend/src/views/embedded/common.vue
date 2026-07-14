@@ -104,8 +104,6 @@ onBeforeMount(async () => {
     return
   }
   assistantStore.setType(4)
-  const now = Date.now()
-  assistantStore.setFlag(now)
   assistantStore.setId(assistantId?.toString() || '')
   assistantStore.setAssistant(true)
   registerReady(assistantId)

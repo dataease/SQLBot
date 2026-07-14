@@ -211,8 +211,6 @@ onBeforeMount(async () => {
   if (userFlag && userFlag === '1') {
     userFlag = '100001'
   }
-  const now = Date.now()
-  assistantStore.setFlag(now)
   assistantStore.setId(assistantId?.toString() || '')
   if (assistantType === 4) {
     assistantStore.setAssistant(true)
