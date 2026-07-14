@@ -165,6 +165,7 @@ async def picture(file_id: str = Path(description="file_id")):
 
 
 @router.patch('/ui', summary=f"{PLACEHOLDER_PREFIX}assistant_ui_api", description=f"{PLACEHOLDER_PREFIX}assistant_ui_api")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.APPLICATION, result_id_expr="id"))
 async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = []):
     json_data = json.loads(data)
