@@ -1,15 +1,17 @@
 
 import base64
 import json
+import re
 from typing import Optional
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from starlette.responses import Response
 import jwt
 from sqlmodel import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 from apps.system.crud.apikey_manage import get_api_key
 from apps.system.models.system_model import ApiKeyModel, AssistantModel
-from common.core.db import engine 
+from common.core.db import engine
 from apps.system.crud.assistant import get_assistant_info, get_assistant_user
 from apps.system.crud.user import get_user_by_account, get_user_info
 from apps.system.schemas.system_schema import AssistantHeader, UserInfoDTO
@@ -17,7 +19,7 @@ from common.core import security
 from common.core.config import settings
 from common.core.schemas import TokenPayload
 from common.utils.locale import I18n
-from common.utils.utils import SQLBotLogUtil, get_origin_from_referer
+from common.utils.utils import SQLBotLogUtil, get_origin_from_referer, origin_match_domain
 from common.utils.whitelist import whiteUtils
 from fastapi.security.utils import get_authorization_scheme_param
 from common.core.deps import get_i18n
@@ -31,6 +33,26 @@ class TokenMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         
         if self.is_options(request) or whiteUtils.is_whitelisted(request.url.path):
+            # 动态处理 /system/assistant/info/{id} 的 CORS 预检
+            if request.method == "OPTIONS":
+                origin = request.headers.get("origin", "")
+                if origin:
+                    match = re.search(r'/system/assistant/info/(\d+)', request.url.path)
+                    if match:
+                        assistant_id = int(match.group(1))
+                        with Session(engine) as session:
+                            db_model = session.get(AssistantModel, assistant_id)
+                            if db_model and origin_match_domain(origin, db_model.domain):
+                                return Response(
+                                    status_code=200,
+                                    headers={
+                                        "Access-Control-Allow-Origin": origin,
+                                        "Access-Control-Allow-Methods": "GET, OPTIONS",
+                                        "Access-Control-Allow-Headers": "*",
+                                        "Access-Control-Allow-Credentials": "true",
+                                        "Access-Control-Max-Age": "600",
+                                    },
+                                )
             return await call_next(request)
         assistantTokenKey = settings.ASSISTANT_TOKEN_KEY
         assistantToken = request.headers.get(assistantTokenKey)

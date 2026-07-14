@@ -12,6 +12,17 @@ from common.utils.utils import get_domain_list
 from common.core.response_middleware import ResponseMiddleware
 
 
+def _update_cors_middleware_instance(app: FastAPI, updated_origins: list[str]):
+    """遍历 middleware 栈，找到 CORSMiddleware 实例并更新其 allow_origins。"""
+    stack = getattr(app, 'middleware_stack', None)
+    while stack is not None and hasattr(stack, 'app'):
+        if isinstance(stack, CORSMiddleware):
+            stack.allow_origins = updated_origins
+            return
+        stack = stack.app
+
+
+
 def dynamic_upgrade_cors(request: Request, session: Session):
     list_result = session.exec(select(AssistantModel).order_by(AssistantModel.create_time)).all()
     seen = set()
@@ -37,6 +48,7 @@ def dynamic_upgrade_cors(request: Request, session: Session):
     updated_origins = list(set(settings.all_cors_origins + unique_domains))
     if cors_middleware:
         cors_middleware.kwargs['allow_origins'] = updated_origins
+        _update_cors_middleware_instance(app, updated_origins)
     if response_middleware:
         for instance in ResponseMiddleware.instances:
             instance.update_allow_origins(updated_origins)

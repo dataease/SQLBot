@@ -22,6 +22,21 @@ from common.core.deps import Trans
 from common.core.response_middleware import ResponseMiddleware
 
 
+def _update_cors_middleware_instance(app: FastAPI, updated_origins: list[str]):
+    """遍历 middleware 栈，找到 CORSMiddleware 实例并更新其 allow_origins。
+
+    仅修改 middleware.kwargs 不会影响已构建的中间件实例，
+    需要直接更新实例的 allow_origins 属性。
+    """
+    stack = getattr(app, 'middleware_stack', None)
+    while stack is not None and hasattr(stack, 'app'):
+        if isinstance(stack, CORSMiddleware):
+            stack.allow_origins = updated_origins
+            return
+        stack = stack.app
+
+
+
 @cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="assistant_id")
 async def get_assistant_info(*, session: Session, assistant_id: int) -> AssistantModel | None:
     db_model = session.get(AssistantModel, assistant_id)
@@ -98,6 +113,7 @@ def init_dynamic_cors(app: FastAPI):
             updated_origins = list(set(settings.all_cors_origins + unique_domains))
             if cors_middleware:
                 cors_middleware.kwargs['allow_origins'] = updated_origins
+                _update_cors_middleware_instance(app, updated_origins)
             if response_middleware:
                 for instance in ResponseMiddleware.instances:
                     instance.update_allow_origins(updated_origins)

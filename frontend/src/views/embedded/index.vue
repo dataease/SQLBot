@@ -20,7 +20,7 @@
     </div>
     <div class="sqlbot-chat-container">
       <chat-component
-        v-if="!loading"
+        v-if="!loading && tokenReady"
         ref="chatRef"
         :welcome="customSet.welcome"
         :welcome-desc="customSet.welcome_desc"
@@ -47,7 +47,7 @@ import LOGO from '@/assets/svg/logo-custom_small.svg'
 import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useRoute } from 'vue-router'
-import { assistantApi } from '@/api/assistant'
+// import { assistantApi } from '@/api/assistant'
 import { useAssistantStore } from '@/stores/assistant'
 import { setCurrentColor } from '@/utils/utils'
 import { useI18n } from 'vue-i18n'
@@ -72,19 +72,30 @@ const openHistory = () => {
   chatRef.value?.showFloatPopover()
 }
 
-const validator = ref({
+/* const validator = ref({
   id: '',
   valid: false,
   id_match: false,
   token: '',
-})
+}) */
 const appName = ref('')
 const loading = ref(true)
+const tokenReady = ref(false)
 const eventName = 'sqlbot_assistant_event'
+
+let resolveTokenReady: (() => void) | null = null
+const tokenReadyPromise = new Promise<void>((resolve) => {
+  resolveTokenReady = resolve
+})
 const communicationCb = async (event: any) => {
   if (event.data?.eventName === eventName) {
     if (event.data?.messageId !== route.query.id) {
       return
+    }
+    if (event.data['sqlbot_embedded_token']) {
+      assistantStore.setToken(event.data['sqlbot_embedded_token'])
+      resolveTokenReady?.()
+      tokenReady.value = true
     }
     if (event.data?.busi == 'certificate') {
       const certificate = event.data['certificate']
@@ -201,13 +212,13 @@ onBeforeMount(async () => {
   const now = Date.now()
   assistantStore.setFlag(now)
   assistantStore.setId(assistantId?.toString() || '')
-  const param = {
+  /* const param = {
     id: assistantId,
     virtual: userFlag || assistantStore.getFlag,
     online,
   }
   validator.value = await assistantApi.validate(param)
-  assistantStore.setToken(validator.value.token)
+  assistantStore.setToken(validator.value.token) */
   assistantStore.setAssistant(true)
   loading.value = false
 
@@ -219,6 +230,8 @@ onBeforeMount(async () => {
     messageId: assistantId,
   }
   window.parent.postMessage(readyData, '*')
+
+  await tokenReadyPromise
 
   request.get(`/system/assistant/${assistantId}`).then((res) => {
     if (res.name) {
