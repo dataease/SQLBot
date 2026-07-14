@@ -164,6 +164,9 @@ defineExpose({
 </template>
 
 <style scoped lang="less">
+:deep(.ed-radio__label) {
+  font-weight: 400;
+}
 .btn {
   margin-left: auto;
   height: 26px;

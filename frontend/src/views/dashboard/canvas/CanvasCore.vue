@@ -727,7 +727,11 @@ function startResize(e: MouseEvent, point: string, item: CanvasItem, index: numb
   infoBox.value.point = point
 }
 
-function containerClick() {
+function containerClick(e?: MouseEvent) {
+  // Ignore clicks that originate inside a component so interacting with component
+  // content (e.g. selecting/copying cells in an S2 table) does not clear the
+  // current selection. Only blank-canvas clicks deselect.
+  if ((e?.target as HTMLElement)?.closest?.('.item')) return
   // remove current component info
   dashboardStore.setCurComponent(null)
 }

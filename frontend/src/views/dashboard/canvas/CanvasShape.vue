@@ -52,7 +52,11 @@ const props = defineProps({
 
 const { draggable } = toRefs(props)
 const shapeClick = (e: MouseEvent) => {
-  e.stopPropagation()
+  // Do not stopPropagation here: the click must reach window so components that
+  // rely on a window-level click listener (e.g. the S2 table copy interaction,
+  // which only enables Cmd/Ctrl+C when the last click landed on its canvas) work
+  // inside the editor. Deselection is handled by containerClick ignoring clicks
+  // that originate inside a component.
   e.preventDefault()
 }
 

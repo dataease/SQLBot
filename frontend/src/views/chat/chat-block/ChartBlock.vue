@@ -264,7 +264,7 @@ function addToDashboard() {
     }
 
     recordeInfo['chart'] = {
-      type: chartBaseInfo?.type,
+      type: currentChartType.value ?? chartBaseInfo?.type,
       title: chartBaseInfo?.title,
       columns: chartBaseInfo?.columns,
       xAxis: axis?.x ? [axis?.x] : [],

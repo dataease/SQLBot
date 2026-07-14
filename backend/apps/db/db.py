@@ -640,6 +640,20 @@ def is_numeric_type_code(type_code, dialect_name: str) -> bool:
         type_str = str(type_code).upper()
         return any(kw in type_str for kw in ['NUMBER', 'FLOAT', 'INTEGER', 'BINARY_FLOAT', 'BINARY_DOUBLE'])
 
+    if dialect_name == 'clickhouse':
+        if isinstance(type_code, str):
+            upper_type = type_code.upper()
+            # 数值类型关键字
+            numeric_prefixes = (
+                'INT',  # Int8/16/32/64
+                'UINT',  # UInt8/16/32/64  ✅ 加上 UINT
+                'FLOAT',  # Float32, Float64
+                'DECIMAL',  # Decimal, Decimal32/64/128
+                'BOOL',  # Bool
+                'BIT',  # 极少数场景
+            )
+            return any(upper_type.startswith(p) for p in numeric_prefixes)
+
     # ---------- SQL Server (pyodbc / pymssql) ----------
     if dialect_name == 'mssql':
         if isinstance(type_code, int):
@@ -841,7 +855,7 @@ def build_fields_info_from_cursor(cursor, origin_column, db_type='postgresql'):
     for col_info in cursor.description:
         col_name = col_info[0]
 
-        if db_type == 'mysql':
+        if db_type in ('mysql', 'mariadb', 'doris', 'starrocks'):
             # MySQL/pymysql 类型码
             is_numeric = col_info[1] in (
                 1,  # TINYINT
@@ -852,34 +866,32 @@ def build_fields_info_from_cursor(cursor, origin_column, db_type='postgresql'):
                 8,  # BIGINT
                 9,  # MEDIUMINT
                 16,  # BIT
-                246,  # DECIMAL
+                246,  # DECIMAL/NEWDECIMAL
             )
         elif db_type in ('postgresql', 'redshift', 'kingbase'):
             # PostgreSQL/psycopg2 类型 OID
             is_numeric = col_info[1] in (
+                16,  # bool
                 20,  # int8
                 21,  # int2
                 23,  # int4
                 700,  # float4
                 701,  # float8
+                790,  # money
                 1700,  # numeric
-                16,  # boolean
             )
         elif db_type == 'dm':
-            # 达梦数据库类型码
-            is_numeric = col_info[1] in (
-                3,  # DECIMAL/NUMERIC
-                2,  # NUMBER
-                4,  # INTEGER
-                5,  # INT
-                6,  # BIGINT
-                7,  # TINYINT
-                8,  # BYTE
-                9,  # FLOAT
-                10,  # DOUBLE
-                11,  # REAL
-                12,  # BOOLEAN
-            )
+            # 达梦数据库类型码 <class 'dmPython.DECIMAL'>
+            # 获取类型类名
+            type_name = col_info[1].__name__.upper() if hasattr(col_info[1], '__name__') else str(col_info[1]).upper()
+
+            is_numeric = type_name in {
+                'INT', 'INTEGER',
+                'BIGINT', 'SMALLINT', 'TINYINT',
+                'NUMBER', 'NUMERIC', 'DECIMAL',
+                'FLOAT', 'DOUBLE', 'REAL',
+                'BIT', 'BOOLEAN',
+            }
         elif db_type == 'hive':
             # Hive 类型对象转字符串判断
             type_str = str(col_info[1]).lower()
