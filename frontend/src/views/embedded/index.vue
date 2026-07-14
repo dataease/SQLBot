@@ -20,7 +20,7 @@
     </div>
     <div class="sqlbot-chat-container">
       <chat-component
-        v-if="!loading && tokenReady"
+        v-if="!loading"
         ref="chatRef"
         :welcome="customSet.welcome"
         :welcome-desc="customSet.welcome_desc"
@@ -42,7 +42,6 @@ import {
   watch,
 } from 'vue'
 import ChatComponent from '@/views/chat/index.vue'
-import { request } from '@/utils/request'
 import LOGO from '@/assets/svg/logo-custom_small.svg'
 import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
@@ -80,11 +79,10 @@ const openHistory = () => {
 }) */
 const appName = ref('')
 const loading = ref(true)
-const tokenReady = ref(false)
 const eventName = 'sqlbot_assistant_event'
 
-let resolveTokenReady: (() => void) | null = null
-const tokenReadyPromise = new Promise<void>((resolve) => {
+let resolveTokenReady: ((data: any) => any) | null = null
+const tokenReadyPromise = new Promise<any>((resolve) => {
   resolveTokenReady = resolve
 })
 const communicationCb = async (event: any) => {
@@ -94,8 +92,8 @@ const communicationCb = async (event: any) => {
     }
     if (event.data['sqlbot_embedded_token']) {
       assistantStore.setToken(event.data['sqlbot_embedded_token'])
-      resolveTokenReady?.()
-      tokenReady.value = true
+      const originData = event.data['sqlbot_origin_data']
+      resolveTokenReady?.(originData)
     }
     if (event.data?.busi == 'certificate') {
       const certificate = event.data['certificate']
@@ -220,8 +218,6 @@ onBeforeMount(async () => {
   validator.value = await assistantApi.validate(param)
   assistantStore.setToken(validator.value.token) */
   assistantStore.setAssistant(true)
-  loading.value = false
-
   window.addEventListener('message', communicationCb)
   const readyData = {
     eventName: 'sqlbot_assistant_event',
@@ -231,46 +227,44 @@ onBeforeMount(async () => {
   }
   window.parent.postMessage(readyData, '*')
 
-  await tokenReadyPromise
-
-  request.get(`/system/assistant/${assistantId}`).then((res) => {
-    if (res.name) {
-      appName.value = res.name
+  const res = await tokenReadyPromise
+  loading.value = false
+  if (res?.name) {
+    appName.value = res.name
+  }
+  if (res?.configuration) {
+    const rawData = JSON.parse(res?.configuration)
+    assistantStore.setAutoDs(rawData?.auto_ds)
+    if (rawData.logo) {
+      logo.value = baseUrl + rawData.logo
     }
-    if (res?.configuration) {
-      const rawData = JSON.parse(res?.configuration)
-      assistantStore.setAutoDs(rawData?.auto_ds)
-      if (rawData.logo) {
-        logo.value = baseUrl + rawData.logo
-      }
 
-      for (const key in customSet) {
-        if (
-          Object.prototype.hasOwnProperty.call(customSet, key) &&
-          ![null, undefined].includes(rawData[key])
-        ) {
-          customSet[key] = rawData[key]
-          configuredKeys.add(key)
-        }
+    for (const key in customSet) {
+      if (
+        Object.prototype.hasOwnProperty.call(customSet, key) &&
+        ![null, undefined].includes(rawData[key])
+      ) {
+        customSet[key] = rawData[key]
+        configuredKeys.add(key)
       }
-
-      if (!rawData.theme) {
-        const { customColor, themeColor } = appearanceStore
-        const currentColor =
-          themeColor === 'custom' && customColor
-            ? customColor
-            : themeColor === 'blue'
-              ? '#3370ff'
-              : '#1CBA90'
-        customSet.theme = currentColor || customSet.theme
-      }
-
-      nextTick(() => {
-        setPageCustomColor(customSet.theme)
-        setPageHeaderFontColor(customSet.header_font_color)
-      })
     }
-  })
+
+    if (!rawData.theme) {
+      const { customColor, themeColor } = appearanceStore
+      const currentColor =
+        themeColor === 'custom' && customColor
+          ? customColor
+          : themeColor === 'blue'
+            ? '#3370ff'
+            : '#1CBA90'
+      customSet.theme = currentColor || customSet.theme
+    }
+
+    nextTick(() => {
+      setPageCustomColor(customSet.theme)
+      setPageHeaderFontColor(customSet.header_font_color)
+    })
+  }
 })
 
 onBeforeUnmount(() => {

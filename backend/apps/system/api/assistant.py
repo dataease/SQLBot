@@ -313,13 +313,13 @@ async def update(request: Request, session: SessionDep, editor: AssistantDTO):
     dynamic_upgrade_cors(request=request, session=session)
 
 
-@router.get("/{id}", response_model=AssistantModel, summary=f"{PLACEHOLDER_PREFIX}assistant_query_api", description=f"{PLACEHOLDER_PREFIX}assistant_query_api")
+""" @router.get("/{id}", response_model=AssistantModel, summary=f"{PLACEHOLDER_PREFIX}assistant_query_api", description=f"{PLACEHOLDER_PREFIX}assistant_query_api")
 async def get_one(session: SessionDep, id: int = Path(description="ID")):
     db_model = await get_assistant_info(session=session, assistant_id=id)
     if not db_model:
         raise ValueError(f"AssistantModel with id {id} not found")
     db_model = AssistantModel.model_validate(db_model)
-    return db_model
+    return db_model """
 
 
 @router.delete("/{id}", summary=f"{PLACEHOLDER_PREFIX}assistant_del_api", description=f"{PLACEHOLDER_PREFIX}assistant_del_api")

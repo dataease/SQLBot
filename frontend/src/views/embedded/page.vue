@@ -23,7 +23,6 @@ import { useAssistantStore } from '@/stores/assistant'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useI18n } from 'vue-i18n'
 import { i18n } from '@/i18n'
-import { request } from '@/utils/request'
 import { setCurrentColor } from '@/utils/utils'
 import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
@@ -74,8 +73,8 @@ const divLoading = ref(true)
 const tokenReady = ref(false)
 const eventName = 'sqlbot_embedded_event'
 
-let resolveTokenReady: (() => void) | null = null
-const tokenReadyPromise = new Promise<void>((resolve) => {
+let resolveTokenReady: ((data: any) => void) | null = null
+const tokenReadyPromise = new Promise<any>((resolve) => {
   resolveTokenReady = resolve
 })
 const communicationCb = async (event: any) => {
@@ -83,13 +82,16 @@ const communicationCb = async (event: any) => {
     if (event.data?.messageId !== route.query.id) {
       return
     }
+    const assistantTypeObj = event.data['type']
     if (
-      event.data['type'] &&
+      assistantTypeObj !== null &&
+      assistantTypeObj !== undefined &&
       parseInt(event.data['type']) !== 4 &&
       event.data['sqlbot_embedded_token']
     ) {
       assistantStore.setToken(event.data['sqlbot_embedded_token'])
-      resolveTokenReady?.()
+      const originData = event.data['sqlbot_origin_data']
+      resolveTokenReady?.(originData)
       tokenReady.value = true
     }
     if (event.data?.busi == 'certificate') {
@@ -228,42 +230,41 @@ onBeforeMount(async () => {
 
   registerReady(assistantId)
 
-  await tokenReadyPromise
+  const res = await tokenReadyPromise
   loading.value = false
-  request.get(`/system/assistant/${assistantId}`).then((res) => {
-    if (res?.configuration) {
-      const rawData = JSON.parse(res?.configuration)
-      assistantStore.setAutoDs(rawData?.auto_ds)
-      if (rawData.logo) {
-        logo.value = baseUrl + rawData.logo
-      }
-      rawData['name'] = rawData['name'] || res['name']
-      for (const key in customSet) {
-        if (
-          Object.prototype.hasOwnProperty.call(customSet, key) &&
-          ![null, undefined].includes(rawData[key])
-        ) {
-          customSet[key] = rawData[key]
-          configuredKeys.add(key)
-        }
-      }
 
-      if (!rawData.theme) {
-        const { customColor, themeColor } = appearanceStore
-        const currentColor =
-          themeColor === 'custom' && customColor
-            ? customColor
-            : themeColor === 'blue'
-              ? '#3370ff'
-              : '#1CBA90'
-        customSet.theme = currentColor || customSet.theme
-      }
-
-      nextTick(() => {
-        setPageCustomColor(customSet.theme)
-      })
+  if (res?.configuration) {
+    const rawData = JSON.parse(res?.configuration)
+    assistantStore.setAutoDs(rawData?.auto_ds)
+    if (rawData.logo) {
+      logo.value = baseUrl + rawData.logo
     }
-  })
+    rawData['name'] = rawData['name'] || res['name']
+    for (const key in customSet) {
+      if (
+        Object.prototype.hasOwnProperty.call(customSet, key) &&
+        ![null, undefined].includes(rawData[key])
+      ) {
+        customSet[key] = rawData[key]
+        configuredKeys.add(key)
+      }
+    }
+
+    if (!rawData.theme) {
+      const { customColor, themeColor } = appearanceStore
+      const currentColor =
+        themeColor === 'custom' && customColor
+          ? customColor
+          : themeColor === 'blue'
+            ? '#3370ff'
+            : '#1CBA90'
+      customSet.theme = currentColor || customSet.theme
+    }
+
+    nextTick(() => {
+      setPageCustomColor(customSet.theme)
+    })
+  }
 })
 
 onBeforeUnmount(() => {
