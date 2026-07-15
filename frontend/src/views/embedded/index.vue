@@ -20,7 +20,7 @@
     </div>
     <div class="sqlbot-chat-container">
       <chat-component
-        v-if="!loading && tokenReady"
+        v-if="!loading"
         ref="chatRef"
         :welcome="customSet.welcome"
         :welcome-desc="customSet.welcome_desc"
@@ -79,7 +79,6 @@ const openHistory = () => {
 }) */
 const appName = ref('')
 const loading = ref(true)
-const tokenReady = ref(false)
 const eventName = 'sqlbot_assistant_event'
 
 let resolveTokenReady: ((data: any) => any) | null = null
