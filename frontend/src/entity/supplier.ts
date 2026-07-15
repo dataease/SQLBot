@@ -276,7 +276,7 @@ export const supplierList: Array<{
           { name: 'doubao-1-5-pro-32k-character-250715' },
           { name: 'kimi-k2-250711' },
           { name: 'deepseek-v3-250324' },
-          { name: 'deepseek-r1' },
+          { name: 'deepseek-v4-pro-260425' },
         ],
       },
     },
@@ -290,10 +290,7 @@ export const supplierList: Array<{
       0: {
         api_domain: 'https://api.minimax.io/v1',
         common_args: [{ key: 'temperature', val: 0.7, type: 'number', range: '[0, 1]' }],
-        model_options: [
-          { name: 'MiniMax-M3' },
-          { name: 'MiniMax-M2.7' },
-        ],
+        model_options: [{ name: 'MiniMax-M3' }, { name: 'MiniMax-M2.7' }],
       },
     },
   },
