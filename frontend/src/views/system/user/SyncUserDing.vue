@@ -177,22 +177,6 @@ const dfsTree = (arr: any) => {
   })
 }
 
-const dfsTreeIds = (arr: any, ids: any) => {
-  return arr.filter((ele: any) => {
-    if (ele.children?.length) {
-      ele.children = dfsTreeIds(ele.children, ids)
-    }
-    if (
-      (ele.name.toLowerCase() as string).includes(search.value.toLowerCase()) ||
-      ele.children?.length
-    ) {
-      ids.push(ele.id)
-      return true
-    }
-    return false
-  })
-}
-
 watch(search, () => {
   organizationUserList.value = dfsTree(cloneDeep(rawTree))
   nextTick(() => {
@@ -225,14 +209,13 @@ function isLeafNode(node: any) {
 }
 
 const handleCheck = () => {
-  const treeIds: any = []
-  dfsTreeIds(cloneDeep(rawTree), treeIds)
+  const checkedKeys = organizationUserRef.value.getCheckedKeys() as any[]
   const checkNodes = organizationUserRef.value.getCheckedNodes()
-  const checkNodesIds = checkNodes.map((ele: any) => ele.id)
-  checkTableList.value = checkTableList.value.filter(
-    (ele: any) =>
-      !treeIds.includes(ele.id) || (treeIds.includes(ele.id) && checkNodesIds.includes(ele.id))
-  )
+
+  // 只保留仍处于勾选状态的项（无论是否可见、是否懒加载）
+  checkTableList.value = checkTableList.value.filter((ele: any) => checkedKeys.includes(ele.id))
+
+  // 合并当前勾选的叶子节点（按 ID 去重）
   const userList = [...checkNodes, ...checkTableList.value]
   let idArr = [...new Set(userList.map((ele: any) => ele.id))]
 
