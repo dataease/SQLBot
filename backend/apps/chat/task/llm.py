@@ -69,15 +69,20 @@ i18n = I18n()
 
 
 def extract_tables_from_sql(sql: str, ds_type: str = None) -> set:
-    """从 SQL 中提取表名（使用 sqlglot 解析，可信）"""
+    """从 SQL 中提取真实表名（排除 CTE 别名）"""
     tables = set()
     dialect = get_sqlglot_dialect(ds_type)
     try:
         statements = sqlglot.parse(sql, dialect=dialect)
         for stmt in statements:
             if stmt:
+                # 收集 CTE 别名，排除嵌套 CTE
+                cte_names = set()
+                for cte in stmt.find_all(exp.CTE):
+                    if cte.alias:
+                        cte_names.add(cte.alias)
                 for table in stmt.find_all(exp.Table):
-                    if table.name:
+                    if table.name and table.name not in cte_names:
                         tables.add(table.name)
     except Exception:
         pass
