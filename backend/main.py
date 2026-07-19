@@ -27,8 +27,12 @@ from common.audit.schemas.request_context import RequestContextMiddlewareCommon
 from common.core.config import settings
 from common.core.response_middleware import ResponseMiddleware, exception_handler
 from common.core.sqlbot_cache import init_sqlbot_cache
-from common.utils.embedding_threads import fill_empty_terminology_embeddings, fill_empty_data_training_embeddings, \
-    fill_empty_table_and_ds_embeddings
+from common.utils.distributed_lock import SingleWorkerGuard
+from common.utils.embedding_threads import (
+    fill_empty_data_training_embeddings,
+    fill_empty_table_and_ds_embeddings,
+    fill_empty_terminology_embeddings,
+)
 from common.utils.utils import SQLBotLogUtil
 
 
@@ -37,16 +41,26 @@ def run_migrations():
     command.upgrade(alembic_cfg, "head")
 
 
+@SingleWorkerGuard.once
 def init_terminology_embedding_data():
     fill_empty_terminology_embeddings()
 
 
+@SingleWorkerGuard.once
 def init_data_training_embedding_data():
     fill_empty_data_training_embeddings()
 
 
+@SingleWorkerGuard.once
 def init_table_and_ds_embedding():
     fill_empty_table_and_ds_embeddings()
+
+
+def shutdown_resources() -> None:
+    try:
+        SingleWorkerGuard.release()
+    except Exception:
+        SQLBotLogUtil.exception("SQLBot shutdown failed")
 
 
 @asynccontextmanager
@@ -61,8 +75,11 @@ async def lifespan(app: FastAPI):
     await sqlbot_xpack.core.clean_xpack_cache()
     await async_model_info()  # 异步加密已有模型的密钥和地址
     await sqlbot_xpack.core.monitor_app(app)
-    yield
-    SQLBotLogUtil.info("SQLBot 应用关闭")
+    try:
+        yield
+    finally:
+        shutdown_resources()
+        SQLBotLogUtil.info("SQLBot 应用关闭")
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
