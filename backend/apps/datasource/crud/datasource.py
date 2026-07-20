@@ -24,6 +24,7 @@ from ..crud.field import delete_field_by_ds_id, update_field
 from ..crud.table import delete_table_by_ds_id, update_table
 from ..models.datasource import CoreDatasource, CreateDatasource, CoreTable, CoreField, ColumnSchema, TableObj, \
     DatasourceConf, TableAndFields
+from apps.db.db import pool_manager, driver_pool_manager
 
 
 def get_datasource_list(session: SessionDep, user: CurrentUser, oid: Optional[int] = None) -> List[CoreDatasource]:
@@ -109,6 +110,10 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
     session.add(record)
     session.commit()
 
+    # update pool
+    pool_manager.remove_pool(ds.id)
+    driver_pool_manager.remove_pool(ds.id)
+
     run_save_ds_embeddings([ds.id])
     return ds
 
@@ -135,6 +140,11 @@ async def delete_ds(session: SessionDep, id: int):
     session.commit()
     delete_table_by_ds_id(session, id)
     delete_field_by_ds_id(session, id)
+
+    # update pool
+    pool_manager.remove_pool(id)
+    driver_pool_manager.remove_pool(id)
+
     if term:
         await clear_ws_ds_cache(term.oid)
     return {
