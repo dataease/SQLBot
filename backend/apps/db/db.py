@@ -237,7 +237,8 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
             )
     elif equals_ignore_case(ds.type, 'redshift'):
         if not use_pool:
-            conn = redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database, user=conf.username,
+            conn = redshift_connector.connect(host=conf.host, port=conf.port, database=conf.database,
+                                              user=conf.username,
                                               password=conf.password,
                                               timeout=conf.timeout, **conn_conf)
         else:
@@ -1175,6 +1176,17 @@ class ConnectionPoolManager:
             print(f"[LRU] create: {ds.id}")
             return new_pool
 
+    def remove_pool(self, datasource_id):
+        with self._lock:
+            if datasource_id in self._pools:
+                # 1. 从字典中移除并获取该连接池对象
+                pool = self._pools.pop(datasource_id)
+                # 2. 安全关闭该连接池，释放底层所有数据库连接和内存
+                pool.close()
+                print(f"[Manager] Closed pool and remove: {datasource_id}")
+            else:
+                print(f"[Manager] Warning: ds id {datasource_id} not exist in sqlalchemy")
+
     def close_all(self):
         """stop"""
         with self._lock:
@@ -1219,6 +1231,17 @@ class DriverConnectionPoolManager:
             self._pools[ds.id] = new_pool
             print(f"[LRU] create: {ds.id}")
             return new_pool
+
+    def remove_pool(self, datasource_id):
+        with self._lock:
+            if datasource_id in self._pools:
+                # 1. 从字典中移除并获取该连接池对象
+                pool = self._pools.pop(datasource_id)
+                # 2. 安全关闭该连接池，释放底层所有数据库连接和内存
+                pool.close()
+                print(f"[Manager] Closed pool and remove: {datasource_id}")
+            else:
+                print(f"[Manager] Warning: ds id {datasource_id} not exist in dbutils")
 
     def close_all(self):
         """stop"""
