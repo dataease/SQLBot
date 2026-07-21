@@ -177,9 +177,15 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
         raise HTTPException(400, "Only support .xlsx/.xls")
 
     os.makedirs(path, exist_ok=True)
-    base_filename = f"{file.filename.split('.')[0]}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
-    filename = f"{base_filename}.{file.filename.split('.')[1]}"
-    save_path = os.path.join(path, filename)
+    # Strip any directory components from the client-supplied filename to
+    # prevent path traversal (CWE-22).
+    safe_name = os.path.basename(file.filename)
+    name_root, name_ext = os.path.splitext(safe_name)
+    base_filename = f"{name_root}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
+    filename = f"{base_filename}{name_ext}"
+    save_path = os.path.realpath(os.path.join(path, filename))
+    if os.path.commonpath([save_path, os.path.realpath(path)]) != os.path.realpath(path):
+        raise HTTPException(400, "Invalid filename")
     with open(save_path, "wb") as f:
         f.write(await file.read())
 
@@ -262,7 +268,9 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
 
             df = pd.DataFrame(md_data, columns=_fields_list)
             error_excel_filename = f"{base_filename}_error.xlsx"
-            save_error_path = os.path.join(path, error_excel_filename)
+            save_error_path = os.path.realpath(os.path.join(path, error_excel_filename))
+            if os.path.commonpath([save_error_path, os.path.realpath(path)]) != os.path.realpath(path):
+                raise Exception("Invalid filename")
             # 保存 DataFrame 到 Excel
             df.to_excel(save_error_path, index=False)
 
