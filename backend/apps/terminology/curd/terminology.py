@@ -230,12 +230,13 @@ def page_terminology(session: SessionDep, current_page: int = 1, page_size: int 
     return current_page, page_size, total_count, total_pages, _list
 
 
-def get_all_terminology(session: SessionDep, name: Optional[str] = None, oid: Optional[int] = 1):
+def get_all_terminology(session: SessionDep, name: Optional[str] = None, oid: Optional[int] = 1,
+                        ds_list: Optional[list[int]] = None, adv_list: Optional[list[int]] = None):
     """
     获取所有术语（不分页）
     """
     stmt, total_count, total_pages, current_page, page_size = build_terminology_query(
-        session, oid, name, False
+        session, oid, name, False, ds_list=ds_list, adv_list=adv_list
     )
     _list = execute_terminology_query(session, stmt)
 

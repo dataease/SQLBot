@@ -71,9 +71,11 @@ async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
 @router.get("/export", summary=f"{PLACEHOLDER_PREFIX}export_term")
 @system_log(LogConfig(operation_type=OperationType.EXPORT, module=OperationModules.TERMINOLOGY))
 async def export_excel(session: SessionDep, trans: Trans, current_user: CurrentUser,
-                       word: Optional[str] = Query(None, description="搜索术语(可选)")):
+                       word: Optional[str] = Query(None, description="搜索术语(可选)"),
+                       ds_list: Optional[list[int]] = Query(None, description="数据集ID集合(可选)"),
+                       adv_list: Optional[list[int]] = Query(None, description="高级应用ID集合(可选)")):
     def inner():
-        _list = get_all_terminology(session, word, oid=current_user.oid)
+        _list = get_all_terminology(session, word, oid=current_user.oid, ds_list=ds_list, adv_list=adv_list)
 
         data_list = []
         for obj in _list:

@@ -98,7 +98,7 @@ const exportExcel = () => {
   }).then(() => {
     searchLoading.value = true
     professionalApi
-      .export2Excel(keywords.value ? { word: keywords.value } : {})
+      .export2Excel(configParams())
       .then((res) => {
         const blob = new Blob([res], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

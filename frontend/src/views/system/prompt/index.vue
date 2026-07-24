@@ -135,7 +135,7 @@ const exportExcel = () => {
   }).then(() => {
     searchLoading.value = true
     promptApi
-      .export2Excel(currentType.value, keywords.value ? { name: keywords.value } : {})
+      .export2Excel(currentType.value, configParams())
       .then((res) => {
         const blob = new Blob([res], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -8,8 +8,7 @@ export const professionalApi = {
   getOne: (id: any) => request.get(`/system/terminology/${id}`),
   enable: (id: any, enabled: any) => request.get(`/system/terminology/${id}/enable/${enabled}`),
   export2Excel: (params: any) =>
-    request.get(`/system/terminology/export`, {
-      params,
+    request.get(`/system/terminology/export${params}`, {
       responseType: 'blob',
       requestOptions: { customError: true },
     }),
