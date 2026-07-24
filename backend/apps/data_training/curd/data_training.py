@@ -1,10 +1,8 @@
 import datetime
-import logging
 import traceback
 from typing import List, Optional
 from xml.dom.minidom import parseString
 
-import dicttoxml
 from sqlalchemy import and_, select, func, delete, update, or_
 from sqlalchemy import text
 
@@ -15,6 +13,7 @@ from apps.system.models.system_model import AssistantModel
 from apps.template.generate_chart.generator import get_base_data_training_template
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
+from common.utils.dict_to_xml import dict_to_xml
 from common.utils.embedding_threads import run_save_data_training_embeddings
 
 
@@ -594,14 +593,7 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
 
 def to_xml_string(_dict: list[dict] | dict, root: str = 'sql-examples') -> str:
     item_name_func = lambda x: 'sql-example' if x == 'sql-examples' else 'item'
-    dicttoxml.LOG.setLevel(logging.ERROR)
-    xml = dicttoxml.dicttoxml(_dict,
-                              cdata=['question', 'suggestion-answer'],
-                              custom_root=root,
-                              item_func=item_name_func,
-                              xml_declaration=False,
-                              encoding='utf-8',
-                              attr_type=False).decode('utf-8')
+    xml = dict_to_xml(_dict, root_name=root, item_func=item_name_func)
     pretty_xml = parseString(xml).toprettyxml()
 
     if pretty_xml.startswith('<?xml'):
