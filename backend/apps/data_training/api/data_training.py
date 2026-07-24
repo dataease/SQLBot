@@ -29,10 +29,12 @@ router = APIRouter(tags=["SQL Examples"], prefix="/system/data-training")
 @router.get("/page/{current_page}/{page_size}", summary=f"{PLACEHOLDER_PREFIX}get_dt_page")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def pager(session: SessionDep, current_user: CurrentUser, current_page: int, page_size: int,
-                question: Optional[str] = Query(None, description="搜索问题(可选)")):
+                question: Optional[str] = Query(None, description="搜索问题(可选)"),
+                ds_list: Optional[list[int]] = Query(None, description="数据集ID集合(可选)"),
+                adv_list: Optional[list[int]] = Query(None, description="高级应用ID集合(可选)")):
     current_page, page_size, total_count, total_pages, _list = page_data_training(session, current_page, page_size,
                                                                                   question,
-                                                                                  current_user.oid)
+                                                                                  current_user.oid, ds_list, adv_list)
 
     return {
         "current_page": current_page,
