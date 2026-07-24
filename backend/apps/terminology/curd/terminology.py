@@ -1,10 +1,8 @@
 import datetime
-import logging
 import traceback
 from typing import List, Optional, Any
 from xml.dom.minidom import parseString
 
-import dicttoxml
 from sqlalchemy import and_, or_, select, func, delete, update, union, text, BigInteger
 from sqlalchemy.orm import aliased
 
@@ -15,6 +13,7 @@ from apps.template.generate_chart.generator import get_base_terminology_template
 from apps.terminology.models.terminology_model import Terminology, TerminologyInfo, TerminologyInfoResult
 from common.core.config import settings
 from common.core.deps import SessionDep, Trans
+from common.utils.dict_to_xml import dict_to_xml
 from common.utils.embedding_threads import run_save_terminology_embeddings
 
 
@@ -949,14 +948,7 @@ def get_example():
 
 def to_xml_string(_dict: list[dict] | dict, root: str = 'terminologies') -> str:
     item_name_func = lambda x: 'terminology' if x == 'terminologies' else 'word' if x == 'words' else 'item'
-    dicttoxml.LOG.setLevel(logging.ERROR)
-    xml = dicttoxml.dicttoxml(_dict,
-                              cdata=['word', 'description'],
-                              custom_root=root,
-                              item_func=item_name_func,
-                              xml_declaration=False,
-                              encoding='utf-8',
-                              attr_type=False).decode('utf-8')
+    xml = dict_to_xml(_dict, root_name=root, item_func=item_name_func)
     pretty_xml = parseString(xml).toprettyxml()
 
     if pretty_xml.startswith('<?xml'):
