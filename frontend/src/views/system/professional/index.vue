@@ -46,6 +46,7 @@ onMounted(() => {
   })
   getAdvancedApplicationList().then((res: any) => {
     adv_options.value = res || []
+    filterOption.value[1].option = [...adv_options.value]
   })
   search()
 })
@@ -381,10 +382,18 @@ const filterOption = ref<any[]>([
   {
     type: 'select',
     option: [],
-    field: 'dslist',
+    field: 'ds_list',
     title: t('ds.title'),
     operate: 'in',
     property: { placeholder: t('common.empty') + t('ds.title') },
+  },
+  {
+    type: 'select',
+    option: [],
+    field: 'adv_list',
+    title: t('embedded.advanced_application'),
+    operate: 'in',
+    property: { placeholder: t('common.empty') + t('embedded.advanced_application') },
   },
 ])
 
