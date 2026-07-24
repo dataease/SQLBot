@@ -8,8 +8,7 @@ export const trainingApi = {
   getOne: (id: any) => request.get(`/system/data-training/${id}`),
   enable: (id: any, enabled: any) => request.get(`/system/data-training/${id}/enable/${enabled}`),
   export2Excel: (params: any) =>
-    request.get(`/system/data-training/export`, {
-      params,
+    request.get(`/system/data-training/export${params}`, {
       responseType: 'blob',
       requestOptions: { customError: true },
     }),

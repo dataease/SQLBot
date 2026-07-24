@@ -7,8 +7,7 @@ export const promptApi = {
   deleteEmbedded: (params: any) => request.delete('/system/custom_prompt', { data: params }),
   getOne: (id: any) => request.get(`/system/custom_prompt/${id}`),
   export2Excel: (type: any, params: any) =>
-    request.get(`/system/custom_prompt/${type}/export`, {
-      params,
+    request.post(`/system/custom_prompt/${type}/export`, params, {
       responseType: 'blob',
       requestOptions: { customError: true },
     }),
