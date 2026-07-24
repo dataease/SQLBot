@@ -29,9 +29,10 @@ router = APIRouter(tags=["Terminology"], prefix="/system/terminology")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def pager(session: SessionDep, current_user: CurrentUser, current_page: int, page_size: int,
                 word: Optional[str] = Query(None, description="搜索术语(可选)"),
-                dslist: Optional[list[int]] = Query(None, description="数据集ID集合(可选)")):
+                ds_list: Optional[list[int]] = Query(None, description="数据集ID集合(可选)"),
+                adv_list: Optional[list[int]] = Query(None, description="高级应用ID集合(可选)")):
     current_page, page_size, total_count, total_pages, _list = page_terminology(session, current_page, page_size, word,
-                                                                                current_user.oid, dslist)
+                                                                                current_user.oid, ds_list, adv_list)
 
     return {
         "current_page": current_page,
