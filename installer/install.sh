@@ -21,6 +21,47 @@ function log_content () {
     log "\t${1}"
 }
 
+COMPROMISED_SECRET_KEY_SHA256='78682d15dcf21e49b462da00b3ab33355c095450e02e2b37ed601e08e1b799c5'
+
+function secret_key_fingerprint() {
+    printf '%s' "$1" | sha256sum | awk '{print $1}'
+}
+
+function prepare_secret_key() {
+    local current_fingerprint=''
+    local secret_action='generated'
+
+    if [[ -n "${SQLBOT_SECRET_KEY:-}" ]]; then
+        current_fingerprint=$(secret_key_fingerprint "${SQLBOT_SECRET_KEY}")
+    fi
+
+    if [[ "${current_fingerprint}" == "${COMPROMISED_SECRET_KEY_SHA256}" ]]; then
+        secret_action='rotated'
+        SQLBOT_SECRET_KEY=''
+    fi
+
+    if [[ -z "${SQLBOT_SECRET_KEY:-}" ]]; then
+        SQLBOT_SECRET_KEY=$(
+            LC_ALL=C tr -dc 'A-Za-z0-9_-' </dev/urandom | head -c 64
+        )
+        export SQLBOT_SECRET_KEY
+
+        if [[ "${#SQLBOT_SECRET_KEY}" -ne 64 ]]; then
+            log_content "生成 SQLBot Secret Key 失败"
+            exit 1
+        fi
+
+        if [[ "${secret_action}" == 'rotated' ]]; then
+            log_content "检测到已公开的 SQLBot Secret Key，已自动轮换，现有登录会话将失效"
+        else
+            log_content "已生成新的 SQLBot Secret Key"
+        fi
+    elif [[ "${#SQLBOT_SECRET_KEY}" -lt 32 ]]; then
+        log_content "SQLBOT_SECRET_KEY 长度不能少于 32 个字符"
+        exit 1
+    fi
+}
+
 function check_and_prepare_env_params() {
     log "当前时间 : $(date)"
     log_title "检查安装环境并初始化环境变量"
@@ -56,6 +97,7 @@ function check_and_prepare_env_params() {
         mkdir -p ${SQLBOT_BASE}
         log_content "全新安装"
     fi
+    prepare_secret_key
     set +a
 }
 
@@ -281,4 +323,6 @@ function main() {
     start_sqlbot
 }
 
-main
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main
+fi
