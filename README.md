@@ -113,5 +113,3 @@ docker run -d \
 
 - 不能替换和修改 SQLBot 的 Logo 和版权信息；
 - 二次开发后的衍生作品必须遵守 GPL V3 的开源义务。
-
-如需商业授权，请联系 support@fit2cloud.com 。
