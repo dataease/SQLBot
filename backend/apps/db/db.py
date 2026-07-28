@@ -527,7 +527,7 @@ def get_tables(ds: CoreDatasource):
                 return res_list
         elif equals_ignore_case(ds.type, 'kingbase'):
             with get_driver_connection(ds) as conn, conn.cursor() as cursor:
-                cursor.execute(sql.format(sql_param))
+                cursor.execute(sql, (sql_param,))
                 res = cursor.fetchall()
                 res_list = [TableSchema(*item) for item in res]
                 return res_list
@@ -577,7 +577,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
                 return res_list
         elif equals_ignore_case(ds.type, 'kingbase'):
             with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
-                cursor.execute(sql.format(p1, p2))
+                cursor.execute(sql, (p1, p2) if p2 is not None and p2 != "" else (p1,))
                 res = cursor.fetchall()
                 res_list = [ColumnSchema(*item) for item in res]
                 return res_list
