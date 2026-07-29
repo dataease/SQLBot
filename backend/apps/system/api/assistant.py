@@ -50,6 +50,16 @@ async def info(request: Request, response: Response, session: SessionDep, trans:
 
     # 校验 target（来源域名）是否合法
     target = sign_data.get("target", "")
+    
+    request_origin = request.headers.get("origin") or get_origin_from_referer(request)
+    if not request_origin:
+        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=request_origin or ''))
+    request_origin = request_origin.rstrip('/')
+    if not target or target == "null":
+        target = request_origin
+    elif target != request_origin:
+        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
+    
     if not origin_match_domain(target, db_model.domain):
         raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
 
