@@ -221,6 +221,26 @@ async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = 
 async def clear_ui_cache(id: int):
     pass
 
+@router.get("/validate/{id}", include_in_schema=False)
+async def validate(request: Request, response: Response, session: SessionDep, trans: Trans, id: int):
+    if not id:
+        raise Exception('miss assistant id')
+    db_model = session.get(AssistantModel, id)
+    if not db_model:
+        raise RuntimeError(f"assistant application not exist")
+
+    origin = request.headers.get("origin") or get_origin_from_referer(request)
+    if not origin:
+        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
+    origin = origin.rstrip('/')
+
+    if not origin_match_domain(origin, db_model.domain):
+        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=origin or ''))
+
+    response.headers["Access-Control-Allow-Origin"] = origin
+    return {"valid": True, "origin": origin}
+
+
 @router.get("/ds", include_in_schema=False, response_model=list[dict])
 async def ds(session: SessionDep, current_assistant: CurrentAssistant):
     if current_assistant.type == 0:
