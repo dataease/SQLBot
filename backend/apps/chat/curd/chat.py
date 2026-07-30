@@ -9,7 +9,7 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import aliased
 
 from apps.chat.models.chat_model import Chat, ChatRecord, CreateChat, ChatInfo, RenameChat, ChatQuestion, ChatLog, \
-    TypeEnum, OperationEnum, ChatRecordResult, ChatLogHistory, ChatLogHistoryItem
+    TypeEnum, OperationEnum, ChatRecordResult, ChatLogHistory, ChatLogHistoryItem, ChatItem
 from apps.datasource.crud.datasource import get_ds
 from apps.datasource.crud.recommended_problem import get_datasource_recommended_chart
 from apps.datasource.models.datasource import CoreDatasource
@@ -41,10 +41,31 @@ def get_chat(session: SessionDep, chat_id: int) -> Chat:
     return chat
 
 
-def list_chats(session: SessionDep, current_user: CurrentUser) -> List[Chat]:
+def list_chats(session: SessionDep, current_user: CurrentUser) -> List[ChatItem]:
     oid = current_user.oid if current_user.oid is not None else 1
-    chart_list = session.query(Chat).filter(and_(Chat.create_by == current_user.id, Chat.oid == oid)).order_by(
-        Chat.create_time.desc()).all()
+    # 子查询：获取每个chat对应的最新chat_record的create_time
+    latest_record_subq = (
+        session.query(
+            ChatRecord.chat_id,
+            func.max(ChatRecord.create_time).label('latest_record_time')
+        )
+        .group_by(ChatRecord.chat_id)
+        .subquery()
+    )
+    # 按最新chat_record的create_time排序，如果没有chat_record则使用chat自身的create_time
+    sort_time = func.coalesce(latest_record_subq.c.latest_record_time, Chat.create_time)
+    results = (
+        session.query(Chat, sort_time.label('latest_record_time'))
+        .outerjoin(latest_record_subq, Chat.id == latest_record_subq.c.chat_id)
+        .filter(and_(Chat.create_by == current_user.id, Chat.oid == oid))
+        .order_by(sort_time.desc())
+        .all()
+    )
+    chart_list = []
+    for chat, latest_record_time in results:
+        item = ChatItem(**chat.model_dump())
+        item.latest_record_time = latest_record_time
+        chart_list.append(item)
     return chart_list
 
 
@@ -475,6 +496,11 @@ def get_chat_with_records(session: SessionDep, chart_id: int, current_user: Curr
             pass
 
     chat_info.records = result
+
+    # 从已查出的records中取最新的create_time
+    record_times = [r.get('create_time') for r in result if r.get('create_time') is not None]
+    if record_times:
+        chat_info.latest_record_time = max(record_times)
 
     return chat_info
 

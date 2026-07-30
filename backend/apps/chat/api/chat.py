@@ -16,7 +16,7 @@ from apps.chat.curd.chat import delete_chat_with_user, get_chart_data_with_user,
     format_json_data, format_json_list_data, get_chart_config, list_recent_questions, rename_chat_with_user, \
     get_chat_log_history, get_chart_data_with_user_live
 from apps.chat.models.chat_model import CreateChat, ChatRecord, RenameChat, ChatQuestion, AxisObj, QuickCommand, \
-    ChatInfo, Chat, ChatFinishStep, ChatQuestionBase, SimpleChat
+    ChatInfo, Chat, ChatFinishStep, ChatQuestionBase, SimpleChat, ChatItem
 from apps.chat.task.llm import LLMService
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
@@ -29,7 +29,7 @@ from common.utils.data_format import DataFormat
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 
 
-@router.get("/list", response_model=List[Chat], summary=f"{PLACEHOLDER_PREFIX}get_chat_list")
+@router.get("/list", response_model=List[ChatItem], summary=f"{PLACEHOLDER_PREFIX}get_chat_list")
 async def chats(session: SessionDep, current_user: CurrentUser):
     return list_chats(session, current_user)
 
