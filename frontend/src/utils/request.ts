@@ -287,11 +287,11 @@ class HttpService {
   }
 
   // Base request method
-  public async request(config: FullRequestConfig): Promise<any> {
+  public async request<T = any>(config: FullRequestConfig): Promise<T> {
     return this.instance.request({
       cancelToken: this.cancelTokenSource.token,
       ...config,
-    })
+    }) as T
   }
 
   // GET request
