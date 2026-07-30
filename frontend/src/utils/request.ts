@@ -287,7 +287,7 @@ class HttpService {
   }
 
   // Base request method
-  public request<T = any>(config: FullRequestConfig): Promise<T> {
+  public async request(config: FullRequestConfig): Promise<any> {
     return this.instance.request({
       cancelToken: this.cancelTokenSource.token,
       ...config,
