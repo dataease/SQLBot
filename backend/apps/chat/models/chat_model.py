@@ -179,6 +179,22 @@ class SimpleChat(BaseModel):
     id: int = None
     brief: str = ''
 
+class ChatItem(BaseModel):
+    id: Optional[int] = None
+    oid: Optional[int] = None
+    create_time: Optional[datetime] = None
+    create_by: Optional[int] = None
+    brief: Optional[str] = None
+    chat_type: Optional[str] = "chat"
+    datasource: Optional[int] = None
+    engine_type: Optional[str] = None
+    origin: Optional[int] = 0
+    brief_generate: Optional[bool] = False
+    recommended_question_answer: Optional[str] = None
+    recommended_question: Optional[str] = None
+    recommended_generate: Optional[bool] = False
+    latest_record_time: Optional[datetime] = None
+
 class ChatInfo(BaseModel):
     id: Optional[int] = None
     create_time: datetime = None
@@ -192,6 +208,7 @@ class ChatInfo(BaseModel):
     datasource_exists: bool = True
     recommended_question: Optional[str] = None
     recommended_generate: Optional[bool] = False
+    latest_record_time: Optional[datetime] = None
     records: List[ChatRecord | dict] = []
 
 
