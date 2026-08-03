@@ -147,7 +147,8 @@ def get_engine(ds: CoreDatasource, timeout: int = 0, use_pool: bool = False) -> 
     db_config = {
         'pool_size': conf.poolSize if conf.poolSize else 5,
         'max_overflow': 20,
-        'pool_recycle': 3600
+        'pool_recycle': 3600,
+        'pool_pre_ping': True
     } if use_pool else {
         'poolclass': NullPool
     }
