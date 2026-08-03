@@ -196,6 +196,14 @@ async def ask_recommend_questions(session: SessionDep, current_user: CurrentUser
         if not record:
             return StreamingResponse(_return_empty(), media_type="text/event-stream")
 
+        chat = session.get(Chat, record.chat_id)
+        if not chat:
+            return StreamingResponse(_return_empty(), media_type="text/event-stream")
+        if chat.oid != current_user.oid:
+            raise Exception(f"Chat Record with id {chat_record_id} does not belong to current workspace")
+        if chat.create_by != current_user.id:
+            raise Exception(f"Chat Record with id {chat_record_id} not Owned by the current user")
+
         request_question = ChatQuestion(chat_id=record.chat_id, question=record.question if record.question else '')
 
         llm_service = await LLMService.create(session, current_user, request_question, current_assistant, True)
@@ -403,6 +411,14 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
 
         if not record:
             raise Exception(f"Chat record with id {chat_record_id} not found")
+
+        chat = session.get(Chat, record.chat_id)
+        if not chat:
+            raise Exception(f"Chat with id {chat.id} not found")
+        if chat.oid != current_user.oid:
+            raise Exception(f"Chat Record with id {chat_record_id} does not belong to current workspace")
+        if chat.create_by != current_user.id:
+            raise Exception(f"Chat Record with id {chat_record_id} not Owned by the current user")
 
         if not record.chart:
             raise Exception(
