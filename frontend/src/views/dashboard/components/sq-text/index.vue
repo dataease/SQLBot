@@ -16,7 +16,7 @@
       @keyup.stop
       @mousedown.stop
       @dblclick.stop="setEdit"
-      v-html="configItem.propValue"
+      v-dompurify-html="configItem.propValue"
     ></div>
     <editor
       :id="tinymceId"
