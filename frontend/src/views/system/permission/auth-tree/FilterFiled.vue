@@ -124,6 +124,7 @@ const initEnumOptions = () => {
 
 const iconMap = {
   text: field_text,
+  kv: field_text,
   number: field_value,
   datetime: field_time,
 }

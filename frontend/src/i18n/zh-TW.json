@@ -23,6 +23,8 @@
     "variable_name": "變數名稱",
     "variable_type": "變數類型",
     "variable_value": "變數值",
+    "variable_key": "變數鍵",
+    "kv": "鍵值",
     "edit_variable": "編輯變數",
     "no_variables_yet": "暫無變數",
     "please_enter_value": "請輸入數值",
@@ -30,7 +32,10 @@
     "start_date": "開始日期",
     "end_date": "結束日期",
     "enter_variable_name": "請輸入變數名稱",
-    "enter_variable_value": "請輸入變數值"
+    "enter_variable_value": "請輸入變數值",
+    "enter_variable_key": "請輸入變數鍵",
+    "key_value_cannot_be_empty": "鍵和值不能為空",
+    "key_repeat": "鍵不能重複"
   },
   "authorized_space": {
     "authorized_space": "授權空間",
