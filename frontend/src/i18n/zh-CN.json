@@ -23,6 +23,8 @@
     "variable_name": "变量名称",
     "variable_type": "变量类型",
     "variable_value": "变量值",
+    "variable_key": "变量键",
+    "kv": "键值",
     "edit_variable": "编辑变量",
     "no_variables_yet": "暂无变量",
     "please_enter_value": "请输入数值",
@@ -30,7 +32,10 @@
     "start_date": "开始日期",
     "end_date": "结束日期",
     "enter_variable_name": "请输入变量名称",
-    "enter_variable_value": "请输入变量值"
+    "enter_variable_value": "请输入变量值",
+    "enter_variable_key": "请输入变量键",
+    "key_value_cannot_be_empty": "键和值不能为空",
+    "key_repeat": "键不能重复"
   },
   "authorized_space": {
     "authorized_space": "授权空间",

@@ -438,6 +438,23 @@
               >
               </el-option>
             </el-select>
+            <el-select
+              v-else-if="
+                variableValueMap[state.form.system_variables[index].variableId].var_type === 'kv'
+              "
+              v-model="state.form.system_variables[index].variableValues"
+              multiple
+              style="width: 236px"
+              :placeholder="$t('datasource.Please_select')"
+            >
+              <el-option
+                v-for="item in getVariableOptionList(state.form.system_variables[index].variableId)"
+                :key="item.value"
+                :label="item.label"
+                :value="item.label"
+              >
+              </el-option>
+            </el-select>
             <el-input-number
               v-else-if="
                 variableValueMap[state.form.system_variables[index].variableId].var_type ===
@@ -587,6 +604,7 @@ const selectionLoading = ref(false)
 
 const iconMap = {
   text: field_text,
+  kv: field_text,
   number: field_value,
   datetime: field_time,
 }
@@ -643,6 +661,56 @@ const defaultForm = {
 const options = ref<any[]>([])
 const variables = shallowRef<any[]>([])
 const variableValueMap = shallowRef<any>({})
+
+const getVariableDefinition = (variableId: string) => variableValueMap.value[variableId]
+
+const getVariableOptionList = (variableId: string) => {
+  const variable = getVariableDefinition(variableId)
+  if (!variable) return []
+
+  if (variable.var_type === 'text') {
+    return variable.value.map((item: string) => ({
+      label: item,
+      value: item,
+    }))
+  }
+
+  if (variable.var_type === 'kv') {
+    return variable.value.map((item: any) => ({
+      label: item.key,
+      value: item.key,
+      actualValue: item.value,
+    }))
+  }
+
+  return []
+}
+
+const getSelectedKeysFromStoredValues = (variableId: string, storedValues: any[] = []) => {
+  const variable = getVariableDefinition(variableId)
+  if (!variable || variable.var_type !== 'kv') return storedValues
+
+  return storedValues
+    .map((storedValue: any) => {
+      const matched = variable.value.find(
+        (item: any) => item.key === storedValue || item.value === storedValue
+      )
+      return matched?.key
+    })
+    .filter(Boolean)
+}
+
+const getStoredValuesFromSelectedKeys = (variableId: string, selectedKeys: any[] = []) => {
+  const variable = getVariableDefinition(variableId)
+  if (!variable || variable.var_type !== 'kv') return selectedKeys
+
+  return selectedKeys
+    .map((selectedKey: any) => {
+      const matched = variable.value.find((item: any) => item.key === selectedKey)
+      return matched?.value
+    })
+    .filter((item: any) => item !== undefined && item !== null && item !== '')
+}
 const state = reactive<any>({
   tableData: [],
   filterTexts: [],
@@ -653,7 +721,7 @@ const state = reactive<any>({
     pageSize: 20,
     total: 0,
     sortColumn: '',
-    sortOrder: '',  // 'ascending' | 'descending' | ''
+    sortOrder: '', // 'ascending' | 'descending' | ''
   },
 })
 
@@ -908,18 +976,24 @@ const editHandler = (row: any) => {
           ...row,
           system_variables: (row.system_variables || []).map((ele: any) => ({
             ...ele,
-            variableValue: ele.variableValues[0],
+            variableValue: ele.variableValues?.[0],
+            variableValues: Array.isArray(ele.variableValues) ? [...ele.variableValues] : [],
           })),
         }
       }
     })
     .finally(() => {
       state.form.system_variables = state.form.system_variables.filter((ele: any) => {
-        if (variableValueMap.value[ele.variableId]) {
-          if (variableValueMap.value[ele.variableId].var_type === 'text') {
-            ele.variableValues = variableValueMap.value[ele.variableId].value.filter(
+        const variable = variableValueMap.value[ele.variableId]
+        if (variable) {
+          if (variable.var_type === 'text') {
+            ele.variableValues = variable.value.filter(
               (item: any) => ele.variableValues.indexOf(item) > -1
             )
+            return !!ele.variableValues.length
+          }
+          if (variable.var_type === 'kv') {
+            ele.variableValues = getSelectedKeysFromStoredValues(ele.variableId, ele.variableValues)
             return !!ele.variableValues.length
           }
           return true
@@ -1036,9 +1110,19 @@ const formatVariableValues = () => {
   if (!state.form.system_variables?.length) return []
   return state.form.system_variables.map((ele: any) => ({
     variableId: ele.variableId,
-    variableValues: ['number', 'datetime'].includes(variableValueMap.value[ele.variableId].var_type)
-      ? [ele.variableValue]
-      : ele.variableValues,
+    variableValues: (() => {
+      const variable = variableValueMap.value[ele.variableId]
+      if (!variable) {
+        return ele.variableValues
+      }
+      if (['number', 'datetime'].includes(variable.var_type)) {
+        return [ele.variableValue]
+      }
+      if (variable.var_type === 'kv') {
+        return getStoredValuesFromSelectedKeys(ele.variableId, ele.variableValues)
+      }
+      return ele.variableValues
+    })(),
   }))
 }
 
@@ -1097,9 +1181,24 @@ const validateSystemVariables = () => {
   if (system_variables?.length) {
     return system_variables.some((ele: any) => {
       const obj = variableValueMap.value[ele.variableId]
+      if (!obj) {
+        return false
+      }
       if (obj.var_type === 'text' && !ele.variableValues.length) {
         ElMessage.error(t('variables.​​cannot_be_empty'))
         return true
+      }
+
+      if (obj.var_type === 'kv') {
+        if (!ele.variableValues.length) {
+          ElMessage.error(t('variables.key_value_cannot_be_empty'))
+          return true
+        }
+
+        if (new Set(ele.variableValues).size !== ele.variableValues.length) {
+          ElMessage.error(t('variables.key_repeat'))
+          return true
+        }
       }
 
       if (obj.var_type === 'number' && [null, undefined, ''].includes(ele.variableValue)) {

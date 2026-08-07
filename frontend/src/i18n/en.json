@@ -23,6 +23,8 @@
     "variable_name": "Variable Name",
     "variable_type": "Variable Type",
     "variable_value": "Variable Value",
+    "variable_key": "Variable Key",
+    "kv": "Key-Value",
     "edit_variable": "Edit Variable",
     "no_variables_yet": "No Variables Yet",
     "please_enter_value": "Please Enter Value",
@@ -30,7 +32,10 @@
     "start_date": "Start Date",
     "end_date": "End Date",
     "enter_variable_name": "Please Enter Variable Name",
-    "enter_variable_value": "Please Enter Variable Value"
+    "enter_variable_value": "Please Enter Variable Value",
+    "enter_variable_key": "Please Enter Variable Key",
+    "key_value_cannot_be_empty": "Key and value cannot be empty.",
+    "key_repeat": "Keys cannot be duplicated."
   },
   "authorized_space": {
     "authorized_space": "Authorized Space",

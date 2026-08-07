@@ -26,6 +26,7 @@ const oldKeywords = ref('')
 const searchLoading = ref(false)
 const iconMap = {
   text: field_text,
+  kv: field_text,
   number: field_value,
   datetime: field_time,
 }
@@ -49,6 +50,7 @@ const pageInfo = reactive({
 
 const var_type = {
   text: 'model.text',
+  kv: 'variables.kv',
   number: 'model.number',
   datetime: 'variables.date',
 } as Record<string, unknown>
@@ -61,6 +63,47 @@ const defaultForm = {
   value: [''],
 }
 const pageForm = ref<Form>(cloneDeep(defaultForm))
+
+const createKvValueItem = () => ({
+  key: '',
+  value: '',
+})
+
+const formatVariableDisplayValue = (row: any) => {
+  if (row.type === 'system') {
+    return t('variables.built_in')
+  }
+
+  if (row.var_type === 'text') {
+    return Array.isArray(row.value) ? row.value.join(', ') : (row.value ?? '')
+  }
+
+  if (row.var_type === 'kv') {
+    return Array.isArray(row.value)
+      ? row.value.map((item: any) => `${item.key}: ${item.value}`).join(', ')
+      : ''
+  }
+
+  if (Array.isArray(row.value)) {
+    return row.value.join(' ~ ')
+  }
+
+  return row.value ?? ''
+}
+
+const normalizeKvValue = (value: any[] = []) => {
+  return value.map((item: any) => ({
+    key: `${item?.key ?? ''}`.trim(),
+    value: `${item?.value ?? ''}`.trim(),
+  }))
+}
+
+const getVariableTypeOptions = () => [
+  { value: 'text', label: t('model.text') },
+  { value: 'kv', label: t('variables.kv') },
+  { value: 'number', label: t('model.number') },
+  { value: 'datetime', label: t('variables.date') },
+]
 
 const cancelDelete = () => {
   handleToggleRowSelection(false)
@@ -157,7 +200,8 @@ const search = ($event: any = {}) => {
       toggleRowLoading.value = true
       fieldList.value = res.items.map((ele: any) => ({
         ...ele,
-        value: ele.type === 'system' ? t('variables.built_in') : ele.value,
+        displayValue: formatVariableDisplayValue(ele),
+        rawValue: ele.value,
       }))
       pageInfo.total = res.total
       searchLoading.value = false
@@ -189,9 +233,31 @@ const validateValue = (_: any, value: any, callback: any) => {
     }
     return
   }
+  if (var_type === 'kv') {
+    if (!Array.isArray(value) || !value.length) {
+      callback(new Error(t('variables.key_value_cannot_be_empty')))
+      return
+    }
+
+    const normalized = normalizeKvValue(value)
+    if (normalized.some((ele: any) => !ele.key || !ele.value)) {
+      callback(new Error(t('variables.key_value_cannot_be_empty')))
+      return
+    }
+
+    const keyList = normalized.map((ele: any) => ele.key)
+    if (new Set(keyList).size !== keyList.length) {
+      callback(new Error(t('variables.key_repeat')))
+      return
+    }
+
+    callback()
+    return
+  }
   if (var_type === 'datetime') {
     if (value === null) {
       callback(new Error(t('datasource.please_enter') + t('common.empty') + t('variables.date')))
+      return
     }
   }
   if (value.some((ele: any) => ele === '' || ele === null)) {
@@ -227,10 +293,38 @@ const varTypeChange = (val: any) => {
     pageForm.value.value = ['']
     return
   }
+  if (val === 'kv') {
+    pageForm.value.value = [createKvValueItem()]
+    return
+  }
   pageForm.value.value = ['', '']
 }
 
+const validateBeforeSave = () => {
+  if (pageForm.value.var_type !== 'kv') {
+    return true
+  }
+
+  const normalized = normalizeKvValue(pageForm.value.value)
+  if (!normalized.length || normalized.some((ele: any) => !ele.key || !ele.value)) {
+    ElMessage.error(t('variables.key_value_cannot_be_empty'))
+    return false
+  }
+
+  const keyList = normalized.map((ele: any) => ele.key)
+  if (new Set(keyList).size !== keyList.length) {
+    ElMessage.error(t('variables.key_repeat'))
+    return false
+  }
+
+  return true
+}
+
 const saveHandler = () => {
+  if (!validateBeforeSave()) {
+    return
+  }
+
   termFormRef.value.validate((res: any) => {
     if (res) {
       const obj = unref(pageForm)
@@ -240,6 +334,10 @@ const saveHandler = () => {
 
       if (obj.var_type === 'text') {
         obj.value = [...new Set(obj.value)]
+      }
+
+      if (obj.var_type === 'kv') {
+        obj.value = normalizeKvValue(obj.value)
       }
 
       if (obj.var_type === 'number') {
@@ -273,7 +371,7 @@ const editHandler = (row: any) => {
     pageForm.value.id = id
     pageForm.value.name = name
     pageForm.value.var_type = var_type
-    pageForm.value.value = cloneDeep(value)
+    pageForm.value.value = cloneDeep(row.rawValue ?? value)
   }
   dialogTitle.value = row?.id ? t('variables.edit_variable') : t('variables.add_variable')
   dialogFormVisible.value = true
@@ -388,7 +486,11 @@ const handleCurrentChange = (val: number) => {
             width="420"
             :label="$t('variables.variable_value')"
             show-overflow-tooltip
-          />
+          >
+            <template #default="scope">
+              {{ scope.row.displayValue }}
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" width="80" :label="t('ds.actions')">
             <template #default="scope">
               <div class="field-comment">
@@ -509,12 +611,8 @@ const handleCurrentChange = (val: number) => {
           :disabled="!!pageForm.id"
           @change="varTypeChange"
         >
-          <el-radio value="text">{{ $t('model.text') }}</el-radio>
-          <el-radio value="number">
-            {{ $t('model.number') }}
-          </el-radio>
-          <el-radio value="datetime">
-            {{ $t('variables.date') }}
+          <el-radio v-for="ele in getVariableTypeOptions()" :key="ele.value" :value="ele.value">
+            {{ ele.label }}
           </el-radio>
         </el-radio-group>
       </el-form-item>
@@ -560,6 +658,50 @@ const handleCurrentChange = (val: number) => {
               </el-icon>
             </div>
           </el-form-item>
+        </div>
+      </el-form-item>
+      <el-form-item v-else-if="pageForm.var_type === 'kv'" :label="t('variables.variable_value')">
+        <template #label>
+          <div style="display: flex; align-items: center; height: 22px">
+            <span>{{ t('variables.variable_value') }}</span>
+            <span class="btn" @click="pageForm.value.push(createKvValueItem())">
+              <el-icon style="margin-right: 4px" size="16">
+                <icon_add_outlined></icon_add_outlined>
+              </el-icon>
+              {{ $t('model.add') }}
+            </span>
+          </div>
+        </template>
+        <div class="value-list">
+          <div class="item kv-title">
+            <span style="width: calc(48% - 0px)">{{ t('variables.variable_key') }}</span>
+            <span style="width: calc(52% - 5px)">{{ t('variables.variable_value') }}</span>
+          </div>
+          <div v-for="(_, index) in pageForm.value" :key="index" class="item kv-item">
+            <el-input
+              v-model="pageForm.value[index].key"
+              :placeholder="$t('variables.enter_variable_key')"
+              autocomplete="off"
+              maxlength="50"
+              clearable
+            />
+            <el-input
+              v-model="pageForm.value[index].value"
+              :placeholder="$t('variables.enter_variable_value')"
+              autocomplete="off"
+              maxlength="50"
+              style="margin-left: 16px"
+              clearable
+            />
+            <el-icon
+              class="action-btn"
+              :class="index === 0 && pageForm.value.length === 1 && 'not-allow'"
+              size="16"
+              @click="deleteValues(index)"
+            >
+              <IconOpeDelete></IconOpeDelete>
+            </el-icon>
+          </div>
         </div>
       </el-form-item>
       <el-form-item v-else prop="value" :label="t('variables.variable_value')">
@@ -817,6 +959,10 @@ const handleCurrentChange = (val: number) => {
           cursor: not-allowed;
           color: #bbbfc4;
         }
+      }
+
+      &.kv-item {
+        margin-bottom: 8px;
       }
     }
   }

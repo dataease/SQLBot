@@ -23,6 +23,8 @@
     "variable_name": "변수 이름",
     "variable_type": "변수 유형",
     "variable_value": "변수 값",
+    "variable_key": "변수 키",
+    "kv": "키-값",
     "edit_variable": "변수 편집",
     "no_variables_yet": "아직 변수가 없습니다",
     "please_enter_value": "값을 입력하세요",
@@ -30,7 +32,10 @@
     "start_date": "시작일",
     "end_date": "종료일",
     "enter_variable_name": "변수 이름을 입력하세요",
-    "enter_variable_value": "변수 값을 입력하세요"
+    "enter_variable_value": "변수 값을 입력하세요",
+    "enter_variable_key": "변수 키를 입력하세요",
+    "key_value_cannot_be_empty": "키와 값은 비워둘 수 없습니다.",
+    "key_repeat": "키는 중복될 수 없습니다."
   },
   "authorized_space": {
     "authorized_space": "권한 있는 공간",
