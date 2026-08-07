@@ -129,6 +129,11 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
                             if (sys_variable.value[0] is not None and values[0] < sys_variable.value[0]) or (
                                     sys_variable.value[1] is not None and values[0] > sys_variable.value[1]):
                                 return None
+                        elif sys_variable.var_type == 'kv':
+                            key_set = set(values)
+                            values = [item["value"] for item in sys_variable.value if item["key"] in key_set]
+                            if values is None or len(values) == 0:
+                                return None
 
                         # build exp
                         whereValue = ''
