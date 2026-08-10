@@ -131,7 +131,7 @@ def transTreeItem(session: SessionDep, current_user: CurrentUser, item: Dict, ds
                                 return None
                         elif sys_variable.var_type == 'kv':
                             key_set = set(values)
-                            values = [item["value"] for item in sys_variable.value if item["key"] in key_set]
+                            values = [item["value"] for item in sys_variable.value if item["value"] in key_set]
                             if values is None or len(values) == 0:
                                 return None
 
