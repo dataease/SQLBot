@@ -55,7 +55,7 @@ def build_data_training_query(session: SessionDep, oid: int, name: Optional[str]
 
     if ds_filter_condition is not None and adv_filter_condition is not None:
         parent_ids_subquery = parent_ids_subquery.where(
-            or_(ds_filter_condition, adv_filter_condition)
+            and_(ds_filter_condition, adv_filter_condition)
         )
     elif ds_filter_condition is not None:
         parent_ids_subquery = parent_ids_subquery.where(ds_filter_condition)
