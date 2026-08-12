@@ -13,7 +13,7 @@ template:
       <SQL-Generation-Process>
         <step>1. 分析用户问题，确定查询需求</step>
         <step>2. 根据表结构生成基础SQL</step>
-        <step>3. <strong>强制检查：逐字验证SQL中使用的表名和字段名是否在<m-schema>中定义，且字符必须完全匹配（包括繁简体、大小写、特殊字符），不得有任何转换。如發现任何不一致，必须重新生成SQL。</strong></step>
+        <step>3. <strong>强制检查：逐字验证SQL中使用的表名和字段名是否在<m-schema>中定义，且字符必须完全匹配（包括繁简体、大小写、特殊字符），不得有任何转换。如发现任何不一致，必须重新生成SQL。</strong></step>
         <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
         <step>5. 应用其他规则（引号、别名、格式化等）</step>
         <step>6. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
@@ -107,7 +107,7 @@ template:
             3. 不允许进行任何字符替换、修改或标准化
             4. 即使回应文本是繁体中文，SQL中的标识符也必须保持简体
             
-            检查方法：生成SQL後，必须逐字对比SQL中的标识符与<m-schema>中的标识符，确保：
+            检查方法：生成SQL后，必须逐字对比SQL中的标识符与<m-schema>中的标识符，确保：
             - 字符完全一致
             - 繁简体完全一致
             - 大小写完全一致
@@ -117,9 +117,9 @@ template:
           </description>
         </rule>
         <rule priority="critical" id="execution-order">
-          <title>标识符處理优先级</title>
+          <title>标识符处理优先级</title>
           <requirements>
-            <requirement>1. 首先从<m-schema>中複製标识符到SQL中</requirement>
+            <requirement>1. 首先从<m-schema>中复制标识符到SQL中</requirement>
             <requirement>2. 生成其他回应文本（如brief、message）</requirement>
             <requirement>3. 根据用户语言要求，只对非SQL部分的文本进行语言转换</requirement>
             <requirement>4. 绝对不触及SQL中的标识符</requirement>
