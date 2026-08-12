@@ -4,7 +4,7 @@ version = "1.10.0"
 description = ""
 requires-python = "==3.11.*"
 dependencies = [
-    "fastapi[standard]<1.0.0,>=0.115.12",
+    "fastapi[standard]<0.116.0,>=0.115.12",
     "python-multipart<1.0.0,>=0.0.7",
     "passlib[bcrypt]<2.0.0,>=1.7.4",
     "tenacity<9.0.0,>=8.2.3",
