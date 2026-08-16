@@ -90,7 +90,7 @@ If you are in an intranet environment, you can deploy SQLBot via the [offline in
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=dataease/sqlbot&type=Date)](https://www.star-history.com/#dataease/sqlbot&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=dataease/sqlbot&type=Date)](https://star-history.dera.page/#dataease/sqlbot&Date)
 
 ## Other star projects under FIT2CLOUD
 
