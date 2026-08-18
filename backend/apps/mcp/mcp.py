@@ -13,8 +13,9 @@ from sqlmodel import select
 
 from apps.chat.api.chat import create_chat, question_answer_inner
 from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion, \
-    ChatFinishStep, McpDs, ChatToken
+    ChatFinishStep, McpDs, ChatToken, WsMcp
 from apps.datasource.crud.datasource import get_datasource_list
+from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.user import authenticate, user_ws_options
 from apps.system.crud.user import get_db_user
 from apps.system.models.system_model import UserWsModel
@@ -156,11 +157,9 @@ async def datasource_list(session: SessionDep, trans: Trans, mcp_ds: McpDs):
     return result
 
 
-#
-#
-# @router.get("/model_list", operation_id="get_model_list")
-# async def get_model_list(session: SessionDep):
-#     return session.query(AiModelDetail).all()
+@router.post("/mcp_model_list", operation_id="mcp_model_list")
+async def get_model_by_ws(session: SessionDep, mcp_oid: WsMcp):
+    return get_ai_model_list_by_workspace(session, mcp_oid.oid, False)
 
 
 @router.post("/mcp_question", operation_id="mcp_question")
@@ -191,7 +190,8 @@ async def mcp_question(session: SessionDep, trans: Trans, chat: McpQuestion):
         else:
             raise HTTPException(status_code=400, detail="Invalid datasource ID")
 
-    mcp_chat = ChatMcp(token=chat.token, chat_id=chat.chat_id, question=chat.question, datasource_id=ds_id)
+    mcp_chat = ChatMcp(token=chat.token, chat_id=chat.chat_id, question=chat.question, datasource_id=ds_id,
+                       custom_model=chat.custom_model)
 
     return await question_answer_inner(session=session, current_user=session_user, request_question=mcp_chat,
                                        in_chat=False, stream=chat.stream, return_img=chat.return_img)
