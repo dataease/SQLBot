@@ -175,9 +175,11 @@ class RenameChat(BaseModel):
     brief: str = ''
     brief_generate: bool = True
 
+
 class SimpleChat(BaseModel):
     id: int = None
     brief: str = ''
+
 
 class ChatItem(BaseModel):
     id: Optional[int] = None
@@ -194,6 +196,7 @@ class ChatItem(BaseModel):
     recommended_question: Optional[str] = None
     recommended_generate: Optional[bool] = False
     latest_record_time: Optional[datetime] = None
+
 
 class ChatInfo(BaseModel):
     id: Optional[int] = None
@@ -362,6 +365,7 @@ class AiModelQuestion(BaseModel):
 class ChatQuestion(AiModelQuestion):
     chat_id: int
     datasource_id: Optional[int] = None
+    custom_model: Optional[str | int] = None
 
 
 class ChatMcp(ChatQuestion):
@@ -371,6 +375,10 @@ class ChatMcp(ChatQuestion):
 class McpDs(BaseModel):
     token: str = Body(description='用户token')
     oid: Optional[str] = Body(description='组织ID，如果不传则为最后一次登录SQLBot时所使用的组织ID', default=None)
+
+
+class WsMcp(BaseModel):
+    oid: Optional[str | int] = Body(description='组织ID')
 
 
 class ChatToken(BaseModel):
@@ -383,7 +391,7 @@ class ChatStart(BaseModel):
     password: str = Body(description='密码', default=None)
     token: str = Body(description='token', default=None)
     oid: Optional[str] = Body(
-        description='组织ID，仅当数据源ID为空时有效，如果不传则为最后一次登录SQLBot时所使用的组织ID', default=None)
+        description='组织ID，如果不传则为最后一次登录SQLBot时所使用的组织ID', default=None)
 
 
 class ChatQuestionBase(BaseModel):
@@ -397,6 +405,7 @@ class McpQuestion(ChatQuestionBase):
     lang: Optional[str] = Body(description='语言：zh-CN|zh-TW|en|ko-KR', default='zh-CN')
     datasource_id: Optional[int | str] = Body(description='数据源ID，仅当当前对话没有确定数据源时有效', default=None)
     return_img: Optional[bool] = Body(description='是否返回图表，默认为true开启, 关闭false则仅返回数据', default=True)
+    custom_model: Optional[str | int] = Body(description='模型ID', default=None)
 
 
 class AxisObj(BaseModel):

@@ -226,6 +226,10 @@ class LLMService:
                     if any(str(model.id) == str(args[3].custom_model) for model in _ai_model_list):
                         specialized_model_id = args[3].custom_model
                         print("use custom model: id[" + specialized_model_id + "]")
+        if args[2] and args[2].custom_model:
+            if any(str(model.id) == str(args[2].custom_model) for model in _ai_model_list):
+                specialized_model_id = args[2].custom_model
+                print("use custom model: id[" + specialized_model_id + "]")
         config: LLMConfig = await get_default_config(specialized_model_id)
         instance = cls(*args, **kwargs, config=config)
 
