@@ -219,7 +219,7 @@ mcp = FastApiMCP(
     description="SQLBot MCP Server",
     describe_all_responses=True,
     describe_full_response_schema=True,
-    include_operations=["mcp_datasource_list", "get_model_list", "mcp_question", "mcp_start", "mcp_assistant", "mcp_ws_list", "access_token"],
+    include_operations=["mcp_datasource_list", "mcp_model_list", "mcp_question", "mcp_start", "mcp_assistant", "mcp_ws_list", "access_token"],
     headers=["Authorization", "X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP", "X-Client-IP"]
 )
 
