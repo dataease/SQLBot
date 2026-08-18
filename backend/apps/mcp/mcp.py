@@ -159,7 +159,7 @@ async def datasource_list(session: SessionDep, trans: Trans, mcp_ds: McpDs):
 
 @router.post("/mcp_model_list", operation_id="mcp_model_list")
 async def get_model_by_ws(session: SessionDep, mcp_oid: WsMcp):
-    return get_ai_model_list_by_workspace(session, mcp_oid.oid, False)
+    return get_ai_model_list_by_workspace(session, int(mcp_oid.oid), False)
 
 
 @router.post("/mcp_question", operation_id="mcp_question")
