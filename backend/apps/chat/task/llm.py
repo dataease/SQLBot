@@ -226,7 +226,11 @@ class LLMService:
                     if any(str(model.id) == str(args[3].custom_model) for model in _ai_model_list):
                         specialized_model_id = args[3].custom_model
                         print("use custom model: id[" + specialized_model_id + "]")
+        # mcp call, custom model id
         if args[2] and args[2].custom_model:
+            if args[1]:
+                ws_id = args[1].oid
+                _ai_model_list = get_ai_model_list_by_workspace(args[0], ws_id)
             if any(str(model.id) == str(args[2].custom_model) for model in _ai_model_list):
                 specialized_model_id = args[2].custom_model
                 print("use custom model: id[" + specialized_model_id + "]")
