@@ -370,8 +370,8 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                         raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                     return False
         elif equals_ignore_case(ds.type, 'hive'):
-            with hive.connect(host=conf.host, port=conf.port, username=conf.username,
-                              database=conf.database, password=conf.password if conf.password else None,
+            with hive.connect(host=conf.host, port=conf.port, username=conf.username, database=conf.database,
+                              password=conf.password if conf.password else None,
                               auth='LDAP' if conf.password else None,
                               **extra_config_dict) as conn, conn.cursor() as cursor:
                 try:
