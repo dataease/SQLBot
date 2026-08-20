@@ -596,7 +596,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
             with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
                 cursor.execute(sql)
                 res = cursor.fetchall()
-                res_list = [ColumnSchema(*item) for item in res]
+                res_list = [ColumnSchema(*item[:3]) for item in res]
                 return res_list
 
 
