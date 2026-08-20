@@ -272,15 +272,19 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
             )
     elif equals_ignore_case(ds.type, 'hive'):
         if not use_pool:
-            conn = hive.connect(host=conf.host, port=conf.port, username=conf.username,
-                                database=conf.database, **conn_conf)
+            conn = hive.connect(host=conf.host, port=conf.port, username=conf.username, database=conf.database,
+                                password=conf.password if conf.password else None,
+                                auth='LDAP' if conf.password else None, **conn_conf)
         else:
             conn = PooledDB(
                 creator=hive,
                 host=conf.host,
                 port=conf.port,
                 username=conf.username,
-                database=conf.database, **conn_conf
+                database=conf.database,
+                password=conf.password if conf.password else None,
+                auth='LDAP' if conf.password else None,
+                **conn_conf
             )
 
     return conn
@@ -367,7 +371,9 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                     return False
         elif equals_ignore_case(ds.type, 'hive'):
             with hive.connect(host=conf.host, port=conf.port, username=conf.username,
-                              database=conf.database, **extra_config_dict) as conn, conn.cursor() as cursor:
+                              database=conf.database, password=conf.password if conf.password else None,
+                              auth='LDAP' if conf.password else None,
+                              **extra_config_dict) as conn, conn.cursor() as cursor:
                 try:
                     cursor.execute('select 1')
                     SQLBotLogUtil.info("success")
