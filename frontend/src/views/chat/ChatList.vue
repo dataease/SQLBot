@@ -7,7 +7,7 @@ import { type Chat, chatApi, ChatInfo } from '@/api/chat.ts'
 import { computed, reactive, ref } from 'vue'
 import dayjs from 'dayjs'
 import { getDate } from '@/utils/utils.ts'
-import { groupBy } from 'lodash-es'
+import { groupBy, orderBy } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
@@ -48,7 +48,10 @@ function groupByDate(chat: Chat) {
 }
 
 const computedChatGroup = computed(() => {
-  return groupBy(props.chatList, groupByDate)
+  return groupBy(
+    orderBy(props.chatList, [(c: Chat) => c.latest_record_time ?? c.create_time], ['desc']),
+    groupByDate
+  )
 })
 
 const expandMap = ref({
