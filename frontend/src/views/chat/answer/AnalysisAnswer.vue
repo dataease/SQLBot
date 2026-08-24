@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseAnswer from './BaseAnswer.vue'
-import { chatApi, ChatInfo, type ChatMessage, ChatRecord } from '@/api/chat.ts'
+import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord } from '@/api/chat.ts'
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import MdComponent from '@/views/chat/component/MdComponent.vue'
 const props = withDefaults(
@@ -95,6 +95,13 @@ const sendMessage = async () => {
   if (error) return
 
   try {
+    _currentChat.value.latest_record_time = new Date()
+    _chatList.value.forEach((c: Chat) => {
+      if (c.id === _currentChat.value.id) {
+        c.latest_record_time = _currentChat.value.latest_record_time
+      }
+    })
+
     const controller: AbortController = new AbortController()
     const response = await chatApi.analysis(currentRecord.analysis_record_id, controller)
     const reader = response.body.getReader()
