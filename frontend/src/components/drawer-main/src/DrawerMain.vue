@@ -16,6 +16,7 @@ const props = defineProps({
       field: propTypes.string,
       option: propTypes.array,
       title: propTypes.string,
+      single: propTypes.bool,
       property: propTypes.shape({}),
     })
   ),
@@ -142,6 +143,7 @@ defineExpose({
         :title="component.title"
         :index="index"
         :property="component.property"
+        :single="!!component.single"
         @filter-change="(v) => filterChange(v, component.field, 'in')"
       />
       <drawer-enum-filter
