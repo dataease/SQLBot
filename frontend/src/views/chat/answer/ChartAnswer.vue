@@ -102,6 +102,13 @@ const sendMessage = async () => {
   if (error) return
 
   try {
+    _currentChat.value.latest_record_time = new Date()
+    _chatList.value.forEach((c: Chat) => {
+      if (c.id === _currentChat.value.id) {
+        c.latest_record_time = _currentChat.value.latest_record_time
+      }
+    })
+
     const controller: AbortController = new AbortController()
     const param = {
       question: currentRecord.question,
