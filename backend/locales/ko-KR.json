@@ -59,8 +59,6 @@
     "record_id_in_mcp": "응답 ID: "
   },
   "i18n_terminology": {
-    "datasource_list_is_not_found": "데이터 소스 목록을 찾을 수 없습니다",
-    "datasource_id_not_found": "데이터 소스 ID: {key}를 찾을 수 없습니다",
     "terminology_not_exists": "이 용어가 존재하지 않습니다",
     "datasource_cannot_be_none": "데이터 소스는 비울 수 없습니다",
     "cannot_be_repeated": "용어 이름과 동의어는 반복될 수 없습니다",
@@ -87,6 +85,8 @@
     "datasource_not_found": "데이터 소스를 찾을 수 없음"
   },
   "i18n_data_training": {
+    "datasource_list_is_not_found": "데이터 소스 목록을 찾을 수 없습니다",
+    "datasource_id_not_found": "데이터 소스 ID: {key}를 찾을 수 없습니다",
     "datasource_cannot_be_none": "데이터 소스는 비울 수 없습니다",
     "datasource_assistant_cannot_be_none": "데이터 소스와 고급 애플리케이션을 모두 비울 수 없습니다",
     "data_training_not_exists": "이 예시가 존재하지 않습니다",
