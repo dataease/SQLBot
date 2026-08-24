@@ -229,6 +229,7 @@ const filterOption = ref<any[]>([
     field: 'ds_list',
     title: t('ds.title'),
     operate: 'in',
+    single: true,
     property: { placeholder: t('common.empty') + t('ds.title') },
   },
   {

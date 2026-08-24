@@ -14,6 +14,7 @@ const props = defineProps({
   ),
   index: propTypes.number,
   title: propTypes.string,
+  single: propTypes.bool,
   property: {
     type: Object,
     default: () => ({}),
@@ -21,14 +22,20 @@ const props = defineProps({
 })
 
 const state = reactive({
-  activeStatus: [],
+  activeStatus: props.single ? undefined : [],
 })
 const emits = defineEmits(['filter-change'])
 
-const selectStatus = (ids: any[]) => {
+const selectStatus = (ids: any[] | any) => {
+  let _list
+  if (ids instanceof Array) {
+    _list = ids
+  } else {
+    _list = [ids]
+  }
   emits(
     'filter-change',
-    ids.map((item) => item.id || item.value)
+    _list.map((item) => item.id || item.value)
   )
 }
 
@@ -37,7 +44,7 @@ const optionListNotSelect = computed(() => {
 })
 const clear = (index: number) => {
   if (index !== props.index) return
-  state.activeStatus = []
+  state.activeStatus = props.single ? undefined : []
 }
 
 useEmitt({
@@ -57,7 +64,7 @@ useEmitt({
         value-key="id"
         filterable
         :placeholder="t('datasource.Please_select') + props.property.placeholder"
-        multiple
+        :multiple="!props.single"
         @change="selectStatus"
       >
         <el-option
