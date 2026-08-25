@@ -2,7 +2,7 @@
   <el-dialog
     v-model="centerDialogVisible"
     :title="$t('workspace.add_member')"
-    modal-class="authorized-workspace"
+    modal-class="authorized-workspace_dialog"
     width="840"
   >
     <p class="mb-8 lighter">{{ $t('workspace.member_type') }}</p>
@@ -42,25 +42,44 @@
             class="checkbox-group-block"
             @change="handleCheckedWorkspaceChange"
           >
-            <el-checkbox
-              v-for="space in workspaceWithKeywords"
-              :key="space.id"
-              :label="space.name"
-              :value="space"
-              class="hover-bg"
+            <FixedSizeList
+              :item-size="44"
+              :data="workspaceWithKeywords"
+              :total="workspaceWithKeywords.length"
+              :height="330"
+              scrollbar-always-on
+              layout="vertical"
             >
-              <div class="flex">
-                <el-icon size="28">
-                  <avatar_personal></avatar_personal>
-                </el-icon>
-                <span class="ml-4 ellipsis" style="max-width: 40%" :title="space.name">
-                  {{ space.name }}</span
-                >
-                <span class="account ellipsis" style="max-width: 40%" :title="space.account"
-                  >({{ space.account }})</span
-                >
-              </div>
-            </el-checkbox>
+              <template #default="{ index, style }">
+                <div class="fixed-size_list" :style="style">
+                  <el-checkbox
+                    :key="workspaceWithKeywords[index].id"
+                    :label="workspaceWithKeywords[index].name"
+                    :value="workspaceWithKeywords[index]"
+                    class="hover-bg"
+                  >
+                    <div class="flex">
+                      <el-icon size="28">
+                        <avatar_personal></avatar_personal>
+                      </el-icon>
+                      <span
+                        class="ml-4 ellipsis"
+                        style="max-width: 40%"
+                        :title="workspaceWithKeywords[index].name"
+                      >
+                        {{ workspaceWithKeywords[index].name }}</span
+                      >
+                      <span
+                        class="account ellipsis"
+                        style="max-width: 40%"
+                        :title="workspaceWithKeywords[index].account"
+                        >({{ workspaceWithKeywords[index].account }})</span
+                      >
+                    </div>
+                  </el-checkbox>
+                </div>
+              </template>
+            </FixedSizeList>
           </el-checkbox-group>
         </div>
       </div>
@@ -74,30 +93,46 @@
             {{ $t('workspace.clear') }}
           </el-button>
         </div>
-        <div
-          v-for="ele in checkTableList"
-          :key="ele.name"
-          style="margin: 0 16px; position: relative"
-          class="flex-between align-center hover-bg_select"
-        >
-          <div
-            :title="`${ele.name}(${ele.account})`"
-            class="flex align-center ellipsis"
-            style="width: 100%"
+        <div class="select-right_member">
+          <FixedSizeList
+            :item-size="44"
+            :data="checkTableList"
+            :total="checkTableList.length"
+            :height="358"
+            scrollbar-always-on
+            layout="vertical"
           >
-            <el-icon size="28">
-              <avatar_personal></avatar_personal>
-            </el-icon>
-            <span class="ml-4 lighter ellipsis" style="max-width: 40%" :title="ele.name">{{
-              ele.name
-            }}</span>
-            <span class="account ellipsis" style="max-width: 40%" :title="ele.account"
-              >({{ ele.account }})</span
-            >
-          </div>
-          <el-button class="close-btn" text>
-            <el-icon size="16" @click="clearWorkspace(ele)"><Close /></el-icon>
-          </el-button>
+            <template #default="{ index, style }">
+              <div :key="checkTableList[index].name" :style="style" class="hover-bg_select">
+                <div
+                  :title="`${checkTableList[index].name}(${checkTableList[index].account})`"
+                  class="flex align-center ellipsis"
+                  style="width: 100%"
+                >
+                  <el-icon size="28">
+                    <avatar_personal></avatar_personal>
+                  </el-icon>
+                  <span
+                    class="ml-4 lighter ellipsis"
+                    style="max-width: 40%"
+                    :title="checkTableList[index].name"
+                    >{{ checkTableList[index].name }}</span
+                  >
+                  <span
+                    class="account ellipsis"
+                    style="max-width: 40%"
+                    :title="checkTableList[index].account"
+                    >({{ checkTableList[index].account }})</span
+                  >
+                </div>
+                <el-button class="close-btn" text>
+                  <el-icon size="16" @click="clearWorkspace(checkTableList[index])"
+                    ><Close
+                  /></el-icon>
+                </el-button>
+              </div>
+            </template>
+          </FixedSizeList>
         </div>
       </div>
     </div>
@@ -116,6 +151,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
+import FixedSizeList from 'element-plus-secondary/es/components/virtual-list/src/components/fixed-size-list.mjs'
 import { workspaceOptionUserList, workspaceUwsCreate } from '@/api/workspace'
 import avatar_personal from '@/assets/svg/avatar_personal.svg'
 import Close from '@/assets/svg/icon_close_outlined_w.svg'
@@ -222,7 +258,7 @@ defineExpose({
 })
 </script>
 <style lang="less">
-.authorized-workspace {
+.authorized-workspace_dialog {
   .mb-8 {
     margin-bottom: 8px;
   }
@@ -238,7 +274,7 @@ defineExpose({
       &::after {
         content: '';
         height: 44px;
-        width: calc(100% + 34px);
+        width: calc(100% + 16px);
         background: #1f23291a;
         position: absolute;
         border-radius: 6px;
@@ -251,9 +287,13 @@ defineExpose({
   }
 
   .hover-bg_select {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
     &:hover {
       &::after {
-        width: calc(100% + 16px);
+        width: 100%;
+        left: 0;
       }
     }
   }
@@ -273,7 +313,13 @@ defineExpose({
   }
 
   .checkbox-group-block {
-    margin: 0 16px;
+    position: relative;
+    .ed-vl__window {
+      overflow-y: hidden !important;
+    }
+    .fixed-size_list {
+      padding-left: 16px;
+    }
   }
 
   .checkbox-group-block {
@@ -311,7 +357,15 @@ defineExpose({
   .w-full {
     height: 100%;
     width: 50%;
-    overflow-y: auto;
+
+    .select-right_member {
+      height: 358px;
+      padding: 0 8px 0 8px;
+      position: relative;
+      .ed-vl__window {
+        overflow-y: hidden !important;
+      }
+    }
 
     .flex-between {
       height: 44px;
