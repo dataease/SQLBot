@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Optional
 from fastapi import APIRouter, File, Path, Query, UploadFile
-from sqlmodel import SQLModel, or_, select, delete as sqlmodel_delete
+from sqlmodel import SQLModel, case, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
 from apps.system.crud.user_excel import batchUpload, downTemplate, download_error_file
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
@@ -80,20 +80,36 @@ async def pager(
     if order_by and order_by != 'account':
         select_columns.append(sort_field)
 
+    # 相似度排序：精确匹配 > 前缀匹配 > 包含匹配
+    # 当有 keyword 时，将 similarity_score 加入 SELECT 列以满足 DISTINCT 约束
+    similarity_score = None
+    if keyword:
+        similarity_score = case(
+            (UserModel.account == keyword, 0),
+            (UserModel.account.startswith(keyword), 1),
+            (UserModel.account.contains(keyword), 2),
+            else_=3
+        )
+        select_columns.append(similarity_score.label('similarity_score'))
+
     origin_stmt = (
         select(*select_columns)
         .join(UserWsModel, UserModel.id == UserWsModel.uid, isouter=True)
         .where(UserModel.id != 1)
         .distinct()
-        .order_by(sort_clause)
     )
-    
+    # 根据是否有 keyword 决定排序方式
+    if keyword:
+        origin_stmt = origin_stmt.order_by(similarity_score, sort_clause)
+    else:
+        origin_stmt = origin_stmt.order_by(sort_clause)
+
     if oidlist:
         origin_stmt = origin_stmt.where(UserWsModel.oid.in_(oidlist))
     if origins:
         origin_stmt = origin_stmt.where(UserModel.origin.in_(origins))
     if status is not None:
-        origin_stmt = origin_stmt.where(UserModel.status == status)        
+        origin_stmt = origin_stmt.where(UserModel.status == status)
     if keyword:
         keyword_pattern = f"%{keyword}%"
         origin_stmt = origin_stmt.where(
@@ -114,8 +130,18 @@ async def pager(
         select(UserModel, UserWsModel.oid.label('ws_oid'))
         .join(UserWsModel, UserModel.id == UserWsModel.uid, isouter=True)
         .where(UserModel.id.in_(uid_list))
-        .order_by(sort_clause)
     )
+    # 第二次查询也需要应用相同的相似度排序
+    if keyword:
+        similarity_score = case(
+            (UserModel.account == keyword, 0),
+            (UserModel.account.startswith(keyword), 1),
+            (UserModel.account.contains(keyword), 2),
+            else_=3
+        )
+        stmt = stmt.order_by(similarity_score, sort_clause)
+    else:
+        stmt = stmt.order_by(sort_clause)
     user_workspaces = session.exec(stmt).all()
     merged = defaultdict(list)
     extra_attrs = {}
