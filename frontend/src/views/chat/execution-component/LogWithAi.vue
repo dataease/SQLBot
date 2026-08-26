@@ -51,7 +51,7 @@ const recordsBeforeCurrentQuestion = computed(() =>
     <template v-if="item.error">
       {{ error }}
     </template>
-    <div v-else class="item-list flex-gap-fallback flex-col">
+    <div class="item-list flex-gap-fallback flex-col">
       <div class="inner-title">{{ t('chat.log_system') }}</div>
       <div class="inner-item flex-gap-fallback flex-col">
         <div class="inner-item-title">
