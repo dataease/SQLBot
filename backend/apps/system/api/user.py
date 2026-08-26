@@ -82,14 +82,31 @@ async def pager(
 
     # 相似度排序：精确匹配 > 前缀匹配 > 包含匹配
     # 当有 keyword 时，将 similarity_score 加入 SELECT 列以满足 DISTINCT 约束
+    # 对 account、name、email 三个字段分别计算相似度，取最高（最小值）
     similarity_score = None
     if keyword:
-        similarity_score = case(
+        from sqlalchemy import func
+        # 每个字段的相似度分数
+        account_score = case(
             (UserModel.account == keyword, 0),
             (UserModel.account.startswith(keyword), 1),
             (UserModel.account.contains(keyword), 2),
             else_=3
         )
+        name_score = case(
+            (UserModel.name == keyword, 0),
+            (UserModel.name.startswith(keyword), 1),
+            (UserModel.name.contains(keyword), 2),
+            else_=3
+        )
+        email_score = case(
+            (UserModel.email == keyword, 0),
+            (UserModel.email.startswith(keyword), 1),
+            (UserModel.email.contains(keyword), 2),
+            else_=3
+        )
+        # 取三个字段中的最小值（最高匹配度）
+        similarity_score = func.LEAST(account_score, name_score, email_score)
         select_columns.append(similarity_score.label('similarity_score'))
 
     origin_stmt = (
@@ -133,12 +150,26 @@ async def pager(
     )
     # 第二次查询也需要应用相同的相似度排序
     if keyword:
-        similarity_score = case(
+        from sqlalchemy import func
+        account_score = case(
             (UserModel.account == keyword, 0),
             (UserModel.account.startswith(keyword), 1),
             (UserModel.account.contains(keyword), 2),
             else_=3
         )
+        name_score = case(
+            (UserModel.name == keyword, 0),
+            (UserModel.name.startswith(keyword), 1),
+            (UserModel.name.contains(keyword), 2),
+            else_=3
+        )
+        email_score = case(
+            (UserModel.email == keyword, 0),
+            (UserModel.email.startswith(keyword), 1),
+            (UserModel.email.contains(keyword), 2),
+            else_=3
+        )
+        similarity_score = func.LEAST(account_score, name_score, email_score)
         stmt = stmt.order_by(similarity_score, sort_clause)
     else:
         stmt = stmt.order_by(sort_clause)
