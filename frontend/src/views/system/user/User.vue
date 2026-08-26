@@ -386,6 +386,7 @@
             <el-select
               v-model="state.form.system_variables[index].variableId"
               style="width: 236px"
+              @change="handleVariableChange(index)"
               :placeholder="$t('datasource.Please_select')"
             >
               <el-option
@@ -684,6 +685,14 @@ const getVariableOptionList = (variableId: string) => {
   }
 
   return []
+}
+
+const handleVariableChange = (index: number) => {
+  state.form.system_variables[index].variableValues = []
+  const variable = variableValueMap.value[state.form.system_variables[index].variableId]
+  if (variable && variable.value.length === 1) {
+    state.form.system_variables[index].variableValues = [variable.value[0]]
+  }
 }
 
 const getSelectedKeysFromStoredValues = (variableId: string, storedValues: any[] = []) => {
