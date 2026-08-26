@@ -359,6 +359,7 @@ const handleCurrentChange = (val: number) => {
       clearable
       :class="workspaceForm.name && 'value-input'"
       :placeholder="$t('workspace.id_account_to_add')"
+      @keydown.enter.exact.prevent="findUser"
     >
       <template #append>
         <span style="cursor: pointer" @click="findUser">{{ t('workspace.find_user') }}</span>
