@@ -244,6 +244,7 @@
                         :record-id="message.record?.id"
                         :duration="message.record?.duration"
                         :total-tokens="message.record?.total_tokens"
+                        :error="message.record?.error"
                       />
                       <ChatToolBar v-if="!message.isTyping" :message="message">
                         <div class="tool-btns">
@@ -339,6 +340,7 @@
                         :record-id="message.record?.id"
                         :duration="message.record?.duration"
                         :total-tokens="message.record?.total_tokens"
+                        :error="message.record?.error"
                       />
                       <ChatToolBar v-if="!message.isTyping" :message="message" />
                     </template>
@@ -366,6 +368,7 @@
                         :record-id="message.record?.id"
                         :duration="message.record?.duration"
                         :total-tokens="message.record?.total_tokens"
+                        :error="message.record?.error"
                       />
                       <ChatToolBar v-if="!message.isTyping" :message="message" />
                     </template>
