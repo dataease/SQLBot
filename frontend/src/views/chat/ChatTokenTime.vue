@@ -7,6 +7,7 @@ const props = defineProps<{
   recordId?: number
   duration?: number | undefined
   totalTokens?: number | undefined
+  error?: string
 }>()
 const chatConfig = useChatConfigStore()
 const showLogBtn = chatConfig.getShowLog
@@ -28,7 +29,7 @@ function getLogList() {
       {{ $t('parameter.execution_details') }}
     </div>
   </div>
-  <ExecutionDetails ref="executionDetailsRef"></ExecutionDetails>
+  <ExecutionDetails ref="executionDetailsRef" :error="error"></ExecutionDetails>
 </template>
 
 <style scoped lang="less">

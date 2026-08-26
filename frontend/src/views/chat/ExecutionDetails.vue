@@ -17,6 +17,10 @@ import LogChooseTable from './execution-component/LogChooseTable.vue'
 import LogGeneratePicture from './execution-component/LogGeneratePicture.vue'
 import LogWithAi from '@/views/chat/execution-component/LogWithAi.vue'
 
+defineProps<{
+  error?: string
+}>()
+
 const { t } = useI18n()
 const logHistory = ref<ChatLogHistory>({})
 const dialogFormVisible = ref(false)
@@ -113,13 +117,29 @@ defineExpose({
           </div>
         </div>
         <div v-if="expandIds.includes(index)" class="content">
-          <LogTerm v-if="ele.operate_key === 'FILTER_TERMS'" :item="ele" />
-          <LogSQLSample v-else-if="ele.operate_key === 'FILTER_SQL_EXAMPLE'" :item="ele" />
-          <LogCustomPrompt v-else-if="ele.operate_key === 'FILTER_CUSTOM_PROMPT'" :item="ele" />
-          <LogChooseTable v-else-if="ele.operate_key === 'CHOOSE_TABLE'" :item="ele" />
-          <LogDataQuery v-else-if="ele.operate_key === 'EXECUTE_SQL'" :item="ele" />
-          <LogGeneratePicture v-else-if="ele.operate_key === 'GENERATE_PICTURE'" :item="ele" />
-          <LogWithAi v-else :item="ele" />
+          <LogTerm v-if="ele.operate_key === 'FILTER_TERMS'" :item="ele" :error="error" />
+          <LogSQLSample
+            v-else-if="ele.operate_key === 'FILTER_SQL_EXAMPLE'"
+            :item="ele"
+            :error="error"
+          />
+          <LogCustomPrompt
+            v-else-if="ele.operate_key === 'FILTER_CUSTOM_PROMPT'"
+            :item="ele"
+            :error="error"
+          />
+          <LogChooseTable
+            v-else-if="ele.operate_key === 'CHOOSE_TABLE'"
+            :item="ele"
+            :error="error"
+          />
+          <LogDataQuery v-else-if="ele.operate_key === 'EXECUTE_SQL'" :item="ele" :error="error" />
+          <LogGeneratePicture
+            v-else-if="ele.operate_key === 'GENERATE_PICTURE'"
+            :item="ele"
+            :error="error"
+          />
+          <LogWithAi v-else :item="ele" :error="error" />
         </div>
       </div>
     </div>
