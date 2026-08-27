@@ -452,7 +452,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord } from '@/api/chat'
 import ChatRow from './ChatRow.vue'
 import ChartAnswer from './answer/ChartAnswer.vue'
@@ -483,7 +483,7 @@ import { onClickOutside } from '@vueuse/core'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useUserStore } from '@/stores/user'
 import { debounce } from 'lodash-es'
-import { isMobile } from '@/utils/utils'
+import { isMobile, isSupportFlexGap } from '@/utils/utils'
 import router from '@/router'
 import QuickQuestion from '@/views/chat/QuickQuestion.vue'
 import { useChatConfigStore } from '@/stores/chatConfig.ts'
@@ -1130,8 +1130,19 @@ function jumpCreatChat() {
     history.replaceState({}, '', newUrl)
   }
 }
-
+function checkAfterVisible() {
+  if (document.visibilityState === 'visible') {
+    clearInterval(time)
+    requestAnimationFrame(() => {
+      isSupportFlexGap()
+    })
+  }
+}
+let time: number
 onMounted(() => {
+  time = setInterval(() => {
+    checkAfterVisible()
+  }, 1000)
   chatConfig.fetchGlobalConfig()
   if (isPhone.value) {
     chatListSideBarShow.value = false
@@ -1141,6 +1152,12 @@ onMounted(() => {
   }
   getChatList(jumpCreatChat)
   assistantPrepareInit()
+})
+
+onBeforeUnmount(() => {
+  clearInterval(time)
+  clearInterval(scrollTime)
+  clearTimeout(scrollingTime)
 })
 </script>
 
