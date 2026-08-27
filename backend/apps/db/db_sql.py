@@ -73,7 +73,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
                 AND c.relkind IN ('r', 'v', 'p', 'm')
                 AND c.relname NOT LIKE 'pg_%'
                 AND c.relname NOT LIKE 'sql_%'
-              ORDER BY c.relname \
+              ORDER BY c.relname
               """, conf.dbSchema
     elif equals_ignore_case(ds.type, "oracle"):
         return """
@@ -154,11 +154,11 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
                    pg_namespace n ON n.oid = c.relnamespace
                        LEFT JOIN
                    pg_description d ON d.objoid = c.oid AND d.objsubid = 0
-              WHERE n.nspname = '{0}'
+              WHERE n.nspname = %s
                 AND c.relkind IN ('r', 'v', 'p', 'm')
-                AND c.relname NOT LIKE 'pg_%'
-                AND c.relname NOT LIKE 'sql_%'
-              ORDER BY c.relname \
+                AND c.relname NOT LIKE 'pg_%%'
+                AND c.relname NOT LIKE 'sql_%%'
+              ORDER BY c.relname
               """, conf.dbSchema
     elif equals_ignore_case(ds.type, "es"):
         return "", None
@@ -212,7 +212,7 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                     pg_catalog.pg_namespace n ON n.oid = c.relnamespace
                WHERE n.nspname = :param1
                  AND a.attnum > 0
-                 AND NOT a.attisdropped \
+                 AND NOT a.attisdropped
                """
         sql2 = " AND c.relname = :param2" if table_name is not None and table_name != "" else ""
         return sql1 + sql2, conf.dbSchema, table_name
@@ -228,7 +228,7 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                     pg_catalog.pg_namespace n ON n.oid = c.relnamespace
                WHERE n.nspname = %s
                  AND a.attnum > 0
-                 AND NOT a.attisdropped \
+                 AND NOT a.attisdropped
                """
         sql2 = " AND c.relname = %s" if table_name is not None and table_name != "" else ""
         return sql1 + sql2, conf.dbSchema, table_name
@@ -308,11 +308,11 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
                             pg_catalog.pg_class c ON a.attrelid = c.oid
                                 JOIN
                             pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                       WHERE n.nspname = '{0}'
+                       WHERE n.nspname = %s
                          AND a.attnum > 0
-                         AND NOT a.attisdropped \
+                         AND NOT a.attisdropped
                        """
-        sql2 = " AND c.relname = '{1}'" if table_name is not None and table_name != "" else ""
+        sql2 = " AND c.relname = %s" if table_name is not None and table_name != "" else ""
         return sql1 + sql2, conf.dbSchema, table_name
     elif equals_ignore_case(ds.type, "es"):
         return "", None, None
