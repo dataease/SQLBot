@@ -386,8 +386,8 @@
             <el-select
               v-model="state.form.system_variables[index].variableId"
               style="width: 236px"
-              @change="handleVariableChange(index)"
               :placeholder="$t('datasource.Please_select')"
+              @change="handleVariableChange(index)"
             >
               <el-option
                 v-for="item in variables"
@@ -691,7 +691,13 @@ const handleVariableChange = (index: number) => {
   state.form.system_variables[index].variableValues = []
   const variable = variableValueMap.value[state.form.system_variables[index].variableId]
   if (variable && variable.value.length === 1) {
-    state.form.system_variables[index].variableValues = [variable.value[0]]
+    if (variable.var_type === 'kv') {
+      state.form.system_variables[index].variableValues = [
+        getVariableOptionList(state.form.system_variables[index].variableId)[0].label,
+      ]
+    } else {
+      state.form.system_variables[index].variableValues = [variable.value[0]]
+    }
   }
 }
 
