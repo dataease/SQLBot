@@ -61,7 +61,7 @@ function getLogList() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 84px;
+        width: calc(100% + 8px);
         height: 26px;
         position: absolute;
       }

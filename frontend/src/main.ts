@@ -15,15 +15,24 @@ cssHasPseudo(document)
 
 function supportsFlexGap() {
   const flex = document.createElement('div')
+
   flex.style.display = 'flex'
   flex.style.flexDirection = 'column'
   flex.style.rowGap = '1px'
 
-  flex.appendChild(document.createElement('div'))
-  flex.appendChild(document.createElement('div'))
+  const child1 = document.createElement('div')
+  const child2 = document.createElement('div')
+
+  child1.style.height = '1px'
+  child2.style.height = '1px'
+
+  flex.appendChild(child1)
+  flex.appendChild(child2)
 
   document.body.appendChild(flex)
-  const isSupported = flex.scrollHeight === 1
+
+  const isSupported = flex.scrollHeight === 3
+
   document.body.removeChild(flex)
 
   return isSupported
