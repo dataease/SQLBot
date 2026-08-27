@@ -81,7 +81,7 @@ const handleDefaultChatChange = (val: any) => {
 <style lang="less">
 .chat-type_select.chat-type_select {
   padding: 4px 0;
-  width: 120px !important;
+  width: auto !important;
   min-width: 120px !important;
   box-shadow: 0px 4px 8px 0px #1f23291a;
   border: 1px solid #dee0e3;
