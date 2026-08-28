@@ -13,7 +13,7 @@ from apps.datasource.models.datasource import CoreDatasource
 from apps.db.constant import DB
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_info
-from apps.system.crud.assistant_manage import dynamic_upgrade_cors, save
+from apps.system.crud.assistant_manage import dynamic_upgrade_cors, get_ws_assistant, save
 from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
@@ -177,13 +177,11 @@ async def picture(file_id: str = Path(description="file_id")):
 @router.patch('/ui', summary=f"{PLACEHOLDER_PREFIX}assistant_ui_api", description=f"{PLACEHOLDER_PREFIX}assistant_ui_api")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.APPLICATION, result_id_expr="id"))
-async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = []):
+async def ui(session: SessionDep, current_user: CurrentUser, trans: Trans, data: str = Form(), files: List[UploadFile] = []):
     json_data = json.loads(data)
     uiSchema = AssistantUiSchema(**json_data)
     id = uiSchema.id
-    db_model = session.get(AssistantModel, id)
-    if not db_model:
-        raise ValueError(f"AssistantModel with id {id} not found")
+    db_model = get_ws_assistant(session, id, current_user, trans)
     configuration = db_model.configuration
     config_obj = json.loads(configuration) if configuration else {}
 
@@ -332,12 +330,15 @@ async def add(request: Request, session: SessionDep, current_user: CurrentUser, 
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 @clear_cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="editor.id")
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.APPLICATION, resource_id_expr="editor.id"))
-async def update(request: Request, session: SessionDep, editor: AssistantDTO):
+async def update(request: Request, session: SessionDep, current_user: CurrentUser, trans: Trans, editor: AssistantDTO):
     id = editor.id
-    db_model = session.get(AssistantModel, id)
-    if not db_model:
-        raise ValueError(f"AssistantModel with id {id} not found")
+    db_model = get_ws_assistant(session, id, current_user, trans)
     update_data = AssistantModel.model_validate(editor)
+    if not current_user.isAdmin:
+        # 忽略请求体 oid（含默认值 1）：非 admin 不允许跨工作空间移动/接管
+        update_data.oid = db_model.oid
+    # create_time 不在请求体中，model_validate 会填默认值 0，更新时保留原值
+    update_data.create_time = db_model.create_time
     db_model.sqlmodel_update(update_data)
     session.add(db_model)
     session.commit()
@@ -357,10 +358,8 @@ async def get_one(session: SessionDep, id: int = Path(description="ID")):
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 @clear_cache(namespace=CacheNamespace.EMBEDDED_INFO, cacheName=CacheName.ASSISTANT_INFO, keyExpression="id")
 @system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.APPLICATION, resource_id_expr="id"))
-async def delete(request: Request, session: SessionDep, id: int = Path(description="ID")):
-    db_model = session.get(AssistantModel, id)
-    if not db_model:
-        raise ValueError(f"AssistantModel with id {id} not found")
+async def delete(request: Request, session: SessionDep, current_user: CurrentUser, trans: Trans, id: int = Path(description="ID")):
+    db_model = get_ws_assistant(session, id, current_user, trans)
     session.delete(db_model)
     session.commit()
     dynamic_upgrade_cors(request=request, session=session)
