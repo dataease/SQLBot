@@ -242,6 +242,7 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
 
     count = session.query(DataTraining).filter(
+        DataTraining.oid == oid,
         DataTraining.id == info.id
     ).count()
     if count == 0:
@@ -420,20 +421,21 @@ def batch_create_training(session: SessionDep, info_list: List[DataTrainingInfo]
     }
 
 
-def delete_training(session: SessionDep, ids: list[int]):
-    stmt = delete(DataTraining).where(and_(DataTraining.id.in_(ids)))
+def delete_training(session: SessionDep, ids: list[int], oid: int):
+    stmt = delete(DataTraining).where(and_(DataTraining.oid == oid, DataTraining.id.in_(ids)))
     session.execute(stmt)
     session.commit()
 
 
-def enable_training(session: SessionDep, id: int, enabled: bool, trans: Trans):
+def enable_training(session: SessionDep, id: int, enabled: bool, trans: Trans, oid: int):
     count = session.query(DataTraining).filter(
+        DataTraining.oid == oid,
         DataTraining.id == id
     ).count()
     if count == 0:
         raise Exception(trans('i18n_data_training.data_training_not_exists'))
 
-    stmt = update(DataTraining).where(and_(DataTraining.id == id)).values(
+    stmt = update(DataTraining).where(and_(DataTraining.oid == oid, DataTraining.id == id)).values(
         enabled=enabled,
     )
     session.execute(stmt)

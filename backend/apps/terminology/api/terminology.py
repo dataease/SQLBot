@@ -57,15 +57,17 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 @router.delete("", summary=f"{PLACEHOLDER_PREFIX}delete_term")
 @system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.TERMINOLOGY,resource_id_expr='id_list'))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def delete(session: SessionDep, id_list: list[int]):
-    delete_terminology(session, id_list)
+async def delete(session: SessionDep, current_user: CurrentUser, id_list: list[int]):
+    oid = current_user.oid
+    delete_terminology(session, id_list, oid)
 
 
 @router.get("/{id}/enable/{enabled}", summary=f"{PLACEHOLDER_PREFIX}enable_term")
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.TERMINOLOGY,resource_id_expr='id'))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
-    enable_terminology(session, id, enabled, trans)
+async def enable(session: SessionDep, current_user: CurrentUser, id: int, enabled: bool, trans: Trans):
+    oid = current_user.oid
+    enable_terminology(session, id, enabled, trans, oid)
 
 
 @router.get("/export", summary=f"{PLACEHOLDER_PREFIX}export_term")

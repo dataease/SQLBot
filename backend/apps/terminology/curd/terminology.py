@@ -716,20 +716,23 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
     return info.id
 
 
-def delete_terminology(session: SessionDep, ids: list[int]):
-    stmt = delete(Terminology).where(or_(Terminology.id.in_(ids), Terminology.pid.in_(ids)))
+def delete_terminology(session: SessionDep, ids: list[int], oid: int):
+    stmt = delete(Terminology).where(
+        and_(Terminology.oid == oid, or_(Terminology.id.in_(ids), Terminology.pid.in_(ids))))
     session.execute(stmt)
     session.commit()
 
 
-def enable_terminology(session: SessionDep, id: int, enabled: bool, trans: Trans):
+def enable_terminology(session: SessionDep, id: int, enabled: bool, trans: Trans, oid: int):
     count = session.query(Terminology).filter(
-        Terminology.id == id
+        Terminology.id == id,
+        Terminology.oid == oid,
     ).count()
     if count == 0:
         raise Exception(trans('i18n_terminology.terminology_not_exists'))
 
-    stmt = update(Terminology).where(or_(Terminology.id == id, Terminology.pid == id)).values(
+    stmt = update(Terminology).where(
+        and_(Terminology.oid == oid, or_(Terminology.id == id, Terminology.pid == id))).values(
         enabled=enabled,
     )
     session.execute(stmt)

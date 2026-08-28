@@ -61,16 +61,18 @@ async def create_or_update(session: SessionDep, current_user: CurrentUser, trans
 @system_log(
     LogConfig(operation_type=OperationType.DELETE, module=OperationModules.DATA_TRAINING, resource_id_expr='id_list'))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def delete(session: SessionDep, id_list: list[int]):
-    delete_training(session, id_list)
+async def delete(session: SessionDep, current_user: CurrentUser, id_list: list[int]):
+    oid = current_user.oid
+    delete_training(session, id_list, oid)
 
 
 @router.get("/{id}/enable/{enabled}", summary=f"{PLACEHOLDER_PREFIX}enable_dt")
 @system_log(
     LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.DATA_TRAINING, resource_id_expr='id'))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def enable(session: SessionDep, id: int, enabled: bool, trans: Trans):
-    enable_training(session, id, enabled, trans)
+async def enable(session: SessionDep, current_user: CurrentUser, id: int, enabled: bool, trans: Trans):
+    oid = current_user.oid
+    enable_training(session, id, enabled, trans, oid)
 
 
 @router.get("/export", summary=f"{PLACEHOLDER_PREFIX}export_dt")
