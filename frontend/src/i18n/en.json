@@ -956,6 +956,7 @@
     "tencent_cloud": "Tencent Cloud",
     "volcano_engine": "Volcano Engine",
     "minimax": "MiniMax",
+    "orcarouter": "OrcaRouter",
     "generic_openai": "Generic OpenAI"
   },
   "modelType": {

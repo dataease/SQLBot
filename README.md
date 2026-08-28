@@ -46,6 +46,7 @@ SQLBot 是一款基于大语言模型和 RAG 的智能问数系统，由 DataEas
 | 腾讯云 | OpenAI 兼容 |
 | 火山引擎 | OpenAI 兼容 |
 | MiniMax | OpenAI 兼容 |
+| OrcaRouter | OpenAI 兼容 |
 | 通用 OpenAI 兼容 | 自定义 |
 
 ## 快速开始

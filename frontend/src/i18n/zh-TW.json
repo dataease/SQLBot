@@ -956,6 +956,7 @@
     "tencent_cloud": "騰訊雲",
     "volcano_engine": "火山引擎",
     "minimax": "MiniMax",
+    "orcarouter": "OrcaRouter",
     "generic_openai": "通用OpenAI"
   },
   "modelType": {
