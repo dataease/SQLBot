@@ -1,10 +1,10 @@
 
 
 from typing import Optional
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from sqlmodel import Session, select
 from starlette.middleware.cors import CORSMiddleware
-from apps.system.schemas.system_schema import AssistantBase
+from apps.system.schemas.system_schema import AssistantBase, UserInfoDTO
 from common.core.config import settings
 from apps.system.models.system_model import AssistantModel
 from common.utils.time import get_timestamp
@@ -60,4 +60,16 @@ async def save(request: Request, session: Session, creator: AssistantBase, oid: 
     session.add(db_model)
     session.commit()
     dynamic_upgrade_cors(request=request, session=session)
+    return db_model
+
+
+def get_ws_assistant(session: Session, id: int, current_user: UserInfoDTO, trans=None) -> AssistantModel:
+    """按 id 加载小助手并校验工作空间归属。资源不存在与越权访问统一返回 404，不泄露资源存在性。
+
+    系统管理员（isAdmin=True）保留跨工作空间管理能力。
+    """
+    db_model = session.get(AssistantModel, id)
+    if not db_model or (not current_user.isAdmin and db_model.oid != current_user.oid):
+        raise HTTPException(status_code=404,
+                            detail=trans('i18n_permission.permission_resource_limit') if trans else 'Assistant not found')
     return db_model
