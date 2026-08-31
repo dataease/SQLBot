@@ -18,16 +18,15 @@ export const datasourceApi = {
     request.post(`/datasource/execSql/${id}`, { sql: sql }),
   chooseTables: (id: number, data: any) => request.post(`/datasource/chooseTables/${id}`, data),
   tableList: (id: number) => request.post(`/datasource/tableList/${id}`),
-  fieldList: (id: number, data = { fieldName: '' }) =>
-    request.post(`/datasource/fieldList/${id}`, data),
-  edit: (data: any) => request.post('/datasource/editLocalComment', data),
+  fieldList: (ds_id: number, id: number, data = { fieldName: '' }) =>
+    request.post(`/datasource/fieldList/${ds_id}/${id}`, data),
   previewData: (id: number, data: any) => request.post(`/datasource/previewData/${id}`, data),
   saveTable: (data: any) => request.post('/datasource/editTable', data),
   saveField: (data: any) => request.post('/datasource/editField', data),
   getDs: (id: number) => request.post(`/datasource/get/${id}`),
   cancelRequests: () => request.cancelRequests(),
   getSchema: (data: any) => request.post('/datasource/getSchemaByConf', data),
-  syncFields: (id: number) => request.post(`/datasource/syncFields/${id}`),
+  syncFields: (ds_id: number, id: number) => request.post(`/datasource/syncFields/${ds_id}/${id}`),
   exportDsSchema: (id: any) =>
     request.get(`/datasource/exportDsSchema/${id}`, {
       responseType: 'blob',

@@ -242,7 +242,7 @@ const saveField = () => {
 
 const clickTable = (table: any) => {
   currentTable.value = table
-  datasourceApi.fieldList(table.id).then((res) => {
+  datasourceApi.fieldList(table.ds_id, table.id).then((res) => {
     fieldList.value = res
     datasourceApi.previewData(dsId.value, buildData()).then((res) => {
       previewData.value = res

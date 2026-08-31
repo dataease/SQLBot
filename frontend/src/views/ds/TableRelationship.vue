@@ -366,7 +366,7 @@ const addNode = (node: any, tableX: any, tableY: any) => {
 const clickTable = (table: any) => {
   loading.value = true
   datasourceApi
-    .fieldList(table.id)
+    .fieldList(table.ds_id, table.id)
     .then((res: AnyColumn) => {
       const node = {
         id: table.id,

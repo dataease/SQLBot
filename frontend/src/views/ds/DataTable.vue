@@ -168,7 +168,7 @@ const clickTable = (table: any) => {
   pageInfo.total = 0
   previewData.value = []
   datasourceApi
-    .fieldList(table.id)
+    .fieldList(table.ds_id, table.id)
     .then((res) => {
       fieldList.value = res
       pageInfo.total = res.length
@@ -259,7 +259,7 @@ const changeStatus = (row: any) => {
 const syncFields = () => {
   loading.value = true
   datasourceApi
-    .syncFields(currentTable.value.id)
+    .syncFields(currentTable.value.ds_id, currentTable.value.id)
     .then(() => {
       btnSelectClick('d')
       ElMessage.success(t('ds.sync_fields_success'))
@@ -343,7 +343,7 @@ const btnSelectClick = (val: any) => {
 
   if (val === 'd') {
     datasourceApi
-      .fieldList(currentTable.value.id, { fieldName: '' })
+      .fieldList(currentTable.value.ds_id, currentTable.value.id, { fieldName: '' })
       .then((res) => {
         fieldList.value = res
         pageInfo.total = res.length
@@ -497,9 +497,9 @@ const btnSelectClick = (val: any) => {
             >
               <el-switch
                 v-model="currentTable.checked"
-                @change="changeChecked"
                 size="small"
                 style="margin-right: 8px"
+                @change="changeChecked"
               />
 
               {{ currentTable.checked ? t('user.disable') : t('user.enable') }}
