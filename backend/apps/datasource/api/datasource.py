@@ -163,8 +163,8 @@ async def get_fields(session: SessionDep,
     return getFields(session, id, table_name)
 
 
-@router.post("/syncFields/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_sync_fields")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+@router.post("/syncFields/{ds_id}/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_sync_fields")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
 async def sync_fields(session: SessionDep, trans: Trans,
                       id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_table_id")):
     return sync_single_fields(session, trans, id)
@@ -200,27 +200,27 @@ async def table_list(session: SessionDep, id: int = Path(..., description=f"{PLA
     return get_tables_by_ds_id(session, id)
 
 
-@router.post("/fieldList/{id}", response_model=List[CoreField], summary=f"{PLACEHOLDER_PREFIX}ds_field_list")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+@router.post("/fieldList/{ds_id}/{id}", response_model=List[CoreField], summary=f"{PLACEHOLDER_PREFIX}ds_field_list")
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
 async def field_list(session: SessionDep, field: FieldObj,
                      id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_table_id")):
     return get_fields_by_table_id(session, id, field)
 
 
-@router.post("/editLocalComment", include_in_schema=False)
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def edit_local(session: SessionDep, data: TableObj):
-    update_table_and_fields(session, data)
+# @router.post("/editLocalComment", include_in_schema=False)
+# @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+# async def edit_local(session: SessionDep, data: TableObj):
+#     update_table_and_fields(session, data)
 
 
 @router.post("/editTable", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_edit_table")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
 async def edit_table(session: SessionDep, table: CoreTable):
     updateTable(session, table)
 
 
 @router.post("/editField", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_edit_field")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin']))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
 async def edit_field(session: SessionDep, field: CoreField):
     updateField(session, field)
 
