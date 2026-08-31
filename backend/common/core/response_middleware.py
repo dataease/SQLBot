@@ -40,7 +40,7 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         path_pattern = '' if not route else route.path_format
 
         if (isinstance(response, JSONResponse)
-                or request.url.path == f"{settings.CONTEXT_PATH}/openapi.json"
+                or (request.scope.get("path") or request.url.path) == f"{settings.CONTEXT_PATH}/openapi.json"
                 or path_pattern in direct_paths):
             return response
         if response.status_code != 200:

@@ -25,6 +25,7 @@ from apps.system.middleware.auth import TokenMiddleware
 from apps.system.schemas.permission import RequestContextMiddleware
 from common.audit.schemas.request_context import RequestContextMiddlewareCommon
 from common.core.config import settings
+from common.core.host_validation import HostValidationMiddleware
 from common.core.response_middleware import ResponseMiddleware, exception_handler
 from common.core.sqlbot_cache import init_sqlbot_cache
 from common.utils.distributed_lock import SingleWorkerGuard
@@ -239,6 +240,8 @@ app.add_middleware(TokenMiddleware)
 app.add_middleware(ResponseMiddleware)
 app.add_middleware(RequestContextMiddleware)
 app.add_middleware(RequestContextMiddlewareCommon)
+# 最后注册即最外层：非法 Host 头（携带路径片段等）在进入任何业务逻辑前被拒绝
+app.add_middleware(HostValidationMiddleware)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # Register exception handlers
