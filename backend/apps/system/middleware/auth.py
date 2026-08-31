@@ -31,13 +31,17 @@ class TokenMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
 
     async def dispatch(self, request, call_next):
-        
-        if self.is_options(request) or whiteUtils.is_whitelisted(request.url.path):
+        # 使用 scope["path"]（请求行真实路径）做白名单判断：
+        # request.url.path 会拼接未校验的 Host 头（Starlette URL(scope) 行为），
+        # 攻击者可通过伪造 Host: x/api/v1/mcp 将受保护接口伪装成白名单路径绕过认证
+        request_path = request.scope.get("path") or request.url.path
+
+        if self.is_options(request) or whiteUtils.is_whitelisted(request_path):
             # 动态处理 /system/assistant/info/{id} 的 CORS 预检
             if request.method == "OPTIONS":
                 origin = request.headers.get("origin", "")
                 if origin:
-                    match = re.search(r'/system/assistant/info/(\d+)', request.url.path)
+                    match = re.search(r'/system/assistant/info/(\d+)', request_path)
                     if match:
                         assistant_id = int(match.group(1))
                         with Session(engine) as session:
@@ -221,6 +225,9 @@ class TokenMiddleware(BaseHTTPMiddleware):
             with Session(engine) as session:
                 assistant_info = await get_assistant_info(session=session, assistant_id=embeddedId)
                 assistant_info = AssistantModel.model_validate(assistant_info)
+                # embedded 协议（app_secret + account）仅适用于页面嵌入（type=4）应用
+                if assistant_info.type != 4:
+                    return False, f"Invalid embedded app type!"
                 payload = jwt.decode(
                     param, assistant_info.app_secret, algorithms=[security.ALGORITHM]
                 )
@@ -232,7 +239,7 @@ class TokenMiddleware(BaseHTTPMiddleware):
                     message = trans('i18n_not_exist', msg = trans('i18n_user.account'))
                     raise Exception(message)
                 session_user = await get_user_info(session = session, user_id = session_user.id)
-                
+
                 session_user = UserInfoDTO.model_validate(session_user)
                 if session_user.status != 1:
                     message = trans('i18n_login.user_disable', msg = trans('i18n_concat_admin'))
@@ -240,6 +247,10 @@ class TokenMiddleware(BaseHTTPMiddleware):
                 if not session_user.oid or session_user.oid == 0:
                     message = trans('i18n_login.no_associated_ws', msg = trans('i18n_concat_admin'))
                     raise Exception(message)
+                # 管理员账号不允许通过 embedded token 使用：app_secret 由集成方持有，
+                # 攻击者若取得任意应用 app_secret 即可伪造 account=admin 的管理员身份
+                if session_user.isAdmin:
+                    return False, f"Admin account is not allowed for embedded token!"
                 if session_user.oid:
                     assistant_info.oid = int(session_user.oid)
                 return True, session_user, assistant_info
