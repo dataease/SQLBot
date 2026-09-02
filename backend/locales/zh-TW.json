@@ -14,7 +14,8 @@
     "user_disable": "帳號已禁用，{msg}",
     "origin_error": "登入方式錯誤",
     "prohibit_auto_create": "禁止自動建立用戶，請先同步用戶",
-    "no_platform_user": "帳號不存在，請先同步用戶"
+    "no_platform_user": "帳號不存在，請先同步用戶",
+    "new_pwd_is_initial": "新密碼不能為初始密碼"
   },
   "i18n_user": {
     "account": "帳號",

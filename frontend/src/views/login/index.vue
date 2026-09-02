@@ -71,6 +71,12 @@
             jsname="L2NvbXBvbmVudC9sb2dpbi9IYW5kbGVy"
             @switch-tab="switchTab"
           />
+          <InitialPwdDialog
+            v-model="initPwdDialogVisible"
+            :account="loginForm.username"
+            :old-pwd="loginForm.password"
+            @pwd-saved="onInitPwdSaved"
+          />
         </div>
       </div>
     </div>
@@ -88,6 +94,7 @@ import login_image from '@/assets/embedded/login_image.png'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import loginImage from '@/assets/blue/login-image_blue.png'
 import Handler from './xpack/Handler.vue'
+import InitialPwdDialog from './InitialPwdDialog.vue'
 import { toLoginSuccess } from '@/utils/utils'
 import elementResizeDetectorMaker from 'element-resize-detector'
 
@@ -134,11 +141,19 @@ const loginFormRef = ref()
 const submitForm = () => {
   loginFormRef.value.validate((valid: boolean) => {
     if (valid) {
-      userStore.login(loginForm.value).then(() => {
+      userStore.login(loginForm.value).then((res: any) => {
+        if (res?.need_change_pwd) {
+          initPwdDialogVisible.value = true
+          return
+        }
         toLoginSuccess(router)
       })
     }
   })
+}
+const initPwdDialogVisible = ref(false)
+const onInitPwdSaved = (newPwd: string) => {
+  loginForm.value.password = newPwd
 }
 const switchTab = (name: string) => {
   activeName.value = name || 'simple'

@@ -96,7 +96,9 @@
     "closed_by_default": "질문 수 창에서 모델 사고 프로세스를 기본적으로 확장할지 또는 닫을지 여부를 제어합니다.",
     "and_platform_integration": "인증 관련",
     "login_settings": "로그인 설정",
-    "default_login": "기본 로그인 방식"
+    "default_login": "기본 로그인 방식",
+    "disable_initial_password": "초기 비밀번호 비활성화",
+    "hide_initial_password": "페이지에서 초기 비밀번호 숨기기"
   },
   "prompt": {
     "default_password:": "기본 비밀번호:{msg}",
@@ -932,6 +934,9 @@
     "default_login": "기본값",
     "ldap_login": "LDAP 로그인",
     "account_login": "계정 로그인",
+    "force_change_pwd_title": "초기 비밀번호 변경",
+    "force_change_pwd_tips": "현재 비밀번호는 시스템 초기 비밀번호입니다. 비밀번호를 변경한 후 로그인해 주세요.",
+    "force_change_pwd_success": "비밀번호가 변경되었습니다",
     "other_login": "기타 로그인 방식",
     "pwd_invalid_error": "비밀번호가 만료되었습니다. 관리자에게 문의하여 수정 또는 재설정해 주세요",
     "pwd_exp_tips": "비밀번호가 {0}일 후에 만료됩니다.尽快尽快 비밀번호를 변경해 주세요",

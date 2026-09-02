@@ -96,7 +96,9 @@
     "closed_by_default": "In the Question Count window, control whether the model thinking process is expanded or closed by default.",
     "and_platform_integration": "Authentication-related",
     "login_settings": "Login Settings",
-    "default_login": "Default Login Method"
+    "default_login": "Default Login Method",
+    "disable_initial_password": "Disable Initial Password",
+    "hide_initial_password": "Hide Initial Password on Page"
   },
   "prompt": {
     "default_password": "Default password:{msg}",
@@ -932,6 +934,9 @@
     "default_login": "Default",
     "ldap_login": "LDAP Login",
     "account_login": "Account Login",
+    "force_change_pwd_title": "Change Initial Password",
+    "force_change_pwd_tips": "Your current password is the system initial password. Please change it and log in again.",
+    "force_change_pwd_success": "Password changed successfully",
     "other_login": "Other Login Methods",
     "pwd_invalid_error": "Password has expired, please contact administrator to modify or reset",
     "pwd_exp_tips": "Password will expire in {0} days, please change it as soon as possible",

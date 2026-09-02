@@ -14,6 +14,14 @@ export const AuthApi = {
       },
     })
   },
+  changePwd: (data: { account: string; pwd: string; new_pwd: string }) => {
+    const entry = {
+      account: LicenseGenerator.sqlbotEncrypt(data.account),
+      pwd: LicenseGenerator.sqlbotEncrypt(data.pwd),
+      new_pwd: LicenseGenerator.sqlbotEncrypt(data.new_pwd),
+    }
+    return request.post('/login/change-pwd', entry)
+  },
   logout: (data: any) => request.post('/login/logout', data),
   info: () => request.get('/user/info'),
 }

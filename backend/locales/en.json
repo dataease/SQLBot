@@ -14,7 +14,8 @@
     "user_disable": "Account is disabled, {msg}",
     "origin_error": "Invalid login method",
     "prohibit_auto_create": "Automatically creating users is prohibited. Please synchronize users first",
-    "no_platform_user": "Account does not exist. Please sync the user first."
+    "no_platform_user": "Account does not exist. Please sync the user first.",
+    "new_pwd_is_initial": "The new password cannot be the initial password"
   },
   "i18n_user": {
     "account": "Account",
