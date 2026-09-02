@@ -18,6 +18,7 @@ from common.core.security import default_md5_pwd, md5pwd, verify_md5pwd
 from common.core.sqlbot_cache import clear_cache
 from common.core.config import settings
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
+from sqlbot_xpack.config.arg_manage import get_group_args
 
 router = APIRouter(tags=["system_user"], prefix="/user")
 
@@ -45,7 +46,11 @@ async def user_info(current_user: CurrentUser) -> UserInfoDTO:
  
 @router.get("/defaultPwd", include_in_schema=False)
 @require_permissions(permission=SqlbotPermission(role=['admin']))
-async def default_pwd() -> str:
+async def default_pwd(session: SessionDep) -> str:
+    login_args = await get_group_args(session=session, flag='login')
+    hidden_arg = next((a for a in login_args if a.pkey == 'login.initial_pwd_hidden'), None)
+    if hidden_arg and str(hidden_arg.pval).strip().lower() == 'true':
+        return ''
     return settings.DEFAULT_PWD
 
 @router.get("/pager/{pageNum}/{pageSize}", response_model=PaginatedResponse[UserGrid], summary=f"{PLACEHOLDER_PREFIX}system_user_grid", description=f"{PLACEHOLDER_PREFIX}system_user_grid")

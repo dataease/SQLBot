@@ -16,6 +16,7 @@ class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
     platform_info: Optional[dict] = None
+    need_change_pwd: Optional[bool] = None
     
 class XOAuth2PasswordBearer(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> Optional[str]:

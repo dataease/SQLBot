@@ -203,7 +203,7 @@
                     </span>
                     <span class="header-span">{{ t('datasource.the_original_one') }}</span>
                   </div>
-                  <div class="confirm-content">
+                  <div v-if="showInitPwd" class="confirm-content">
                     <span>{{ defaultPwd }}</span>
                     <el-button style="margin-left: 4px" text @click="copyText">{{
                       t('datasource.copy')
@@ -284,7 +284,7 @@
     size="600px"
     :before-close="onFormClose"
   >
-    <div style="margin-bottom: 12px" class="down-template">
+    <div v-if="showInitPwd" style="margin-bottom: 12px" class="down-template">
       <span class="icon-span">
         <el-icon>
           <Icon name="icon_warning_filled"><icon_warning_filled class="svg-icon" /></Icon>
@@ -584,6 +584,7 @@ import { request } from '@/utils/request'
 import { workspaceList } from '@/api/workspace'
 import { variablesApi } from '@/api/variables'
 import { formatTimestamp } from '@/utils/date'
+import { formatArg } from '@/utils/utils'
 import { ClickOutside as vClickOutside } from 'element-plus-secondary'
 import icon_warning_filled from '@/assets/svg/icon_warning_filled.svg'
 import { useClipboard } from '@vueuse/core'
@@ -1291,6 +1292,21 @@ const loadDefaultPwd = () => {
     }
   })
 }
+const showInitPwd = ref(true)
+const loadInitPwdHidden = () => {
+  request
+    .get('/system/parameter/login')
+    .then((res: any) => {
+      const argObj: Record<string, string> = {}
+      ;(res || []).forEach((item: any) => {
+        argObj[item.pkey] = item.pval
+      })
+      showInitPwd.value = !formatArg(argObj['login.initial_pwd_hidden'])
+    })
+    .catch(() => {
+      showInitPwd.value = true
+    })
+}
 const formatUserOrigin = (origin?: number) => {
   if (!origin) {
     return t('user.local_creation')
@@ -1327,6 +1343,7 @@ onMounted(() => {
   handleCurrentChange(1)
 
   loadDefaultPwd()
+  loadInitPwdHidden()
 })
 const downErrorExcel = (dataKey: any) => {
   userApi.errorRecord(dataKey).then((res: any) => {

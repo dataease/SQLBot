@@ -96,7 +96,9 @@
     "closed_by_default": "在问数窗口中，控制模型思考过程默认展开或者关闭",
     "and_platform_integration": "登录认证相关",
     "login_settings": "登录设置",
-    "default_login": "默认登录方式"
+    "default_login": "默认登录方式",
+    "disable_initial_password": "禁用初始密码",
+    "hide_initial_password": "页面隐藏初始密码"
   },
   "prompt": {
     "default_password": "默认密码：{msg}",
@@ -932,6 +934,9 @@
     "default_login": "默认",
     "ldap_login": "LDAP 登录",
     "account_login": "账号登录",
+    "force_change_pwd_title": "修改初始密码",
+    "force_change_pwd_tips": "当前密码为系统初始密码，请修改密码后再登录",
+    "force_change_pwd_success": "密码修改成功",
     "other_login": "其他登录方式",
     "pwd_invalid_error": "密码已过期请联系管理员修改或重置",
     "pwd_exp_tips": "密码在 {0} 天后过期，请尽快修改密码",

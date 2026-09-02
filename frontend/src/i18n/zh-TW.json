@@ -96,7 +96,9 @@
     "closed_by_default": "在問數視窗中，控制模型思考過程預設展開或者關閉",
     "and_platform_integration": "登入認證相關",
     "login_settings": "登入設定",
-    "default_login": "預設登入方式"
+    "default_login": "預設登入方式",
+    "disable_initial_password": "禁用初始密碼",
+    "hide_initial_password": "頁面隱藏初始密碼"
   },
   "prompt": {
     "default_password": "預設密碼：{msg}",
@@ -932,6 +934,9 @@
     "default_login": "預設",
     "ldap_login": "LDAP 登入",
     "account_login": "帳號登入",
+    "force_change_pwd_title": "修改初始密碼",
+    "force_change_pwd_tips": "目前密碼為系統初始密碼，請修改密碼後再登入",
+    "force_change_pwd_success": "密碼修改成功",
     "other_login": "其他登入方式",
     "pwd_invalid_error": "密碼已過期請聯繫管理員修改或重設",
     "pwd_exp_tips": "密碼在 {0} 天後過期，請盡快修改密碼",

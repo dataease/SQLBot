@@ -83,7 +83,10 @@ export const UserStore = defineStore('user', {
   actions: {
     async login(formData: { username: string; password: string }) {
       const res: any = await AuthApi.login(formData)
-      this.setToken(res.access_token)
+      if (res.access_token) {
+        this.setToken(res.access_token)
+      }
+      return res
     },
 
     async logout() {

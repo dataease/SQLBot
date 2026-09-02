@@ -63,11 +63,11 @@
     </div>
   </div>
 
-  <div v-if="anyPlatformEnable" class="card">
+  <div v-if="xpackValid" class="card">
     <div class="card-title">
       {{ t('parameter.login_settings') }}
     </div>
-    <div class="card-item" style="width: 100%">
+    <div v-if="anyPlatformEnable" class="card-item" style="width: 100%">
       <div class="label">
         {{ t('parameter.default_login') }}
       </div>
@@ -77,6 +77,20 @@
             item.label
           }}</el-radio>
         </el-radio-group>
+      </div>
+    </div>
+
+    <div class="card-item" style="width: 100%">
+      <div class="label">{{ t('parameter.disable_initial_password') }}</div>
+      <div class="value">
+        <el-switch v-model="formData['login.initial_pwd_disabled']" />
+      </div>
+    </div>
+
+    <div class="card-item" style="width: 100%">
+      <div class="label">{{ t('parameter.hide_initial_password') }}</div>
+      <div class="value">
+        <el-switch v-model="formData['login.initial_pwd_hidden']" />
       </div>
     </div>
   </div>
@@ -97,6 +111,8 @@ const defaultForm = reactive<Record<string, any>>({
   'platform.oid': 1,
   'platform.rid': 1,
   'login.default_login': 0,
+  'login.initial_pwd_disabled': false,
+  'login.initial_pwd_hidden': false,
 })
 
 const loginTypeOptions = shallowRef<any[]>([{ value: 0, label: t('login.account_login') }])
