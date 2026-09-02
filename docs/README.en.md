@@ -45,6 +45,7 @@ SQLBot is an intelligent data query system based on large language models and RA
 | Tencent Cloud | OpenAI Compatible |
 | Volcano Engine | OpenAI Compatible |
 | MiniMax | OpenAI Compatible |
+| OrcaRouter | OpenAI Compatible |
 | Generic OpenAI Compatible | Custom |
 
 ## Quick Start

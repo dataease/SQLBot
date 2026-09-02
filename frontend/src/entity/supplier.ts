@@ -11,6 +11,7 @@ import icon_hsyq_colorful from '@/assets/model/icon_hsyq_colorful.png'
 // import icon_vllm_colorful from '@/assets/model/icon_vllm_colorful.png'
 import icon_common_openai from '@/assets/model/icon_common_openai.png'
 import icon_minimax_colorful from '@/assets/model/icon_minimax_colorful.png'
+import icon_orcarouter_colorful from '@/assets/model/icon_orcarouter_colorful.png'
 // import icon_azure_openAI_colorful from '@/assets/model/icon_Azure_OpenAI_colorful.png'
 
 type ModelArg = { key: string; val?: string | number; type: string; range?: string }
@@ -291,6 +292,36 @@ export const supplierList: Array<{
         api_domain: 'https://api.minimax.io/v1',
         common_args: [{ key: 'temperature', val: 0.7, type: 'number', range: '[0, 1]' }],
         model_options: [{ name: 'MiniMax-M3' }, { name: 'MiniMax-M2.7' }],
+      },
+    },
+  },
+  {
+    id: 16,
+    name: 'OrcaRouter',
+    i18nKey: 'supplier.orcarouter',
+    icon: icon_orcarouter_colorful,
+    model_config: {
+      0: {
+        api_domain: 'https://api.orcarouter.ai/v1',
+        common_args: [{ key: 'temperature', val: 1.0, type: 'number', range: '[0, 2]' }],
+        model_options: [
+          { name: 'orcarouter/fusion' },
+          { name: 'orcarouter/fusion-flash' },
+          { name: 'orcarouter/fusion-mini' },
+          { name: 'orcarouter/auto' },
+          { name: 'deepseek/deepseek-v4-pro' },
+          { name: 'deepseek/deepseek-v4-flash' },
+          { name: 'deepseek/deepseek-chat' },
+          { name: 'openai/gpt-4.1' },
+          { name: 'openai/gpt-4.1-mini' },
+          { name: 'openai/gpt-4o' },
+          { name: 'qwen/qwen3.5-plus' },
+          { name: 'qwen/qwen3.5-flash' },
+          { name: 'google/gemini-2.5-pro' },
+          { name: 'google/gemini-2.5-flash' },
+          { name: 'anthropic/claude-sonnet-5' },
+          { name: 'anthropic/claude-haiku-4.5' },
+        ],
       },
     },
   },
