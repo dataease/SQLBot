@@ -159,7 +159,7 @@ class TableSchemaResponse(BaseModel):
 
 
 class ColumnSchema:
-    def __init__(self, attr1, attr2, attr3):
+    def __init__(self, attr1, attr2, attr3, *_extra_columns):
         self.fieldName = attr1
         self.fieldType = attr2
         self.fieldComment = attr3 if attr3 is None or isinstance(attr3, str) else attr3.decode("utf-8")
