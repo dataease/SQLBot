@@ -126,6 +126,9 @@ class Settings(BaseSettings):
     PG_POOL_RECYCLE: int = 3600
     PG_POOL_PRE_PING: bool = True
 
+    # Include table sample rows in SQL generation context (disable for sensitive data).
+    TABLE_SAMPLE_DATA_ENABLED: bool = True
+
     TABLE_EMBEDDING_ENABLED: bool = True
     TABLE_EMBEDDING_COUNT: int = 10
     DS_EMBEDDING_COUNT: int = 10
@@ -138,6 +141,7 @@ class Settings(BaseSettings):
                      'PARSE_REASONING_BLOCK_ENABLED',
                      'PG_POOL_PRE_PING',
                      'TABLE_EMBEDDING_ENABLED',
+                     'TABLE_SAMPLE_DATA_ENABLED',
                      mode='before')
     @classmethod
     def lowercase_bool(cls, v: Any) -> Any:

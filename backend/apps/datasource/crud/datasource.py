@@ -500,6 +500,9 @@ def get_table_sample_data(ds: CoreDatasource, table_name: str, fields: list) -> 
 def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource,
                            table_list: list[str] = None) -> str:
     """Get sample data (3 rows) for all tables to help AI understand the data"""
+    if not settings.TABLE_SAMPLE_DATA_ENABLED:
+        return ""
+
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
         return ""
