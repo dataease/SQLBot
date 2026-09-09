@@ -40,53 +40,62 @@ async def info(request: Request, response: Response, session: SessionDep, trans:
     # 校验 SQLBOT-EMBEDDED-SIGN 请求头
     sign_header = request.headers.get("SQLBOT-EMBEDDED-SIGN")
     if not sign_header:
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=''))
+        raise RuntimeError(trans('i18n_embedded.missing_sign'))
 
-    sign_data = await decrypt_embedded_sign(sign_header)
+    try:
+        sign_data = await decrypt_embedded_sign(sign_header)
+    except Exception:
+        raise RuntimeError(trans('i18n_embedded.invalid_sign'))
 
     # 校验 assistant_id 与 id 参数一致
     if str(sign_data.get("assistant_id")) != str(id):
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=''))
+        raise RuntimeError(trans('i18n_embedded.assistant_id_mismatch'))
 
     # 校验 target（来源域名）是否合法
     target = sign_data.get("target", "")
     
     request_origin = request.headers.get("origin") or get_origin_from_referer(request)
     if not request_origin:
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=request_origin or ''))
+        raise RuntimeError(trans('i18n_embedded.missing_origin'))
     request_origin = request_origin.rstrip('/')
     if not target or target == "null":
         target = request_origin
     elif target != request_origin:
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
+        raise RuntimeError(trans('i18n_embedded.target_origin_mismatch'))
     
     if not origin_match_domain(target, db_model.domain):
         raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
 
     # 校验 sign_time 是否在 10 秒内
     sign_time_str = sign_data.get("sign_time", "")
-    sign_time = datetime.fromisoformat(sign_time_str)
+    try:
+        sign_time = datetime.fromisoformat(sign_time_str)
+    except (ValueError, TypeError):
+        raise RuntimeError(trans('i18n_embedded.sign_time_invalid'))
     now_utc = datetime.now(timezone.utc)
     sign_time_utc = sign_time.astimezone(timezone.utc)
     if abs((now_utc - sign_time_utc).total_seconds()) > 10:
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
+        raise RuntimeError(trans('i18n_embedded.sign_time_expired'))
 
     # 校验是否为真实浏览器请求（非自动化工具）
     if sign_data.get("webdriver", False):
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
+        raise RuntimeError(trans('i18n_embedded.automation_tool_detected'))
 
     # 校验 User-Agent 一致性（签名中的 navigator.userAgent 与请求头一致）
     sign_user_agent = sign_data.get("user_agent", "")
     request_user_agent = request.headers.get("User-Agent", "")
     if sign_user_agent != request_user_agent:
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
+        raise RuntimeError(trans('i18n_embedded.user_agent_mismatch'))
 
     # 校验 timezone 与 sign_time 偏移一致性（防时区伪造）
     tz_name = sign_data.get("timezone", "")
-    tz = ZoneInfo(tz_name)
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        raise RuntimeError(trans('i18n_embedded.timezone_mismatch'))
     sign_time_naive = sign_time.replace(tzinfo=None)
     if tz.utcoffset(sign_time_naive) != sign_time.utcoffset():
-        raise RuntimeError(trans('i18n_embedded.invalid_origin', origin=target or ''))
+        raise RuntimeError(trans('i18n_embedded.timezone_mismatch'))
 
     origin = target.rstrip('/')
 

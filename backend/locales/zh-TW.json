@@ -54,7 +54,17 @@
   "i18n_ds_invalid": "數據源連接無效",
   "i18n_ds_upload_error": "上傳文件失敗",
   "i18n_embedded": {
-    "invalid_origin": "網域校驗失敗【{origin}】"
+    "invalid_origin": "網域校驗失敗【{origin}】",
+    "missing_sign": "缺少嵌入簽名(SQLBOT-EMBEDDED-SIGN)，無法驗證嵌入方身分。",
+    "assistant_id_mismatch": "簽名中的助手標識與當前請求不一致，無法驗證嵌入方身分。",
+    "missing_origin": "當前頁面缺少來源資訊(Origin/Referer)，無法驗證嵌入方身分。",
+    "target_origin_mismatch": "簽名中的來源網域與當前頁面網域不一致，無法驗證嵌入方身分。",
+    "invalid_sign": "嵌入簽名無效或已損壞，無法驗證嵌入方身分。",
+    "sign_time_expired": "服務端(SQLBot)與當前頁面(嵌入端)的同步延遲超過10秒，導致連線中斷。",
+    "sign_time_invalid": "簽名時間格式無效，無法驗證嵌入方身分。",
+    "automation_tool_detected": "偵測到自動化工具存取，已阻止嵌入。",
+    "user_agent_mismatch": "簽名中的瀏覽器標識與當前請求不一致，已阻止嵌入。",
+    "timezone_mismatch": "簽名中的時區資訊與簽名時間不一致，已阻止嵌入。"
   },
   "i18n_chat": {
     "record_id_in_mcp": "響應ID: "

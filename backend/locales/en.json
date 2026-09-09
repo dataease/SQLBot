@@ -54,7 +54,17 @@
   "i18n_ds_invalid": "Datasource connection is invalid",
   "i18n_ds_upload_error": "Upload Failed",
   "i18n_embedded": {
-    "invalid_origin": "Domain name validation failed【{origin}】"
+    "invalid_origin": "Domain name validation failed【{origin}】",
+    "missing_sign": "Missing embedded signature (SQLBOT-EMBEDDED-SIGN); cannot verify the embedding party's identity.",
+    "assistant_id_mismatch": "The assistant ID in the signature does not match the current request; cannot verify the embedding party's identity.",
+    "missing_origin": "The current page is missing source information (Origin/Referer); cannot verify the embedding party's identity.",
+    "target_origin_mismatch": "The source domain in the signature does not match the current page domain; cannot verify the embedding party's identity.",
+    "invalid_sign": "The embedded signature is invalid or corrupted; cannot verify the embedding party's identity.",
+    "sign_time_expired": "The synchronization delay between the server (SQLBot) and the current page (embedding site) exceeds 10 seconds, causing the connection to be interrupted.",
+    "sign_time_invalid": "Invalid signature time format; cannot verify the embedding party's identity.",
+    "automation_tool_detected": "Automated tool access detected. Embedding has been blocked.",
+    "user_agent_mismatch": "The browser identifier in the signature does not match the current request. Embedding has been blocked.",
+    "timezone_mismatch": "The timezone information in the signature does not match the signing time. Embedding has been blocked."
   },
   "i18n_chat": {
     "record_id_in_mcp": "Answer ID: "

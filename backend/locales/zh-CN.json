@@ -54,7 +54,17 @@
   "i18n_ds_invalid": "数据源连接无效",
   "i18n_ds_upload_error": "上传文件失败",
   "i18n_embedded": {
-    "invalid_origin": "域名校验失败【{origin}】"
+    "invalid_origin": "域名校验失败【{origin}】",
+    "missing_sign": "缺少嵌入签名(SQLBOT-EMBEDDED-SIGN)，无法验证嵌入方身份。",
+    "assistant_id_mismatch": "签名中的助手标识与当前请求不一致，无法验证嵌入方身份。",
+    "missing_origin": "当前页面缺少来源信息(Origin/Referer)，无法验证嵌入方身份。",
+    "target_origin_mismatch": "签名中的来源域名与当前页面域名不一致，无法验证嵌入方身份。",
+    "invalid_sign": "嵌入签名无效或已损坏，无法验证嵌入方身份。",
+    "sign_time_expired": "服务端(SQLBot)与当前页面(嵌入端)的同步延迟超过10秒，导致连接中断。",
+    "sign_time_invalid": "签名时间格式无效，无法验证嵌入方身份。",
+    "automation_tool_detected": "检测到自动化工具访问，已阻止嵌入。",
+    "user_agent_mismatch": "签名中的浏览器标识与当前请求不一致，已阻止嵌入。",
+    "timezone_mismatch": "签名中的时区信息与签名时间不一致，已阻止嵌入。"
   },
   "i18n_chat": {
     "record_id_in_mcp": "响应ID: "

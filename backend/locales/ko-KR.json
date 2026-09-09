@@ -54,7 +54,17 @@
   "i18n_ds_invalid": "데이터 소스 연결이 무효합니다",
   "i18n_ds_upload_error": "파일 업로드 실패",
   "i18n_embedded": {
-    "invalid_origin": "도메인 이름 검증 실패 【{origin}】"
+    "invalid_origin": "도메인 이름 검증 실패 【{origin}】",
+    "missing_sign": "임베드 서명(SQLBOT-EMBEDDED-SIGN)이 누락되어 임베드 당사자의 신원을 확인할 수 없습니다.",
+    "assistant_id_mismatch": "서명의 어시스턴트 ID가 현재 요청과 일치하지 않아 임베드 당사자의 신원을 확인할 수 없습니다.",
+    "missing_origin": "현재 페이지에 출처 정보(Origin/Referer)가 없어 임베드 당사자의 신원을 확인할 수 없습니다.",
+    "target_origin_mismatch": "서명의 출처 도메인이 현재 페이지 도메인과 일치하지 않아 임베드 당사자의 신원을 확인할 수 없습니다.",
+    "invalid_sign": "임베드 서명이 유효하지 않거나 손상되어 임베드 당사자의 신원을 확인할 수 없습니다.",
+    "sign_time_expired": "서버(SQLBot)와 현재 페이지(임베드 사이트) 간 동기화 지연이 10초를 초과하여 연결이 중단되었습니다.",
+    "sign_time_invalid": "서명 시간 형식이 유효하지 않아 임베드 당사자의 신원을 확인할 수 없습니다.",
+    "automation_tool_detected": "자동화 도구 접근이 감지되어 임베드를 차단했습니다.",
+    "user_agent_mismatch": "서명의 브라우저 식별 정보가 현재 요청과 일치하지 않아 임베드를 차단했습니다.",
+    "timezone_mismatch": "서명의 시간대 정보가 서명 시간과 일치하지 않아 임베드를 차단했습니다."
   },
   "i18n_chat": {
     "record_id_in_mcp": "응답 ID: "
