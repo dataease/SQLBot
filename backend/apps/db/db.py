@@ -1157,7 +1157,7 @@ class ConnectionPoolManager:
         :param max_pools: max pool
         """
         self.max_pools = max_pools
-        self._pools = OrderedDict()  # 使用有序字典实现 LRU
+        self._pools = OrderedDict()  # datasource_id -> (sessionmaker, Engine)
         self._lock = threading.Lock()  # 保证多线程安全
 
     def get_pool(self, ds: CoreDatasource | AssistantOutDsSchema, **db_config):
@@ -1170,18 +1170,18 @@ class ConnectionPoolManager:
                 if ds.id in self._pools:
                     self._pools.move_to_end(ds.id)
                     print(f"[LRU] return: {ds.id}")
-                    return self._pools[ds.id]
+                    return self._pools[ds.id][0]
 
                 # 2. 如果连接池不存在，检查是否达到上限，若达到则淘汰最久未使用的（字典头部）
                 if len(self._pools) >= self.max_pools:
-                    oldest_id, oldest_pool = self._pools.popitem(last=False)
-                    oldest_pool.close()  # 安全关闭被驱逐的连接池
+                    oldest_id, (_, oldest_engine) = self._pools.popitem(last=False)
+                    oldest_engine.dispose()  # 安全关闭被驱逐的连接池
                     print(f"[LRU] remove oldest: {oldest_id}")
 
             # 3. 创建新连接池并放入字典末尾
             engine = get_engine(ds, use_pool=True)
             new_pool = sessionmaker(bind=engine)
-            self._pools[ds.id] = new_pool
+            self._pools[ds.id] = (new_pool, engine)
             print(f"[LRU] create: {ds.id}")
             return new_pool
 
@@ -1189,9 +1189,9 @@ class ConnectionPoolManager:
         with self._lock:
             if datasource_id in self._pools:
                 # 1. 从字典中移除并获取该连接池对象
-                pool = self._pools.pop(datasource_id)
+                _, engine = self._pools.pop(datasource_id)
                 # 2. 安全关闭该连接池，释放底层所有数据库连接和内存
-                pool.close()
+                engine.dispose()
                 print(f"[Manager] Closed pool and remove: {datasource_id}")
             else:
                 print(f"[Manager] Warning: ds id {datasource_id} not exist in sqlalchemy")
@@ -1199,8 +1199,8 @@ class ConnectionPoolManager:
     def close_all(self):
         """stop"""
         with self._lock:
-            for pool in self._pools.values():
-                pool.close()
+            for _, engine in self._pools.values():
+                engine.dispose()
             self._pools.clear()
 
 
