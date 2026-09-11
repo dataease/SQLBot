@@ -148,7 +148,8 @@ def get_engine(ds: CoreDatasource, timeout: int = 0, use_pool: bool = False) -> 
         'pool_size': conf.poolSize if conf.poolSize else 5,
         'max_overflow': 20,
         'pool_recycle': 3600,
-        'pool_pre_ping': True
+        'pool_pre_ping': True,
+        'pool_timeout': conf.timeout if conf.timeout else 30
     } if use_pool else {
         'poolclass': NullPool
     }
@@ -164,7 +165,7 @@ def get_engine(ds: CoreDatasource, timeout: int = 0, use_pool: bool = False) -> 
         engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds.type, conf),
                                **db_config)
     elif equals_ignore_case(ds.type, 'oracle'):
-        engine = create_engine(get_uri(ds), **db_config)
+        engine = create_engine(get_uri(ds), connect_args={"tcp_connect_timeout": conf.timeout}, **db_config)
     elif equals_ignore_case(ds.type, 'mysql'):  # mysql
         ssl_mode = {"require": True} if conf.ssl else None
         engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout, "ssl": ssl_mode},
