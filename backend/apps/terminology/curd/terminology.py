@@ -977,10 +977,122 @@ def get_terminology_template(session: SessionDep, question: str, oid: Optional[i
                              advanced_application_id: Optional[int] = None) -> tuple[str, list[dict]]:
     if not oid:
         oid = 1
-    _results = select_terminology_by_word(session, question, oid, datasource, advanced_application_id)
-    if _results and len(_results) > 0:
+
+    # 有逗号时视为关键词列表，逐个匹配（精度更高，避免整体 ILIKE 误匹配）
+    # 无逗号时视为自然语言问题，整体匹配
+    if ',' in question:
+        parts = [kw.strip() for kw in question.split(',') if kw.strip()]
+    else:
+        parts = [question]
+
+    # select_terminology_by_word 返回 list[dict]，每个 dict 结构：
+    # {'words': ['销售', 'sales'], 'description': '...'}
+    seen_words = set()
+    _results = []
+    for part in parts:
+        for item in select_terminology_by_word(session, part, oid, datasource, advanced_application_id):
+            item_words = set(item.get('words', [])) if isinstance(item, dict) else set()
+            if item_words and not item_words.issubset(seen_words):
+                seen_words.update(item_words)
+                _results.append(item)
+
+    if _results:
         terminology = to_xml_string(_results)
         template = get_base_terminology_template().format(terminologies=terminology)
         return template, _results
     else:
         return '', []
+
+
+def expand_with_terminology(keywords: str, session: SessionDep, oid: int) -> str:
+    """使用术语同义词扩展关键词。
+
+    查询当前租户启用的术语表，将匹配的关键词扩展为同义词集合。
+    pid=None 表示父术语（主词），pid=<id> 表示子术语（同义词）。
+
+    Args:
+        keywords: 逗号分隔的关键词字符串
+        session: 数据库会话
+        oid: 组织 ID
+
+    Returns:
+        扩展后的关键词字符串（逗号分隔），最多 10 个关键词
+    """
+    if not keywords or not session or oid is None:
+        return keywords
+
+    keyword_list = [kw.strip() for kw in keywords.split(',') if kw.strip()]
+    if not keyword_list:
+        return keywords
+
+    try:
+        # 查询当前租户启用的术语（限制 500 条避免内存问题）
+        terms = session.query(Terminology).filter(
+            Terminology.oid == oid,
+            Terminology.enabled == True
+        ).limit(500).all()
+
+        if not terms:
+            return keywords
+
+        # 构建父子结构
+        parent_map = {}  # id -> Terminology（仅父术语）
+        children_map = {}  # parent_id -> [Terminology]（子术语列表）
+        word_to_parent_ids = {}  # 小写词 -> 父术语 id 集合
+
+        for term in terms:
+            if term.pid is None or term.pid == 0:
+                parent_map[term.id] = term
+                if term.word:
+                    w = term.word.strip().lower()
+                    if w not in word_to_parent_ids:
+                        word_to_parent_ids[w] = set()
+                    word_to_parent_ids[w].add(term.id)
+            else:
+                if term.pid not in children_map:
+                    children_map[term.pid] = []
+                children_map[term.pid].append(term)
+                if term.word:
+                    w = term.word.strip().lower()
+                    if w not in word_to_parent_ids:
+                        word_to_parent_ids[w] = set()
+                    word_to_parent_ids[w].add(term.pid)
+
+        # 扩展关键词
+        expanded = list(keyword_list)
+        seen = set(kw.lower() for kw in keyword_list)
+        max_keywords = 10
+
+        for kw in keyword_list:
+            if len(expanded) >= max_keywords:
+                break
+
+            kw_lower = kw.lower()
+            matched_parent_ids = word_to_parent_ids.get(kw_lower, set())
+
+            for pid in matched_parent_ids:
+                if len(expanded) >= max_keywords:
+                    break
+
+                # 添加父术语
+                parent = parent_map.get(pid)
+                if parent and parent.word:
+                    parent_word = parent.word.strip()
+                    if parent_word.lower() not in seen:
+                        expanded.append(parent_word)
+                        seen.add(parent_word.lower())
+
+                # 添加子术语（同义词）
+                for child in children_map.get(pid, []):
+                    if len(expanded) >= max_keywords:
+                        break
+                    if child.word:
+                        child_word = child.word.strip()
+                        if child_word.lower() not in seen:
+                            expanded.append(child_word)
+                            seen.add(child_word.lower())
+
+        return ','.join(expanded)
+    except Exception:
+        traceback.print_exc()
+        return keywords

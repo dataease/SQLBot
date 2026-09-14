@@ -2,6 +2,7 @@ import asyncio
 import concurrent
 import json
 import os
+import re
 import traceback
 import urllib.parse
 import warnings
@@ -30,7 +31,7 @@ from apps.ai_model.model_factory import LLMConfig, LLMFactory, get_default_confi
 from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     save_error_message, save_sql_exec_data, save_chart_answer, save_chart, \
     finish_record, save_analysis_answer, save_predict_answer, save_predict_data, \
-    save_select_datasource_answer, save_recommend_question_answer, \
+    save_select_datasource_answer, save_recommend_question_answer, save_extracted_keywords, \
     get_old_questions, save_analysis_predict_record, rename_chat, get_chart_config, \
     get_chat_chart_data, list_generate_sql_logs, list_generate_chart_logs, start_log, end_log, \
     get_last_execute_sql_error, format_json_data, format_chart_fields, get_chat_brief_generate, get_chat_predict_data, \
@@ -48,6 +49,7 @@ from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, ge
 from apps.system.crud.parameter_manage import get_groups
 from apps.system.crud.user import user_ws_list
 from apps.system.schemas.system_schema import AssistantOutDsSchema
+from apps.terminology.curd.terminology import expand_with_terminology
 from apps.terminology.curd.terminology import get_terminology_template
 from common.core.config import settings
 from common.core.db import engine
@@ -378,14 +380,16 @@ class LLMService:
             calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
             if self.current_assistant.type == 1:
                 calculate_ds_id = None
+        # 使用原始提取的关键词（未扩展）进行术语匹配，避免同义词重复查询
+        match_text = self.chat_question.extracted_keywords or self.chat_question.question
         if self.current_assistant and self.current_assistant.type == 1:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
-                                                                                   self.chat_question.question,
+                                                                                   match_text,
                                                                                    calculate_oid,
                                                                                    None, self.current_assistant.id)
         else:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
-                                                                                   self.chat_question.question,
+                                                                                   match_text,
                                                                                    calculate_oid,
                                                                                    calculate_ds_id)
 
@@ -447,17 +451,108 @@ class LLMService:
                                                                           OperationEnum.FILTER_SQL_EXAMPLE],
                                                                       full_message=example_list)
 
+    def extract_keywords(self, _session: Session) -> tuple[bool, str]:
+        """从用户问题中提取核心业务实体词。
+
+        使用 LLM 提取名词性业务实体，忽略时间词、动作词、修饰词。
+        支持上下文历史，可根据对话上下文理解用户意图。
+        提取结果可复用于表匹配、术语扩展等环节。
+
+        Returns:
+            (is_error, result) 元组：
+                - (False, keywords) 成功，关键词逗号分隔
+                - (True, error_message) 错误（LLM 失败或非查数据意图）
+        """
+        system_prompt = self.chat_question.extract_keywords_sys_prompt()
+
+        keywords_msg: List[Union[BaseMessage, dict[str, Any]]] = []
+        keywords_msg.append(SystemPromptMessage(content=system_prompt))
+
+        # 加载上下文历史（仅取用户的历史提问，不含 AI 生成的 SQL 等回复）
+        last_sql_messages: List[dict[str, Any]] = self.generate_sql_logs[-1].messages if len(
+            self.generate_sql_logs) > 0 else []
+        if self.chat_question.regenerate_record_id:
+            _temp_log = next(
+                filter(lambda obj: obj.pid == self.chat_question.regenerate_record_id, self.generate_sql_logs), None)
+            last_sql_messages: List[dict[str, Any]] = _temp_log.messages if _temp_log else []
+
+        # 排除系统提示词和 AI 回复，只保留用户的历史提问
+        last_user_messages = [
+            obj for obj in last_sql_messages
+            if obj.get("sqlbot_system") != True and obj.get('type') == 'human'
+        ]
+
+        if last_user_messages:
+            last_rounds = get_last_conversation_rounds(last_user_messages, rounds=self.base_message_round_count_limit)
+            for _msg_dict in last_rounds:
+                content = _msg_dict.get('content', '')
+                # 提取 <user-question> 标签内的用户原始提问，排除 error-msg 等干扰信息
+                match = re.search(r'<user-question>(.*?)</user-question>', content, re.DOTALL)
+                if match:
+                    question_text = match.group(1).strip()
+                    if question_text:
+                        keywords_msg.append(HumanMessage(content=question_text))
+
+        # 当前问题
+        keywords_msg.append(HumanMessage(content=self.chat_question.question))
+
+        self.current_logs[OperationEnum.EXTRACT_KEYWORDS] = start_log(
+            session=_session,
+            ai_modal_id=self.chat_question.ai_modal_id,
+            ai_modal_name=self.chat_question.ai_modal_name,
+            operate=OperationEnum.EXTRACT_KEYWORDS,
+            record_id=self.record.id,
+            full_message=[{'type': msg.type, 'content': msg.content} for msg in keywords_msg]
+        )
+
+        full_thinking_text = ''
+        full_text = ''
+        token_usage = {}
+        res = process_stream(self.llm.stream(keywords_msg), token_usage)
+        for chunk in res:
+            if chunk.get('content'):
+                full_text += chunk.get('content')
+            if chunk.get('reasoning_content'):
+                full_thinking_text += chunk.get('reasoning_content')
+
+        result_text = full_text.strip()
+
+        keywords_msg.append(AIMessage(result_text))
+        self.current_logs[OperationEnum.EXTRACT_KEYWORDS] = end_log(
+            session=_session,
+            log=self.current_logs[OperationEnum.EXTRACT_KEYWORDS],
+            full_message=[{'type': msg.type, 'content': msg.content} for msg in keywords_msg],
+            reasoning_content=full_thinking_text if full_thinking_text else None,
+            token_usage=token_usage
+        )
+
+        if result_text.startswith('ERROR:NOT_DATA_QUERY'):
+            # return True, '您的问题似乎不是查询数据的问题，请提出与数据查询相关的问题。'
+            return False, ''
+
+        if result_text == 'EMPTY' or not result_text:
+            self.chat_question.extracted_keywords = self.chat_question.question
+            return False, ''
+
+        self.chat_question.extracted_keywords = result_text
+        return False, result_text
+
     def choose_table_schema(self, _session: Session):
         self.current_logs[OperationEnum.CHOOSE_TABLE] = start_log(session=_session,
                                                                   operate=OperationEnum.CHOOSE_TABLE,
                                                                   record_id=self.record.id,
                                                                   local_operation=True)
+
+        # 使用扩展后的关键词进行表匹配（包含同义词，匹配更全面）
+        keywords = self.chat_question.expanded_keywords or self.chat_question.question
+
         self.chat_question.db_schema, tables = self.out_ds_instance.get_db_schema(
             self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
             session=_session,
             current_user=self.current_user,
             ds=self.ds,
-            question=self.chat_question.question)
+            question=self.chat_question.question,
+            keywords=keywords)
 
         # Get sample data for all tables
         if not self.out_ds_instance:
@@ -478,6 +573,12 @@ class LLMService:
         data = get_chat_chart_data(_session, self.record.id)
         self.chat_question.data = orjson.dumps(data.get('data')).decode()
         analysis_msg: List[Union[BaseMessage, dict[str, Any]]] = []
+
+        # 从 record 加载已提取的关键词（SQL 生成阶段已持久化）
+        if self.record.extracted_keywords:
+            self.chat_question.extracted_keywords = self.record.extracted_keywords
+        if self.record.expanded_keywords:
+            self.chat_question.expanded_keywords = self.record.expanded_keywords
 
         ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
@@ -780,6 +881,22 @@ class LLMService:
         if self.ds:
             oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+
+            # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
+            if settings.TABLE_EMBEDDING_KEYWORD_ENABLED:
+                is_error, kw_result = self.extract_keywords(_session)
+                if is_error:
+                    raise SingleMessageError(kw_result)
+                if kw_result:
+                    self.chat_question.extracted_keywords = kw_result
+                    SQLBotLogUtil.info(f"提取的关键词: {kw_result}")
+                    # 术语同义词扩展（用于表匹配，不用于术语模板查询）
+                    expanded = expand_with_terminology(kw_result, _session, oid)
+                    self.chat_question.expanded_keywords = expanded
+                    SQLBotLogUtil.info(f"扩展后的关键词: {expanded}")
+                    # 持久化到 record，供后续独立接口（如 generate_analysis）使用
+                    save_extracted_keywords(_session, self.record.id,
+                                            expanded_keywords=expanded, extracted_keywords=kw_result)
 
             self.filter_terminology_template(_session, oid, ds_id)
 
@@ -1246,6 +1363,22 @@ class LLMService:
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+
+                # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
+                if settings.TABLE_EMBEDDING_KEYWORD_ENABLED:
+                    is_error, kw_result = self.extract_keywords(_session)
+                    if is_error:
+                        raise SingleMessageError(kw_result)
+                    if kw_result:
+                        self.chat_question.extracted_keywords = kw_result
+                        SQLBotLogUtil.info(f"提取的关键词: {kw_result}")
+                        # 术语同义词扩展（用于表匹配，不用于术语模板查询）
+                        expanded = expand_with_terminology(kw_result, _session, oid)
+                        self.chat_question.expanded_keywords = expanded
+                        SQLBotLogUtil.info(f"扩展后的关键词: {expanded}")
+                        # 持久化到 record，供后续独立接口（如 generate_analysis）使用
+                        save_extracted_keywords(_session, self.record.id,
+                                                expanded_keywords=expanded, extracted_keywords=kw_result)
 
                 self.filter_terminology_template(_session, oid, ds_id)
 

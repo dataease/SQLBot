@@ -809,6 +809,7 @@
       "GENERATE_DYNAMIC_SQL": "동적 SQL 생성",
       "CHOOSE_TABLE": "데이터 테이블 매칭 (스키마)",
       "FILTER_TERMS": "용어 매칭",
+      "EXTRACT_KEYWORDS": "키워드 추출",
       "FILTER_SQL_EXAMPLE": "SQL 예시 매칭",
       "FILTER_CUSTOM_PROMPT": "사용자 정의 프롬프트 매칭",
       "EXECUTE_SQL": "SQL 실행",

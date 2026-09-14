@@ -809,6 +809,7 @@
       "GENERATE_DYNAMIC_SQL": "Generate Dynamic SQL",
       "CHOOSE_TABLE": "Match Data Table (Schema)",
       "FILTER_TERMS": "Match Terms",
+      "EXTRACT_KEYWORDS": "Extract Keywords",
       "FILTER_SQL_EXAMPLE": "Match SQL Examples",
       "FILTER_CUSTOM_PROMPT": "Match Custom Prompts",
       "EXECUTE_SQL": "Execute SQL",

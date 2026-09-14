@@ -128,6 +128,8 @@ class Settings(BaseSettings):
 
     TABLE_EMBEDDING_ENABLED: bool = True
     TABLE_EMBEDDING_COUNT: int = 10
+    TABLE_EMBEDDING_ALPHA: float = 0.4  # weight for vector score; (1-alpha) is keyword weight
+    TABLE_EMBEDDING_KEYWORD_ENABLED: bool = True
     DS_EMBEDDING_COUNT: int = 10
 
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
@@ -138,6 +140,7 @@ class Settings(BaseSettings):
                      'PARSE_REASONING_BLOCK_ENABLED',
                      'PG_POOL_PRE_PING',
                      'TABLE_EMBEDDING_ENABLED',
+                     'TABLE_EMBEDDING_KEYWORD_ENABLED',
                      mode='before')
     @classmethod
     def lowercase_bool(cls, v: Any) -> Any:
@@ -149,6 +152,16 @@ class Settings(BaseSettings):
             elif v_lower == 'false':
                 return False
         return v
+
+    @field_validator('TABLE_EMBEDDING_ALPHA', mode='before')
+    @classmethod
+    def clamp_alpha(cls, v: Any) -> float:
+        """将 TABLE_EMBEDDING_ALPHA 限制在 [0.0, 1.0] 范围内"""
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return 0.4
+        return max(0.0, min(1.0, v))
 
 
 settings = Settings()  # type: ignore

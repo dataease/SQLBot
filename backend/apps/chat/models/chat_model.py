@@ -47,6 +47,7 @@ class OperationEnum(Enum):
     FILTER_CUSTOM_PROMPT = '11'
     EXECUTE_SQL = '12'
     GENERATE_PICTURE = '13'
+    EXTRACT_KEYWORDS = '14'
 
 
 class ChatFinishStep(Enum):
@@ -129,6 +130,8 @@ class ChatRecord(SQLModel, table=True):
     analysis_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
     predict_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
     regenerate_record_id: int = Field(sa_column=Column(BigInteger, nullable=True))
+    extracted_keywords: str = Field(sa_column=Column(Text, nullable=True))
+    expanded_keywords: str = Field(sa_column=Column(Text, nullable=True))
 
 
 class ChatRecordResult(BaseModel):
@@ -238,6 +241,8 @@ class AiModelQuestion(BaseModel):
     question: str = None
     ai_modal_id: int = None
     ai_modal_name: str = None  # Specific model name
+    extracted_keywords: str = ""  # LLM 提取的核心业务关键词（逗号分隔，未经扩展）
+    expanded_keywords: str = ""  # 经术语同义词扩展后的关键词（用于表匹配）
     engine: str = ""
     db_schema: str = ""
     sql: str = ""
@@ -254,6 +259,10 @@ class AiModelQuestion(BaseModel):
     regenerate_record_id: Optional[int] = None
     sample_data: str = ""
     sqlbot_name: str = "SQLBot"
+
+    def extract_keywords_sys_prompt(self) -> str:
+        return get_sql_template().get("extract_keywords").format(lang=self.lang,
+                                                                     sqlbot_name=self.sqlbot_name)
 
     def sql_sys_question(self, db_type: Union[str, DB], enable_query_limit: bool = True):
         templates: dict[str, str] = {}
