@@ -175,8 +175,13 @@ async def start_chat(session: SessionDep, current_user: CurrentUser, create_chat
 async def start_chat(session: SessionDep, current_user: CurrentUser, current_assistant: CurrentAssistant,
                      create_chat_obj: CreateChat = CreateChat(origin=2)):
     try:
-        return create_chat(session, current_user, create_chat_obj, create_chat_obj and create_chat_obj.datasource,
-                           current_assistant)
+        # create_chat 内会经 AssistantOutDsFactory.get_instance 同步请求宿主 API
+        # （requests.get，默认 10s 超时），必须放工作线程执行，避免阻塞事件循环（Issue #1288）
+        def inner():
+            return create_chat(session, current_user, create_chat_obj, create_chat_obj and create_chat_obj.datasource,
+                               current_assistant)
+
+        return await asyncio.to_thread(inner)
     except Exception as e:
         raise HTTPException(
             status_code=500,
