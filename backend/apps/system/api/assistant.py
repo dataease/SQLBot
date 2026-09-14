@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -285,7 +286,12 @@ async def ds(session: SessionDep, current_assistant: CurrentAssistant):
             }
             for ds in db_ds_list]
     if current_assistant.type == 1:
-        out_ds_instance: AssistantOutDs = AssistantOutDsFactory.get_instance(current_assistant)
+        # 构造 AssistantOutDs 会同步请求宿主 API（requests.get，默认 10s 超时），
+        # 必须在工作线程执行，避免阻塞事件循环导致宿主回调死锁（Issue #1288）
+        def inner():
+            return AssistantOutDsFactory.get_instance(current_assistant)
+
+        out_ds_instance: AssistantOutDs = await asyncio.to_thread(inner)
         return [
             {
                 "id": str(ds.id),

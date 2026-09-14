@@ -1,3 +1,4 @@
+import asyncio
 import concurrent
 import json
 import os
@@ -235,7 +236,10 @@ class LLMService:
                 specialized_model_id = args[2].custom_model
                 print("use custom model: id[" + specialized_model_id + "]")
         config: LLMConfig = await get_default_config(specialized_model_id)
-        instance = cls(*args, **kwargs, config=config)
+        # 构造函数可能同步调用宿主 API（type==1 高级应用动态数据源，
+        # LLMService.__init__ -> AssistantOutDsFactory.get_instance -> requests.get），
+        # 必须在工作线程执行，避免阻塞事件循环（Issue #1288）
+        instance = await asyncio.to_thread(cls, *args, **kwargs, config=config)
 
         chat_params: list[SysArgModel] = await get_groups(args[0], "chat")
         for config in chat_params:
