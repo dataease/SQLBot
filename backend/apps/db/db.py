@@ -598,7 +598,19 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
             with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
                 cursor.execute(sql)
                 res = cursor.fetchall()
-                res_list = [ColumnSchema(*item[:3]) for item in res]
+                res_list = []
+                seen_fields = set()
+                for item in res:
+                    field_name = item[0]
+                    if not field_name or not field_name.strip():
+                        continue
+                    # DESCRIBE includes section headings and repeats partition columns.
+                    if field_name.lstrip().startswith('#') and (item[1] or '').strip() in ('', 'data_type'):
+                        continue
+                    if field_name in seen_fields:
+                        continue
+                    seen_fields.add(field_name)
+                    res_list.append(ColumnSchema(*item[:3]))
                 return res_list
 
 
