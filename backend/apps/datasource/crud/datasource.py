@@ -517,7 +517,8 @@ def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: C
 
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
-                     embedding: bool = True, table_list: list[str] = None) -> tuple[str, list]:
+                     embedding: bool = True, table_list: list[str] = None,
+                     keywords: str = None) -> tuple[str, list]:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -538,17 +539,25 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         table_comment = ''
         if obj.table.custom_comment:
             table_comment = obj.table.custom_comment.strip()
+        if not table_comment and obj.table.table_comment:
+            table_comment = obj.table.table_comment.strip()
         if table_comment == '':
             schema_table += '\n[\n'
         else:
             schema_table += f", {table_comment}\n[\n"
 
+        fields_info = []
         if obj.fields:
             field_list = []
             for field in obj.fields:
                 field_comment = ''
                 if field.custom_comment:
                     field_comment = field.custom_comment.strip()
+                fields_info.append({
+                    "field_name": field.field_name,
+                    "field_comment": (field.field_comment or '').strip(),
+                    "custom_comment": (field.custom_comment or '').strip()
+                })
                 if field_comment == '':
                     field_list.append(f"({field.field_name}:{field.field_type})")
                 else:
@@ -557,7 +566,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         schema_table += '\n]\n'
 
         t_obj = {"id": obj.table.id, "table_name": obj.table.table_name, "schema_table": schema_table,
-                 "embedding": obj.table.embedding}
+                 "embedding": obj.table.embedding, "table_comment": table_comment, "fields": fields_info}
         tables.append(t_obj)
         all_tables.append(t_obj)
 
@@ -565,9 +574,14 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
     if not tables:
         return schema_str, []
 
-    # do table embedding
+    # 执行表 embedding 匹配
     if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
-        tables = calc_table_embedding(tables, question)
+        try:
+            tables = calc_table_embedding(tables, question, session=session, oid=current_user.oid,
+                                          keywords=keywords)
+        except ValueError as e:
+            # LLM 判断意图不是查数据或关键词提取失败
+            return str(e), []
     # splice schema
     if tables:
         for s in tables:

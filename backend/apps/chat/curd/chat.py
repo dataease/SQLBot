@@ -933,6 +933,19 @@ def save_sql_answer(session: SessionDep, record_id: int, answer: str) -> ChatRec
     return record
 
 
+def save_extracted_keywords(session: SessionDep, record_id: int, expanded_keywords: str,
+                            extracted_keywords: str = None) -> None:
+    """保存提取的关键词到 record，供后续独立接口复用。"""
+    if not record_id:
+        return
+    values = {'expanded_keywords': expanded_keywords}
+    if extracted_keywords:
+        values['extracted_keywords'] = extracted_keywords
+    stmt = update(ChatRecord).where(and_(ChatRecord.id == record_id)).values(**values)
+    session.execute(stmt)
+    session.commit()
+
+
 def save_analysis_answer(session: SessionDep, record_id: int, answer: str = '') -> ChatRecord:
     if not record_id:
         raise Exception("Record id cannot be None")

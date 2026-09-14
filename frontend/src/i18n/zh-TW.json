@@ -809,6 +809,7 @@
       "GENERATE_DYNAMIC_SQL": "產生動態 SQL",
       "CHOOSE_TABLE": "匹配資料表 (Schema)",
       "FILTER_TERMS": "匹配術語",
+      "EXTRACT_KEYWORDS": "提取關鍵詞",
       "FILTER_SQL_EXAMPLE": "匹配 SQL 範例",
       "FILTER_CUSTOM_PROMPT": "匹配自訂提示詞",
       "EXECUTE_SQL": "執行 SQL",
