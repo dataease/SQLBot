@@ -6,7 +6,7 @@ import time
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
-from apps.datasource.embedding.utils import cosine_similarity
+from apps.datasource.embedding.utils import batch_cosine_similarity, cosine_similarity
 from common.core.config import settings
 from common.utils.utils import SQLBotLogUtil
 
@@ -83,6 +83,27 @@ def calc_keyword_score(
     tc = (table_comment or '').lower()
     total_kw = len(keywords)
 
+    # 表名只分割一次，后续复用
+    tn_parts = set(re.split(r'[_\s]+', tn))
+    tn_parts.discard('')
+
+    # 预处理字段：只 strip/lower 一次
+    field_comments = []
+    field_name_parts = []
+    for field in fields:
+        fc = ''
+        if field.get('custom_comment'):
+            fc = field['custom_comment'].strip().lower()
+        if not fc and field.get('field_comment'):
+            fc = field['field_comment'].strip().lower()
+        field_comments.append(fc)
+
+        fname = field.get('field_name', '').lower()
+        if fname:
+            field_name_parts.append(set(re.split(r'[_\s]+', fname)) - {''})
+        else:
+            field_name_parts.append(set())
+
     # 收集每个关键词的最佳匹配分数
     kw_scores = {}  # keyword -> best_score
 
@@ -103,35 +124,24 @@ def calc_keyword_score(
             continue
 
         # 4. 表名部分匹配：收集匹配的关键词
-        tn_parts = set(re.split(r'[_\s]+', tn))
-        tn_parts.discard('')
         if kw in tn_parts:
             kw_scores[kw] = max(kw_scores.get(kw, 0), 0)  # 标记匹配，分数稍后计算
 
-        # 4. 字段注释匹配：0.5（精确）/ 0.4（子串）
-        for field in fields:
-            field_comment = ''
-            if field.get('custom_comment'):
-                field_comment = field['custom_comment'].strip().lower()
-            if not field_comment and field.get('field_comment'):
-                field_comment = field['field_comment'].strip().lower()
-            if field_comment:
-                if kw == field_comment:
+        # 5. 字段注释匹配：0.5（精确）/ 0.4（子串）
+        for fc in field_comments:
+            if fc:
+                if kw == fc:
                     kw_scores[kw] = max(kw_scores.get(kw, 0), 0.5)
                     break
-                elif kw in field_comment:
+                elif kw in fc:
                     kw_scores[kw] = max(kw_scores.get(kw, 0), 0.4)
 
-        # 5. 字段名匹配：0.3
+        # 6. 字段名匹配：0.3
         if kw not in kw_scores or kw_scores[kw] < 0.3:
-            for field in fields:
-                fname = field.get('field_name', '').lower()
-                if fname:
-                    fname_parts = set(re.split(r'[_\s]+', fname))
-                    fname_parts.discard('')
-                    if kw in fname_parts:
-                        kw_scores[kw] = max(kw_scores.get(kw, 0), 0.3)
-                        break
+            for fparts in field_name_parts:
+                if kw in fparts:
+                    kw_scores[kw] = max(kw_scores.get(kw, 0), 0.3)
+                    break
 
     if not kw_scores:
         return 0.0
@@ -141,10 +151,6 @@ def calc_keyword_score(
         return 1.0
     if tc and kw_scores.get(tc) == 0.9:
         return 0.9
-
-    # 表名部分匹配：按覆盖率计算（多个关键词共同覆盖表名）
-    tn_parts = set(re.split(r'[_\s]+', tn))
-    tn_parts.discard('')
     if tn_parts:
         matched_parts = {kw for kw in keywords if kw in tn_parts}
         if matched_parts:
@@ -201,15 +207,26 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
     try:
         start_time = time.time()
 
-        # 步骤 1：用关键词计算向量相似度
+        # 步骤 1：用关键词计算向量相似度（批量向量化）
         model = EmbeddingModelCache.get_model()
-        results = [item.get('embedding') for item in _list]
-
         q_embedding = model.embed_query(keywords)
-        for index in range(len(results)):
-            item = results[index]
-            if item:
-                _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, _parse_embedding(item))
+
+        # 预解析所有 embedding，跳过空的
+        parsed_embeddings = []
+        valid_indices = []
+        for i, item in enumerate(_list):
+            emb = item.get('embedding')
+            if emb:
+                parsed = _parse_embedding(emb)
+                if parsed:
+                    parsed_embeddings.append(parsed)
+                    valid_indices.append(i)
+
+        # 一次性批量计算所有余弦相似度
+        if parsed_embeddings:
+            similarities = batch_cosine_similarity(q_embedding, parsed_embeddings)
+            for idx, sim in zip(valid_indices, similarities):
+                _list[idx]['cosine_similarity'] = float(sim)
 
         # 步骤 2 & 3：计算关键词分数并融合
         alpha = settings.TABLE_EMBEDDING_ALPHA
@@ -269,13 +286,24 @@ def _calc_vector_only(tables: list[dict], question: str):
         try:
             model = EmbeddingModelCache.get_model()
             start_time = time.time()
-            results = [item.get('embedding') for item in _list]
-
             q_embedding = model.embed_query(question)
-            for index in range(len(results)):
-                item = results[index]
-                if item:
-                    _list[index]['cosine_similarity'] = cosine_similarity(q_embedding, _parse_embedding(item))
+
+            # 预解析所有 embedding，跳过空的
+            parsed_embeddings = []
+            valid_indices = []
+            for i, item in enumerate(_list):
+                emb = item.get('embedding')
+                if emb:
+                    parsed = _parse_embedding(emb)
+                    if parsed:
+                        parsed_embeddings.append(parsed)
+                        valid_indices.append(i)
+
+            # 一次性批量计算所有余弦相似度
+            if parsed_embeddings:
+                similarities = batch_cosine_similarity(q_embedding, parsed_embeddings)
+                for idx, sim in zip(valid_indices, similarities):
+                    _list[idx]['cosine_similarity'] = float(sim)
 
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
             _list = _list[:settings.TABLE_EMBEDDING_COUNT]
