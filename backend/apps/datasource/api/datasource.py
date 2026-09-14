@@ -588,6 +588,17 @@ async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequ
             except Exception as e:
                 raise HTTPException(500, f"{trans('i18n_ds_upload_error')}: {str(e)}")
 
+            max_identifier_len = 63
+            for col in df.columns:
+                col_bytes = str(col).encode('utf-8')
+                if len(col_bytes) > max_identifier_len:
+                    raise HTTPException(
+                        400,
+                        f"{trans('i18n_ds_upload_error')}: "
+                        f"Sheet [{sheet_name}] column name '{col}' exceeds "
+                        f"{max_identifier_len} bytes (actual: {len(col_bytes)} bytes)"
+                    )
+
             conn = engine.raw_connection()
             cursor = conn.cursor()
             try:
@@ -598,7 +609,7 @@ async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequ
                     index=False
                 )
                 output = StringIO()
-                df.to_csv(output, sep='\t', header=False, index=False)
+                df.to_csv(output, sep='\t', header=False, index=False, na_rep='\\N')
 
                 query = sql.SQL("COPY {} FROM STDIN WITH CSV DELIMITER E'\t'").format(
                     sql.Identifier(table_name)
