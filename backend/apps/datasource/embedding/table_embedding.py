@@ -10,6 +10,9 @@ from apps.datasource.embedding.utils import batch_cosine_similarity, cosine_simi
 from common.core.config import settings
 from common.utils.utils import SQLBotLogUtil
 
+# 预编译正则，避免每次调用都重新编译
+_RE_UNDERSCORE_SPACE = re.compile(r'[_\s]+')
+
 
 def _parse_embedding(embedding):
     """解析 embedding，兼容 JSON 字符串和原生列表两种格式。"""
@@ -83,11 +86,11 @@ def calc_keyword_score(
     tc = (table_comment or '').lower()
     total_kw = len(keywords)
 
-    # 表名只分割一次，后续复用
-    tn_parts = set(re.split(r'[_\s]+', tn))
+    # 表名只分割一次，后续复用（使用预编译正则）
+    tn_parts = set(_RE_UNDERSCORE_SPACE.split(tn))
     tn_parts.discard('')
 
-    # 预处理字段：只 strip/lower 一次
+    # 预处理字段：只 strip/lower 一次（使用预编译正则）
     field_comments = []
     field_name_parts = []
     for field in fields:
@@ -100,7 +103,7 @@ def calc_keyword_score(
 
         fname = field.get('field_name', '').lower()
         if fname:
-            field_name_parts.append(set(re.split(r'[_\s]+', fname)) - {''})
+            field_name_parts.append(set(_RE_UNDERSCORE_SPACE.split(fname)) - {''})
         else:
             field_name_parts.append(set())
 
@@ -236,19 +239,30 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
 
         # 步骤 2 & 3：计算关键词分数并融合
         alpha = settings.TABLE_EMBEDDING_ALPHA
+        kw_total = 0.0
+        kw_max = 0.0
+        kw_max_name = ''
         for table in _list:
             vec_score = table['cosine_similarity']
+            _kw_start = time.time()
             kw_score = calc_keyword_score(
                 keywords,
                 table.get('table_name', ''),
                 table.get('table_comment', ''),
                 table.get('fields', [])
             )
+            _kw_cost = time.time() - _kw_start
+            kw_total += _kw_cost
+            if _kw_cost > kw_max:
+                kw_max = _kw_cost
+                kw_max_name = table.get('table_name', '')
             table['keyword_score'] = kw_score
             table['cosine_similarity'] = alpha * vec_score + (1 - alpha) * kw_score
 
         t3 = time.time()
-        SQLBotLogUtil.info(f"[perf] 关键词评分耗时 {t3 - t2:.3f}s，共 {len(_list)} 张表")
+        SQLBotLogUtil.info(f"[perf] 关键词评分耗时 {t3 - t2:.3f}s，共 {len(_list)} 张表，"
+                           f"最慢单表 {kw_max_name}={kw_max * 1000:.1f}ms，"
+                           f"平均每表 {kw_total / len(_list) * 1000:.1f}ms")
 
         # 步骤 4：排序 - 精确匹配（keyword_score=1.0）始终排最前
         exact_matches = [t for t in _list if t.get('keyword_score') == 1.0]
