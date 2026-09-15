@@ -209,7 +209,10 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
 
         # 步骤 1：用关键词计算向量相似度（批量向量化）
         model = EmbeddingModelCache.get_model()
+        t0 = time.time()
         q_embedding = model.embed_query(keywords)
+        t1 = time.time()
+        SQLBotLogUtil.info(f"[perf] embed_query 耗时 {t1 - t0:.3f}s")
 
         # 预解析所有 embedding，跳过空的
         parsed_embeddings = []
@@ -228,6 +231,9 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
             for idx, sim in zip(valid_indices, similarities):
                 _list[idx]['cosine_similarity'] = float(sim)
 
+        t2 = time.time()
+        SQLBotLogUtil.info(f"[perf] 向量相似度计算耗时 {t2 - t1:.3f}s，共 {len(parsed_embeddings)} 张表")
+
         # 步骤 2 & 3：计算关键词分数并融合
         alpha = settings.TABLE_EMBEDDING_ALPHA
         for table in _list:
@@ -241,6 +247,9 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
             table['keyword_score'] = kw_score
             table['cosine_similarity'] = alpha * vec_score + (1 - alpha) * kw_score
 
+        t3 = time.time()
+        SQLBotLogUtil.info(f"[perf] 关键词评分耗时 {t3 - t2:.3f}s，共 {len(_list)} 张表")
+
         # 步骤 4：排序 - 精确匹配（keyword_score=1.0）始终排最前
         exact_matches = [t for t in _list if t.get('keyword_score') == 1.0]
         other_tables = [t for t in _list if t.get('keyword_score') != 1.0]
@@ -252,7 +261,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         _list = _list[:settings.TABLE_EMBEDDING_COUNT]
 
         end_time = time.time()
-        SQLBotLogUtil.info(f"融合评分耗时 {end_time - start_time:.3f}s")
+        SQLBotLogUtil.info(f"[perf] 融合评分总耗时 {end_time - start_time:.3f}s")
         SQLBotLogUtil.info(json.dumps([{
             "id": ele.get('id'),
             "schema_table": ele.get('schema_table'),
@@ -309,7 +318,7 @@ def _calc_vector_only(tables: list[dict], question: str):
             _list = _list[:settings.TABLE_EMBEDDING_COUNT]
 
             end_time = time.time()
-            SQLBotLogUtil.info(str(end_time - start_time))
+            SQLBotLogUtil.info(f"[perf] 纯向量匹配耗时 {end_time - start_time:.3f}s，共 {len(parsed_embeddings)} 张表")
             SQLBotLogUtil.info(json.dumps([{
                 "id": ele.get('id'),
                 "schema_table": ele.get('schema_table'),
