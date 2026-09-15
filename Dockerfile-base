@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     libgif-dev \
     librsvg2-dev \
+    supervisor \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && curl -qL https://www.npmjs.com/install.sh | sh - \
     && apt-get install -y nodejs \

@@ -67,9 +67,6 @@ RUN npm install
 # Runtime stage
 FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-python-pg:latest
 
-RUN apt-get update && apt-get install -y --no-install-recommends supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
 
