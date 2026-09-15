@@ -69,7 +69,7 @@ jobs:
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
       - name: Docker Buildx (build-and-push)
         run: |
-          docker buildx build -f Dockerfile-base --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
+          docker buildx build -f Dockerfile-base --output "type=image,push=true,oci-mediatypes=false" --provenance=false --sbom=false ${{ steps.prepare.outputs.buildx_args }}
 
   build-and-push-to-dockerhub:
     if: ${{ contains(github.event.inputs.registry, 'dockerhub') }}
@@ -105,4 +105,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Docker Buildx (build-and-push)
         run: |
-          docker buildx build -f Dockerfile-base --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
+          docker buildx build -f Dockerfile-base --output "type=image,push=true,oci-mediatypes=false" --provenance=false --sbom=false ${{ steps.prepare.outputs.buildx_args }}
