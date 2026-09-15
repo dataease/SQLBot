@@ -130,6 +130,7 @@ class Settings(BaseSettings):
     TABLE_EMBEDDING_COUNT: int = 10
     TABLE_EMBEDDING_ALPHA: float = 0.4  # weight for vector score; (1-alpha) is keyword weight
     TABLE_EMBEDDING_KEYWORD_ENABLED: bool = True
+    SAMPLE_DATA_ENABLED: bool = True  # 是否获取表示例数据，关闭可提升响应速度
     DS_EMBEDDING_COUNT: int = 10
 
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
@@ -141,6 +142,7 @@ class Settings(BaseSettings):
                      'PG_POOL_PRE_PING',
                      'TABLE_EMBEDDING_ENABLED',
                      'TABLE_EMBEDDING_KEYWORD_ENABLED',
+                     'SAMPLE_DATA_ENABLED',
                      mode='before')
     @classmethod
     def lowercase_bool(cls, v: Any) -> Any:

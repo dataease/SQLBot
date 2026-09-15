@@ -555,7 +555,7 @@ class LLMService:
             keywords=keywords)
 
         # Get sample data for all tables
-        if not self.out_ds_instance:
+        if not self.out_ds_instance and settings.SAMPLE_DATA_ENABLED:
             self.chat_question.sample_data = get_tables_sample_data(
                 session=_session,
                 current_user=self.current_user,
