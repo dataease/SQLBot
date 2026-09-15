@@ -67,6 +67,9 @@ RUN npm install
 # Runtime stage
 FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-python-pg:latest
 
+RUN apt-get update && apt-get install -y --no-install-recommends supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
 
@@ -85,11 +88,12 @@ COPY start.sh /opt/sqlbot/app/start.sh
 COPY g2-ssr/*.ttf /usr/share/fonts/truetype/liberation/
 COPY --from=sqlbot-builder ${SQLBOT_HOME} ${SQLBOT_HOME}
 COPY --from=ssr-builder /app /opt/sqlbot/g2-ssr
+COPY g2-ssr/supervisord.conf /etc/supervisor/conf.d/g2-ssr.conf
 COPY --from=vector-model /opt/maxkb/app/model /opt/sqlbot/models
 
 WORKDIR ${SQLBOT_HOME}/app
 
-RUN mkdir -p /opt/sqlbot/images /opt/sqlbot/g2-ssr
+RUN mkdir -p /opt/sqlbot/images /opt/sqlbot/g2-ssr/logs
 
 EXPOSE 3000 8000 8001 5432
 
