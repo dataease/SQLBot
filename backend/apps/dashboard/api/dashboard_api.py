@@ -22,7 +22,7 @@ async def list_resource_api(session: SessionDep, dashboard: QueryDashboard, curr
 @router.post("/load_resource", summary=f"{PLACEHOLDER_PREFIX}load_resource_api")
 @require_permissions(permission=SqlbotPermission(type='dashboard', keyExpression="dashboard.id"))
 async def load_resource_api(session: SessionDep, current_user: CurrentUser, dashboard: QueryDashboard):
-    return load_resource(session=session, dashboard=dashboard)
+    return load_resource(session=session, dashboard=dashboard, current_user=current_user)
 
 
 @router.post("/create_resource", response_model=BaseDashboard, summary=f"{PLACEHOLDER_PREFIX}create_resource_api")

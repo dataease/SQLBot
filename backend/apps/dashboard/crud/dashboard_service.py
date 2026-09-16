@@ -34,7 +34,7 @@ def list_resource(session: SessionDep, dashboard: QueryDashboard, current_user: 
     return tree
 
 
-def load_resource(session: SessionDep, dashboard: QueryDashboard):
+def load_resource(session: SessionDep, dashboard: QueryDashboard, current_user: CurrentUser):
     sql = text("""
                SELECT cd.*,
                       creator.name AS create_name,
@@ -46,6 +46,11 @@ def load_resource(session: SessionDep, dashboard: QueryDashboard):
                WHERE cd.id = :dashboard_id
                """)
     result = session.execute(sql, {"dashboard_id": dashboard.id}).mappings().first()
+
+    if not result:
+        raise ValueError(f"Resource with id {dashboard.id} does not exist")
+    if str(result['create_by']) != str(current_user.id):
+        raise ValueError(f"Resource with id {dashboard.id} not owned by the current user")
 
     result_dict = dict(result)
     canvas_view_obj = orjson.loads(result_dict['canvas_view_info'])
@@ -80,6 +85,10 @@ def create_resource(session: SessionDep, user: CurrentUser, dashboard: CreateDas
 
 def update_resource(session: SessionDep, user: CurrentUser, dashboard: QueryDashboard):
     record = session.query(CoreDashboard).filter(CoreDashboard.id == dashboard.id).first()
+    if not record:
+        raise ValueError(f"Resource with id {dashboard.id} does not exist")
+    if str(record.create_by) != str(user.id):
+        raise ValueError(f"Resource with id {dashboard.id} not owned by the current user")
     record.name = dashboard.name
     record.update_by = user.id
     record.update_time = int(time.time())
@@ -103,6 +112,10 @@ def create_canvas(session: SessionDep, user: CurrentUser, dashboard: CreateDashb
 
 def update_canvas(session: SessionDep, user: CurrentUser, dashboard: CreateDashboard):
     record = session.query(CoreDashboard).filter(CoreDashboard.id == dashboard.id).first()
+    if not record:
+        raise ValueError(f"Resource with id {dashboard.id} does not exist")
+    if str(record.create_by) != str(user.id):
+        raise ValueError(f"Resource with id {dashboard.id} not owned by the current user")
     record.name = dashboard.name
     record.update_by = user.id
     record.update_time = int(time.time())
@@ -149,6 +162,8 @@ def delete_resource(session: SessionDep, current_user: CurrentUser, resource_id:
     coreDashboard = session.get(CoreDashboard, resource_id)
     if not coreDashboard:
         raise ValueError(f"Resource with id {resource_id} does not exist")
+    if str(coreDashboard.create_by) != str(current_user.id):
+        raise ValueError(f"Resource with id {resource_id} not owned by the current user")
     sql = text("DELETE FROM core_dashboard WHERE id = :resource_id")
     result = session.execute(sql, {"resource_id": resource_id})
     session.commit()
