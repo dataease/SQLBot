@@ -12,6 +12,69 @@ from common.utils.utils import SQLBotLogUtil
 
 # 预编译正则，避免每次调用都重新编译
 _RE_UNDERSCORE_SPACE = re.compile(r'[_\s]+')
+_IDENTIFIER_CHARS = r'A-Za-z0-9_$'
+_RE_QUOTED_IDENTIFIER = re.compile(r'"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]]|\]\])*\]')
+
+
+def _mention_spans(question: str, name: str):
+    """Match identifier boundaries while allowing adjacent Chinese text and SQL delimiters."""
+    left = rf'(?<![{_IDENTIFIER_CHARS}])' if re.match(rf'[{_IDENTIFIER_CHARS}]', name[0]) else ''
+    right = rf'(?![{_IDENTIFIER_CHARS}])' if re.match(rf'[{_IDENTIFIER_CHARS}]', name[-1]) else ''
+    return [match.span() for match in re.finditer(left + re.escape(name) + right, question)]
+
+
+def _longest_mentions(spans_by_name: dict):
+    """Keep the longest overlapping name and any independently mentioned shorter names."""
+    spans = {span for occurrences in spans_by_name.values() for span in occurrences}
+    longest_spans = set()
+    furthest_end = -1
+    for start, end in sorted(spans, key=lambda span: (span[0], -span[1])):
+        if end > furthest_end:
+            longest_spans.add((start, end))
+            furthest_end = end
+    return {name for name, occurrences in spans_by_name.items()
+            if any(span in longest_spans for span in occurrences)}
+
+
+def _select_tables(ranked_tables: list[dict], question: str, *, apply_limit: bool = True):
+    """Keep explicitly mentioned candidates, then fill remaining slots by existing rank.
+
+    Inspect only candidates already filtered by the caller; retain duplicate comments.
+    Resolve overlapping names and comments separately. Error fallback can disable truncation.
+    """
+    question = (question or '').lower()
+    quoted_names = []
+    for match in _RE_QUOTED_IDENTIFIER.finditer(question):
+        token = match.group()
+        closing = token[-1]
+        quoted_names.append((match.span(), token[1:-1].replace(closing * 2, closing)))
+    name_spans, comment_spans = {}, {}
+    for table in ranked_tables:
+        name = (table.get('table_name') or '').strip().lower()
+        if name and name not in name_spans:
+            # Match quoted identifiers as a whole, even when the full name is not a candidate.
+            name_spans[name] = [
+                (a, b) for a, b in _mention_spans(question, name)
+                if not any(a < end and start < b for (start, end), _ in quoted_names)
+            ]
+            name_spans[name].extend(span for span, quoted_name in quoted_names if quoted_name == name)
+        comment = (table.get('table_comment') or '').strip().lower()
+        if comment and comment not in comment_spans:
+            comment_spans[comment] = _mention_spans(question, comment)
+
+    explicit_names = _longest_mentions(name_spans)
+    explicit_comments = _longest_mentions(comment_spans)
+    required, remaining = [], []
+    for table in ranked_tables:
+        name = (table.get('table_name') or '').strip().lower()
+        comment = (table.get('table_comment') or '').strip().lower()
+        if name in explicit_names or comment in explicit_comments:
+            required.append(table)
+        else:
+            remaining.append(table)
+    if apply_limit:
+        remaining = remaining[:max(0, settings.TABLE_EMBEDDING_COUNT - len(required))]
+    return required + remaining
 
 
 def _parse_embedding(embedding):
@@ -177,13 +240,13 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
     1. 用 keywords 计算向量相似度（vec_score）
     2. 计算关键词匹配度（keyword_score）
     3. 融合评分：final_score = α * vec_score + (1-α) * keyword_score
-    4. keyword_score=1.0 的表保证排在最前面
+    4. Keep explicitly mentioned table names or complete comments, then fill slots by rank.
 
     当 keywords 为空或 TABLE_EMBEDDING_KEYWORD_ENABLED 为 False 时，回退到纯向量匹配。
 
     Args:
         tables: 表列表，每个 dict 包含 id, table_name, schema_table, embedding, table_comment, fields
-        question: 原始用户问题（用于纯向量匹配回退）
+        question: Original user question for explicit matching and vector-only fallback.
         session: 数据库会话（预留）
         oid: 组织 ID（预留）
         keywords: 已提取并扩展的关键词（由调用方传入）
@@ -272,7 +335,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         other_tables.sort(key=lambda x: x['cosine_similarity'], reverse=True)
 
         _list = exact_matches + other_tables
-        _list = _list[:settings.TABLE_EMBEDDING_COUNT]
+        _list = _select_tables(_list, question)
 
         end_time = time.time()
         SQLBotLogUtil.info(f"[perf] 融合评分总耗时 {end_time - start_time:.3f}s")
@@ -292,7 +355,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
 
 
 def _calc_vector_only(tables: list[dict], question: str):
-    """纯向量相似度评分（原始逻辑）。"""
+    """Rank by vector similarity while retaining explicitly mentioned tables."""
     _list = []
     for table in tables:
         _list.append({
@@ -329,7 +392,7 @@ def _calc_vector_only(tables: list[dict], question: str):
                     _list[idx]['cosine_similarity'] = float(sim)
 
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
-            _list = _list[:settings.TABLE_EMBEDDING_COUNT]
+            _list = _select_tables(_list, question)
 
             end_time = time.time()
             SQLBotLogUtil.info(f"[perf] 纯向量匹配耗时 {end_time - start_time:.3f}s，共 {len(parsed_embeddings)} 张表")
@@ -342,4 +405,5 @@ def _calc_vector_only(tables: list[dict], question: str):
             return _list
         except Exception:
             traceback.print_exc()
-    return _list
+    # Preserve all candidates when vector ranking fails; move explicit matches to the front.
+    return _select_tables(_list, question, apply_limit=False)
