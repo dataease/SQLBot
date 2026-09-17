@@ -31,7 +31,7 @@ from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj, \
     TableSchemaResponse, ColumnSchemaResponse, PreviewResponse, ImportRequest
-from ..utils.excel import parse_excel_preview, USER_TYPE_TO_PANDAS
+from ..utils.excel import parse_excel_preview, read_import_dataframe
 
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
@@ -576,17 +576,10 @@ async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequ
             fields = sheet_info.fields
 
             field_mapping = {f.fieldName: f.fieldType for f in fields}
-            dtype_dict = {
-                col: USER_TYPE_TO_PANDAS.get(field_mapping.get(col, 'string'), 'string')
-                for col in field_mapping.keys()
-            }
-
             try:
+                df = read_import_dataframe(save_path, sheet_name, field_mapping)
                 if save_path.endswith(".csv"):
-                    df = pd.read_csv(save_path, engine='c', dtype=dtype_dict)
                     sheet_name = "Sheet1"
-                else:
-                    df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine', dtype=dtype_dict)
             except Exception as e:
                 raise HTTPException(500, f"{trans('i18n_ds_upload_error')}: {str(e)}")
 
