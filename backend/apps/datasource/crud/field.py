@@ -1,6 +1,7 @@
 from common.core.deps import SessionDep
-from ..models.datasource import CoreField, FieldObj
+from ..models.datasource import CoreField, FieldObj, CoreTable
 from sqlalchemy import or_, and_
+from fastapi import HTTPException
 
 
 def delete_field_by_ds_id(session: SessionDep, id: int):
@@ -8,7 +9,11 @@ def delete_field_by_ds_id(session: SessionDep, id: int):
     session.commit()
 
 
-def get_fields_by_table_id(session: SessionDep, id: int, field: FieldObj):
+def get_fields_by_table_id(session: SessionDep, ds_id: int, id: int, field: FieldObj):
+    table = session.query(CoreTable).filter(and_(CoreTable.id == id, CoreTable.ds_id == ds_id)).first()
+    if not table:
+        raise HTTPException(status_code=500, detail='The data source ID does not match the table ID')
+
     if field and field.fieldName:
         return session.query(CoreField).filter(
             and_(CoreField.table_id == id, or_(CoreField.field_name.like(f'%{field.fieldName}%'),

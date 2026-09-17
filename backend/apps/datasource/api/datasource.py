@@ -203,8 +203,9 @@ async def table_list(session: SessionDep, id: int = Path(..., description=f"{PLA
 @router.post("/fieldList/{ds_id}/{id}", response_model=List[CoreField], summary=f"{PLACEHOLDER_PREFIX}ds_field_list")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
 async def field_list(session: SessionDep, field: FieldObj,
+                     ds_id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
                      id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_table_id")):
-    return get_fields_by_table_id(session, id, field)
+    return get_fields_by_table_id(session, ds_id, id, field)
 
 
 # @router.post("/editLocalComment", include_in_schema=False)
