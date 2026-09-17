@@ -121,7 +121,8 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
 def update_ds_recommended_config(session: SessionDep, datasource_id: int, recommended_config: int):
     # 使用 update 语句直接更新，避免 ORM 追踪问题
     from sqlalchemy import update
-    stmt = update(CoreDatasource).where(CoreDatasource.id == datasource_id).values(recommended_config=recommended_config)
+    stmt = update(CoreDatasource).where(CoreDatasource.id == datasource_id).values(
+        recommended_config=recommended_config)
     session.execute(stmt)
     session.commit()
 
@@ -181,8 +182,10 @@ def execSql(session: SessionDep, id: int, sql: str):
     return exec_sql(ds, sql, True)
 
 
-def sync_single_fields(session: SessionDep, trans: Trans, id: int):
-    table = session.query(CoreTable).filter(CoreTable.id == id).first()
+def sync_single_fields(session: SessionDep, trans: Trans, ds_id: int, id: int):
+    table = session.query(CoreTable).filter(and_(CoreTable.id == id, CoreTable.ds_id == ds_id)).first()
+    if not table:
+        raise HTTPException(status_code=500, detail='The data source ID does not match the table ID')
     ds = session.query(CoreDatasource).filter(CoreDatasource.id == table.ds_id).first()
 
     tables = getTablesByDs(session, ds)
@@ -289,6 +292,10 @@ def update_table_and_fields(session: SessionDep, data: TableObj):
 
 
 def updateTable(session: SessionDep, table: CoreTable):
+    obj = session.query(CoreTable).filter(and_(CoreTable.id == table.id, CoreTable.ds_id == table.ds_id)).first()
+    if not obj:
+        raise HTTPException(status_code=500, detail='The data source ID does not match the table ID')
+
     update_table(session, table)
 
     # do table embedding
@@ -297,6 +304,11 @@ def updateTable(session: SessionDep, table: CoreTable):
 
 
 def updateField(session: SessionDep, field: CoreField):
+    obj = session.query(CoreField).filter(
+        and_(CoreField.id == field.id, CoreField.table_id == field.table_id, CoreField.ds_id == field.ds_id)).first()
+    if not obj:
+        raise HTTPException(status_code=500, detail='Resource ID does not matched')
+
     update_field(session, field)
 
     # do table embedding

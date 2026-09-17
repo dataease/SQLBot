@@ -166,8 +166,9 @@ async def get_fields(session: SessionDep,
 @router.post("/syncFields/{ds_id}/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_sync_fields")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
 async def sync_fields(session: SessionDep, trans: Trans,
+                      ds_id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
                       id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_table_id")):
-    return sync_single_fields(session, trans, id)
+    return sync_single_fields(session, trans, ds_id, id)
 
 
 from pydantic import BaseModel
@@ -215,13 +216,13 @@ async def field_list(session: SessionDep, field: FieldObj,
 
 
 @router.post("/editTable", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_edit_table")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="table.ds_id"))
 async def edit_table(session: SessionDep, table: CoreTable):
     updateTable(session, table)
 
 
 @router.post("/editField", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_edit_field")
-@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds_id"))
+@require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="field.ds_id"))
 async def edit_field(session: SessionDep, field: CoreField):
     updateField(session, field)
 
