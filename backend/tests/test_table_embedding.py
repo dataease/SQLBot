@@ -608,5 +608,157 @@ class TestCalcTableEmbedding:
         assert len(result) == 2
 
 
+class TestExplicitTableSelection:
+    """Retain explicitly named tables and comments even with low vector rankings."""
+
+    TARGET = 'ads_jt_scm_purchase_process_chain_relation_detail_full_1d'
+    COMMENT = '采购全链路数据各节点表'
+
+    @pytest.fixture(autouse=True)
+    def setup_models(self):
+        with patch(EMBEDDING_CACHE_PATCH) as cache, patch(SETTINGS_PATCH) as config:
+            config.TABLE_EMBEDDING_KEYWORD_ENABLED = True
+            config.TABLE_EMBEDDING_COUNT = 10
+            config.TABLE_EMBEDDING_ALPHA = 0.4
+            cache.get_model.return_value.embed_query.return_value = [1.0, 0.0]
+            self.cache, self.config = cache, config
+            yield
+
+    def table(self, name, comment='', embedding=None):
+        return dict(id=name, table_name=name, table_comment=comment,
+                    schema_table=f'# Table: {name}', fields=[],
+                    embedding=json.dumps(embedding if embedding is not None else [0.95, 0.31225]))
+
+    def candidates(self):
+        return [self.table(f'{self.TARGET}_{i}', self.COMMENT + f'（环节{i}明细）')
+                for i in range(19)] + [self.table(self.TARGET, self.COMMENT, [0.6, 0.8])]
+
+    @pytest.mark.parametrize('keywords', [None, '采购,节点,金额', '查询采购金额'])
+    @pytest.mark.parametrize('mention', ['name', 'comment'])
+    def test_explicit_mention_survives_top_ten(self, keywords, mention):
+        question = f'查询{self.TARGET if mention == "name" else self.COMMENT}的采购金额'
+        result = calc_table_embedding(self.candidates(), question, keywords=keywords)
+        assert len(result) == 10
+        assert result[0]['table_name'] == self.TARGET
+
+    @pytest.mark.parametrize('mention', ['name', 'comment'])
+    def test_keyword_disabled(self, mention):
+        self.config.TABLE_EMBEDDING_KEYWORD_ENABLED = False
+        result = calc_table_embedding(self.candidates(),
+                                      self.TARGET if mention == 'name' else self.COMMENT,
+                                      keywords='采购')
+        assert len(result) == 10
+        assert result[0]['table_name'] == self.TARGET
+
+    @pytest.mark.parametrize('failure', ['load', 'encode', 'invalid_embedding', 'missing_embedding'])
+    def test_vector_failure_does_not_remove_explicit_table(self, failure):
+        tables = self.candidates()
+        if failure == 'load':
+            self.cache.get_model.side_effect = RuntimeError('model unavailable')
+        elif failure == 'encode':
+            self.cache.get_model.return_value.embed_query.side_effect = RuntimeError('encoding failed')
+        elif failure == 'invalid_embedding':
+            tables[0]['embedding'] = 'invalid json'
+        else:
+            tables[-1]['embedding'] = None
+        result = calc_table_embedding(tables, f'查询{self.COMMENT}', keywords='采购')
+        assert len(result) == (10 if failure == 'missing_embedding' else len(tables))
+        assert result[0]['table_name'] == self.TARGET
+
+    @pytest.mark.parametrize('keywords', [None, '销售额'])
+    @pytest.mark.parametrize('failure', ['load', 'encode', 'invalid_embedding'])
+    def test_vector_failure_keeps_all_candidates_without_explicit_name(self, keywords, failure):
+        tables = self.candidates()
+        if failure == 'load':
+            self.cache.get_model.side_effect = RuntimeError('model unavailable')
+        elif failure == 'encode':
+            self.cache.get_model.return_value.embed_query.side_effect = RuntimeError('encoding failed')
+        else:
+            tables[0]['embedding'] = 'invalid json'
+        result = calc_table_embedding(tables, '统计本月销售额', keywords=keywords)
+        assert [t['id'] for t in result] == [t['id'] for t in tables]
+
+    @pytest.mark.parametrize('question,long_name,short_name', [
+        ('查询订单明细', '订单明细', '订单'),
+        ('查询 "sales-order"', 'sales-order', 'sales'),
+        ('查询 `sales-order`', 'sales-order', 'sales'),
+        ('查询 [sales-order]', 'sales-order', 'sales'),
+        ('查询 public."sales-order"', 'sales-order', 'sales'),
+    ])
+    def test_long_physical_name_does_not_require_short_name(self, question, long_name, short_name):
+        self.config.TABLE_EMBEDDING_COUNT = 1
+        tables = [self.table(short_name), self.table(long_name, embedding=[0, 1])]
+        result = calc_table_embedding(tables, question)
+        assert [t['table_name'] for t in result] == [long_name]
+        result = calc_table_embedding(tables, question + '，以及 ' + short_name)
+        assert {t['table_name'] for t in result} == {long_name, short_name}
+
+    @pytest.mark.parametrize('quoted', ['"sales-order"', '`sales-order`', '[sales-order]', '"订单明细"'])
+    def test_unknown_quoted_identifier_does_not_match_part(self, quoted):
+        self.config.TABLE_EMBEDDING_COUNT = 1
+        tables = [self.table('other'), self.table('sales', embedding=[0, 1]),
+                  self.table('订单', embedding=[0, 1])]
+        assert calc_table_embedding(tables, '查询 ' + quoted)[0]['table_name'] == 'other'
+
+    @pytest.mark.parametrize('name,quoted', [('a"b', '"a""b"'), ('a`b', '`a``b`'), ('a]b', '[a]]b]')])
+    def test_escaped_quoted_identifier(self, name, quoted):
+        self.config.TABLE_EMBEDDING_COUNT = 1
+        tables = [self.table('other'), self.table(name, embedding=[0, 1])]
+        assert calc_table_embedding(tables, '查询 ' + quoted)[0]['table_name'] == name
+
+    @pytest.mark.parametrize('question,expected', [
+        ('查询 SALES_ORDER 的金额', 'sales_order'),
+        ('查询sales_order的金额', 'sales_order'),
+        ('查询 public.sales_order 的金额', 'sales_order'),
+        ('查询 "sales_order" 的金额', 'sales_order'),
+        ('查询 `sales_order` 的金额', 'sales_order'),
+        ('查询 [sales_order] 的金额', 'sales_order'),
+        ('查询 sales_order_detail 的金额', 'other'),
+        ('查询 old_sales_order 的金额', 'other'),
+        ('查询 sales_order2 的金额', 'other'),
+        ('查询 sales_order$backup 的金额', 'other'),
+    ])
+    def test_physical_name_boundaries(self, question, expected):
+        self.config.TABLE_EMBEDDING_COUNT = 1
+        tables = [self.table('other'), self.table('sales_order', embedding=[0, 1])]
+        result = calc_table_embedding(tables, question)
+        assert [t['table_name'] for t in result] == [expected]
+
+    def test_longer_comment_wins_only_at_same_occurrence(self):
+        self.config.TABLE_EMBEDDING_COUNT = 1
+        tables = [self.table('short', '采购订单'), self.table('long', '采购订单明细', [0, 1])]
+        result = calc_table_embedding(tables, '查询采购订单明细')
+        assert [t['table_name'] for t in result] == ['long']
+        result = calc_table_embedding(tables, '比较采购订单和采购订单明细')
+        assert {t['table_name'] for t in result} == {'short', 'long'}
+
+    def test_duplicate_comments_keep_all_candidates(self):
+        self.config.TABLE_EMBEDDING_COUNT = 1
+        tables = [self.table('other'), self.table('a', '采购订单'), self.table('b', '采购订单')]
+        result = calc_table_embedding(tables, '查询采购订单')
+        assert {t['table_name'] for t in result} == {'a', 'b'}
+
+    def test_explicit_names_can_exceed_limit_without_duplicates(self):
+        tables = [self.table(f'purchase_{i}') for i in range(20)]
+        names = [t['table_name'] for t in tables[-12:]]
+        result = calc_table_embedding(tables, '查询 ' + ','.join(names + names), keywords='采购')
+        assert len(result) == 12
+        assert {t['table_name'] for t in result} == set(names)
+
+    def test_explicit_table_not_in_candidates_is_not_added(self):
+        tables = self.candidates()[:-1]
+        result = calc_table_embedding(tables, self.TARGET)
+        assert len(result) == 10
+        assert self.TARGET not in {t['table_name'] for t in result}
+
+    def test_no_explicit_mention_keeps_existing_ranking(self):
+        tables = self.candidates()
+        result = calc_table_embedding(tables, '查询采购金额', keywords='采购,金额')
+        assert [t['id'] for t in result] == [t['id'] for t in tables[:10]]
+
+    def test_empty_candidates(self):
+        assert calc_table_embedding([], self.TARGET, keywords='采购') == []
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
