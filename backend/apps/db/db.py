@@ -162,7 +162,9 @@ def get_engine(ds: CoreDatasource, timeout: int = 0, use_pool: bool = False) -> 
         else:
             engine = create_engine(get_uri(ds), connect_args={"connect_timeout": conf.timeout}, **db_config)
     elif equals_ignore_case(ds.type, 'sqlServer'):
-        engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds.type, conf),
+        # A pooled connection may be recreated after the datasource's ORM session closes.
+        ds_type = ds.type
+        engine = create_engine('mssql+pymssql://', creator=lambda: get_origin_connect(ds_type, conf),
                                **db_config)
     elif equals_ignore_case(ds.type, 'oracle'):
         engine = create_engine(get_uri(ds), connect_args={"tcp_connect_timeout": conf.timeout}, **db_config)
