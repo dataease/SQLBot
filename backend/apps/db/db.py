@@ -113,26 +113,17 @@ def get_origin_connect(type: str, conf: DatasourceConf):
     if equals_ignore_case(type, "sqlServer"):
         # none or true, set tds_version = 7.0
         if conf.lowVersion is None or conf.lowVersion:
-            return pymssql.connect(
-                server=conf.host,
-                port=str(conf.port),
-                user=conf.username,
-                password=conf.password,
-                database=conf.database,
-                timeout=conf.timeout,
-                tds_version='7.0',  # options: '4.2', '7.0', '8.0' ...,
-                **extra_config_dict
-            )
-        else:
-            return pymssql.connect(
-                server=conf.host,
-                port=str(conf.port),
-                user=conf.username,
-                password=conf.password,
-                database=conf.database,
-                timeout=conf.timeout,
-                **extra_config_dict
-            )
+            extra_config_dict['tds_version'] = '7.0'
+
+        return pymssql.connect(
+            server=conf.host,
+            port=str(conf.port),
+            user=conf.username,
+            password=conf.password,
+            database=conf.database,
+            timeout=conf.timeout,
+            **extra_config_dict
+        )
 
 
 # use sqlalchemy
@@ -418,15 +409,7 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
                                                                                    "excel") else get_engine_config()
     else:
         conf = DatasourceConf(**json.loads(aes_decrypt(get_out_ds_conf(ds, 10))))
-    # if isinstance(ds, AssistantOutDsSchema):
-    #     conf = DatasourceConf()
-    #     conf.host = ds.host
-    #     conf.port = ds.port
-    #     conf.username = ds.user
-    #     conf.password = ds.password
-    #     conf.database = ds.dataBase
-    #     conf.dbSchema = ds.db_schema
-    #     conf.timeout = 10
+
     db = DB.get_db(ds.type)
     sql = get_version_sql(ds, conf)
     if not sql:
