@@ -41,15 +41,24 @@ async def get_ws_resource(oid, type) -> list:
 async def check_ws_permission(oid, type, resource) -> bool:
     if not resource or (isinstance(resource, list) and len(resource) == 0):
         return True
-    
+
     resource_id_list = await get_ws_resource(oid, type)
     if not resource_id_list:
         return False
     if isinstance(resource, list):
         return set(resource).issubset(set(resource_id_list))
     return resource in resource_id_list
-        
- 
+
+
+async def _dynamic_assistant_ds_allowed(assistant, ds_id) -> bool:
+    """高级小助手（type 1/3 动态数据源）的 ds 来自宿主 API，本地 core_datasource 无记录：
+    仅当 ds_id 在本地不存在时才跳过归属校验；本地数据源仍按工作区 oid 校验。"""
+    if assistant is None or assistant.type not in (1, 3) or isinstance(ds_id, list):
+        return False
+    with Session(engine) as session:
+        return session.get(CoreDatasource, ds_id) is None
+
+
 def require_permissions(permission: SqlbotPermission):
     def decorator(func):
         @wraps(func)
@@ -62,6 +71,7 @@ def require_permissions(permission: SqlbotPermission):
                     status_code=401,
                     detail="用户未认证"
                 )
+            assistant = getattr(request.state, 'assistant', None)
             current_oid = current_user.oid
             
             trans = i18n(request)
@@ -90,7 +100,9 @@ def require_permissions(permission: SqlbotPermission):
                     if match := re.match(r"args\[(\d+)\]", keyExpression):
                         index = int(match.group(1))
                         value = bound_args.args[index]
-                        if await check_ws_permission(current_oid, resource_type, value):
+                        if await check_ws_permission(current_oid, resource_type, value) or (
+                                resource_type in ('ds', 'datasource')
+                                and await _dynamic_assistant_ds_allowed(assistant, value)):
                             return await func(*args, **kwargs)
                         #raise Exception('no permission to execute or resource do not exist!')
                         raise Exception(trans('i18n_permission.permission_resource_limit'))
@@ -101,7 +113,9 @@ def require_permissions(permission: SqlbotPermission):
                 value = bound_args.arguments[parts[0]]
                 for part in parts[1:]:
                     value = getattr(value, part)
-                if await check_ws_permission(current_oid, resource_type, value):
+                if await check_ws_permission(current_oid, resource_type, value) or (
+                        resource_type in ('ds', 'datasource')
+                        and await _dynamic_assistant_ds_allowed(assistant, value)):
                     return await func(*args, **kwargs)
                 raise Exception(trans('i18n_permission.permission_resource_limit'))
             
