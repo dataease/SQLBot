@@ -91,10 +91,6 @@ docker run -d \
     <img alt="q&a" src="https://github.com/user-attachments/assets/55526514-52f3-4cfe-98ec-08a986259280"   />
   </tr>
 
-## Star History
-
-[![Star History Chart](https://star-history.dera.page/svg?repos=dataease/sqlbot&type=Date)](https://star-history.dera.page/#dataease/sqlbot&Date)
-
 ## 飞致云旗下的其他明星项目
 
 - [DataEase](https://github.com/dataease/dataease/) - 人人可用的开源 BI 工具
