@@ -55,7 +55,7 @@ class DataFormat:
             """格式化浮点数，避免科学记数法"""
             if value == 0:
                 return "0"
-            formatted = str(Decimal(str(value)))
+            formatted = format(Decimal(str(value)), 'f')
             if '.' in formatted:
                 formatted = formatted.rstrip('0').rstrip('.')
             return formatted
