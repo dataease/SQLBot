@@ -354,7 +354,7 @@ class AiModelQuestion(BaseModel):
                                                               sqlbot_name=self.sqlbot_name)
 
     def guess_user_question(self, old_questions: str = "[]"):
-        return get_guess_question_template()['user'].format(question=self.question, schema=self.db_schema,
+        return get_guess_question_template()['user'].format(lang=self.lang, question=self.question, schema=self.db_schema,
                                                             old_questions=old_questions)
 
     def filter_sys_question(self):
@@ -411,7 +411,7 @@ class ChatQuestionBase(BaseModel):
 class McpQuestion(ChatQuestionBase):
     token: str = Body(description='token')
     stream: Optional[bool] = Body(description='是否流式输出，默认为true开启, 关闭false则返回JSON对象', default=True)
-    lang: Optional[str] = Body(description='语言：zh-CN|zh-TW|en|ko-KR', default='zh-CN')
+    lang: Optional[str] = Body(description='语言：zh-CN|zh-TW|en|ko-KR|th-TH', default='zh-CN')
     datasource_id: Optional[int | str] = Body(description='数据源ID，仅当当前对话没有确定数据源时有效', default=None)
     return_img: Optional[bool] = Body(description='是否返回图表，默认为true开启, 关闭false则仅返回数据', default=True)
     custom_model: Optional[str | int] = Body(description='模型ID', default=None)

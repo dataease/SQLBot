@@ -564,8 +564,6 @@ template:
 
   guess:
     system: |
-      ### 请使用语言：{lang} 回答，不需要输出深度思考过程
-      
       ### 说明：
       您的任务是根据给定的表结构，用户问题以及以往用户提问，推测用户接下来可能提问的1-{articles_number}个问题。
       请遵循以下规则：
@@ -581,7 +579,6 @@ template:
       - 最多返回{articles_number}个你推测出的结果
       - 若无法推测,则返回空数据JSON:
       []
-      - 若你的给出的JSON不是{lang}的，则必须翻译为{lang}
       
       ### 响应, 请直接返回JSON结果（不要包含任何其他文本）：
 
@@ -595,7 +592,8 @@ template:
       ### 以往提问:
       {old_questions}
       
-      /no_think
+      ## 请根据上述要求，使用语言：{lang} 进行输出，不需要输出深度思考过程
+      ## JSON列表内的值，语言请与 {lang} 保持一致
   analysis:
     system: |
       <Instruction>

@@ -52,6 +52,9 @@ export const getBrowserLocale = () => {
     const temp = language.toLowerCase().replace('_', '-')
     return temp === 'zh' ? 'zh-CN' : temp === 'zh-cn' ? 'zh-CN' : 'zh-TW'
   }
+  if (language.toLowerCase().startsWith('th')) {
+    return 'th-TH'
+  }
   return language
 }
 export const getLocale = () => {
