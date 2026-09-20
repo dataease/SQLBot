@@ -184,6 +184,8 @@ export const UserStore = defineStore('user', {
         language = 'zh-TW'
       } else if (language === 'ko_KR') {
         language = 'ko-KR'
+      } else if (language === 'th_TH') {
+        language = 'th-TH'
       }
       wsCache.set('user.language', language)
       this.language = language

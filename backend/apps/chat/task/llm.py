@@ -2086,6 +2086,8 @@ def get_lang_name(lang: str):
         return '英文'
     if normalized.startswith('ko'):
         return '韩语'
+    if normalized.startswith('th'):
+        return '泰语'
     return '简体中文'
 
 

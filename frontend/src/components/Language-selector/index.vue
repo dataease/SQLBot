@@ -36,6 +36,7 @@ const languageOptions = computed(() => [
   { value: 'zh-CN', label: t('common.simplified_chinese') },
   { value: 'zh-TW', label: t('common.traditional_chinese') },
   { value: 'ko-KR', label: t('common.korean') },
+  { value: 'th-TH', label: t('common.thai') },
 ])
 
 const selectedLanguage = computed(() => {

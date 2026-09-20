@@ -66,6 +66,10 @@ const languageList = computed(() => [
     name: '한국인',
     value: 'ko-KR',
   },
+  {
+    name: 'ไทย',
+    value: 'th-TH',
+  },
 ])
 const popoverRef = ref()
 

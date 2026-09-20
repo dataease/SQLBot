@@ -3,9 +3,11 @@ import en from './en.json'
 import zhCN from './zh-CN.json'
 import zhTw from './zh-TW.json'
 import koKR from './ko-KR.json'
+import thTH from './th-TH.json'
 import elementEnLocale from 'element-plus-secondary/es/locale/lang/en'
 import elementZhLocale from 'element-plus-secondary/es/locale/lang/zh-cn'
 import elementTwLocale from 'element-plus-secondary/es/locale/lang/zh-tw'
+import elementThLocale from 'element-plus-secondary/es/locale/lang/th'
 import { useCache } from '@/utils/useCache'
 import { getBrowserLocale } from '@/utils/utils'
 
@@ -57,6 +59,10 @@ const messages = {
     ...koKR,
     el: elementKoLocale,
   },
+  'th-TH': {
+    ...thTH,
+    el: elementThLocale,
+  },
 }
 
 export const i18n = createI18n({
@@ -72,6 +78,7 @@ const elementLocales = {
   'zh-CN': elementZhLocale,
   'zh-TW': elementTwLocale,
   'ko-KR': elementKoLocale,
+  'th-TH': elementThLocale,
 } as const
 
 export const getElementLocale = () => {

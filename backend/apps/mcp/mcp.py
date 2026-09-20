@@ -166,7 +166,7 @@ async def get_model_by_ws(session: SessionDep, mcp_oid: WsMcp):
 async def mcp_question(session: SessionDep, trans: Trans, chat: McpQuestion):
     session_user = get_user(session, chat.token)
     lang = chat.lang
-    if lang in ["zh-CN", "zh-TW", "en", "ko-KR"]:
+    if lang in ["zh-CN", "zh-TW", "en", "ko-KR", "th-TH"]:
         session_user.language = lang
     # if chat.oid:
     #     w_list = await user_ws_options(session, session_user.id, trans)
