@@ -28,7 +28,7 @@ template:
         <step>1. 分析用户问题，确定查询需求</step>
         <step>2. 根据表结构生成基础SQL</step>
         <step>3. <strong>强制检查：逐字验证SQL中使用的表名和字段名是否在<m-schema>中定义，且字符必须完全匹配（包括繁简体、大小写、特殊字符），不得有任何转换。如发现任何不一致，必须重新生成SQL。</strong></step>
-        <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
+        <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量），限制必须位于最外层查询，不得出现在子查询、派生表、CTE内部</strong></step>
         <step>5. 应用其他规则（引号、别名、格式化等）</step>
         <step>6. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
         <step>7. 确定图表类型（根据规则选择table/column/bar/line/pie）</step>
@@ -41,17 +41,22 @@ template:
       <rule priority="critical" id="data-limit-policy">
         <title>数据量限制策略（必须严格遵守 - 零容忍）</title>
         <requirements>
-          <requirement level="must-zero-tolerance">所有生成的SQL必须包含数据量限制，这是强制要求</requirement>
+          <requirement level="must-zero-tolerance">每条生成的完整SQL语句，最外层查询必须包含数据量限制，这是强制要求</requirement>
           <requirement level="must">默认限制：1000条（除非用户明确指定其他数量，如"查询前10条"）</requirement>
           <requirement level="must">当用户说"所有数据"或"全部数据"时，视为用户没有指定数量，使用默认的1000条限制</requirement>
+          <requirement level="must">数据量限制只能应用在最外层查询上，限制的是最终返回结果的行数，而不是参与计算的数据量</requirement>
+          <requirement level="must">禁止在子查询、派生表、CTE内部添加数据量限制，聚合、统计、排序等计算必须基于完整数据，否则会导致结果错误</requirement>
           <requirement level="must">忘记添加数据量限制是不可接受的错误</requirement>
         </requirements>
 
         <enforcement>
           <action>如果生成的SQL没有数据量限制，必须重新生成</action>
-          <action>在最终返回前必须验证限制是否存在</action>
-          <action>不要因为用户说"所有数据"而拒绝生成SQL，只需自动加上1000条限制即可</action>
+          <action>在最终返回前必须验证：数据量限制存在于最外层查询，且所有子查询内部均没有数据量限制</action>
+          <action>不要因为用户说"所有数据"而拒绝生成SQL，只需在最外层自动加上1000条限制即可</action>
         </enforcement>
+        <note>
+          用户明确要求的"每组前N"类需求（如"每个部门薪资最高的前3名"），属于分组内的行数条件：若数据库引擎支持窗口函数，应通过ROW_NUMBER()等窗口函数配合WHERE条件实现；若引擎不支持窗口函数，则使用该引擎支持的等效写法实现。这类分组内的行数条件不视为违反本规则
+        </note>
       </rule>
     no_query_limit: |
       <rule priority="critical" id="data-limit-policy">
@@ -59,11 +64,15 @@ template:
         <requirements>
           <requirement>默认不限制数据量，返回全部数据（除非用户明确指定其他数量）</requirement>
           <requirement>不要臆测场景可能需要的数据量限制，以用户明确指定的数量为准</requirement>
-          <requirement>用户明确说"前N条"、"限制N条"、"N条"等条件时，必须添加限制</requirement>
+          <requirement>用户明确说"前N条"、"限制N条"、"N条"等条件时，必须添加限制，且该限制只能应用在最外层查询上，限制的是最终返回结果的行数</requirement>
+          <requirement>禁止在子查询、派生表、CTE内部添加数据量限制，聚合、统计、排序等计算必须基于完整数据</requirement>
         </requirements>
         <enforcement>
           <action>不要拒绝查询所有数据的情况</action>
         </enforcement>
+        <note>
+          用户明确要求的"每组前N"类需求（如"每个部门薪资最高的前3名"），属于分组内的行数条件：若数据库引擎支持窗口函数，应通过ROW_NUMBER()等窗口函数配合WHERE条件实现；若引擎不支持窗口函数，则使用该引擎支持的等效写法实现。这类分组内的行数条件不视为在子查询内添加数据量限制
+        </note>
       </rule>
     multi_table_condition: |
       <rule>

@@ -72,6 +72,26 @@ template:
           OFFSET 0 ROWS FETCH NEXT 1000 ROWS ONLY
         </output-good>
       </example>
+
+      <example>
+        <input>统计订单表 Sales.Orders 中2024年每个客户的消费总金额，返回金额最高的前100名客户</input>
+        <output-bad>
+          SELECT [t].[customer_id] AS [customer_id], SUM([t].[amount]) AS [total_amount]
+          FROM (SELECT TOP 100 [customer_id], [amount] FROM [Sales].[Orders] WHERE [create_time] >= '2024-01-01') [t]
+          GROUP BY [t].[customer_id]
+          -- 严重错误：TOP加在了内层子查询中，聚合只基于被截断的100行数据计算，结果错误！
+        </output-bad>
+        <output-good>
+          SELECT TOP 100
+            [o].[customer_id] AS [customer_id],
+            SUM([o].[amount]) AS [total_amount]
+          FROM [Sales].[Orders] [o]
+          WHERE [o].[create_time] >= '2024-01-01'
+          GROUP BY [o].[customer_id]
+          ORDER BY [total_amount] DESC
+          -- 正确：TOP只加在最外层查询上，聚合基于完整数据计算，只限制最终返回结果的行数
+        </output-good>
+      </example>
     </basic-examples>
 
   example_engine: Microsoft SQL Server 2022
