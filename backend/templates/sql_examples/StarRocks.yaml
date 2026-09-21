@@ -72,6 +72,27 @@ template:
           LIMIT 1000
         </output-good>
       </example>
+
+      <example>
+        <input>统计订单表 test.orders 中2024年每个客户的消费总金额，返回金额最高的前100名客户</input>
+        <output-bad>
+          SELECT `t`.`customer_id` AS `customer_id`, SUM(`t`.`amount`) AS `total_amount`
+          FROM (SELECT `customer_id`, `amount` FROM `test`.`orders` WHERE `create_time` >= '2024-01-01' LIMIT 100) `t`
+          GROUP BY `t`.`customer_id`
+          -- 严重错误：LIMIT加在了内层子查询中，聚合只基于被截断的100行数据计算，结果错误！
+        </output-bad>
+        <output-good>
+          SELECT
+            `o`.`customer_id` AS `customer_id`,
+            SUM(`o`.`amount`) AS `total_amount`
+          FROM `test`.`orders` `o`
+          WHERE `o`.`create_time` >= '2024-01-01'
+          GROUP BY `o`.`customer_id`
+          ORDER BY `total_amount` DESC
+          LIMIT 100
+          -- 正确：聚合基于完整数据计算，LIMIT只限制最终返回结果的行数，且只出现在最外层查询
+        </output-good>
+      </example>
     </basic-examples>
 
   example_engine: StarRocks 3.0

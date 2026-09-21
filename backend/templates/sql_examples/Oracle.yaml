@@ -4,7 +4,7 @@ template:
       <step>1. 分析用户问题，确定查询需求</step>
       <step>2. 根据表结构生成基础SQL</step>
       <step>3. <strong>强制检查：逐字验证SQL中使用的表名和字段名是否在<m-schema>中定义，且字符必须完全匹配（包括繁简体、大小写、特殊字符），不得有任何转换。如发现任何不一致，必须重新生成SQL。</strong></step>
-      <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量）</strong></step>
+      <step>4. <strong>强制检查：应用数据量限制规则（默认限制或用户指定数量），限制必须位于最外层查询，不得出现在子查询、派生表、CTE内部</strong></step>
       <step>5. 应用其他规则（引号、别名、格式化等）</step>
       <step>6. <strong>最终验证：GROUP BY查询的ROWNUM位置是否正确？</strong></step>
       <step>7. <strong>强制检查：验证SQL语法是否符合<db-engine>规范</strong></step>
@@ -110,14 +110,26 @@ template:
           SELECT COUNT("订单ID") FROM "TEST"."ORDERS" "t1"  -- 错误：函数未加别名
         </output-bad>
         <output-good version="12c-below">
-          SELECT 
+          SELECT "order_id", "amount", "total_orders", "discount_percent" FROM (
+            SELECT
+              "t1"."订单ID" AS "order_id",
+              "t1"."金额" AS "amount",
+              COUNT("t1"."订单ID") AS "total_orders",
+              TO_CHAR("t1"."折扣率" * 100, '990.99') || '%' AS "discount_percent"
+            FROM "TEST"."ORDERS" "t1"
+            GROUP BY "t1"."订单ID", "t1"."金额", "t1"."折扣率"
+          )
+          WHERE ROWNUM <= 100
+        </output-good>
+        <output-good version="12c+">
+          SELECT
             "t1"."订单ID" AS "order_id",
             "t1"."金额" AS "amount",
             COUNT("t1"."订单ID") AS "total_orders",
             TO_CHAR("t1"."折扣率" * 100, '990.99') || '%' AS "discount_percent"
           FROM "TEST"."ORDERS" "t1"
           GROUP BY "t1"."订单ID", "t1"."金额", "t1"."折扣率"
-          WHERE ROWNUM <= 100
+          FETCH FIRST 100 ROWS ONLY
         </output-good>
       </example>
     
@@ -197,11 +209,11 @@ template:
   example_answer_1: |
     {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
   example_answer_1_with_limit: |
-    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE ROWNUM <= 1000 ORDER BY \"country\", \"year\"","tables":["sample_country_gdp"],"chart-type":"line"}
+    {"success":true,"sql":"SELECT \"country_name\", \"continent_name\", \"year\", \"gdp\" FROM (SELECT \"country\" AS \"country_name\", \"continent\" AS \"continent_name\", \"year\" AS \"year\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" ORDER BY \"country\", \"year\") WHERE ROWNUM <= 1000","tables":["sample_country_gdp"],"chart-type":"line"}
   example_answer_2: |
     {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
   example_answer_2_with_limit: |
-    {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' AND ROWNUM <= 1000 ORDER BY \"gdp\" DESC","tables":["sample_country_gdp"],"chart-type":"pie"}
+    {"success":true,"sql":"SELECT \"country_name\", \"gdp\" FROM (SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2024' ORDER BY \"gdp\" DESC) WHERE ROWNUM <= 1000","tables":["sample_country_gdp"],"chart-type":"pie"}
   example_answer_3: |
     {"success":true,"sql":"SELECT \"country\" AS \"country_name\", \"gdp\" AS \"gdp\" FROM \"Sample_Database\".\"sample_country_gdp\" WHERE \"year\" = '2025' AND \"country\" = '中国'","tables":["sample_country_gdp"],"chart-type":"table"}
   example_answer_3_with_limit: |

@@ -88,6 +88,27 @@ template:
           LIMIT 5
         </output-good>
       </example>
+
+      <example>
+        <input>统计 logs-* 索引中最近一天各个客户端IP的日志数量，返回数量最多的前100个IP</input>
+        <output-bad>
+          SELECT "t"."host.ip" AS "client_ip", COUNT("t"."message") AS "log_count"
+          FROM (SELECT "host.ip", "message" FROM "logs-*" LIMIT 100) "t"
+          GROUP BY "t"."host.ip"
+          -- 严重错误：内层LIMIT导致聚合只基于被截断的100行数据计算，结果错误！Elasticsearch SQL也不支持FROM子查询
+        </output-bad>
+        <output-good>
+          SELECT
+            "l"."host.ip" AS "client_ip",
+            COUNT("l"."message") AS "log_count"
+          FROM "logs-*" "l"
+          WHERE CAST("l"."@timestamp" AS TIMESTAMP) > DATE_SUB(NOW(), INTERVAL 1 DAY)
+          GROUP BY "l"."host.ip"
+          ORDER BY "log_count" DESC
+          LIMIT 100
+          -- 正确：聚合基于完整数据计算，LIMIT只限制最终返回结果的行数，且只出现在整个查询的最外层
+        </output-good>
+      </example>
     </basic-examples>
 
   example_engine: Elasticsearch SQL 8.9
