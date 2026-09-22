@@ -265,10 +265,13 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
                 **conn_conf
             )
     elif equals_ignore_case(ds.type, 'hive'):
+        if conf.password:
+            conn_conf['password'] = conf.password
+            conn_conf['auth'] = 'LDAP'
+
         if not use_pool:
             conn = hive.connect(host=conf.host, port=conf.port, username=conf.username, database=conf.database,
-                                password=conf.password if conf.password else None,
-                                auth='LDAP' if conf.password else None, **conn_conf)
+                                **conn_conf)
         else:
             conn = PooledDB(
                 creator=hive,
@@ -276,8 +279,6 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
                 port=conf.port,
                 username=conf.username,
                 database=conf.database,
-                password=conf.password if conf.password else None,
-                auth='LDAP' if conf.password else None,
                 **conn_conf
             )
 
