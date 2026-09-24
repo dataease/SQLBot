@@ -193,3 +193,9 @@ test.py
 sqlbot-xpack
 
 .claude
+AGENTS.local.env
+
+# 本机环境配置与运行日志
+frontend/.npmrc
+backend/logs/
+/logs/
