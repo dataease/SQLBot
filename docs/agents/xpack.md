@@ -27,7 +27,7 @@ SQLBOT_XPACK_REPO=/replace/with/your/sqlbot-xpack-checkout
 | `false` | 继续使用已发布 wheel。不读取路径、不安装 editable 包、不修改 xpack、不重复询问。若任务无法绕开闭源实现，说明需要用户主动开启开关。 |
 | `true` | 验证路径后读取目标仓库根目录的 `AGENTS.md`，在已授权的任务范围内联调；开关本身不授权无关修改、推送或发布。 |
 
-路径目录名可以任意，但必须是指向 xpack Git 仓库根目录的绝对路径；用 `git -C "$SQLBOT_XPACK_REPO" rev-parse --show-toplevel` 验证。环境变量优先于 `AGENTS.local.env`；文件按键值读取（不 `source` 执行内容、不展开变量），只接受 `SQLBOT_XPACK_LINK_ENABLED` 和 `SQLBOT_XPACK_REPO` 两个键，未知键或值无效时报错而非忽略。不要静默覆盖该文件，也不要在其中保存密钥。
+路径目录名可以任意，但必须是指向 xpack Git 仓库根目录的绝对路径；用 `git -C "$SQLBOT_XPACK_REPO" rev-parse --show-toplevel` 验证。环境变量优先于 `AGENTS.local.env`；文件按键值读取（不 `source` 执行内容、不展开变量），只接受 `SQLBOT_XPACK_LINK_ENABLED` 和 `SQLBOT_XPACK_REPO` 两个键，未知键或值无效时报错而非忽略。不要静默覆盖该文件，也不要在其中保存密钥。xpack 仓库侧的 `AGENTS.local.env`（`SQLBOT_MAIN_REPO`）只在直接从 xpack 仓库发起工作时需要，从本仓库发起联调不必创建它。
 
 本地联调前按上述优先级读取两个配置值：已设置的环境变量优先，只从本机可信配置文件补齐未设置项；不要直接 `source` 文件覆盖环境变量或执行其中任意 shell 内容。确认开关为 `true` 且路径验证通过后，导出解析得到的 `SQLBOT_XPACK_REPO`。下面命令从 SQLBot 根目录运行，作用于选定后端环境；优先使用隔离环境，使用共享环境时先确认受影响的运行服务，并记录恢复方式：
 
