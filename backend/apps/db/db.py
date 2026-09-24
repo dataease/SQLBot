@@ -759,6 +759,49 @@ def is_numeric_type_code(type_code, dialect_name: str) -> bool:
     return False
 
 
+def is_mssql_string_type_code(type_code) -> bool:
+    """
+    判断 SQL Server (pymssql) 游标描述中的 type_code 是否为字符串类型。
+
+    pymssql 的 varchar/char/nvarchar/nchar/text 等字符串类型的 type_code 为
+    STRING(1)，而数值/日期等类型分别为 NUMBER(3)、DATETIME(4) 等。
+
+    Args:
+        type_code: cursor.description[col][1] 的值
+
+    Returns:
+        bool: 是否为字符串（varchar 等）类型
+    """
+    try:
+        return type_code == 1
+    except Exception:
+        return False
+
+
+def convert_gbk_string(value):
+    """
+    将 SQL Server 中以 latin-1 读取出的乱码字符串转换为 GBK 编码的正确文本。
+
+    当 varchar 列实际存储的是 GBK 字节（被错误地按 latin-1 解码）时，
+    通过 str.encode('latin-1').decode('gbk') 还原。转换中任一步失败则返回原值。
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        return value.encode('latin-1').decode('gbk')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+
+
+def convert_mssql_value(value, col_idx, string_col_idx_set, is_mssql):
+    """
+    对 SQL Server 结果集中字符串列的值进行 GBK 编码转换。
+    """
+    if is_mssql and col_idx in string_col_idx_set:
+        return convert_gbk_string(value)
+    return value
+
+
 def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=False):
     while sql.endswith(';'):
         sql = sql[:-1]
@@ -777,6 +820,10 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                 try:
                     columns = result.keys()._keys if origin_column else [item.lower() for item in result.keys()._keys]
 
+                    # SQL Server varchar 等字符串列需做 GBK 编码转换
+                    is_mssql = dialect_name == 'mssql'
+                    string_cols = []
+
                     fields_info = []
 
                     for col_idx, col_name in enumerate(columns):
@@ -784,6 +831,8 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                         try:
                             type_code = result.cursor.description[col_idx][1]
                             is_numeric = is_numeric_type_code(type_code, dialect_name)
+                            if is_mssql and is_mssql_string_type_code(type_code):
+                                string_cols.append(col_idx)
                         except (IndexError, AttributeError):
                             pass
 
@@ -792,9 +841,12 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                             "is_numeric": is_numeric
                         })
 
+                    string_col_idx_set = set(string_cols)
+
                     res = result.fetchall()
                     result_list = [
-                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
+                        {str(columns[i]): convert_mssql_value(convert_value(value), i, string_col_idx_set, is_mssql)
+                         for i, value in enumerate(tuple_item)} for tuple_item in
                         res
                     ]
                     return {"fields": columns, "data": result_list, "fields_info": fields_info,
