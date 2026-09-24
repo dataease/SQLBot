@@ -39,7 +39,7 @@ uv run pytest -q tests/<relevant-test.py>
 
 - 测试可隔离的纯逻辑或服务函数；
 - 用 `Mock`、`SimpleNamespace`、SQLite 或 AST 加载方式隔离外部数据库和驱动；
-- 默认单元/守卫测试不访问真实 LLM、外部数据库或互联网；需要这些依赖时遵循上面的集成验收约定；
+- 单元/守卫测试保持离线可重复；确实需要真实 LLM、外部数据库或互联网的用例，按「集成与产品验收」规范编写并单独显式运行，不进入默认收集；
 - 命名和断言风格跟随相邻测试。
 
 `LOG_FORMAT` 只是 `logging.Formatter` 的百分号格式串模板，代码中没有 JSON 日志实现；若本机环境把它设成了非默认格式串导致 formatter 初始化失败，先检查进程环境与 dotenv 来源；`unset LOG_FORMAT` 后 dotenv 仍可能重新加载该值。可在单次测试命令中使用 `LOG_FORMAT='%(levelname)s %(message)s'`，不要为测试覆盖共享配置。
