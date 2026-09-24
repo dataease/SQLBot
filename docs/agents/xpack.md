@@ -4,7 +4,7 @@
 
 ## 主工程对 xpack 的运行时依赖
 
-以下事实在"已发布 wheel"与"源码联调（editable）"两种模式下一致，修改依赖、初始化、许可证或前端集成前先掌握：
+以下描述以当前依赖实现为背景；包内路由、许可证和静态资源行为会随 xpack 版本变化。修改相关集成时记录实际安装版本，并核对对应 wheel 的 `core.py` / `init_fastapi_app`；源码联调核对目标 checkout，不把本文当作所有版本的固定契约。主仓库入口见 `backend/main.py`、`backend/pyproject.toml` 和 `frontend/src/router/watch.ts`：
 
 - `sqlbot-xpack` 是 `backend/pyproject.toml` 的**必装依赖**（不是 optional extra），索引指向 TestPyPI，CE 镜像构建必然包含；构建环境需能访问 test.pypi.org。
 - 后端启动即无条件 import：`backend/main.py` 与多个业务模块（登录加解密、AES 落库、审计、行权限、参数管理、embedded 签名）顶层 import，没有降级路径——xpack 缺失则后端无法启动。8001 的 MCP 进程因 `uvicorn main:mcp_app` import 同一 `main` 模块，同样加载。
@@ -25,16 +25,13 @@ SQLBOT_XPACK_REPO=/replace/with/your/sqlbot-xpack-checkout
 | --- | --- |
 | 未配置或值无效 | 仅当任务需要 xpack 时，询问一次是否开启本地关联；同意后验证并保存路径。 |
 | `false` | 继续使用已发布 wheel。不读取路径、不安装 editable 包、不修改 xpack、不重复询问。若任务无法绕开闭源实现，说明需要用户主动开启开关。 |
-| `true` | 验证路径后，把该 checkout 作为可修改的 xpack 工作区，读取 `sqlbot-xpack/AGENTS.md`，并协调两个仓库的变更。 |
+| `true` | 验证路径后读取目标仓库根目录的 `AGENTS.md`，在已授权的任务范围内联调；开关本身不授权无关修改、推送或发布。 |
 
 路径目录名可以任意，但必须是指向 xpack Git 仓库根目录的绝对路径；用 `git -C "$SQLBOT_XPACK_REPO" rev-parse --show-toplevel` 验证。环境变量优先于 `AGENTS.local.env`。不要静默覆盖该文件，也不要在其中保存密钥。
 
-本地联调时，先加载配置，把 xpack 以 editable 方式安装进后端环境，并使用 `--no-sync` 避免 uv 用锁定 wheel 替换它：
+本地联调前按上述优先级读取两个配置值：已设置的环境变量优先，只从本机可信配置文件补齐未设置项；不要直接 `source` 文件覆盖环境变量或执行其中任意 shell 内容。确认开关为 `true` 且路径验证通过后，导出解析得到的 `SQLBOT_XPACK_REPO`。下面命令从 SQLBot 根目录运行，作用于选定后端环境；优先使用隔离环境，使用共享环境时先确认受影响的运行服务，并记录恢复方式：
 
 ```bash
-set -a
-. ./AGENTS.local.env
-set +a
 cd backend
 uv pip install -e "$SQLBOT_XPACK_REPO"
 uv run --no-sync pytest -q
