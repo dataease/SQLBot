@@ -3,12 +3,11 @@
 ## 领域与代码映射
 
 - `oid` 和 `workspace_id` 是同一个工作空间 ID 的历史命名。
-- `AssistantModel.type`：
-  - `0`：普通小助手；
-  - `1`：高级应用；
-  - `4`：页面嵌入。
+- `AssistantModel.type` 实际值域 `0`–`4`：`0` 普通小助手；`1` 高级应用；`4` 页面嵌入；`2`、`3` 为遗留兼容值，行为分别等同 `0`、`1`，当前无创建入口。
 - `AssistantModel.domain` 表示对接目标系统的域名，不是业务领域。
 - `DataTraining` 是「SQL 示例库」概念的持久化命名。
+- `Chat.chat_type` 目前只有 `chat` 一个有效值；`datasource` 是为未实现的表字段备注自动生成功能预留的遗留值。
+- `ChatRecord.recommended_question` 同时承载两种内容：开场记录中是数据源配置的推荐问题，普通记录中是模型生成的猜测问题。
 
 ## 代码组织
 
@@ -85,7 +84,7 @@ Endpoint 命名沿既有风格：
 1. `POST /chat/start` 与 `POST /chat/assistant/start` 在工作空间内创建会话，并可绑定初始数据源或助手上下文。
 2. `POST /chat/question` 先解析快速命令。普通问题进入 `stream_sql`；`/regenerate` 直接再生。`/analysis` 和 `/predict` 在会话内会直接拒绝（temporary not supported），实际通过 `POST /record/{chat_record_id}/{action_type}` 触发。
 3. `stream_sql` 构造 `LLMService`，创建 `ChatRecord`，并启动异步执行。
-4. 已绑定数据源时，服务先提取关键词并扩展术语，再筛选适用的术语、SQL 示例和自定义提示词，随后组装 SQL 消息。
+4. 已绑定数据源时，服务先提取关键词并扩展术语，再筛选适用的术语、SQL 示例和自定义提示词，随后组装 SQL 消息；筛选的作用域、命中和组合规则见 `docs/agents/knowledge-enhancement.md`。
 5. 未绑定数据源时，先由模型选择数据源；服务随后校验数据源访问权和连接可用性。
 6. 模型生成 SQL 后，服务解析 SQL、对照允许的表元数据校验引用表，并按需应用行权限或助手动态 SQL 变换。
 7. 服务执行最终 SQL，规范化大数字和带限定名的列结果，并持久化查询结果。
@@ -94,5 +93,13 @@ Endpoint 命名沿既有风格：
 10. 猜测问题与已配置的推荐问题分开生成。
 
 `ChatFinishStep` 允许一次执行在生成 SQL、查询数据或生成图表后停止。不要假设所有调用方都需要完整图表流程。
+
+### 记录状态与衍生关系
+
+- 记录终态二元：`finish=true` 即终态，`error` 非空即失败。生成 SQL、执行、图表任一阶段失败都写同一个 `error` 字段；失败阶段从已填充字段推断（有 SQL 无数据为执行失败，有数据无图表为图表失败），精确失败点看 ChatLog 的 `error` 标记。
+- 分析和预测各生成一条新的完整记录，复制源记录的问题、图表和数据，以 `analysis_record_id` / `predict_record_id` 指回源记录；衍生记录不能再被分析、预测或再生。
+- 再生记录以 `regenerate_record_id` 指向被再生记录，形成链，沿链回溯可取到原始问题。
+- 开场记录（`first_chat=true`）不能被分析、预测或再生；查找"上一条记录"时排除开场记录。
+- 问题快捷入口按位置分两个标签："猜你想问"是会话级快捷提问入口（开场记录展示数据源配置的推荐问题，输入框区域展示生成的猜测问题）；"继续问"是每次成功回答后的追问入口（生成的猜测问题）。
 
 验证要求与测试选择标准见 `docs/agents/testing.md`。
