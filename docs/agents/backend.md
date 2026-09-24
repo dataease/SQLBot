@@ -15,7 +15,7 @@
 - 领域代码放在 `backend/apps/<domain>/`。多数域采用 `api/`、`crud/` 或 `curd/`、`models/` 分层；`schemas/` 仅 `system` 和 `settings` 有，`chat` 另有 `task/`，`ai_model`、`db`、`mcp`、`template`、`swagger` 不遵循该布局——新代码跟随所在域的既有形态。
 - 项目同时存在 `crud` 和 `curd` 拼写；不要为统一命名制造无关重构。
 - 新 router 注册到 `backend/apps/api.py`。
-- 应用组装、中间件、MCP、静态资源挂载和 xpack 初始化属于 `backend/main.py`。
+- 应用组装、中间件、MCP 和 MCP 图片静态挂载属于 `backend/main.py`；`init_fastapi_app` 在此触发 xpack 初始化，前端 dist 静态挂载与 `/xpack_static` 提取由 xpack 包内完成（见 `docs/agents/xpack.md`）。
 - SQLModel 结构变更必须配套 Alembic 迁移；细节见 `docs/agents/migrations.md`。
 - 用户可见后端消息使用 `backend/locales/`，不要硬编码新文案。
 
@@ -76,7 +76,7 @@ Endpoint 命名沿既有风格：
 - 生成 SQL、路径、Host 头和上传文件都按不可信输入处理。
 - 不要削弱行数限制、权限过滤、元数据查询控制、Host 校验或路径穿越防护。
 - 修改连接池、事务和异步执行边界时，先阅读相邻实现和回归测试；不要把阻塞调用移回事件循环。
-- 商业实现留在 xpack；本仓库只保留对已发布包的调用和初始化。
+- 商业实现留在 xpack；本仓库只保留对已发布包的调用和初始化。xpack 是必装硬依赖（启动即 import，无降级），许可证只做功能门控；加载场景见 `docs/agents/xpack.md`。
 
 ## Chat 问题流程
 
