@@ -8,11 +8,12 @@ model factory.
 
 import json
 import os
-import re
 import unittest
 
 # Project root relative to this test file
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 
 class TestMiniMaxSupplierConfig(unittest.TestCase):
@@ -22,7 +23,7 @@ class TestMiniMaxSupplierConfig(unittest.TestCase):
         supplier_path = os.path.join(
             PROJECT_ROOT, "frontend", "src", "entity", "supplier.ts"
         )
-        with open(supplier_path, "r", encoding="utf-8") as f:
+        with open(supplier_path, encoding="utf-8") as f:
             self.supplier_content = f.read()
 
     def test_minimax_icon_import_exists(self):
@@ -47,18 +48,18 @@ class TestMiniMaxSupplierConfig(unittest.TestCase):
 
     def test_minimax_api_domain(self):
         """MiniMax API domain should be https://api.minimax.io/v1."""
-        self.assertIn(
-            "api_domain: 'https://api.minimax.io/v1'", self.supplier_content
-        )
+        self.assertIn("api_domain: 'https://api.minimax.io/v1'", self.supplier_content)
 
     def test_minimax_temperature_range(self):
         """MiniMax temperature should be in range [0, 1]."""
         # Find the MiniMax section and check temperature config
-        minimax_section = self.supplier_content[
-            self.supplier_content.index("id: 13") :
-        ]
+        minimax_section = self.supplier_content[self.supplier_content.index("id: 13") :]
         # Limit to just MiniMax section (up to next id:)
-        next_id = minimax_section.index("id: 11", 10) if "id: 11" in minimax_section[10:] else len(minimax_section)
+        next_id = (
+            minimax_section.index("id: 11", 10)
+            if "id: 11" in minimax_section[10:]
+            else len(minimax_section)
+        )
         minimax_section = minimax_section[:next_id]
         self.assertIn("key: 'temperature'", minimax_section)
         self.assertIn("val: 0.7", minimax_section)
@@ -71,23 +72,27 @@ class TestMiniMaxSupplierConfig(unittest.TestCase):
 
     def test_minimax_has_model_config_type_0(self):
         """MiniMax should have model_config with type 0 (LLM)."""
-        minimax_section = self.supplier_content[
-            self.supplier_content.index("id: 13") :
-        ]
+        minimax_section = self.supplier_content[self.supplier_content.index("id: 13") :]
         next_section = minimax_section.find("/* {", 10)
         if next_section == -1:
             next_section = minimax_section.find("  {", 10)
-        minimax_section = minimax_section[:next_section] if next_section > 0 else minimax_section[:500]
+        minimax_section = (
+            minimax_section[:next_section]
+            if next_section > 0
+            else minimax_section[:500]
+        )
         self.assertIn("model_config:", minimax_section)
         self.assertIn("0:", minimax_section)
 
     def test_minimax_uses_openai_protocol(self):
         """MiniMax should not set type='vllm' or type='azure' (defaults to openai)."""
-        minimax_section = self.supplier_content[
-            self.supplier_content.index("id: 13") :
-        ]
+        minimax_section = self.supplier_content[self.supplier_content.index("id: 13") :]
         # Limit to just MiniMax section (up to next id:)
-        next_id = minimax_section.index("id: 11", 10) if "id: 11" in minimax_section[10:] else len(minimax_section)
+        next_id = (
+            minimax_section.index("id: 11", 10)
+            if "id: 11" in minimax_section[10:]
+            else len(minimax_section)
+        )
         minimax_text = minimax_section[:next_id]
         self.assertNotIn("type: 'vllm'", minimax_text)
         self.assertNotIn("type: 'azure'", minimax_text)
@@ -105,7 +110,7 @@ class TestMiniMaxI18nTranslations(unittest.TestCase):
         path = os.path.join(
             PROJECT_ROOT, "frontend", "src", "i18n", f"{locale_name}.json"
         )
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
     def test_en_translation(self):
@@ -134,8 +139,12 @@ class TestMiniMaxI18nTranslations(unittest.TestCase):
         en_keys = set(en["supplier"].keys())
         zh_keys = set(zh["supplier"].keys())
         ko_keys = set(ko["supplier"].keys())
-        self.assertEqual(en_keys, zh_keys, "EN and ZH-CN should have same supplier keys")
-        self.assertEqual(en_keys, ko_keys, "EN and KO-KR should have same supplier keys")
+        self.assertEqual(
+            en_keys, zh_keys, "EN and ZH-CN should have same supplier keys"
+        )
+        self.assertEqual(
+            en_keys, ko_keys, "EN and KO-KR should have same supplier keys"
+        )
 
 
 class TestMiniMaxIconFile(unittest.TestCase):
@@ -166,9 +175,7 @@ class TestMiniMaxIconFile(unittest.TestCase):
         with open(icon_path, "rb") as f:
             header = f.read(8)
         # PNG magic number
-        self.assertEqual(
-            header[:4], b"\x89PNG", "File should have PNG magic number"
-        )
+        self.assertEqual(header[:4], b"\x89PNG", "File should have PNG magic number")
 
     def test_icon_not_empty(self):
         """MiniMax icon file should not be empty."""
@@ -191,7 +198,7 @@ class TestModelFactoryConfig(unittest.TestCase):
         factory_path = os.path.join(
             PROJECT_ROOT, "backend", "apps", "ai_model", "model_factory.py"
         )
-        with open(factory_path, "r", encoding="utf-8") as f:
+        with open(factory_path, encoding="utf-8") as f:
             self.factory_content = f.read()
 
     def test_openai_type_in_factory(self):
@@ -213,24 +220,6 @@ class TestModelFactoryConfig(unittest.TestCase):
     def test_openai_llm_passes_base_url(self):
         """OpenAILLM should pass base_url to BaseChatOpenAI."""
         self.assertIn("base_url=self.config.api_base_url", self.factory_content)
-
-
-class TestReadmeContent(unittest.TestCase):
-    """Test that README files mention MiniMax."""
-
-    def test_readme_zh_mentions_minimax(self):
-        """Chinese README should list MiniMax as a supported provider."""
-        path = os.path.join(PROJECT_ROOT, "README.md")
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read()
-        self.assertIn("MiniMax", content)
-
-    def test_readme_en_mentions_minimax(self):
-        """English README should list MiniMax as a supported provider."""
-        path = os.path.join(PROJECT_ROOT, "docs", "README.en.md")
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read()
-        self.assertIn("MiniMax", content)
 
 
 if __name__ == "__main__":

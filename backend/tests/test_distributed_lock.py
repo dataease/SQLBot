@@ -8,8 +8,7 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import SQLAlchemyError
 
-
-BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
+BACKEND_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND_DIR))
 
 from common.utils import distributed_lock as lock_module  # noqa: E402
