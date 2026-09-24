@@ -71,7 +71,7 @@ request.get('/path', {
   - 普通登录和管理员登录白名单；
   - `/assistant`、`/embeddedPage`、`/embeddedCommon`、`/401` 助手白名单；
   - `userStore.isAdmin` 与 `isSpaceAdmin` 的路由差异；
-  - xpack 静态脚本加载失败路径。
+  - xpack 静态脚本加载失败路径：`LicenseGenerator` 是无类型声明的 window 全局，登录/改密加密（`sqlbotEncrypt`）和动态路由注册都硬依赖它，脚本加载失败只提示并中断导航，没有降级。
 - 新路由必须配置名称、标题 i18n 和正确父布局；不要绕过已有访问控制。
 
 ## 视图、组件与样式
