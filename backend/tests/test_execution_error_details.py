@@ -4,7 +4,7 @@ import re
 import unittest
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CHAT_DIR = PROJECT_ROOT / "frontend" / "src" / "views" / "chat"
 COMPONENT_DIR = CHAT_DIR / "execution-component"
 
@@ -74,17 +74,17 @@ class ExecutionErrorDetailsTestCase(unittest.TestCase):
                 self.assertIsNotNone(error_branch)
                 self.assertIn("{{ error }}", error_branch.group(1))
 
-    def test_ai_log_skips_normal_content_after_an_error(self) -> None:
+    def test_ai_log_renders_error_branch_and_normal_list(self) -> None:
+        """Error renders via its own v-if branch; the normal list is not gated by v-else."""
         source = read_source(COMPONENT_DIR / "LogWithAi.vue")
 
         self.assertRegex(
             source,
             re.compile(
-                r'<template v-if="item\.error">.*?</template>\s*'
-                r'<div v-else class="item-list flex-gap-fallback flex-col">',
-                re.DOTALL,
+                r'<template v-if="item\.error">\s*\{\{ error \}\}\s*</template>'
             ),
         )
+        self.assertIn('<div class="item-list flex-gap-fallback flex-col">', source)
 
 
 if __name__ == "__main__":

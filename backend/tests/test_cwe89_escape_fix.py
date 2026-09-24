@@ -6,17 +6,21 @@ These tests validate:
 2. _escape_sql_value() preserves safe values unchanged
 3. _VALID_LOGIC_OPS whitelist rejects injection payloads
 """
+
 import os
 import textwrap
 
 import pytest
 
-
 # ---------- Extract functions from source ----------
 
 _SRC_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "backend", "apps", "datasource", "crud", "row_permission.py",
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "backend",
+    "apps",
+    "datasource",
+    "crud",
+    "row_permission.py",
 )
 
 # Parse the source and extract _escape_sql_value function body
@@ -54,6 +58,7 @@ assert "_VALID_LOGIC_OPS" in _source, "Whitelist not found in source"
 # ============================================================
 # Test _escape_sql_value
 # ============================================================
+
 
 class TestEscapeSqlValue:
     """Tests for the _escape_sql_value helper."""
@@ -142,6 +147,7 @@ class TestEscapeSqlValue:
 # Test _VALID_LOGIC_OPS whitelist
 # ============================================================
 
+
 class TestValidLogicOps:
     """Tests for the logic operator whitelist."""
 
@@ -180,6 +186,7 @@ class TestValidLogicOps:
 # ============================================================
 # Test SQL fragment construction safety
 # ============================================================
+
 
 class TestSqlFragmentSafety:
     """End-to-end tests simulating how escaped values are used in SQL fragments."""
