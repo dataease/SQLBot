@@ -67,9 +67,9 @@ node --check g2-ssr/charts/<changed-file.js>
 
 1. 主仓库功能和测试完成。
 2. 若涉及 xpack：
-   1. xpack 独立仓库完成实现、版本提升和静态构建；
+   1. xpack 独立仓库完成实现、版本提升（经使用者确认）和静态构建；
    2. 发布目标 wheel；
-   3. 主仓库更新 `backend/pyproject.toml` 版本范围并重新验证。
+   3. 主仓库更新 `backend/pyproject.toml` 版本范围，`uv sync` 重锁本机 lock 并安装新 wheel 后重新验证。
 3. 确认迁移、默认配置和 installer 模板兼容。
 4. 构建 base 镜像（仅在 base 变更时）。
 5. 构建主镜像。
