@@ -216,7 +216,7 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
         if not use_pool:
             conn = pymysql.connect(user=conf.username, passwd=conf.password, host=conf.host,
                                    port=conf.port, db=conf.database, connect_timeout=conf.timeout,
-                                   read_timeout=conf.timeout, **conn_conf,
+                                   read_timeout=conf.timeout,
                                    **args)
         else:
             conn = PooledDB(
