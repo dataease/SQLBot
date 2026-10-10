@@ -129,6 +129,7 @@ const form = ref<any>({
   lowVersion: false,
   ssl: false,
   poolSize: 5,
+  engine: 'hive',
 })
 
 const close = () => {
@@ -182,6 +183,7 @@ const initForm = (item: any, editTable: boolean = false) => {
         configuration.poolSize !== null && configuration.poolSize !== undefined
           ? configuration.poolSize
           : 5
+      form.value.engine = configuration.engine ? configuration.engine : 'hive'
     }
 
     if (editTable) {
@@ -256,6 +258,7 @@ const initForm = (item: any, editTable: boolean = false) => {
       lowVersion: false,
       ssl: false,
       poolSize: 5,
+      engine: 'hive',
     }
   }
   dialogVisible.value = true
@@ -346,6 +349,7 @@ const buildConf = () => {
       lowVersion: form.value.lowVersion,
       ssl: form.value.ssl,
       poolSize: form.value.poolSize,
+      engine: form.value.engine,
     })
   )
   const obj = JSON.parse(JSON.stringify(form.value))
@@ -364,6 +368,7 @@ const buildConf = () => {
   delete obj.lowVersion
   delete obj.ssl
   delete obj.poolSize
+  delete obj.engine
   return obj
 }
 
@@ -736,6 +741,12 @@ defineExpose({
             <el-radio-group v-model="form.mode">
               <el-radio value="service_name">{{ t('ds.form.mode.service_name') }}</el-radio>
               <el-radio value="sid">{{ t('ds.form.mode.sid') }}</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="form.type === 'hive'" :label="t('ds.form.engine')" prop="engine">
+            <el-radio-group v-model="form.engine">
+              <el-radio value="hive">{{ t('ds.form.engine_hive') }}</el-radio>
+              <el-radio value="spark">{{ t('ds.form.engine_spark') }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item

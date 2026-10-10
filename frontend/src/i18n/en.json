@@ -422,7 +422,10 @@
       "low_version": "Compatible with lower versions",
       "ssl": "Enable SSL",
       "file_path": "File Path",
-      "pool_size": "Connection Pool Size"
+      "pool_size": "Connection Pool Size",
+      "engine": "Engine",
+      "engine_hive": "HiveServer2",
+      "engine_spark": "Spark Thrift Server"
     },
     "sync_fields": "Sync Fields",
     "sync_fields_success": "Sync fields successfully",

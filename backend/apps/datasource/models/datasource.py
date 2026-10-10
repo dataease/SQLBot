@@ -123,6 +123,7 @@ class DatasourceConf(BaseModel):
     lowVersion: bool = False
     ssl: bool = False
     poolSize: int = 5
+    engine: str = 'hive'
 
     def to_dict(self):
         return {
@@ -140,7 +141,8 @@ class DatasourceConf(BaseModel):
             "timeout": self.timeout,
             "lowVersion": self.lowVersion,
             "ssl": self.ssl,
-            "poolSize": self.poolSize
+            "poolSize": self.poolSize,
+            "engine": self.engine
         }
 
 

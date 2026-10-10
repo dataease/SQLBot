@@ -422,7 +422,10 @@
       "low_version": "相容低版本",
       "ssl": "啟用 SSL",
       "file_path": "文件路徑",
-      "pool_size": "連線池大小"
+      "pool_size": "連線池大小",
+      "engine": "引擎",
+      "engine_hive": "HiveServer2",
+      "engine_spark": "Spark Thrift Server"
     },
     "sync_fields": "同步表結構",
     "sync_fields_success": "同步表結構成功",

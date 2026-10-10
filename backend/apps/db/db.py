@@ -126,6 +126,88 @@ def get_origin_connect(type: str, conf: DatasourceConf):
         )
 
 
+def is_spark_thrift(conf: DatasourceConf) -> bool:
+    """Whether the hive datasource points to a Spark Thrift Server."""
+    engine = getattr(conf, 'engine', None) or 'hive'
+    return equals_ignore_case(engine, 'spark')
+
+
+def parse_hive_table_rows(res, is_spark: bool):
+    """Parse SHOW TABLES result rows.
+
+    - HiveServer2 returns a single `tab_name` column.
+    - Spark Thrift Server (2.4+ through 4.x) returns
+      `(database, tableName, isTemporary)`; the plain table name always sits in
+      the second column. Over the legacy Hive-JDBC path a header row named
+      `tableName` may be returned in-band, which we skip defensively.
+
+    Returns a list of (table_name, comment) tuples.
+    """
+    tables = []
+    seen = set()
+    for item in res:
+        if not item:
+            continue
+        row = [c.decode('utf-8') if isinstance(c, bytes) else c for c in item]
+        row = [str(c) if c is not None else '' for c in row]
+
+        if is_spark:
+            # Spark Thrift Server returns (database, tableName, isTemporary).
+            if len(row) >= 2:
+                # Skip a possible in-band header row over the legacy Hive-JDBC path.
+                if row[1].lower() == 'tablename':
+                    continue
+                name = row[1].strip()
+            else:
+                name = row[0].strip()
+        else:
+            # HiveServer2 returns a single tab_name column.
+            name = row[0].strip()
+
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        tables.append((name, ''))
+    return tables
+
+
+def parse_hive_field_rows(res, is_spark: bool):
+    """Parse DESCRIBE table result rows for HiveServer2 and Spark Thrift Server
+    (all Spark 2.4+ versions use the same col_name/data_type/comment shape with
+    a `# Partition Information` / `# col_name` section).
+
+    On the legacy Hive-JDBC path the (col_name, data_type, comment) header may
+    also be returned in-band; we skip it defensively.
+
+    Returns a list of (field_name, field_type, field_comment) tuples.
+    """
+    fields = []
+    seen_fields = set()
+    for item in res:
+        field_name = item[0] if len(item) > 0 else None
+        field_type = item[1] if len(item) > 1 else None
+        field_comment = item[2] if len(item) > 2 else None
+
+        if not field_name or not str(field_name).strip():
+            continue
+        stripped_name = str(field_name).strip()
+
+        type_str = (field_type or '').strip() if isinstance(field_type, str) else (str(field_type).strip() if field_type else '')
+
+        # Legacy Hive-JDBC path may return the column header row as data.
+        if is_spark and stripped_name.lower() == 'col_name':
+            continue
+
+        # DESCRIBE includes section headings and repeats partition columns.
+        if stripped_name.lstrip().startswith('#') and type_str in ('', 'data_type'):
+            continue
+        if stripped_name in seen_fields:
+            continue
+        seen_fields.add(stripped_name)
+        fields.append((field_name, type_str, field_comment))
+    return fields
+
+
 # use sqlalchemy
 def get_engine(ds: CoreDatasource, timeout: int = 0, use_pool: bool = False) -> Engine:
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
@@ -534,7 +616,7 @@ def get_tables(ds: CoreDatasource):
             with get_driver_connection(ds) as conn, conn.cursor() as cursor:
                 cursor.execute(sql)
                 res = cursor.fetchall()
-                res_list = [TableSchema(*item) for item in res]
+                res_list = [TableSchema(*item) for item in parse_hive_table_rows(res, is_spark_thrift(conf))]
                 return res_list
 
 
@@ -585,19 +667,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
             with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
                 cursor.execute(sql)
                 res = cursor.fetchall()
-                res_list = []
-                seen_fields = set()
-                for item in res:
-                    field_name = item[0]
-                    if not field_name or not field_name.strip():
-                        continue
-                    # DESCRIBE includes section headings and repeats partition columns.
-                    if field_name.lstrip().startswith('#') and (item[1] or '').strip() in ('', 'data_type'):
-                        continue
-                    if field_name in seen_fields:
-                        continue
-                    seen_fields.add(field_name)
-                    res_list.append(ColumnSchema(*item[:3]))
+                res_list = [ColumnSchema(*item) for item in parse_hive_field_rows(res, is_spark_thrift(conf))]
                 return res_list
 
 

@@ -422,7 +422,10 @@
       "low_version": "เข้ากันได้กับเวอร์ชันต่ำกว่า",
       "ssl": "เปิดใช้งาน SSL",
       "file_path": "เส้นทางไฟล์",
-      "pool_size": "ขนาดพูลการเชื่อมต่อ"
+      "pool_size": "ขนาดพูลการเชื่อมต่อ",
+      "engine": "เอนจิน",
+      "engine_hive": "HiveServer2",
+      "engine_spark": "Spark Thrift Server"
     },
     "sync_fields": "ซิงค์โครงสร้างตาราง",
     "sync_fields_success": "ซิงค์โครงสร้างตารางสำเร็จ",
