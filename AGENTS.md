@@ -21,6 +21,7 @@ SQLBot 让业务用户用自然语言提问，基于已配置的数据源生成�
 | `frontend/` | Vue 3、TypeScript strict、Vite、Pinia、Vue Router 和 Element Plus。请求在 `src/api/`，共享实体在 `src/entity/`，状态在 `src/stores/`，路由在 `src/router/`，UI 在 `src/views/` 和 `src/components/`。 |
 | `g2-ssr/` | Node.js 图表渲染服务，使用 `@antv/g2-ssr`；图表实现位于 `charts/`，目录内有独立 `AGENTS.md`。 |
 | `installer/` | 离线安装、卸载、配置模板和服务控制脚本。 |
+| `.codex/` | Codex 开发用 MCP 配置、启动器与本地配置模板；使用方式见 `.codex/README.md`，不属于 SQLBot 产品 MCP。 |
 | `Dockerfile*`、`docker-compose.yaml`、`start.sh` | 容器组装和运行时进程启动。 |
 
 商业扩展源码维护在独立仓库 [dataease/sqlbot-xpack](https://github.com/dataease/sqlbot-xpack)。它不是 submodule，也不是本仓库的固定子目录。本地 `sqlbot-xpack/` checkout 会被主仓库忽略，永远不应出现在本仓库 PR 中。
@@ -39,6 +40,7 @@ SQLBot 让业务用户用自然语言提问，基于已配置的数据源生成�
 | 修改后端业务代码 | `docs/agents/backend.md` |
 | 修改前端代码 | `docs/agents/frontend.md` |
 | 修改或新增测试、执行验证 | `docs/agents/testing.md` |
+| 修改 Codex 开发用 MCP 配置或启动器 | `.codex/README.md` |
 | 修改用户可见文案或新增语言 | `docs/agents/i18n.md` |
 | 修改认证、授权、SQL 执行、上传/下载、嵌入协议或前端渲染安全 | `docs/agents/security.md` |
 | 修改 SQLModel 模型或 Alembic 迁移 | `docs/agents/migrations.md` |

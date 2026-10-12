@@ -199,3 +199,8 @@ AGENTS.local.env
 frontend/.npmrc
 backend/logs/
 /logs/
+
+# Codex MCP 本地凭据、浏览器会话和输出
+/.codex/**/.env.local
+/.codex/playwright_mcp/browser-profile/
+/.codex/playwright_mcp/output/

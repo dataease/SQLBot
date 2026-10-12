@@ -1,0 +1,13 @@
+[[sources]]
+id = "sqlbot"
+dsn = "${DSN}"
+
+[[tools]]
+name = "execute_sql"
+source = "sqlbot"
+readonly = true
+max_rows = 1000
+
+[[tools]]
+name = "search_objects"
+source = "sqlbot"
