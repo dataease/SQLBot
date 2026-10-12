@@ -21,6 +21,10 @@ uv run pytest -q tests/<relevant-test.py>
 
 ## 环境与证据
 
+Codex 开发用 MCP 的离线回归位于 `backend/tests/test_codex_mcp_runtime.py`。
+从仓库根运行 `python3 -B backend/tests/test_codex_mcp_runtime.py`，只需 Python 标准库，
+使用临时配置和模拟进程启动，不连接 TAPD、浏览器或数据库；也可用上述 pytest 命令执行该文件。
+
 - 记录测试提交、命令、工作目录和必要的依赖版本/配置；不记录凭据。独立 worktree 复用环境时确认模块实际从当前 worktree 导入，避免测试到旧代码。
 - `uv run` 可能解析、同步依赖；需要保留已准备环境或 editable 安装时使用 `uv run --no-sync`，并说明依赖来源。没有入库 lockfile 时，不能仅凭代码 SHA 宣称依赖可完全复现。
 - 分别报告源码/静态检查、单元或守卫测试、真实接口/数据库、浏览器、镜像部署的覆盖；没有执行的层不能标为通过。AST/源码文本测试不能替代真实导入、路由和授权调用链验证。
