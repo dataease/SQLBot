@@ -8,6 +8,7 @@ model factory.
 
 import json
 import os
+import re
 import unittest
 
 # Project root relative to this test file
@@ -66,9 +67,14 @@ class TestMiniMaxSupplierConfig(unittest.TestCase):
         self.assertIn("range: '[0, 1]'", minimax_section)
 
     def test_minimax_model_options(self):
-        """MiniMax should have M3 and M2.7 models."""
-        self.assertIn("name: 'MiniMax-M3'", self.supplier_content)
-        self.assertIn("name: 'MiniMax-M2.7'", self.supplier_content)
+        """Offer only current MiniMax models, with Flash first in the picker."""
+        minimax_section = self.supplier_content.split("id: 13,", 1)[1]
+        minimax_section = minimax_section.split("/* {", 1)[0]
+        model_options = minimax_section.split("model_options:", 1)[1]
+        self.assertEqual(
+            re.findall(r"name: '([^']+)'", model_options),
+            ["MiniMax-M3.1-Flash", "MiniMax-M3"],
+        )
 
     def test_minimax_has_model_config_type_0(self):
         """MiniMax should have model_config with type 0 (LLM)."""
