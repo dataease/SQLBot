@@ -290,7 +290,7 @@ export const supplierList: Array<{
       0: {
         api_domain: 'https://api.minimax.io/v1',
         common_args: [{ key: 'temperature', val: 0.7, type: 'number', range: '[0, 1]' }],
-        model_options: [{ name: 'MiniMax-M3' }, { name: 'MiniMax-M2.7' }],
+        model_options: [{ name: 'MiniMax-M3.1-Flash' }, { name: 'MiniMax-M3' }],
       },
     },
   },
