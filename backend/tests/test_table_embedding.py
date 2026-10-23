@@ -662,7 +662,7 @@ class TestExplicitTableSelection:
         else:
             tables[-1]['embedding'] = None
         result = calc_table_embedding(tables, f'查询{self.COMMENT}', keywords='采购')
-        assert len(result) == (10 if failure == 'missing_embedding' else len(tables))
+        assert len(result) == len(tables)
         assert result[0]['table_name'] == self.TARGET
 
     @pytest.mark.parametrize('keywords', [None, '销售额'])

@@ -42,17 +42,17 @@ def run_migrations():
     command.upgrade(alembic_cfg, "head")
 
 
-@SingleWorkerGuard.once
+# Knowledge tasks deduplicate per resource, so every new worker can recover
+# pending vectors even while another worker owns the legacy startup lock.
 def init_terminology_embedding_data():
     fill_empty_terminology_embeddings()
 
 
-@SingleWorkerGuard.once
 def init_data_training_embedding_data():
     fill_empty_data_training_embeddings()
 
 
-@SingleWorkerGuard.once
+# Per-resource database locks deduplicate startup work and recover after worker death.
 def init_table_and_ds_embedding():
     fill_empty_table_and_ds_embeddings()
 

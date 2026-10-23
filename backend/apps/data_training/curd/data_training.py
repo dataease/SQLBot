@@ -3,17 +3,19 @@ import traceback
 from typing import List, Optional
 from xml.dom.minidom import parseString
 
-from sqlalchemy import and_, select, func, delete, update, or_
+from sqlalchemy import case, and_, select, func, delete, update, or_
 from sqlalchemy import text
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.datasource.embedding.utils import parse_valid_embedding
 from apps.data_training.models.data_training_model import DataTrainingInfo, DataTraining, DataTrainingInfoResult
 from apps.datasource.models.datasource import CoreDatasource
 from apps.system.models.system_model import AssistantModel
 from apps.template.generate_chart.generator import get_base_data_training_template
-from common.core.config import settings
+from common.core.embedding_config import EmbeddingConfig, load_embedding_config
 from common.core.deps import SessionDep, Trans
 from common.utils.dict_to_xml import dict_to_xml
+from common.utils.embedding_lifecycle import generate_missing_embeddings
 from common.utils.embedding_threads import run_save_data_training_embeddings
 
 
@@ -266,6 +268,7 @@ def update_training(session: SessionDep, info: DataTrainingInfo, oid: int, trans
         raise Exception(trans("i18n_data_training.exists_in_db"))
 
     stmt = update(DataTraining).where(and_(DataTraining.id == info.id)).values(
+        embedding=case((DataTraining.question.is_distinct_from(info.question.strip()), None), else_=DataTraining.embedding),
         question=info.question.strip(),
         description=info.description.strip(),
         datasource=info.datasource,
@@ -442,84 +445,46 @@ def enable_training(session: SessionDep, id: int, enabled: bool, trans: Trans, o
     session.commit()
 
 
-# def run_save_embeddings(ids: List[int]):
-#     executor.submit(save_embeddings, ids)
-#
-#
-# def fill_empty_embeddings():
-#     executor.submit(run_fill_empty_embeddings)
-
-
 def run_fill_empty_embeddings(session_maker):
-    try:
-        if not settings.EMBEDDING_ENABLED:
-            return
-
-        session = session_maker()
-        stmt = select(DataTraining.id).where(and_(DataTraining.embedding.is_(None)))
-        results = session.execute(stmt).scalars().all()
-
-        save_embeddings(session_maker, results)
-    except Exception:
-        traceback.print_exc()
-    finally:
-        session_maker.remove()
+    return generate_missing_embeddings(session_maker, DataTraining, DataTraining.question)
 
 
 def save_embeddings(session_maker, ids: List[int]):
-    if not settings.EMBEDDING_ENABLED:
+    if not ids:
         return
-
-    if not ids or len(ids) == 0:
-        return
-    try:
-        session = session_maker()
-        _list = session.query(DataTraining).filter(and_(DataTraining.id.in_(ids))).all()
-
-        _question_list = [item.question for item in _list]
-
-        model = EmbeddingModelCache.get_model()
-
-        results = model.embed_documents(_question_list)
-
-        for index in range(len(results)):
-            item = results[index]
-            stmt = update(DataTraining).where(and_(DataTraining.id == _list[index].id)).values(embedding=item)
-            session.execute(stmt)
-            session.commit()
-
-    except Exception:
-        traceback.print_exc()
-    finally:
-        session_maker.remove()
+    return generate_missing_embeddings(
+        session_maker, DataTraining, DataTraining.question,
+        DataTraining.id.in_(ids),
+    )
 
 
-embedding_sql = f"""
+embedding_sql = """
 SELECT id, datasource, question, similarity
 FROM
 (SELECT id, datasource, question, oid, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM data_training AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and datasource = :datasource and enabled = true
+WHERE similarity > :similarity and oid = :oid and datasource = :datasource and enabled = true
 ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
+LIMIT :top_count
 """
-embedding_sql_in_advanced_application = f"""
+embedding_sql_in_advanced_application = """
 SELECT id, advanced_application, question, similarity
 FROM
 (SELECT id, advanced_application, question, oid, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM data_training AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_DATA_TRAINING_SIMILARITY} and oid = :oid and advanced_application = :advanced_application and enabled = true
+WHERE similarity > :similarity and oid = :oid and advanced_application = :advanced_application and enabled = true
 ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_DATA_TRAINING_TOP_COUNT}
+LIMIT :top_count
 """
 
 
 def select_training_by_question(session: SessionDep, question: str, oid: int, datasource: Optional[int] = None,
-                                advanced_application_id: Optional[int] = None):
+                                advanced_application_id: Optional[int] = None, *, config: EmbeddingConfig | None = None):
+    config = config or load_embedding_config(session)
     if question.strip() == "":
         return []
 
@@ -547,20 +512,20 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
     for row in results:
         _list.append(DataTraining(id=row.id, question=row.question))
 
-    if settings.EMBEDDING_ENABLED:
+    if config.enabled:
         with session.begin_nested():
             try:
                 model = EmbeddingModelCache.get_model()
 
-                embedding = model.embed_query(question)
+                embedding = parse_valid_embedding(model.embed_query(question))
 
                 if advanced_application_id is not None:
                     results = session.execute(text(embedding_sql_in_advanced_application),
-                                              {'embedding_array': str(embedding), 'oid': oid,
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.data_training_similarity, 'top_count': config.data_training_top_count,
                                                'advanced_application': advanced_application_id})
                 else:
                     results = session.execute(text(embedding_sql),
-                                              {'embedding_array': str(embedding), 'oid': oid, 'datasource': datasource})
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.data_training_similarity, 'top_count': config.data_training_top_count, 'datasource': datasource})
 
                 for row in results:
                     _list.append(DataTraining(id=row.id, question=row.question))
@@ -617,12 +582,14 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'sql-examples') -> str:
 
 
 def get_training_template(session: SessionDep, question: str, oid: Optional[int] = 1, datasource: Optional[int] = None,
-                          advanced_application_id: Optional[int] = None) -> tuple[str, list[dict]]:
+                          advanced_application_id: Optional[int] = None, *,
+                          config: EmbeddingConfig | None = None) -> tuple[str, list[dict]]:
+    config = config or load_embedding_config(session)
     if not oid:
         oid = 1
     if not datasource and not advanced_application_id:
         return '', []
-    _results = select_training_by_question(session, question, oid, datasource, advanced_application_id)
+    _results = select_training_by_question(session, question, oid, datasource, advanced_application_id, config=config)
     if _results and len(_results) > 0:
         data_training = to_xml_string(_results)
         template = get_base_data_training_template().format(data_training=data_training)

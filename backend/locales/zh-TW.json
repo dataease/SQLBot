@@ -205,5 +205,8 @@
     "name": "姓名",
     "account": "帳號",
     "email": "郵箱"
+  },
+  "i18n_parameter": {
+    "invalid_embedding_parameter": "向量參數 {key} 無效。相似度與權重必須是 0～1 的有限數值，候選數量必須是正整數。"
   }
 }

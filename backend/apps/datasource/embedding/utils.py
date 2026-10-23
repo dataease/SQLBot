@@ -1,5 +1,6 @@
 # Author: Junjun
 # Date: 2025/9/23
+import json
 import math
 
 import numpy as np
@@ -44,3 +45,15 @@ def batch_cosine_similarity(query_vec, table_vecs):
     norms[norms == 0] = 1.0  # 零向量相似度为 0，除以 1 保持结果为 0
 
     return mat @ q / (norms * q_norm)
+
+
+def parse_valid_embedding(value):
+    """Reject absent, malformed or unusable JSON vectors before candidate pruning."""
+    vector = json.loads(value) if isinstance(value, str) else value
+    if not isinstance(vector, list) or not vector:
+        raise ValueError("Missing embedding")
+    if any(type(number) not in (int, float) or not math.isfinite(number) for number in vector):
+        raise ValueError("Invalid embedding")
+    if not any(vector):
+        raise ValueError("Zero embedding")
+    return vector
