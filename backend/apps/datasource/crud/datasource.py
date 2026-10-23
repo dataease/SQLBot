@@ -14,11 +14,12 @@ from apps.db.constant import DB
 from apps.db.db import get_tables, get_fields, exec_sql, check_connection
 from apps.db.engine import get_engine_config, get_engine_conn
 from apps.system.schemas.auth import CacheName, CacheNamespace
-from common.core.config import settings
+from common.core.embedding_config import EmbeddingConfig, load_embedding_config
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.embedding_threads import run_save_table_embeddings, run_save_ds_embeddings
 from common.utils.utils import SQLBotLogUtil, deepcopy_ignore_extra, equals_ignore_case
 from common.core.sqlbot_cache import cache, clear_cache
+from .embedding_state import invalidate_metadata
 from .table import get_tables_by_ds_id
 from ..crud.field import delete_field_by_ds_id, update_field
 from ..crud.table import delete_table_by_ds_id, update_table
@@ -104,7 +105,8 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
     # status = check_status(session, trans, ds)
     ds.status = "Success"
     record = session.exec(select(CoreDatasource).where(CoreDatasource.id == ds.id)).first()
-    update_data = ds.model_dump(exclude_unset=True)
+    invalidate_metadata(session, record.id)
+    update_data = ds.model_dump(exclude_unset=True, exclude={"embedding"})
     for field, value in update_data.items():
         setattr(record, field, value)
     session.add(record)
@@ -206,6 +208,7 @@ def sync_single_fields(session: SessionDep, trans: Trans, ds_id: int, id: int):
 
 
 def sync_table(session: SessionDep, ds: CoreDatasource, tables: List[CoreTable]):
+    invalidate_metadata(session, ds.id, [t.id for t in get_tables_by_ds_id(session, ds.id)])
     id_list = []
     for item in tables:
         statement = select(CoreTable).where(and_(CoreTable.ds_id == ds.id, CoreTable.table_name == item.table_name))
@@ -217,7 +220,7 @@ def sync_table(session: SessionDep, ds: CoreDatasource, tables: List[CoreTable])
 
             record.table_comment = item.table_comment
             session.add(record)
-            session.commit()
+            session.flush()
         else:
             # save new table
             table = CoreTable(ds_id=ds.id, checked=True, table_name=item.table_name, table_comment=item.table_comment,
@@ -227,11 +230,11 @@ def sync_table(session: SessionDep, ds: CoreDatasource, tables: List[CoreTable])
             session.refresh(table)
             item.id = table.id
             id_list.append(table.id)
-            session.commit()
+            session.flush()
 
         # sync field
         fields = getFieldsByDs(session, ds, item.table_name)
-        sync_fields(session, ds, item, fields)
+        sync_fields(session, ds, item, fields, commit=False)
 
     if len(id_list) > 0:
         session.query(CoreTable).filter(and_(CoreTable.ds_id == ds.id, CoreTable.id.not_in(id_list))).delete(
@@ -249,7 +252,8 @@ def sync_table(session: SessionDep, ds: CoreDatasource, tables: List[CoreTable])
     run_save_ds_embeddings([ds.id])
 
 
-def sync_fields(session: SessionDep, ds: CoreDatasource, table: CoreTable, fields: List[ColumnSchema]):
+def sync_fields(session: SessionDep, ds: CoreDatasource, table: CoreTable, fields: List[ColumnSchema], *, commit=True):
+    invalidate_metadata(session, ds.id, [table.id])
     id_list = []
     for index, item in enumerate(fields):
         statement = select(CoreField).where(
@@ -263,7 +267,7 @@ def sync_fields(session: SessionDep, ds: CoreDatasource, table: CoreTable, field
             record.field_index = index
             record.field_type = item.fieldType
             session.add(record)
-            session.commit()
+            session.flush()
         else:
             field = CoreField(ds_id=ds.id, table_id=table.id, checked=True, field_name=item.fieldName,
                               field_type=item.fieldType, field_comment=item.fieldComment,
@@ -273,11 +277,13 @@ def sync_fields(session: SessionDep, ds: CoreDatasource, table: CoreTable, field
             session.refresh(field)
             item.id = field.id
             id_list.append(field.id)
-            session.commit()
+            session.flush()
 
-    if len(id_list) > 0:
-        session.query(CoreField).filter(and_(CoreField.table_id == table.id, CoreField.id.not_in(id_list))).delete(
-            synchronize_session=False)
+    stale_fields = session.query(CoreField).filter(CoreField.table_id == table.id)
+    if id_list:
+        stale_fields = stale_fields.filter(CoreField.id.not_in(id_list))
+    stale_fields.delete(synchronize_session=False)
+    if commit:
         session.commit()
 
 
@@ -415,9 +421,6 @@ def updateNum(session: SessionDep, ds: CoreDatasource):
     num = f'{len(selected_tables)}/{len(all_tables)}'
 
     record = session.exec(select(CoreDatasource).where(CoreDatasource.id == ds.id)).first()
-    update_data = ds.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(record, field, value)
     record.num = num
     session.add(record)
     session.commit()
@@ -530,7 +533,7 @@ def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: C
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
                      embedding: bool = True, table_list: list[str] = None,
-                     keywords: str = None) -> tuple[str, list]:
+                     keywords: str = None, *, config: EmbeddingConfig = None) -> tuple[str, list]:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -587,66 +590,65 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         return schema_str, []
 
     # 执行表 embedding 匹配
-    if embedding and tables and settings.TABLE_EMBEDDING_ENABLED:
+    if embedding and config is None:
+        config = load_embedding_config(session)
+    if embedding and tables and config.table_enabled:
+        candidate_count = len(tables)
         try:
             tables = calc_table_embedding(tables, question, session=session, oid=current_user.oid,
-                                          keywords=keywords)
+                                          keywords=keywords, config=config)
+            SQLBotLogUtil.info(
+                f"[embedding] stage=table ds_id={ds.id} action=selection_result vector_enabled=True "
+                f"candidate_count={candidate_count} result_count={len(tables)} "
+                f"limit={config.table_count} keyword_enabled={config.keyword_enabled} "
+                f"alpha={config.table_alpha}"
+            )
         except ValueError as e:
             # LLM 判断意图不是查数据或关键词提取失败
             return str(e), []
+    elif embedding:
+        SQLBotLogUtil.info(
+            f"[embedding] stage=table ds_id={ds.id} action=skip reason=disabled "
+            f"candidate_count={len(tables)} result_count={len(tables)}"
+        )
     # splice schema
     if tables:
         for s in tables:
             schema_str += s.get('schema_table')
             table_name_list.append(s.get('table_name'))
 
-    # field relation
+    # Complete one-hop relations only inside the original selected/authorized
+    # candidate and column set. Graph identifiers may be strings or integers.
     if tables and ds.table_relation:
-        relations = list(filter(lambda x: x.get('shape') == 'edge', ds.table_relation))
+        eligible = {str(table['id']): table for table in all_tables}
+        selected = {str(table['id']) for table in tables}
+        visible_fields = {
+            (str(obj.table.id), str(field.id)): field.field_name
+            for obj in table_objs if str(obj.table.id) in eligible
+            for field in (obj.fields or [])
+        }
+        relations = []
+        for relation in ds.table_relation:
+            if relation.get('shape') != 'edge':
+                continue
+            source, target = relation.get('source', {}), relation.get('target', {})
+            source_id, target_id = str(source.get('cell')), str(target.get('cell'))
+            source_key = (source_id, str(source.get('port')))
+            target_key = (target_id, str(target.get('port')))
+            if (source_id in eligible and target_id in eligible
+                    and (source_id in selected or target_id in selected)
+                    and source_key in visible_fields and target_key in visible_fields):
+                relations.append((source_key, target_key))
+        related = {key[0] for relation in relations for key in relation}
+        for table_id, table in eligible.items():
+            if table_id in related - selected:
+                schema_str += table['schema_table']
+                table_name_list.append(table['table_name'])
         if relations:
-            # Complete the missing table
-            # get tables in relation, remove irrelevant relation
-            embedding_table_ids = [s.get('id') for s in tables]
-            all_relations = list(
-                filter(lambda x: x.get('source').get('cell') in embedding_table_ids or x.get('target').get(
-                    'cell') in embedding_table_ids, relations))
-
-            # get relation table ids, sub embedding table ids
-            relation_table_ids = []
-            for r in all_relations:
-                relation_table_ids.append(r.get('source').get('cell'))
-                relation_table_ids.append(r.get('target').get('cell'))
-            relation_table_ids = list(set(relation_table_ids))
-            # get table dict
-            table_records = session.query(CoreTable).filter(CoreTable.id.in_(list(map(int, relation_table_ids)))).all()
-            table_dict = {}
-            for ele in table_records:
-                table_dict[ele.id] = ele.table_name
-
-            # get lost table ids
-            lost_table_ids = list(set(relation_table_ids) - set(embedding_table_ids))
-            # get lost table schema and splice it
-            lost_tables = list(filter(lambda x: x.get('id') in lost_table_ids, all_tables))
-            if lost_tables:
-                for s in lost_tables:
-                    schema_str += s.get('schema_table')
-                    table_name_list.append(s.get('table_name'))
-
-            # get field dict
-            relation_field_ids = []
-            for relation in all_relations:
-                relation_field_ids.append(relation.get('source').get('port'))
-                relation_field_ids.append(relation.get('target').get('port'))
-            relation_field_ids = list(set(relation_field_ids))
-            field_records = session.query(CoreField).filter(CoreField.id.in_(list(map(int, relation_field_ids)))).all()
-            field_dict = {}
-            for ele in field_records:
-                field_dict[ele.id] = ele.field_name
-
-            if all_relations:
-                schema_str += '【Foreign keys】\n'
-                for ele in all_relations:
-                    schema_str += f"{table_dict.get(int(ele.get('source').get('cell')))}.{field_dict.get(int(ele.get('source').get('port')))}={table_dict.get(int(ele.get('target').get('cell')))}.{field_dict.get(int(ele.get('target').get('port')))}\n"
+            schema_str += '【Foreign keys】\n'
+            for source, target in relations:
+                schema_str += (f"{eligible[source[0]]['table_name']}.{visible_fields[source]}="
+                               f"{eligible[target[0]]['table_name']}.{visible_fields[target]}\n")
 
     return schema_str, table_name_list
 

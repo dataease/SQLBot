@@ -62,3 +62,20 @@ SQLBot 让业务用户用自然语言提问，基于已配置的数据源生成�
 - 按验收条件选择验证层级，不把构建或单元测试等同于产品验收。普通任务不默认构建镜像或启动完整运行栈；已要求真实接口、浏览器或部署验证时，可启动必要的隔离服务。环境范围、外部成本或数据用途不明确时先确认。
 - 除非用户明确要求，不要上传、发布或推送镜像 / wheel / 包。
 - 变更涉及本文件或 `docs/agents/` 描述的约定（目录职责、命令、流程）时，同步更新对应文档。
+
+## Agent skills
+
+### Issue tracker
+
+处理 Issue 或发布规格、任务时，使用 dataease/SQLBot 的 GitHub Issues；
+操作约定见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+执行 triage 时，使用五个默认角色标签；
+映射见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+工程技能采用 single-context 布局；探索相关领域前，
+按 `docs/agents/domain.md` 读取词汇表和架构决策。

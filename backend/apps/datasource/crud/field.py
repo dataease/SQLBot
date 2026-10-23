@@ -1,3 +1,4 @@
+from .embedding_state import invalidate_metadata
 from common.core.deps import SessionDep
 from ..models.datasource import CoreField, FieldObj, CoreTable
 from sqlalchemy import or_, and_
@@ -26,6 +27,7 @@ def get_fields_by_table_id(session: SessionDep, ds_id: int, id: int, field: Fiel
 
 def update_field(session: SessionDep, item: CoreField):
     record = session.query(CoreField).filter(CoreField.id == item.id).first()
+    invalidate_metadata(session, record.ds_id, [record.table_id])
     record.checked = item.checked
     record.custom_comment = item.custom_comment
     session.add(record)

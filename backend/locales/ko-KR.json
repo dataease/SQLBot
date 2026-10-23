@@ -205,5 +205,8 @@
     "name": "이름",
     "account": "계정",
     "email": "이메일"
+  },
+  "i18n_parameter": {
+    "invalid_embedding_parameter": "벡터 매개변수 {key}이(가) 유효하지 않습니다. 유사도와 가중치는 0~1 사이의 유한한 수, 후보 수는 양의 정수여야 합니다."
   }
 }

@@ -1,3 +1,5 @@
+from apps.datasource.crud.embedding_state import invalidate_metadata
+from common.utils.embedding_threads import run_save_table_embeddings, run_save_ds_embeddings
 import asyncio
 import hashlib
 import io
@@ -505,6 +507,14 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
         # sheet table mapping
         sheet_table_map = {}
 
+        changed_ids = []
+        if table_sheet:
+            names = [table[t_n_col] for table in table_sheet]
+            changed_ids = session.query(CoreTable.id).filter(
+                CoreTable.ds_id == id, CoreTable.table_name.in_(names)).all()
+            changed_ids = [row[0] for row in changed_ids]
+            invalidate_metadata(session, id, changed_ids)
+
         # get data and update
         # update table comment
         if table_sheet and len(table_sheet) > 0:
@@ -530,9 +540,12 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
                                      CoreField.field_name == field[f_n_col])).update(
                                 {'custom_comment': field[f_c_col]})
         session.commit()
+        run_save_table_embeddings(changed_ids)
+        run_save_ds_embeddings([id])
 
         return True
     except Exception as e:
+        session.rollback()
         raise HTTPException(status_code=500, detail=f"Parse Excel Failed: {str(e)}")
 
 

@@ -205,5 +205,8 @@
     "name": "Name",
     "account": "Account",
     "email": "Email"
+  },
+  "i18n_parameter": {
+    "invalid_embedding_parameter": "Invalid embedding parameter: {key}. Similarities and weights must be finite numbers from 0 to 1; candidate counts must be positive integers."
   }
 }

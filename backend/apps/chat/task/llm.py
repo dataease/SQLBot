@@ -52,6 +52,7 @@ from apps.system.schemas.system_schema import AssistantOutDsSchema
 from apps.terminology.curd.terminology import expand_with_terminology
 from apps.terminology.curd.terminology import get_terminology_template
 from common.core.config import settings
+from common.core.embedding_config import load_embedding_config
 from common.core.db import engine
 from common.core.deps import CurrentAssistant, CurrentUser
 from common.error import SingleMessageError, SQLBotDBError, ParseSQLResultError, SQLBotDBConnectionError
@@ -125,6 +126,7 @@ class LLMService:
     def __init__(self, session: Session, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
                  embedding: bool = False, config: LLMConfig = None):
+        self.embedding_config = load_embedding_config(session)
         self.sql_message = []
         self.chart_message = []
         self.generate_sql_logs = []
@@ -155,6 +157,9 @@ class LLMService:
                 raise SingleMessageError("Current assistant user cannot not access this chat")
 
         self.current_user.oid = chat.oid
+        SQLBotLogUtil.info(
+            f"[embedding] stage=config chat_id={chat_id} config={self.embedding_config}"
+        )
         ds: CoreDatasource | AssistantOutDsSchema | None = None
         if not chat.datasource and chat_question.datasource_id:
             _ds = session.get(CoreDatasource, chat_question.datasource_id)
@@ -386,13 +391,19 @@ class LLMService:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
                                                                                    match_text,
                                                                                    calculate_oid,
-                                                                                   None, self.current_assistant.id)
+                                                                                   None, self.current_assistant.id, config=self.embedding_config)
         else:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
                                                                                    match_text,
                                                                                    calculate_oid,
-                                                                                   calculate_ds_id)
+                                                                                   calculate_ds_id, config=self.embedding_config)
 
+        SQLBotLogUtil.info(
+            f"[embedding] stage=terminology chat_id={self.chat_question.chat_id} "
+            f"record_id={self.record.id} "
+            f"retrieval_mode={'literal_and_vector' if self.embedding_config.enabled else 'literal_only'} "
+            f"result_count={len(term_list)}"
+        )
         self.current_logs[OperationEnum.FILTER_TERMS] = end_log(session=_session,
                                                                 log=self.current_logs[OperationEnum.FILTER_TERMS],
                                                                 full_message=term_list)
@@ -440,12 +451,18 @@ class LLMService:
             self.chat_question.data_training, example_list = get_training_template(_session,
                                                                                    self.chat_question.question,
                                                                                    calculate_oid,
-                                                                                   None, self.current_assistant.id)
+                                                                                   None, self.current_assistant.id, config=self.embedding_config)
         else:
             self.chat_question.data_training, example_list = get_training_template(_session,
                                                                                    self.chat_question.question,
                                                                                    calculate_oid,
-                                                                                   calculate_ds_id)
+                                                                                   calculate_ds_id, config=self.embedding_config)
+        SQLBotLogUtil.info(
+            f"[embedding] stage=sql_example chat_id={self.chat_question.chat_id} "
+            f"record_id={self.record.id} "
+            f"retrieval_mode={'literal_and_vector' if self.embedding_config.enabled else 'literal_only'} "
+            f"result_count={len(example_list)}"
+        )
         self.current_logs[OperationEnum.FILTER_SQL_EXAMPLE] = end_log(session=_session,
                                                                       log=self.current_logs[
                                                                           OperationEnum.FILTER_SQL_EXAMPLE],
@@ -552,7 +569,15 @@ class LLMService:
             current_user=self.current_user,
             ds=self.ds,
             question=self.chat_question.question,
-            keywords=keywords)
+            keywords=keywords, config=self.embedding_config)
+
+        SQLBotLogUtil.info(
+            f"[embedding] stage=table_context chat_id={self.chat_question.chat_id} "
+            f"record_id={self.record.id} ds_id={self.ds.id} "
+            f"source={'dynamic_datasource' if self.out_ds_instance else 'configured_datasource'} "
+            f"vector_enabled={self.embedding_config.table_enabled and not self.out_ds_instance} "
+            f"result_count={len(tables)}"
+        )
 
         # Get sample data for all tables
         if not self.out_ds_instance and settings.SAMPLE_DATA_ENABLED:
@@ -767,16 +792,28 @@ class LLMService:
         if not _ds_list:
             raise SingleMessageError('No available datasource configuration found')
         ignore_auto_select = _ds_list and len(_ds_list) == 1
+        if ignore_auto_select:
+            SQLBotLogUtil.info(
+                f"[embedding] stage=datasource chat_id={self.chat_question.chat_id} "
+                f"record_id={self.record.id} action=skip reason=single_candidate candidate_count=1"
+            )
         # ignore auto select ds
 
         full_thinking_text = ''
         full_text = ''
         if not ignore_auto_select:
-            if settings.TABLE_EMBEDDING_ENABLED and (
-                    not self.current_assistant or (self.current_assistant and self.current_assistant.type != 1)):
+            if self.embedding_config.table_enabled and (
+                    not self.current_assistant or (self.current_assistant and self.current_assistant.type not in dynamic_ds_types)):
                 _ds_list = get_ds_embedding(_session, _ds_list, self.out_ds_instance,
-                                            self.chat_question.question, self.current_assistant)
+                                            self.chat_question.question, self.current_assistant, config=self.embedding_config)
                 # yield {'content': '{"id":' + str(ds.get('id')) + '}'}
+            else:
+                reason = 'disabled' if not self.embedding_config.table_enabled else 'dynamic_datasource'
+                SQLBotLogUtil.info(
+                    f"[embedding] stage=datasource chat_id={self.chat_question.chat_id} "
+                    f"record_id={self.record.id} action=skip reason={reason} "
+                    f"candidate_count={len(_ds_list)} result_count={len(_ds_list)}"
+                )
 
             _ds_list_dict = []
             for _ds in _ds_list:
@@ -873,7 +910,7 @@ class LLMService:
         except Exception as e:
             _error = e
 
-        if not ignore_auto_select and not settings.TABLE_EMBEDDING_ENABLED:
+        if not ignore_auto_select and not self.embedding_config.table_enabled:
             self.record = save_select_datasource_answer(session=_session, record_id=self.record.id,
                                                         answer=orjson.dumps({'content': full_text}).decode(),
                                                         datasource=_datasource,
@@ -883,7 +920,7 @@ class LLMService:
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
             # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
-            if settings.TABLE_EMBEDDING_KEYWORD_ENABLED:
+            if self.embedding_config.keyword_enabled:
                 is_error, kw_result = self.extract_keywords(_session)
                 if is_error:
                     raise SingleMessageError(kw_result)
@@ -1365,7 +1402,7 @@ class LLMService:
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
                 # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
-                if settings.TABLE_EMBEDDING_KEYWORD_ENABLED:
+                if self.embedding_config.keyword_enabled:
                     is_error, kw_result = self.extract_keywords(_session)
                     if is_error:
                         raise SingleMessageError(kw_result)

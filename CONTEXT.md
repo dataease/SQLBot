@@ -54,6 +54,18 @@ _Avoid_: Terminology、SQL example
 术语、SQL 示例和自定义提示词生效的边界：工作空间、数据源或高级应用。高级应用是独立知识域，不继承工作空间级知识。
 _Avoid_: 权限——作用域决定向模型注入哪些知识，权限决定用户能访问哪些数据
 
+**Knowledge Retrieval / 知识召回**:
+根据问题匹配相关术语和 SQL 示例，为问数提供业务解释与查询示例。字面匹配与向量匹配是补充关系。
+_Avoid_: 自定义提示词注入、全系统向量化
+
+**Table Selection / 表筛选**:
+从当前可访问的候选表中选择与问题相关的表，为生成 SQL 提供表结构上下文。
+_Avoid_: 表权限——筛选不授予访问权限
+
+**Datasource Preselection / 数据源预筛选**:
+在自动选择数据源之前，缩小与问题相关的数据源候选范围。
+_Avoid_: 数据源选择结果——预筛选结果仍是候选集合
+
 **Row Permission / 行权限**（xpack）:
 对表追加的行级过滤条件；同一表命中多条时取 AND，经改写 SQL 执行。
 _Avoid_: Column Permission

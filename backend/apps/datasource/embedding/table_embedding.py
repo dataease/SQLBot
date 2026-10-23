@@ -6,8 +6,13 @@ import time
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
-from apps.datasource.embedding.utils import batch_cosine_similarity, cosine_similarity
+from apps.datasource.embedding.utils import (
+    batch_cosine_similarity,
+    cosine_similarity,
+    parse_valid_embedding,
+)
 from common.core.config import settings
+from common.core.embedding_config import EmbeddingConfig, load_embedding_config
 from common.utils.utils import SQLBotLogUtil
 
 # 预编译正则，避免每次调用都重新编译
@@ -36,7 +41,7 @@ def _longest_mentions(spans_by_name: dict):
             if any(span in longest_spans for span in occurrences)}
 
 
-def _select_tables(ranked_tables: list[dict], question: str, *, apply_limit: bool = True):
+def _select_tables(ranked_tables: list[dict], question: str, *, apply_limit: bool = True, count: int = None):
     """Keep explicitly mentioned candidates, then fill remaining slots by existing rank.
 
     Inspect only candidates already filtered by the caller; retain duplicate comments.
@@ -73,17 +78,8 @@ def _select_tables(ranked_tables: list[dict], question: str, *, apply_limit: boo
         else:
             remaining.append(table)
     if apply_limit:
-        remaining = remaining[:max(0, settings.TABLE_EMBEDDING_COUNT - len(required))]
+        remaining = remaining[:max(0, (settings.TABLE_EMBEDDING_COUNT if count is None else count) - len(required))]
     return required + remaining
-
-
-def _parse_embedding(embedding):
-    """解析 embedding，兼容 JSON 字符串和原生列表两种格式。"""
-    if isinstance(embedding, list):
-        return embedding
-    if isinstance(embedding, str):
-        return json.loads(embedding)
-    return None
 
 
 def get_table_embedding(tables: list[dict], question: str):
@@ -232,8 +228,17 @@ def calc_keyword_score(
     return round(best_score * match_rate, 2)
 
 
+def _score_table_vectors(tables: list[dict], query_embedding) -> int:
+    """Validate the complete candidate set before publishing any vector scores."""
+    embeddings = [parse_valid_embedding(table.get('embedding')) for table in tables]
+    similarities = batch_cosine_similarity(parse_valid_embedding(query_embedding), embeddings)
+    for table, similarity in zip(tables, similarities, strict=True):
+        table['cosine_similarity'] = float(similarity)
+    return len(embeddings)
+
+
 def calc_table_embedding(tables: list[dict], question: str, session=None, oid: int = None,
-                         keywords: str = None):
+                         keywords: str = None, *, config: EmbeddingConfig = None):
     """使用向量相似度和关键词匹配的融合评分计算表的相关性分数。
 
     当 keywords 不为空时（已由调用方提取并扩展）：
@@ -251,9 +256,11 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         oid: 组织 ID（预留）
         keywords: 已提取并扩展的关键词（由调用方传入）
     """
-    if not keywords or not settings.TABLE_EMBEDDING_KEYWORD_ENABLED:
+    if config is None and session is not None:
+        config = load_embedding_config(session)
+    if not keywords or not (config.keyword_enabled if config else settings.TABLE_EMBEDDING_KEYWORD_ENABLED):
         # 回退到纯向量匹配
-        return _calc_vector_only(tables, question)
+        return _calc_vector_only(tables, question, config=config)
 
     _list = []
     for table in tables:
@@ -280,28 +287,14 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         t1 = time.time()
         SQLBotLogUtil.info(f"[perf] embed_query 耗时 {t1 - t0:.3f}s")
 
-        # 预解析所有 embedding，跳过空的
-        parsed_embeddings = []
-        valid_indices = []
-        for i, item in enumerate(_list):
-            emb = item.get('embedding')
-            if emb:
-                parsed = _parse_embedding(emb)
-                if parsed:
-                    parsed_embeddings.append(parsed)
-                    valid_indices.append(i)
-
-        # 一次性批量计算所有余弦相似度
-        if parsed_embeddings:
-            similarities = batch_cosine_similarity(q_embedding, parsed_embeddings)
-            for idx, sim in zip(valid_indices, similarities):
-                _list[idx]['cosine_similarity'] = float(sim)
+        # A partial vector set must never exclude otherwise eligible tables.
+        vector_count = _score_table_vectors(_list, q_embedding)
 
         t2 = time.time()
-        SQLBotLogUtil.info(f"[perf] 向量相似度计算耗时 {t2 - t1:.3f}s，共 {len(parsed_embeddings)} 张表")
+        SQLBotLogUtil.info(f"[perf] 向量相似度计算耗时 {t2 - t1:.3f}s，共 {vector_count} 张表")
 
         # 步骤 2 & 3：计算关键词分数并融合
-        alpha = settings.TABLE_EMBEDDING_ALPHA
+        alpha = config.table_alpha if config else settings.TABLE_EMBEDDING_ALPHA
         kw_total = 0.0
         kw_max = 0.0
         kw_max_name = ''
@@ -335,7 +328,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         other_tables.sort(key=lambda x: x['cosine_similarity'], reverse=True)
 
         _list = exact_matches + other_tables
-        _list = _select_tables(_list, question)
+        _list = _select_tables(_list, question, count=config.table_count if config else None)
 
         end_time = time.time()
         SQLBotLogUtil.info(f"[perf] 融合评分总耗时 {end_time - start_time:.3f}s")
@@ -348,13 +341,18 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         } for ele in _list]))
 
         return _list
-    except Exception:
+    except Exception as exc:
         traceback.print_exc()
-        # 异常回退到纯向量匹配
-        return _calc_vector_only(tables, question)
+        # Skip this preselection layer if vectors are incomplete or scoring fails.
+        SQLBotLogUtil.info(
+            f"[embedding] stage=table action=fallback mode=hybrid "
+            f"reason=invalid_vectors_or_scoring_failed error_type={type(exc).__name__} "
+            f"candidate_count={len(tables)} result_count={len(tables)}"
+        )
+        return _select_tables(tables, question, apply_limit=False)
 
 
-def _calc_vector_only(tables: list[dict], question: str):
+def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingConfig = None):
     """Rank by vector similarity while retaining explicitly mentioned tables."""
     _list = []
     for table in tables:
@@ -374,28 +372,13 @@ def _calc_vector_only(tables: list[dict], question: str):
             start_time = time.time()
             q_embedding = model.embed_query(question)
 
-            # 预解析所有 embedding，跳过空的
-            parsed_embeddings = []
-            valid_indices = []
-            for i, item in enumerate(_list):
-                emb = item.get('embedding')
-                if emb:
-                    parsed = _parse_embedding(emb)
-                    if parsed:
-                        parsed_embeddings.append(parsed)
-                        valid_indices.append(i)
-
-            # 一次性批量计算所有余弦相似度
-            if parsed_embeddings:
-                similarities = batch_cosine_similarity(q_embedding, parsed_embeddings)
-                for idx, sim in zip(valid_indices, similarities):
-                    _list[idx]['cosine_similarity'] = float(sim)
+            vector_count = _score_table_vectors(_list, q_embedding)
 
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
-            _list = _select_tables(_list, question)
+            _list = _select_tables(_list, question, count=config.table_count if config else None)
 
             end_time = time.time()
-            SQLBotLogUtil.info(f"[perf] 纯向量匹配耗时 {end_time - start_time:.3f}s，共 {len(parsed_embeddings)} 张表")
+            SQLBotLogUtil.info(f"[perf] 纯向量匹配耗时 {end_time - start_time:.3f}s，共 {vector_count} 张表")
             SQLBotLogUtil.info(json.dumps([{
                 "id": ele.get('id'),
                 "schema_table": ele.get('schema_table'),
@@ -403,7 +386,12 @@ def _calc_vector_only(tables: list[dict], question: str):
                 "table_name": ele.get('table_name')
             } for ele in _list]))
             return _list
-        except Exception:
+        except Exception as exc:
             traceback.print_exc()
+            SQLBotLogUtil.info(
+                f"[embedding] stage=table action=fallback mode=vector_only "
+                f"reason=invalid_vectors_or_scoring_failed error_type={type(exc).__name__} "
+                f"candidate_count={len(_list)} result_count={len(_list)}"
+            )
     # Preserve all candidates when vector ranking fails; move explicit matches to the front.
     return _select_tables(_list, question, apply_limit=False)

@@ -3,17 +3,19 @@ import traceback
 from typing import List, Optional, Any
 from xml.dom.minidom import parseString
 
-from sqlalchemy import and_, or_, select, func, delete, update, union, text, BigInteger
+from sqlalchemy import and_, or_, select, func, delete, update, text, BigInteger, case
 from sqlalchemy.orm import aliased
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.datasource.embedding.utils import parse_valid_embedding
 from apps.datasource.models.datasource import CoreDatasource
 from apps.system.models.system_model import AssistantModel
 from apps.template.generate_chart.generator import get_base_terminology_template
 from apps.terminology.models.terminology_model import Terminology, TerminologyInfo, TerminologyInfoResult
-from common.core.config import settings
+from common.core.embedding_config import EmbeddingConfig, load_embedding_config
 from common.core.deps import SessionDep, Trans
 from common.utils.dict_to_xml import dict_to_xml
+from common.utils.embedding_lifecycle import generate_missing_embeddings
 from common.utils.embedding_threads import run_save_terminology_embeddings
 
 
@@ -372,7 +374,8 @@ def create_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
                     oid=oid,
                     enabled=info.enabled,
                     specific_ds=specific_ds,
-                    datasource_ids=datasource_ids
+                    datasource_ids=datasource_ids,
+                    advanced_application=info.advanced_application,
                 )
             )
 
@@ -591,8 +594,9 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         if not datasource_ids and info.advanced_application is None:
             raise Exception(trans("i18n_data_training.datasource_assistant_cannot_be_none"))
 
+    other_words = info.other_words or []
     words = [info.word.strip()]
-    for child in info.other_words:
+    for child in other_words:
         if child in words:
             raise Exception(trans("i18n_terminology.cannot_be_repeated"))
         else:
@@ -671,6 +675,7 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         raise Exception(trans("i18n_terminology.exists_in_db"))
 
     stmt = update(Terminology).where(and_(Terminology.id == info.id)).values(
+        embedding=case((Terminology.word.is_distinct_from(info.word.strip()), None), else_=Terminology.embedding),
         word=info.word.strip(),
         description=info.description.strip(),
         specific_ds=specific_ds,
@@ -678,36 +683,37 @@ def update_terminology(session: SessionDep, info: TerminologyInfo, oid: int, tra
         enabled=info.enabled,
         advanced_application=info.advanced_application,
     )
-    session.execute(stmt)
-    session.commit()
-
-    stmt = delete(Terminology).where(and_(Terminology.pid == info.id))
-    session.execute(stmt)
-    session.commit()
-
-    create_time = datetime.datetime.now()
-    # 插入子记录（其他词）
-    child_list = []
-    if info.other_words:
-        for other_word in info.other_words:
-            if other_word.strip() == "":
-                continue
-            child_list.append(
-                Terminology(
-                    pid=info.id,
-                    word=other_word.strip(),
-                    create_time=create_time,
-                    oid=oid,
-                    enabled=info.enabled,
-                    specific_ds=specific_ds,
-                    datasource_ids=datasource_ids,
-                    advanced_application=info.advanced_application,
-                )
-            )
-
-    if child_list:
-        session.bulk_save_objects(child_list)
-        session.flush()
+    # The parent update serializes edits of this term. Keep input invalidation,
+    # synonym removal/addition and scope propagation in one transaction.
+    if session.execute(stmt).rowcount != 1:
+        raise Exception(trans('i18n_terminology.terminology_not_exists'))
+    desired_words = {word.strip() for word in other_words if word.strip()}
+    children = session.execute(
+        select(Terminology.id, Terminology.word).where(Terminology.pid == info.id)
+    ).all()
+    existing_words = set()
+    for child_id, word in children:
+        if word not in desired_words:
+            session.execute(delete(Terminology).where(Terminology.id == child_id))
+        else:
+            existing_words.add(word)
+            session.execute(update(Terminology).where(Terminology.id == child_id).values(
+                enabled=info.enabled,
+                specific_ds=specific_ds,
+                datasource_ids=datasource_ids,
+                advanced_application=info.advanced_application,
+            ))
+    for word in sorted(desired_words - existing_words):
+        session.add(Terminology(
+            pid=info.id,
+            word=word,
+            create_time=datetime.datetime.now(),
+            oid=oid,
+            enabled=info.enabled,
+            specific_ds=specific_ds,
+            datasource_ids=datasource_ids,
+            advanced_application=info.advanced_application,
+        ))
     session.commit()
 
     # embedding
@@ -739,108 +745,66 @@ def enable_terminology(session: SessionDep, id: int, enabled: bool, trans: Trans
     session.commit()
 
 
-# def run_save_embeddings(ids: List[int]):
-#     executor.submit(save_embeddings, ids)
-#
-#
-# def fill_empty_embeddings():
-#     executor.submit(run_fill_empty_embeddings)
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import sessionmaker,scoped_session
-# engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-# session_maker = scoped_session(sessionmaker(bind=engine))
-
 def run_fill_empty_embeddings(session_maker):
-    try:
-        if not settings.EMBEDDING_ENABLED:
-            return
-        session = session_maker()
-        stmt1 = select(Terminology.id).where(and_(Terminology.embedding.is_(None), Terminology.pid.is_(None)))
-        stmt2 = select(Terminology.pid).where(
-            and_(Terminology.embedding.is_(None), Terminology.pid.isnot(None))).distinct()
-        combined_stmt = union(stmt1, stmt2)
-        results = session.execute(combined_stmt).scalars().all()
-        save_embeddings(session_maker, results)
-    except Exception:
-        traceback.print_exc()
-    finally:
-        session_maker.remove()
+    return generate_missing_embeddings(session_maker, Terminology, Terminology.word)
 
 
 def save_embeddings(session_maker, ids: List[int]):
-    if not settings.EMBEDDING_ENABLED:
+    if not ids:
         return
-
-    if not ids or len(ids) == 0:
-        return
-    try:
-        session = session_maker()
-        _list = session.query(Terminology).filter(or_(Terminology.id.in_(ids), Terminology.pid.in_(ids))).all()
-
-        _words_list = [item.word for item in _list]
-
-        model = EmbeddingModelCache.get_model()
-
-        results = model.embed_documents(_words_list)
-
-        for index in range(len(results)):
-            item = results[index]
-            stmt = update(Terminology).where(and_(Terminology.id == _list[index].id)).values(embedding=item)
-            session.execute(stmt)
-            session.commit()
-
-    except Exception:
-        traceback.print_exc()
-    finally:
-        session_maker.remove()
+    return generate_missing_embeddings(
+        session_maker, Terminology, Terminology.word,
+        or_(Terminology.id.in_(ids), Terminology.pid.in_(ids)),
+    )
 
 
-embedding_sql = f"""
+embedding_sql = """
 SELECT id, pid, word, similarity
 FROM
 (SELECT id, pid, word, oid, specific_ds, datasource_ids, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM terminology AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid AND enabled = true
+WHERE similarity > :similarity AND oid = :oid AND enabled = true
 AND (specific_ds = false OR specific_ds IS NULL)
 ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
+LIMIT :top_count
 """
 
-embedding_sql_with_datasource = f"""
+embedding_sql_with_datasource = """
 SELECT id, pid, word, similarity
 FROM
 (SELECT id, pid, word, oid, specific_ds, datasource_ids, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM terminology AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid AND enabled = true
+WHERE similarity > :similarity AND oid = :oid AND enabled = true
 AND (
     (specific_ds = false OR specific_ds IS NULL)
      OR
     (specific_ds = true AND datasource_ids IS NOT NULL AND datasource_ids @> jsonb_build_array(:datasource))
 )
 ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
+LIMIT :top_count
 """
 
-embedding_sql_with_advanced_application = f"""
+embedding_sql_with_advanced_application = """
 SELECT id, pid, word, similarity
 FROM
 (SELECT id, pid, word, oid, specific_ds, advanced_application, enabled,
 ( 1 - (embedding <=> :embedding_array) ) AS similarity
 FROM terminology AS child
 ) TEMP
-WHERE similarity > {settings.EMBEDDING_TERMINOLOGY_SIMILARITY} AND oid = :oid AND enabled = true
+WHERE similarity > :similarity AND oid = :oid AND enabled = true
 AND advanced_application = :advanced_application_id
 ORDER BY similarity DESC
-LIMIT {settings.EMBEDDING_TERMINOLOGY_TOP_COUNT}
+LIMIT :top_count
 """
 
 
 def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasource: int = None,
-                               advanced_application_id: Optional[int] = None):
+                               advanced_application_id: Optional[int] = None, *, config: EmbeddingConfig | None = None):
+    config = config or load_embedding_config(session)
     if word.strip() == "":
         return []
 
@@ -883,24 +847,24 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
     for row in results:
         _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
 
-    if settings.EMBEDDING_ENABLED:
+    if config.enabled:
         with session.begin_nested():
             try:
                 model = EmbeddingModelCache.get_model()
 
-                embedding = model.embed_query(word)
+                embedding = parse_valid_embedding(model.embed_query(word))
 
                 if advanced_application_id is not None:
                     results = session.execute(text(embedding_sql_with_advanced_application),
-                                              {'embedding_array': str(embedding), 'oid': oid,
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.terminology_similarity, 'top_count': config.terminology_top_count,
                                                'advanced_application_id': advanced_application_id}).fetchall()
                 elif datasource is not None:
                     results = session.execute(text(embedding_sql_with_datasource),
-                                              {'embedding_array': str(embedding), 'oid': oid,
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.terminology_similarity, 'top_count': config.terminology_top_count,
                                                'datasource': datasource}).fetchall()
                 else:
                     results = session.execute(text(embedding_sql),
-                                              {'embedding_array': str(embedding), 'oid': oid}).fetchall()
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.terminology_similarity, 'top_count': config.terminology_top_count}).fetchall()
 
                 for row in results:
                     _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
@@ -974,7 +938,9 @@ def to_xml_string(_dict: list[dict] | dict, root: str = 'terminologies') -> str:
 
 def get_terminology_template(session: SessionDep, question: str, oid: Optional[int] = 1,
                              datasource: Optional[int] = None,
-                             advanced_application_id: Optional[int] = None) -> tuple[str, list[dict]]:
+                             advanced_application_id: Optional[int] = None, *,
+                             config: EmbeddingConfig | None = None) -> tuple[str, list[dict]]:
+    config = config or load_embedding_config(session)
     if not oid:
         oid = 1
 
@@ -990,7 +956,7 @@ def get_terminology_template(session: SessionDep, question: str, oid: Optional[i
     seen_words = set()
     _results = []
     for part in parts:
-        for item in select_terminology_by_word(session, part, oid, datasource, advanced_application_id):
+        for item in select_terminology_by_word(session, part, oid, datasource, advanced_application_id, config=config):
             item_words = set(item.get('words', [])) if isinstance(item, dict) else set()
             if item_words and not item_words.issubset(seen_words):
                 seen_words.update(item_words)

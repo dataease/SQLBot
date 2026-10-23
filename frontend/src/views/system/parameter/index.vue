@@ -6,6 +6,38 @@ import PlatformParam from './xpack/PlatformParam.vue'
 import { request } from '@/utils/request'
 import { formatArg } from '@/utils/utils'
 const { t } = useI18n()
+const knowledgeFields = [
+  { key: 'embedding.terminology_similarity', label: 'terminology_similarity', integer: false },
+  { key: 'embedding.terminology_top_count', label: 'terminology_top_count', integer: true },
+  { key: 'embedding.data_training_similarity', label: 'data_training_similarity', integer: false },
+  { key: 'embedding.data_training_top_count', label: 'data_training_top_count', integer: true },
+] as const
+
+const tableFields = [
+  { key: 'embedding.table_count', label: 'table_count', integer: true },
+  { key: 'embedding.datasource_count', label: 'datasource_count', integer: true },
+  { key: 'embedding.table_alpha', label: 'table_alpha', integer: false },
+] as const
+const booleanFields = [
+  'embedding.enabled',
+  'embedding.keyword_enabled',
+  'embedding.table_enabled',
+] as const
+type NumericParameterKey =
+  (typeof knowledgeFields)[number]['key'] | (typeof tableFields)[number]['key']
+type BooleanParameterKey = (typeof booleanFields)[number]
+type EmbeddingParameterForm = Partial<
+  Record<NumericParameterKey, number> & Record<BooleanParameterKey, boolean>
+>
+interface ParameterValue {
+  pkey: string
+  pval: string | number | boolean | null
+}
+const embeddingForm = reactive<EmbeddingParameterForm>({})
+const isBooleanParameter = (key: string): key is BooleanParameterKey =>
+  booleanFields.some((field) => field === key)
+const isNumericParameter = (key: string): key is NumericParameterKey =>
+  [...knowledgeFields, ...tableFields].some((field) => field.key === key)
 
 const state = reactive({
   parameterForm: reactive<any>({
@@ -19,24 +51,27 @@ const state = reactive({
 })
 provide('parameterForm', state.parameterForm)
 const loadData = () => {
-  request.get('/system/parameter').then((res: any) => {
+  request.get('/system/parameter').then((res: ParameterValue[]) => {
     if (res) {
-      res.forEach((item: any) => {
-        if (
+      res.forEach((item) => {
+        if (isBooleanParameter(item.pkey)) {
+          embeddingForm[item.pkey] = item.pval === true || item.pval === 'true'
+        } else if (isNumericParameter(item.pkey)) {
+          embeddingForm[item.pkey] = Number(item.pval)
+        } else if (
           item.pkey?.startsWith('chat') ||
           item.pkey?.startsWith('login') ||
           item.pkey?.startsWith('platform')
         ) {
           if (item.pkey === 'chat.sqlbot_name') {
-            if (item.pval && item.pval.trim().length > 0) {
+            if (typeof item.pval === 'string' && item.pval.trim().length > 0) {
               state.parameterForm[item.pkey] = item.pval
             }
           } else {
-            state.parameterForm[item.pkey] = formatArg(item.pval)
+            state.parameterForm[item.pkey] = formatArg(String(item.pval))
           }
         }
       })
-      console.log(state.parameterForm)
     }
   })
 }
@@ -66,19 +101,29 @@ const beforeChange = (): Promise<boolean> => {
   })
 }
 const buildParam = () => {
-  const changedItemArray = Object.keys(state.parameterForm).map((key: string) => {
-    return {
-      pkey: key,
-      pval: Object.prototype.hasOwnProperty.call(state.parameterForm, 'key')
-        ? state.parameterForm[key].toString()
-        : state.parameterForm[key],
-    }
-  })
+  const changedItemArray = Object.entries({ ...state.parameterForm, ...embeddingForm }).map(
+    ([pkey, pval]) => ({
+      pkey,
+      pval: String(pval),
+    })
+  )
   const formData = new FormData()
   formData.append('data', JSON.stringify(unref(changedItemArray)))
   return formData
 }
 const saveHandler = () => {
+  const invalid = [...knowledgeFields, ...tableFields].some(({ key, integer }) => {
+    const value = embeddingForm[key]
+    return (
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      (integer ? !Number.isInteger(value) || value <= 0 : value < 0 || value > 1)
+    )
+  })
+  if (invalid || booleanFields.some((key) => typeof embeddingForm[key] !== 'boolean')) {
+    ElMessage.error(t('parameter.invalid_embedding_parameter'))
+    return
+  }
   const param = buildParam()
   request
     .post('/system/parameter', param, {
@@ -88,6 +133,7 @@ const saveHandler = () => {
     })
     .then(() => {
       ElMessage.success(t('common.save_success'))
+      loadData()
     })
 }
 onMounted(() => {
@@ -199,6 +245,56 @@ onMounted(() => {
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-title">{{ t('parameter.knowledge_retrieval') }}</div>
+        <div class="card-item">
+          <div class="label">{{ t('parameter.knowledge_enabled') }}</div>
+          <div class="value"><el-switch v-model="embeddingForm['embedding.enabled']" /></div>
+        </div>
+        <p class="hint">{{ t('parameter.knowledge_enabled_hint') }}</p>
+        <p class="hint">{{ t('parameter.knowledge_candidates_hint') }}</p>
+        <div class="embedding-grid">
+          <div v-for="field in knowledgeFields" :key="field.key" class="card-item">
+            <div class="label">{{ t(`parameter.${field.label}`) }}</div>
+            <div class="value">
+              <el-input-number
+                v-model="embeddingForm[field.key]"
+                :step="field.integer ? 1 : 0.05"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">{{ t('parameter.table_selection') }}</div>
+        <p class="hint">{{ t('parameter.table_candidates_hint') }}</p>
+        <div class="card-item">
+          <div class="label">{{ t('parameter.table_enabled') }}</div>
+          <div class="value">
+            <el-switch v-model="embeddingForm['embedding.table_enabled']" />
+          </div>
+        </div>
+        <p class="hint">{{ t('parameter.table_enabled_hint') }}</p>
+        <div class="embedding-grid">
+          <div v-for="field in tableFields" :key="field.key" class="card-item">
+            <div class="label">{{ t(`parameter.${field.label}`) }}</div>
+            <div class="value">
+              <el-input-number
+                v-model="embeddingForm[field.key]"
+                :step="field.integer ? 1 : 0.05"
+              />
+            </div>
+          </div>
+          <div class="card-item">
+            <div class="label">{{ t('parameter.keyword_enabled') }}</div>
+            <div class="value">
+              <el-switch v-model="embeddingForm['embedding.keyword_enabled']" />
+            </div>
+          </div>
+        </div>
+        <p class="hint">{{ t('parameter.table_weight_hint') }}</p>
+        <p class="hint">{{ t('parameter.keyword_enabled_hint') }}</p>
+      </div>
       <platform-param />
     </div>
     <div class="save" style="margin-top: 16px">
@@ -229,6 +325,15 @@ onMounted(() => {
     font-size: 20px;
     line-height: 28px;
     margin-bottom: 16px;
+  }
+  .embedding-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .hint {
+    color: var(--ed-text-color-secondary);
+    margin: 8px 0 0;
+    font-size: 12px;
   }
   .card-container {
     .card {
