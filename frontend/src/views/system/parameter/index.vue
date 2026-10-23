@@ -13,6 +13,11 @@ const knowledgeFields = [
   { key: 'embedding.data_training_top_count', label: 'data_training_top_count', integer: true },
 ] as const
 
+const knowledgeRows = [
+  { label: 'terminology', similarity: knowledgeFields[0], count: knowledgeFields[1] },
+  { label: 'sql_example', similarity: knowledgeFields[2], count: knowledgeFields[3] },
+] as const
+
 const tableFields = [
   { key: 'embedding.table_count', label: 'table_count', integer: true },
   { key: 'embedding.datasource_count', label: 'datasource_count', integer: true },
@@ -245,59 +250,134 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">{{ t('parameter.knowledge_retrieval') }}</div>
-        <div class="card-item">
-          <div class="label">{{ t('parameter.knowledge_enabled') }}</div>
-          <div class="value"><el-switch v-model="embeddingForm['embedding.enabled']" /></div>
-        </div>
-        <p class="hint">{{ t('parameter.knowledge_enabled_hint') }}</p>
-        <p class="hint">{{ t('parameter.knowledge_candidates_hint') }}</p>
-        <div class="embedding-grid">
-          <div v-for="field in knowledgeFields" :key="field.key" class="card-item">
-            <div class="label">{{ t(`parameter.${field.label}`) }}</div>
-            <div class="value">
-              <el-input-number
-                v-model="embeddingForm[field.key]"
-                :step="field.integer ? 1 : 0.05"
+      <p class="embedding-scope hint">{{ t('parameter.embedding_scope_hint') }}</p>
+      <div class="card embedding-card">
+        <div class="embedding-header">
+          <div class="card-title">{{ t('parameter.knowledge_retrieval') }}</div>
+          <div class="embedding-toggle">
+            <span>{{ t('parameter.knowledge_enabled') }}</span>
+            <el-tooltip :content="t('parameter.embedding_backfill_hint')" placement="top">
+              <el-switch
+                v-model="embeddingForm['embedding.enabled']"
+                :aria-label="
+                  t('parameter.knowledge_retrieval') + ' ' + t('parameter.knowledge_enabled')
+                "
               />
-            </div>
+            </el-tooltip>
           </div>
         </div>
+        <p class="hint">{{ t('parameter.knowledge_enabled_hint') }}</p>
+        <div class="knowledge-table-wrapper">
+          <table class="knowledge-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ t('parameter.knowledge_type') }}</th>
+                <th scope="col">
+                  <span class="embedding-label">
+                    {{ t('parameter.similarity_threshold') }}
+                    <el-tooltip :content="t('parameter.similarity_hint')" placement="top">
+                      <el-icon tabindex="0" :aria-label="t('parameter.similarity_hint')">
+                        <icon_info_outlined_1 />
+                      </el-icon>
+                    </el-tooltip>
+                  </span>
+                </th>
+                <th scope="col">{{ t('parameter.vector_candidates') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in knowledgeRows" :key="row.label">
+                <th scope="row">{{ t(`parameter.${row.label}`) }}</th>
+                <td>
+                  <el-input-number
+                    v-model="embeddingForm[row.similarity.key]"
+                    :step="0.05"
+                    :disabled="!embeddingForm['embedding.enabled']"
+                    :aria-label="t(`parameter.${row.similarity.label}`)"
+                  />
+                </td>
+                <td>
+                  <div class="embedding-label">
+                    <el-input-number
+                      v-model="embeddingForm[row.count.key]"
+                      :step="1"
+                      :disabled="!embeddingForm['embedding.enabled']"
+                      :aria-label="t(`parameter.${row.count.label}`)"
+                    />
+                    <el-tooltip :content="t(`parameter.${row.label}_count_hint`)" placement="top">
+                      <el-icon tabindex="0" :aria-label="t(`parameter.${row.label}_count_hint`)">
+                        <icon_info_outlined_1 />
+                      </el-icon>
+                    </el-tooltip>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-title">{{ t('parameter.table_selection') }}</div>
-        <p class="hint">{{ t('parameter.table_candidates_hint') }}</p>
-        <div class="card-item">
-          <div class="label">{{ t('parameter.table_enabled') }}</div>
-          <div class="value">
-            <el-switch v-model="embeddingForm['embedding.table_enabled']" />
+      <div class="card embedding-card">
+        <div class="embedding-header">
+          <div class="card-title">{{ t('parameter.table_selection') }}</div>
+          <div class="embedding-toggle">
+            <span>{{ t('parameter.table_enabled') }}</span>
+            <el-tooltip :content="t('parameter.embedding_backfill_hint')" placement="top">
+              <el-switch
+                v-model="embeddingForm['embedding.table_enabled']"
+                :aria-label="t('parameter.table_selection') + ' ' + t('parameter.table_enabled')"
+              />
+            </el-tooltip>
           </div>
         </div>
         <p class="hint">{{ t('parameter.table_enabled_hint') }}</p>
         <div class="embedding-grid">
           <div v-for="field in tableFields" :key="field.key" class="card-item">
-            <div class="label">{{ t(`parameter.${field.label}`) }}</div>
+            <div class="label embedding-label">
+              {{ t(`parameter.${field.label}`) }}
+              <el-tooltip :content="t(`parameter.${field.label}_hint`)" placement="top">
+                <el-icon tabindex="0" :aria-label="t(`parameter.${field.label}_hint`)">
+                  <icon_info_outlined_1 />
+                </el-icon>
+              </el-tooltip>
+            </div>
             <div class="value">
               <el-input-number
                 v-model="embeddingForm[field.key]"
                 :step="field.integer ? 1 : 0.05"
+                :disabled="
+                  !embeddingForm['embedding.table_enabled'] ||
+                  (field.key === 'embedding.table_alpha' &&
+                    !embeddingForm['embedding.keyword_enabled'])
+                "
+                :aria-label="t(`parameter.${field.label}`)"
               />
             </div>
-          </div>
-          <div class="card-item">
-            <div class="label">{{ t('parameter.keyword_enabled') }}</div>
-            <div class="value">
-              <el-switch v-model="embeddingForm['embedding.keyword_enabled']" />
-            </div>
+            <p
+              v-if="
+                field.key === 'embedding.table_alpha' && !embeddingForm['embedding.keyword_enabled']
+              "
+              class="hint"
+            >
+              {{ t('parameter.table_alpha_disabled_hint') }}
+            </p>
           </div>
         </div>
-        <p class="hint">{{ t('parameter.table_weight_hint') }}</p>
+      </div>
+      <div class="card embedding-card">
+        <div class="embedding-header">
+          <div class="card-title">{{ t('parameter.keyword_enabled') }}</div>
+          <div class="embedding-toggle">
+            <el-switch
+              v-model="embeddingForm['embedding.keyword_enabled']"
+              :aria-label="t('parameter.keyword_enabled')"
+            />
+          </div>
+        </div>
         <p class="hint">{{ t('parameter.keyword_enabled_hint') }}</p>
       </div>
       <platform-param />
     </div>
-    <div class="save" style="margin-top: 16px">
+    <div class="save">
       <el-button type="primary" @click="saveHandler">{{ t('common.save') }}</el-button>
     </div>
   </div>
@@ -328,7 +408,75 @@ onMounted(() => {
   }
   .embedding-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 24px;
+  }
+  .embedding-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .embedding-toggle,
+  .embedding-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .embedding-toggle {
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+  .embedding-label .ed-icon {
+    flex-shrink: 0;
+    color: var(--ed-text-color-secondary);
+  }
+  .knowledge-table-wrapper {
+    overflow-x: auto;
+    margin-top: 16px;
+  }
+  .knowledge-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+
+    th,
+    td {
+      padding: 12px 16px;
+      font-weight: 400;
+    }
+    thead {
+      background: var(--ed-fill-color-light);
+      color: var(--ed-text-color-secondary);
+    }
+    tbody tr + tr {
+      border-top: 1px solid var(--ed-border-color-lighter);
+    }
+    th:first-child {
+      width: 24%;
+      min-width: 110px;
+    }
+  }
+  .save {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: 16px;
+    padding: 16px 0;
+    background: var(--ed-bg-color);
+    border-top: 1px solid var(--ed-border-color-lighter);
+  }
+  .hint.embedding-scope {
+    margin-top: 24px;
+  }
+  .card-container .card.embedding-card {
+    .embedding-header .card-title {
+      width: auto;
+    }
+    .card-item {
+      width: 100%;
+    }
   }
   .hint {
     color: var(--ed-text-color-secondary);
@@ -377,6 +525,14 @@ onMounted(() => {
           line-height: 20px;
         }
       }
+    }
+  }
+  @media (max-width: 960px) {
+    .embedding-grid {
+      grid-template-columns: 1fr;
+    }
+    .embedding-header {
+      flex-wrap: wrap;
     }
   }
 }
