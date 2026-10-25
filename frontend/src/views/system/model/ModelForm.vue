@@ -81,6 +81,7 @@ const handleParamsCreate = () => {
 
 const handleParamsDel = (item: any) => {
   advancedSetting.value = advancedSetting.value.filter((ele) => ele.id !== item.id)
+  tempConfigMap.set(`${modelForm.supplier}-${modelForm.base_model}`, [...advancedSetting.value])
 }
 const currentPage = ref(1)
 const advancedSettingPagination = computed(() => {
