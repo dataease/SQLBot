@@ -20,6 +20,8 @@ import { chatApi } from '@/api/chat'
 import RecommendedProblemConfigDialog from '@/views/ds/RecommendedProblemConfigDialog.vue'
 import { highlightKeyword } from '@/utils/xss'
 const userStore = useUserStore()
+const props = defineProps<{ pageEmbedded?: boolean }>()
+const emits = defineEmits<{ 'start-chat': [id: string] }>()
 const recommendedProblemConfigRef = ref()
 
 export interface Datasource {
@@ -109,6 +111,10 @@ const handleQuestion = async (id: string) => {
         }
       },
     })
+    return
+  }
+  if (props.pageEmbedded) {
+    emits('start-chat', id)
     return
   }
   router.push({

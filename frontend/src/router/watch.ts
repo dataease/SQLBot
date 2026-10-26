@@ -19,7 +19,8 @@ export const watchRouter = (router: Router) => {
     await loadXpackStatic()
     await appearanceStore.setAppearance()
     LicenseGenerator.generateRouters(router)
-    if (to.path.startsWith('/login') && userStore.getUid) {
+    const token = wsCache.get('user.token')
+    if (to.path.startsWith('/login') && token && userStore.getUid) {
       next(to?.query?.redirect || '/')
       return
     }
@@ -27,7 +28,6 @@ export const watchRouter = (router: Router) => {
       next()
       return
     }
-    const token = wsCache.get('user.token')
     if (whiteList.includes(to.path)) {
       next()
       return

@@ -489,7 +489,7 @@ import QuickQuestion from '@/views/chat/QuickQuestion.vue'
 import { useChatConfigStore } from '@/stores/chatConfig.ts'
 const userStore = useUserStore()
 const props = defineProps<{
-  startChatDsId?: number
+  startChatDsId?: number | string
   welcomeDesc?: string
   logoAssistant?: string
   welcome?: string
@@ -1126,8 +1126,10 @@ function jumpCreatChat() {
     nextTick(() => {
       hiddenChatCreatorRef.value?.createChat(_id)
     })
-    const newUrl = window.location.hash.replace(/\?.*$/, '')
-    history.replaceState({}, '', newUrl)
+    if (!props.pageEmbedded) {
+      const newUrl = window.location.hash.replace(/\?.*$/, '')
+      history.replaceState({}, '', newUrl)
+    }
   }
 }
 function checkAfterVisible() {
