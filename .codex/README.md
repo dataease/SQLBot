@@ -20,7 +20,7 @@ TAPD、DBHub 保持启用；Playwright MCP 默认禁用。浏览器复现使用 
 
 ## 服务约定
 
-- **TAPD**：填写 SQLBot 对应的 `TAPD_WORKSPACE_ID`、个人用户名、令牌和入口。配置保留参考项目的 Node/Python 两种实现的读取工具白名单，不开放写入工具。Python `mcp-server-tapd` 调用仍须显式传本项目 `workspace_id`；启动器不会自动注入每次调用。不要使用会另行加载其他个人凭据的包装入口。
+- **TAPD**：填写 SQLBot 对应的 `TAPD_WORKSPACE_ID`、个人用户名、令牌和入口。工具白名单与 DataEase V3 对齐，保留读取工具，并开放 `get_workflows_all_transitions`、`update_bug`、`update_story_or_task`、`create_comments`。写入仅在用户授权的任务范围内执行；更新前读取实体最新内容和适用工作流，更新后回读核对。不得将代码已提交等同于已合并、已部署或已验证。Python `mcp-server-tapd` 调用仍须显式传本项目 `workspace_id`；启动器不会自动注入每次调用。不要使用会另行加载其他个人凭据的包装入口。
 - **Playwright MCP（历史兼容，默认禁用）**：使用支持 Chrome、`--user-data-dir` 和 `--output-dir` 参数的 `@playwright/mcp` 入口，并准备本机 Chrome。浏览器资料位于 `playwright_mcp/browser-profile/`，截图等产物位于 `playwright_mcp/output/`。`TEST_BASE_URL` 是本机示例，需按实际测试环境调整；`TEST_*` 仅供执行测试时按需使用，启动器不会自动登录。
 - **DBHub**：沿用参考项目针对 `@bytebase/dbhub@1.3.1` 的配置格式，入口须支持 `--config`。示例 DSN 已改为 PostgreSQL/sqlbot，仅用于展示格式。DSN 通过环境变量传递，`dbhub.toml` 为 `execute_sql` 设置 `readonly = true` 和最多 1000 行；数据库账号本身也必须只读。只在任务授权的测试环境使用，不用生产或共享业务库做配置验证。
 
