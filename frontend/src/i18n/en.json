@@ -612,6 +612,7 @@
     "old_password": "Old password",
     "title": "User management",
     "upgrade_pwd": {
+      "save_error": "Unable to change the password. Please try again later.",
       "title": "Change password",
       "old_pwd": "Old password",
       "new_pwd": "New password",

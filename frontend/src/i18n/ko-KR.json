@@ -612,6 +612,7 @@
     "old_password": "기존 비밀번호",
     "title": "사용자 관리",
     "upgrade_pwd": {
+      "save_error": "비밀번호를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       "title": "비밀번호 변경",
       "old_pwd": "기존 비밀번호",
       "new_pwd": "새 비밀번호",

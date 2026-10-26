@@ -1,13 +1,18 @@
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
+import { isAxiosError } from 'axios'
 import { useI18n } from 'vue-i18n'
 import { userApi } from '@/api/auth'
 const { t } = useI18n()
 const pwdRef = ref()
+const submitError = ref('')
 const pwdForm = reactive({
   pwd: '',
   new_pwd: '',
   confirm_pwd: '',
+})
+watch(pwdForm, () => {
+  submitError.value = ''
 })
 const PWD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*()_+\-={}|:"<>?`\[\];',./])[A-Za-z\d~!@#$%^&*()_+\-={}|:"<>?`\[\];',./]{8,20}$/
@@ -23,7 +28,8 @@ const validatePass = (rule: any, value: any, callback: any) => {
     }
     if (pwdForm.confirm_pwd !== '') {
       if (!pwdRef.value) return
-      pwdRef.value.validateField('confirm_pwd')
+      // Field validation already renders mismatch errors in the form.
+      pwdRef.value.validateField('confirm_pwd').catch(() => undefined)
     }
     callback()
   }
@@ -62,13 +68,24 @@ const submit = () => {
         pwd: pwdForm.pwd,
         new_pwd: pwdForm.new_pwd,
       }
-      userApi.pwd(param).then(() => {
-        ElMessage({
-          type: 'success',
-          message: t('common.save_success'),
+      submitError.value = ''
+      userApi
+        .pwd(param)
+        .then(() => {
+          ElMessage({
+            type: 'success',
+            message: t('common.save_success'),
+          })
+          emits('pwdSaved')
         })
-        emits('pwdSaved')
-      })
+        .catch((error: unknown) => {
+          // The shared HTTP client keeps its toast and authentication handling.
+          const message = isAxiosError(error) ? error.response?.data : undefined
+          submitError.value =
+            typeof message === 'string' && message.trim()
+              ? message
+              : t('user.upgrade_pwd.save_error')
+        })
     }
   })
 }
@@ -114,6 +131,14 @@ defineExpose({
           clearable
         />
       </el-form-item>
+      <el-alert
+        v-if="submitError"
+        class="pwd-submit-error"
+        :title="submitError"
+        type="error"
+        :closable="false"
+        show-icon
+      />
     </el-form>
   </div>
 </template>

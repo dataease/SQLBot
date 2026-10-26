@@ -1,8 +1,9 @@
 from collections import defaultdict
 from typing import Optional
-from fastapi import APIRouter, File, Path, Query, UploadFile
+from fastapi import APIRouter, File, HTTPException, Path, Query, UploadFile
 from sqlmodel import SQLModel, case, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
+from apps.system.crud.password_policy import initial_pwd_disabled
 from apps.system.crud.user_excel import batchUpload, downTemplate, download_error_file
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.models.user import UserModel
@@ -398,6 +399,8 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
     db_user: UserModel = get_db_user(session=session, user_id=current_user.id)
     if not verify_md5pwd(editor.pwd, db_user.password):
         raise Exception(trans('i18n_error', key = trans('i18n_user.password')))
+    if await initial_pwd_disabled(session) and new_pwd == settings.DEFAULT_PWD:
+        raise HTTPException(status_code=400, detail=trans('i18n_login.new_pwd_is_initial'))
     db_user.password = md5pwd(new_pwd)
     session.add(db_user)
     return db_user

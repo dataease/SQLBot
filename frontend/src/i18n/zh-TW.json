@@ -612,6 +612,7 @@
     "old_password": "舊密碼",
     "title": "使用者管理",
     "upgrade_pwd": {
+      "save_error": "密碼修改失敗，請稍後重試",
       "title": "修改密碼",
       "old_pwd": "舊密碼",
       "new_pwd": "新密碼",
