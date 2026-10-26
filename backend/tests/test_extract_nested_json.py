@@ -1,14 +1,15 @@
 import os
 import sys
-import pytest
+
 import orjson
+import pytest
 
 # Ensure backend root is in sys.path
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from common.utils.utils import extract_nested_json
+from common.utils.utils import extract_nested_json  # noqa: E402
 
 
 def test_standard_json_extraction():
@@ -116,6 +117,58 @@ def test_invalid_candidate_before_valid_json():
     assert data["sql"] == "SELECT 1"
 
 
-@pytest.mark.parametrize("invalid_input", [None, "", "   ", 123, [], {}, "No json at all here"])
+@pytest.mark.parametrize(
+    "invalid_input", [None, "", "   ", 123, [], {}, "No json at all here"]
+)
 def test_invalid_or_empty_inputs(invalid_input):
     assert extract_nested_json(invalid_input) is None
+
+
+@pytest.mark.parametrize(
+    "invalid_candidate",
+    [
+        '{"tables": [],}',
+        '{"outer": {"success": true, "sql": "SELECT 0"}, bad}',
+        '[{"year": 2026, "value": 10},]',
+        '{"sql": "SELECT \'{}\'", bad}',
+        '{"tables": [}, "other": {"success": true}}',
+        '{"value": NaN, "tables": []}',
+        '{"sql": "SELECT\n1", "tables": []}',
+    ],
+)
+def test_invalid_outer_candidate_does_not_expose_nested_values(invalid_candidate):
+    assert extract_nested_json(invalid_candidate) is None
+    answer = '{"success": true, "sql": "SELECT 1", "tables": ["t"]}'
+    assert extract_nested_json(invalid_candidate + " then " + answer) == answer
+
+
+@pytest.mark.parametrize(
+    "truncated",
+    [
+        '{"sql": "SELECT 1", "tables": ["t"]',
+        '[{"year": 2026, "value": 10},',
+        '[{"x": 1}',
+        '{"outer": {"success": true, "sql": "SELECT 1"}',
+        '{"text": "unterminated [] {}',
+    ],
+)
+def test_truncated_outer_candidate_is_rejected(truncated):
+    assert extract_nested_json(truncated) is None
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        '{"outer": [{"inner": [1, 2]}, []], "empty": {}}',
+        "{\"sql\": \"SELECT '[', ']', '{', '}'\", \"tables\": []}",
+        r'{"text": "escaped quote: \" { [", "tail": "ends in slash \\"}',
+        "{}",
+        "[]",
+    ],
+)
+def test_complete_outer_candidate_is_preserved(answer):
+    assert (
+        extract_nested_json('Explanation: "answer" ```json\n' + answer + "\n```")
+        == answer
+    )
+    assert extract_nested_json(answer + ' {"next": true}') == answer

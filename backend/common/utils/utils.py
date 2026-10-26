@@ -53,24 +53,48 @@ def deepcopy_ignore_extra(src, dest):
     return dest
 
 
-def extract_nested_json(text: str) -> Optional[str]:
+def extract_nested_json(text: str) -> str | None:
+    """Return the first valid outer JSON object/array, never a failed one's child."""
     if not text or not isinstance(text, str):
         return None
 
-    decoder = json.JSONDecoder(strict=False)
+    depth = 0
+    start = 0
+    in_string = False
+    escaped = False
     for i, char in enumerate(text):
-        if char in '{[':
-            try:
-                _, end = decoder.raw_decode(text, i)
-                candidate = text[i:end]
+        if depth == 0:
+            if char in "{[":
+                start = i
+                depth = 1
+            continue
+
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+        elif char in "{[":
+            depth += 1
+        elif char in "}]":
+            depth -= 1
+            if depth == 0:
+                # Count boundaries only; orjson checks bracket types and syntax.
+                # Skip an invalid candidate as a whole instead of retrying inside it.
+                candidate = text[start : i + 1]
                 try:
                     orjson.loads(candidate)
-                    return candidate
-                except Exception:
+                except orjson.JSONDecodeError:
                     continue
-            except Exception:
-                continue
+                return candidate
     return None
+
 
 def string_to_numeric_hash(text: str, bits: Optional[int] = 64) -> int:
     hash_bytes = hashlib.sha256(text.encode()).digest()
