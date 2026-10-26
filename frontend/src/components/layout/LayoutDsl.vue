@@ -379,7 +379,7 @@ onBeforeMount(() => {
     .content {
       width: 100%;
       height: 100%;
-      padding: 16px 24px;
+      padding: 16px 24px 0;
       background-color: #fff;
       border-radius: 12px;
       box-shadow: 0px 2px 4px 0px #1f23291f;
