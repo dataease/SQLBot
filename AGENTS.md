@@ -17,9 +17,10 @@ SQLBot 让业务用户用自然语言提问，基于已配置的数据源生成�
 
 | 路径 | 职责 |
 | --- | --- |
-| `backend/` | Python 3.11 / FastAPI / SQLModel 后端。`main.py` 组装应用、MCP、中间件、静态资源和 xpack；业务域在 `apps/`，共享代码在 `common/`，迁移在 `alembic/versions/`，全部测试（含仓库守卫）在 `tests/`。 |
+| `backend/` | Python 3.11 / FastAPI / SQLModel 后端。`main.py` 组装应用、MCP、中间件、静态资源和 xpack；业务域在 `apps/`，共享代码在 `common/`，迁移在 `alembic/versions/`，后端测试（含仓库守卫）在 `tests/`。 |
 | `frontend/` | Vue 3、TypeScript strict、Vite、Pinia、Vue Router 和 Element Plus。请求在 `src/api/`，共享实体在 `src/entity/`，状态在 `src/stores/`，路由在 `src/router/`，UI 在 `src/views/` 和 `src/components/`。 |
 | `g2-ssr/` | Node.js 图表渲染服务，使用 `@antv/g2-ssr`；图表实现位于 `charts/`，目录内有独立 `AGENTS.md`。 |
+| `tests/browser/` | 独立 Playwright CLI 复现与 Playwright Test 浏览器回归，使用方式见目录内 `README.md`。 |
 | `installer/` | 离线安装、卸载、配置模板和服务控制脚本。 |
 | `.codex/` | Codex 开发用 MCP 配置、启动器与本地配置模板；使用方式见 `.codex/README.md`，不属于 SQLBot 产品 MCP。 |
 | `Dockerfile*`、`docker-compose.yaml`、`start.sh` | 容器组装和运行时进程启动。 |
@@ -59,6 +60,7 @@ SQLBot 让业务用户用自然语言提问，基于已配置的数据源生成�
 - 不要为了通过测试削弱安全守卫；安全、权限、SQL、Host、路径和嵌入认证改动必须有相关回归验证。
 - 修改 Docker、installer 或路径配置时，核对前端构建产物、后端工作目录、`/opt/sqlbot` 数据目录、图表输出和日志挂载仍然一致。
 - 依赖、lockfile 和版本号只在任务明确需要时更新；不要顺手刷新。
+- 浏览器问题使用 `tests/browser` 下的 Playwright CLI 复现、Playwright Test 回归，不使用 Playwright MCP；优先局部输出，失败时按需读取截图和 trace。
 - 按验收条件选择验证层级，不把构建或单元测试等同于产品验收。普通任务不默认构建镜像或启动完整运行栈；已要求真实接口、浏览器或部署验证时，可启动必要的隔离服务。环境范围、外部成本或数据用途不明确时先确认。
 - 除非用户明确要求，不要上传、发布或推送镜像 / wheel / 包。
 - 变更涉及本文件或 `docs/agents/` 描述的约定（目录职责、命令、流程）时，同步更新对应文档。

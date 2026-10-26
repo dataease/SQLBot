@@ -2,7 +2,7 @@
 
 ## 测试布局
 
-当前入库的自动化测试集中在 `backend/tests/`。以下命令从仓库根进入 `backend/` 后运行；其余文档中的命令也应按注明的工作目录执行：
+后端单元与仓库守卫测试位于 `backend/tests/`，浏览器复现和回归工具位于 `tests/browser/`。以下命令从仓库根进入 `backend/` 后运行；其余文档中的命令也应按注明的工作目录执行：
 
 ```bash
 cd backend
@@ -62,7 +62,9 @@ npm run build
 - 类型、模板和打包验证由 `vue-tsc -b` 与 Vite 完成。
 - 修改少量文件时可用 `npx eslint <changed-file...> --fix`。
 - 不要默认运行全量自动修复脚本。
-- 当前不要自行引入 Vitest/Jest/Playwright 等新测试框架；若需要，先提出框架、运行成本和 CI 影响。
+- 浏览器复现使用 Playwright CLI，回归使用 Playwright Test，不使用 Playwright MCP。工具依赖独立于前端，固定版本及 lockfile 位于 `tests/browser/`；本次配置不增加 CI 作业。其他新测试框架仍需先说明运行成本和 CI 影响。
+- 安装：`npm --prefix tests/browser ci`；工具自检：`npm --prefix tests/browser run test:smoke`。业务冒烟需显式设置 `PLAYWRIGHT_BASE_URL`，不自动启动产品或执行迁移。完整命令见 [`tests/browser/README.md`](../../tests/browser/README.md)。
+- 每个缺陷使用独立 CLI 会话，优先 `find`、局部快照或合并 `run-code`，只读取必要输出。业务回归需增加明确的项目/testMatch，保留修复前失败、修复后通过的证据；工具自检不等同业务验收。
 
 ## 图表渲染服务
 

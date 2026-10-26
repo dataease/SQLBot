@@ -6,7 +6,7 @@
 ## 配置与启用
 
 [Codex 官方 MCP 文档](https://developers.openai.com/codex/mcp)支持受信任项目使用 `.codex/config.toml`。
-本仓库三个服务配置为 `enabled = true`。首次使用前需完成本地配置；暂不使用的服务应设为 `enabled = false`，避免缺少配置时启动失败。
+TAPD、DBHub 保持启用；Playwright MCP 默认禁用。浏览器复现使用 Playwright CLI，回归使用 Playwright Test，配置和命令见 [`tests/browser/README.md`](../tests/browser/README.md)。首次使用前需完成本地配置；暂不使用的服务应设为 `enabled = false`，避免缺少配置时启动失败。
 
 1. 在本机安装需要的 MCP 服务，记录其入口文件位置；启动器不会自动安装依赖。
 2. 将相应目录的 `.env.example` 复制为同目录 `.env.local`，填写自己的入口、解释器和项目配置。
@@ -21,7 +21,7 @@
 ## 服务约定
 
 - **TAPD**：填写 SQLBot 对应的 `TAPD_WORKSPACE_ID`、个人用户名、令牌和入口。配置保留参考项目的 Node/Python 两种实现的读取工具白名单，不开放写入工具。Python `mcp-server-tapd` 调用仍须显式传本项目 `workspace_id`；启动器不会自动注入每次调用。不要使用会另行加载其他个人凭据的包装入口。
-- **Playwright**：使用支持 Chrome、`--user-data-dir` 和 `--output-dir` 参数的 `@playwright/mcp` 入口，并准备本机 Chrome。浏览器资料位于 `playwright_mcp/browser-profile/`，截图等产物位于 `playwright_mcp/output/`。`TEST_BASE_URL` 是本机示例，需按实际测试环境调整；`TEST_*` 仅供执行测试时按需使用，启动器不会自动登录。
+- **Playwright MCP（历史兼容，默认禁用）**：使用支持 Chrome、`--user-data-dir` 和 `--output-dir` 参数的 `@playwright/mcp` 入口，并准备本机 Chrome。浏览器资料位于 `playwright_mcp/browser-profile/`，截图等产物位于 `playwright_mcp/output/`。`TEST_BASE_URL` 是本机示例，需按实际测试环境调整；`TEST_*` 仅供执行测试时按需使用，启动器不会自动登录。
 - **DBHub**：沿用参考项目针对 `@bytebase/dbhub@1.3.1` 的配置格式，入口须支持 `--config`。示例 DSN 已改为 PostgreSQL/sqlbot，仅用于展示格式。DSN 通过环境变量传递，`dbhub.toml` 为 `execute_sql` 设置 `readonly = true` 和最多 1000 行；数据库账号本身也必须只读。只在任务授权的测试环境使用，不用生产或共享业务库做配置验证。
 
 ## 运行时
@@ -43,3 +43,7 @@ python3 -B backend/tests/test_codex_mcp_runtime.py
 
 离线测试覆盖配置校验、解释器选择和启动参数/环境变量传递，不连接外部服务。
 配置解析或离线测试通过不代表真实 MCP 握手、工具调用或数据库只读权限已经验证。
+
+## 浏览器测试迁移
+
+新任务不使用 Playwright MCP，也不在 CLI/Test 失败时自动回退。旧启动器和本地配置保留用于兼容；新工具不会读取旧凭据或复用旧浏览器资料。使用 `PLAYWRIGHT_BASE_URL` 显式指定 SQLBot 测试地址，登录状态保存到 `tests/browser/.auth/`。已有会话可能仍显示已加载的 MCP 工具；新建会话后按禁用配置加载。
