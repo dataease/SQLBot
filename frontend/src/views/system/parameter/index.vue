@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, provide, reactive, unref } from 'vue'
+import { computed, onMounted, provide, reactive, unref } from 'vue'
 import icon_info_outlined_1 from '@/assets/svg/icon_info_outlined_1.svg'
 import { useI18n } from 'vue-i18n'
 import PlatformParam from './xpack/PlatformParam.vue'
@@ -21,15 +21,15 @@ const knowledgeRows = [
 const tableFields = [
   { key: 'embedding.table_count', label: 'table_count', integer: true },
   { key: 'embedding.datasource_count', label: 'datasource_count', integer: true },
-  { key: 'embedding.table_alpha', label: 'table_alpha', integer: false },
 ] as const
+const weightField = { key: 'embedding.table_alpha', label: 'table_alpha', integer: false } as const
+const numericFields = [...knowledgeFields, ...tableFields, weightField]
 const booleanFields = [
   'embedding.enabled',
   'embedding.keyword_enabled',
   'embedding.table_enabled',
 ] as const
-type NumericParameterKey =
-  (typeof knowledgeFields)[number]['key'] | (typeof tableFields)[number]['key']
+type NumericParameterKey = (typeof numericFields)[number]['key']
 type BooleanParameterKey = (typeof booleanFields)[number]
 type EmbeddingParameterForm = Partial<
   Record<NumericParameterKey, number> & Record<BooleanParameterKey, boolean>
@@ -39,10 +39,20 @@ interface ParameterValue {
   pval: string | number | boolean | null
 }
 const embeddingForm = reactive<EmbeddingParameterForm>({})
+const tableMatchingMode = computed(() => {
+  if (!embeddingForm['embedding.table_enabled']) return 'unfiltered'
+  return embeddingForm['embedding.keyword_enabled'] ? 'hybrid' : 'vector'
+})
+const keywordWeight = computed(() => {
+  const alpha = embeddingForm['embedding.table_alpha']
+  return typeof alpha === 'number' && Number.isFinite(alpha) && alpha >= 0 && alpha <= 1
+    ? Number((1 - alpha).toFixed(10))
+    : '—'
+})
 const isBooleanParameter = (key: string): key is BooleanParameterKey =>
   booleanFields.some((field) => field === key)
 const isNumericParameter = (key: string): key is NumericParameterKey =>
-  [...knowledgeFields, ...tableFields].some((field) => field.key === key)
+  numericFields.some((field) => field.key === key)
 
 const state = reactive({
   parameterForm: reactive<any>({
@@ -117,7 +127,7 @@ const buildParam = () => {
   return formData
 }
 const saveHandler = () => {
-  const invalid = [...knowledgeFields, ...tableFields].some(({ key, integer }) => {
+  const invalid = numericFields.some(({ key, integer }) => {
     const value = embeddingForm[key]
     return (
       typeof value !== 'number' ||
@@ -344,29 +354,18 @@ onMounted(() => {
               <el-input-number
                 v-model="embeddingForm[field.key]"
                 :step="field.integer ? 1 : 0.05"
-                :disabled="
-                  !embeddingForm['embedding.table_enabled'] ||
-                  (field.key === 'embedding.table_alpha' &&
-                    !embeddingForm['embedding.keyword_enabled'])
-                "
+                :disabled="!embeddingForm['embedding.table_enabled']"
                 :aria-label="t(`parameter.${field.label}`)"
               />
             </div>
-            <p
-              v-if="
-                field.key === 'embedding.table_alpha' && !embeddingForm['embedding.keyword_enabled']
-              "
-              class="hint"
-            >
-              {{ t('parameter.table_alpha_disabled_hint') }}
-            </p>
           </div>
         </div>
       </div>
       <div class="card embedding-card">
         <div class="embedding-header">
-          <div class="card-title">{{ t('parameter.keyword_enabled') }}</div>
+          <div class="card-title">{{ t('parameter.keyword_and_hybrid_matching') }}</div>
           <div class="embedding-toggle">
+            <span>{{ t('parameter.keyword_enabled') }}</span>
             <el-switch
               v-model="embeddingForm['embedding.keyword_enabled']"
               :aria-label="t('parameter.keyword_enabled')"
@@ -374,6 +373,36 @@ onMounted(() => {
           </div>
         </div>
         <p class="hint">{{ t('parameter.keyword_enabled_hint') }}</p>
+        <div class="table-matching" aria-live="polite">
+          <div class="matching-mode">
+            <span>{{ t('parameter.table_matching_strategy') }}</span>
+            <el-tag :type="tableMatchingMode === 'unfiltered' ? 'info' : 'primary'" size="small">
+              {{ t(`parameter.table_matching_${tableMatchingMode}`) }}
+            </el-tag>
+          </div>
+          <p class="hint">{{ t(`parameter.table_matching_${tableMatchingMode}_hint`) }}</p>
+          <div class="card-item">
+            <div class="label embedding-label">
+              {{ t('parameter.table_alpha') }}
+              <el-tooltip :content="t('parameter.table_alpha_hint')" placement="top">
+                <el-icon tabindex="0" :aria-label="t('parameter.table_alpha_hint')">
+                  <icon_info_outlined_1 />
+                </el-icon>
+              </el-tooltip>
+            </div>
+            <div class="value matching-weight">
+              <el-input-number
+                v-model="embeddingForm[weightField.key]"
+                :step="0.05"
+                :disabled="tableMatchingMode !== 'hybrid'"
+                :aria-label="t('parameter.table_alpha')"
+              />
+              <span v-if="tableMatchingMode === 'hybrid'" class="hint">
+                {{ t('parameter.keyword_weight', { weight: keywordWeight }) }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
       <platform-param />
     </div>
@@ -408,7 +437,7 @@ onMounted(() => {
   }
   .embedding-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px 24px;
   }
   .embedding-header {
@@ -430,6 +459,23 @@ onMounted(() => {
   .embedding-label .ed-icon {
     flex-shrink: 0;
     color: var(--ed-text-color-secondary);
+  }
+  .table-matching {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    background: var(--ed-fill-color-light);
+  }
+  .matching-mode,
+  .matching-weight {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 14px;
+  }
+  .matching-weight .hint {
+    margin: 0;
   }
   .knowledge-table-wrapper {
     overflow-x: auto;
