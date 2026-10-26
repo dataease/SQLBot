@@ -1,10 +1,18 @@
 <template>
   <div v-loading="divLoading" class="sqlbot--embedded-page">
-    <ds-component
+    <div
       v-if="!loading && isWsAdmin && busiFlag === 'ds'"
-      ref="dsRef"
-      :page-embedded="true"
-    />
+      v-show="!startChatDsId"
+      class="embedded-datasource"
+    >
+      <ds-component ref="dsRef" :page-embedded="true" @start-chat="startChatDsId = $event" />
+    </div>
+    <div v-if="!loading && isWsAdmin && busiFlag === 'ds' && startChatDsId" class="embedded-chat">
+      <div class="embedded-chat-header">
+        <el-button text @click="startChatDsId = undefined">{{ t('common.back') }}</el-button>
+      </div>
+      <chat-component :start-chat-ds-id="startChatDsId" :page-embedded="true" />
+    </div>
     <page-401
       v-if="!loading && !isWsAdmin && busiFlag === 'ds'"
       :title="t('login.permission_invalid')"
@@ -13,6 +21,7 @@
 </template>
 <script setup lang="ts">
 import DsComponent from '@/views/ds/Datasource.vue'
+import ChatComponent from '@/views/chat/index.vue'
 import Page401 from '@/views/error/index.vue'
 import { computed, nextTick, onBeforeMount, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -29,6 +38,7 @@ const loading = ref(true)
 const divLoading = ref(true)
 const eventName = 'sqlbot_embedded_event'
 const busiFlag = ref('ds')
+const startChatDsId = ref<string>()
 
 const setParamLanguage = () => {
   const lang = route.query.lang
@@ -121,5 +131,23 @@ onBeforeUnmount(() => {
   height: 100vh;
   position: relative;
   background: #fff;
+}
+.embedded-datasource,
+.embedded-chat {
+  height: 100%;
+}
+.embedded-chat {
+  display: flex;
+  flex-direction: column;
+
+  .embedded-chat-header {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--ed-border-color);
+  }
+
+  :deep(.chat-container) {
+    flex: 1;
+    min-height: 0;
+  }
 }
 </style>
