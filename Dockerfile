@@ -41,7 +41,7 @@ COPY ./backend ${APP_HOME}
 
 # Final sync to ensure all dependencies are installed
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra cpu
+    uv sync --extra cpu --default-index https://pypi.org/simple
 
 # Build g2-ssr
 FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS ssr-builder

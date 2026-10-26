@@ -5,7 +5,7 @@
 运行镜像由多个阶段组成：
 
 1. 前端构建：`frontend/` 执行 `npm install` 和 `npm run build`，产物进入 `/opt/sqlbot/frontend/dist`。
-2. 后端构建：复制 `backend/`，使用 base 镜像中的 uv 安装依赖。以根 `Dockerfile` 为准：中间层包含 `uv sync --frozen` 尝试，最终层执行 `uv sync --extra cpu`，不是全程冻结安装。`uv.lock` 不入库，不能据此承诺全新 checkout 的依赖可复现；`|| echo` 的提示也不能证明失败只因缺少 lock，需检查实际构建日志。
+2. 后端构建：复制 `backend/`，使用 base 镜像中的 uv 安装依赖。以根 `Dockerfile` 为准：中间层包含 `uv sync --frozen` 尝试，最终层执行 `uv sync --extra cpu --default-index https://pypi.org/simple`，使用官方 PyPI 作为默认源，不是全程冻结安装。`uv.lock` 不入库，不能据此承诺全新 checkout 的依赖可复现；`|| echo` 的提示也不能证明失败只因缺少 lock，需检查实际构建日志。
 3. 图表服务构建：复制 `g2-ssr/app.js`、`package.json` 和 `charts/`，安装 Node 依赖和 canvas 相关库。
 4. 运行层：基于含 PostgreSQL / Python 的 base 镜像，复制前端、后端、g2-ssr、字体、向量模型和启动脚本。
 5. 启动脚本依次准备 PostgreSQL、supervisor/g2-ssr、MCP 服务和主 FastAPI 服务。
