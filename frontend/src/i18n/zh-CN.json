@@ -612,6 +612,7 @@
     "old_password": "旧密码",
     "title": "用户管理",
     "upgrade_pwd": {
+      "save_error": "密码修改失败，请稍后重试",
       "title": "修改密码",
       "old_pwd": "旧密码",
       "new_pwd": "新密码",

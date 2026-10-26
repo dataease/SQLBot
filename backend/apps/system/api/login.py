@@ -11,18 +11,12 @@ from datetime import timedelta
 from common.core.config import settings
 from common.core.schemas import Token
 from sqlbot_xpack.authentication.manage import logout as xpack_logout
-from sqlbot_xpack.config.arg_manage import get_group_args
+from apps.system.crud.password_policy import initial_pwd_disabled
 
 from common.audit.models.log_model import OperationType, OperationModules
 from common.audit.schemas.logger_decorator import system_log, LogConfig
 
 router = APIRouter(tags=["login"], prefix="/login")
-
-
-async def initial_pwd_disabled(session) -> bool:
-    login_args = await get_group_args(session=session, flag='login')
-    disabled_arg = next((a for a in login_args if a.pkey == 'login.initial_pwd_disabled'), None)
-    return bool(disabled_arg and str(disabled_arg.pval).strip().lower() == 'true')
 
 
 @router.post("/access-token")
