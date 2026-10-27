@@ -145,6 +145,41 @@ def test_valid_knowledge_workbook_reaches_batch_import(
 
 
 @pytest.mark.parametrize(
+    "module,batch_name,column_count",
+    [
+        (terminology, "batch_create_terminology", 6),
+        (data_training, "batch_create_training", 4),
+    ],
+)
+@pytest.mark.parametrize("empty", [False, True])
+@pytest.mark.parametrize(
+    "language,message",
+    [
+        ("zh-CN", "EXCEL列数量不匹配"),
+        ("en", "Number of columns in Excel does not match"),
+    ],
+)
+def test_insufficient_excel_columns_return_localized_400(
+    api, monkeypatch, module, batch_name, column_count, empty, language, message
+):
+    client, session = api
+    client.app.dependency_overrides.pop(get_i18n)
+    monkeypatch.setattr(module, "session_maker", lambda: session)
+    batch = Mock()
+    monkeypatch.setattr(module, batch_name, batch)
+    columns = [] if empty else range(column_count - 1)
+    response = client.post(
+        module.router.prefix + "/uploadExcel",
+        files={"file": ("invalid.xlsx", workbook(columns))},
+        headers={"Accept-Language": language},
+    )
+    assert response.status_code == 400, response.text
+    assert response.json() == message
+    batch.assert_not_called()
+    session.commit.assert_not_called()
+
+
+@pytest.mark.parametrize(
     "filename,exists,status,message",
     [
         ("missing_error.xlsx", False, 404, "File Not Exists"),
