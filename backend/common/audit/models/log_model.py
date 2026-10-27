@@ -1,8 +1,11 @@
-from sqlmodel import Field, SQLModel,BigInteger
 from datetime import datetime
-from typing import Optional
 from enum import Enum
+from typing import Optional
+
 from pydantic import BaseModel
+from sqlalchemy import DateTime
+from sqlmodel import BigInteger, Field, SQLModel
+
 
 class OperationModules(str, Enum):
     CHAT = "chat"  # 问数
@@ -68,7 +71,10 @@ class SystemLog(SQLModel, table=True):
     user_agent: Optional[str] = Field(default=None)
     execution_time: int = Field(default=0, description="执行时间(毫秒)", sa_type=BigInteger())
     error_message: Optional[str] = Field(default=None)
-    create_time: datetime = Field(default_factory=datetime.now)
+    # Match the timestamp-without-time-zone column created by migration 055.
+    create_time: datetime = Field(
+        default_factory=datetime.now, sa_type=DateTime(timezone=False)
+    )
     module: Optional[str] = Field(default=None)
     oid: Optional[int] = Field(default=None, sa_type=BigInteger())
     resource_id: Optional[str] = Field(default=None)
