@@ -208,7 +208,7 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
         for sheet_name in sheet_names:
 
             if get_excel_column_count(save_path, sheet_name) < len(use_cols):
-                raise Exception(trans("i18n_excel_import.col_num_not_match"))
+                raise HTTPException(400, trans("i18n_excel_import.col_num_not_match"))
 
             df = pd.read_excel(
                 save_path,
