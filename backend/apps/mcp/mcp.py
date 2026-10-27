@@ -13,7 +13,7 @@ from sqlmodel import select
 
 from apps.chat.api.chat import create_chat, question_answer_inner
 from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuestion, McpAssistant, ChatQuestion, \
-    ChatFinishStep, McpDs, ChatToken, WsMcp
+    ChatFinishStep, McpDs, ChatToken, WsMcp, Chat
 from apps.datasource.crud.datasource import get_datasource_list
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.user import authenticate, user_ws_options
@@ -168,13 +168,19 @@ async def mcp_question(session: SessionDep, trans: Trans, chat: McpQuestion):
     lang = chat.lang
     if lang in ["zh-CN", "zh-TW", "en", "ko-KR", "th-TH"]:
         session_user.language = lang
-    # if chat.oid:
-    #     w_list = await user_ws_options(session, session_user.id, trans)
-    #     oid_list = [item.id for item in w_list]
-    #     if int(chat.oid) not in oid_list:
-    #         raise HTTPException(status_code=400, detail="The current user is not in the selected workspace")
-    #
-    #     session_user.oid = int(chat.oid)
+
+    c = session.query(Chat).filter(Chat.id == chat.chat_id).first()
+    if not c:
+        raise HTTPException(status_code=400, detail="Chat ID is not exist")
+    chat_oid = c.oid
+    if chat_oid:
+        w_list = await user_ws_options(session, session_user.id, trans)
+        oid_list = [item.id for item in w_list]
+        if int(chat_oid) not in oid_list:
+            raise HTTPException(status_code=400, detail="The current user is not in the selected workspace")
+
+        session_user.oid = int(chat_oid)
+
     ds_id: Optional[int] = None
     if chat.datasource_id:
         if isinstance(chat.datasource_id, str):
