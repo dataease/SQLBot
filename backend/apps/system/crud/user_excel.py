@@ -1,13 +1,13 @@
 
 
 import asyncio
-from http.client import HTTPException
 import io
 import sys
 import tempfile
 import uuid
 import atexit
 import threading
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse, FileResponse
 import os
 from openai import BaseModel

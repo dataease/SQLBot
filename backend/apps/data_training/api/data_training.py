@@ -3,11 +3,10 @@ import hashlib
 import io
 import os
 import uuid
-from http.client import HTTPException
 from typing import Optional
 
 import pandas as pd
-from fastapi import APIRouter, File, UploadFile, Query
+from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 from fastapi.responses import StreamingResponse
 
 from apps.chat.models.chat_model import AxisObj
