@@ -52,6 +52,7 @@
     "miss_default": "Default large language model has not been configured"
   },
   "i18n_ds_invalid": "Datasource connection is invalid",
+  "i18n_ds_unsupported_file_format": "Unsupported file format. Please upload an XLS, XLSX or CSV file.",
   "i18n_ds_upload_error": "Upload Failed",
   "i18n_embedded": {
     "invalid_origin": "Domain name validation failed【{origin}】",

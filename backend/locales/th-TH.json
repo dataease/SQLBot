@@ -52,6 +52,7 @@
     "miss_default": "ยังไม่ได้กำหนดค่าโมเดลภาษาขนาดใหญ่เริ่มต้น"
   },
   "i18n_ds_invalid": "การเชื่อมต่อแหล่งข้อมูลไม่ถูกต้อง",
+  "i18n_ds_unsupported_file_format": "ไม่รองรับรูปแบบไฟล์ โปรดอัปโหลดไฟล์ XLS, XLSX หรือ CSV",
   "i18n_ds_upload_error": "อัปโหลดไฟล์ล้มเหลว",
   "i18n_embedded": {
     "invalid_origin": "ตรวจสอบโดเมนไม่สำเร็จ【{origin}】",

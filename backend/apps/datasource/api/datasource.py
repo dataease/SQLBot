@@ -324,10 +324,11 @@ async def field_enum(session: SessionDep, ds_id: int, id: int):
 # deprecated
 @router.post("/uploadExcel", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_upload_excel")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def upload_excel(session: SessionDep, file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
+async def upload_excel(trans: Trans, session: SessionDep,
+                       file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
     ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
-        raise HTTPException(400, "Only support .xlsx/.xls/.csv")
+        raise HTTPException(400, trans('i18n_ds_unsupported_file_format'))
 
     os.makedirs(path, exist_ok=True)
     filename = f"{file.filename.split('.')[0]}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}.{file.filename.split('.')[1]}"
@@ -478,11 +479,12 @@ async def export_ds_schema(session: SessionDep, id: int = Path(..., description=
 
 @router.post("/uploadDsSchema/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_upload_ds_schema")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="id"))
-async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
+async def upload_ds_schema(trans: Trans, session: SessionDep,
+                           id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id"),
                            file: UploadFile = File(...)):
     ALLOWED_EXTENSIONS = {"xlsx", "xls"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
-        raise HTTPException(400, "Only support .xlsx/.xls")
+        raise HTTPException(400, trans('i18n_ds_unsupported_file_format'))
 
     try:
         contents = await file.read()
@@ -554,10 +556,10 @@ async def upload_ds_schema(session: SessionDep, id: int = Path(..., description=
 
 @router.post("/parseExcel", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_parse_excel")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def parse_excel(file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
+async def parse_excel(trans: Trans, file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
     ALLOWED_EXTENSIONS = {".xlsx", ".xls", ".csv"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
-        raise HTTPException(400, "Only support .xlsx/.xls/.csv")
+        raise HTTPException(400, trans('i18n_ds_unsupported_file_format'))
 
     os.makedirs(path, exist_ok=True)
     filename = f"{file.filename.split('.')[0].split('/')[-1]}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}.{file.filename.split('.')[-1]}"
