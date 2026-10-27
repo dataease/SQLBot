@@ -2,6 +2,7 @@
 import { h, defineComponent } from 'vue'
 import { ElMenuItem, ElSubMenu, ElIcon } from 'element-plus-secondary'
 import { useRouter, useRoute } from 'vue-router'
+import { useMenuTitle } from './useMenuTitle'
 import chat from '@/assets/svg/menu/icon_chat_filled.svg'
 import noChat from '@/assets/svg/menu/icon_chat_outlined.svg'
 import dashboard from '@/assets/svg/menu/icon_dashboard_filled.svg'
@@ -52,6 +53,7 @@ const MenuItem = defineComponent({
     },
   },
   setup(props) {
+    const getMenuTitle = useMenuTitle()
     const router = useRouter()
     const route = useRoute()
     const titleWithIcon = (props: any) => {
@@ -78,7 +80,8 @@ const MenuItem = defineComponent({
       }
 
       if (children?.length) {
-        const { title, iconDeActive, iconActive } = props.menu?.meta || {}
+        const { iconDeActive, iconActive } = props.menu?.meta || {}
+        const title = getMenuTitle(props.menu?.meta)
         const icon = route.path.startsWith(path) ? iconActive : iconDeActive
         return h(
           ElSubMenu,
@@ -93,7 +96,8 @@ const MenuItem = defineComponent({
         )
       }
 
-      const { title, iconDeActive, iconActive } = props.menu?.meta || {}
+      const { iconDeActive, iconActive } = props.menu?.meta || {}
+      const title = getMenuTitle(props.menu?.meta)
       const icon = route.path === path ? iconActive : iconDeActive
       const iconCom: any = iconMap[icon] ? ElIcon : null
       return h(

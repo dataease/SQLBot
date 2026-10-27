@@ -33,10 +33,8 @@ import Workspace from '@/views/system/workspace/index.vue'
 import Page401 from '@/views/error/index.vue'
 import ChatPreview from '@/views/chat/preview.vue'
 
-import { i18n } from '@/i18n'
 import { watchRouter } from './watch'
 
-const t = i18n.global.t
 export const routes = [
   {
     path: '/login',
@@ -55,7 +53,7 @@ export const routes = [
         props: (route: any) => {
           return { startChatDsId: route.query.start_chat }
         },
-        meta: { title: t('menu.Data Q&A'), iconActive: 'chat', iconDeActive: 'noChat' },
+        meta: { titleKey: 'menu.Data Q&A', iconActive: 'chat', iconDeActive: 'noChat' },
       },
     ],
   },
@@ -81,7 +79,7 @@ export const routes = [
         path: 'index',
         name: 'ds',
         component: Datasource,
-        meta: { title: t('menu.Data Connections'), iconActive: 'ds', iconDeActive: 'noDs' },
+        meta: { titleKey: 'menu.Data Connections', iconActive: 'ds', iconDeActive: 'noDs' },
       },
     ],
   }, */
@@ -95,7 +93,7 @@ export const routes = [
         name: 'dashboard',
         component: Dashboard,
         meta: {
-          title: t('dashboard.dashboard'),
+          titleKey: 'dashboard.dashboard',
           iconActive: 'dashboard',
           iconDeActive: 'noDashboard',
         },
@@ -107,43 +105,43 @@ export const routes = [
     name: 'set',
     component: LayoutDsl,
     redirect: '/set/member',
-    meta: { title: t('workspace.set'), iconActive: 'set', iconDeActive: 'noSet' },
+    meta: { titleKey: 'workspace.set', iconActive: 'set', iconDeActive: 'noSet' },
     children: [
       {
         path: '/set/member',
         name: 'member',
         component: Member,
-        meta: { title: t('workspace.member_management') },
+        meta: { titleKey: 'workspace.member_management' },
       },
       {
         path: '/set/permission',
         name: 'permission',
         component: Permission,
-        meta: { title: t('workspace.permission_configuration') },
+        meta: { titleKey: 'workspace.permission_configuration' },
       },
       /* {
         path: '/set/assistant',
         name: 'setAssistant',
         component: SetAssistant,
-        meta: { title: t('embedded.assistant_app') },
+        meta: { titleKey: 'embedded.assistant_app' },
       }, */
       {
         path: '/set/professional',
         name: 'professional',
         component: Professional,
-        meta: { title: t('professional.professional_terminology') },
+        meta: { titleKey: 'professional.professional_terminology' },
       },
       {
         path: '/set/training',
         name: 'training',
         component: Training,
-        meta: { title: t('training.data_training') },
+        meta: { titleKey: 'training.data_training' },
       },
       {
         path: '/set/prompt',
         name: 'prompt',
         component: Prompt,
-        meta: { title: t('prompt.customize_prompt_words') },
+        meta: { titleKey: 'prompt.customize_prompt_words' },
       },
     ],
   },
@@ -170,14 +168,14 @@ export const routes = [
         path: 'user',
         name: 'user',
         component: User,
-        meta: { title: t('user.user_management'), iconActive: 'user', iconDeActive: 'noUser' },
+        meta: { titleKey: 'user.user_management', iconActive: 'user', iconDeActive: 'noUser' },
       },
       {
         path: 'workspace',
         name: 'workspace',
         component: Workspace,
         meta: {
-          title: t('user.workspace'),
+          titleKey: 'user.workspace',
           iconActive: 'workspace',
           iconDeActive: 'noWorkspace',
         },
@@ -187,7 +185,7 @@ export const routes = [
         name: 'model',
         component: Model,
         meta: {
-          title: t('model.ai_model_configuration'),
+          titleKey: 'model.ai_model_configuration',
           iconActive: 'model',
           iconDeActive: 'noModel',
         },
@@ -197,14 +195,14 @@ export const routes = [
         name: 'embedded',
         component: SystemEmbedded,
         meta: {
-          title: t('embedded.embedded_management'),
+          titleKey: 'embedded.embedded_management',
           iconActive: 'embedded',
           iconDeActive: 'noEmbedded',
         },
       },
       {
         path: 'setting',
-        meta: { title: t('system.system_settings'), iconActive: 'set', iconDeActive: 'noSet' },
+        meta: { titleKey: 'system.system_settings', iconActive: 'set', iconDeActive: 'noSet' },
         redirect: 'system_/appearance',
         name: 'setting',
         children: [
@@ -212,31 +210,31 @@ export const routes = [
             path: 'appearance',
             name: 'appearance',
             component: Appearance,
-            meta: { title: t('system.appearance_settings') },
+            meta: { titleKey: 'system.appearance_settings' },
           },
           {
             path: 'parameter',
             name: 'parameter',
             component: Parameter,
-            meta: { title: t('parameter.parameter_configuration') },
+            meta: { titleKey: 'parameter.parameter_configuration' },
           },
           {
             path: 'variables',
             name: 'variables',
             component: Variables,
-            meta: { title: t('variables.system_variables') },
+            meta: { titleKey: 'variables.system_variables' },
           },
           {
             path: 'authentication',
             name: 'authentication',
             component: Authentication,
-            meta: { title: t('system.authentication_settings') },
+            meta: { titleKey: 'system.authentication_settings' },
           },
           {
             path: 'platform',
             name: 'platform',
             component: Platform,
-            meta: { title: t('platform.title') },
+            meta: { titleKey: 'platform.title' },
           },
         ],
       },
@@ -244,7 +242,7 @@ export const routes = [
         path: 'audit',
         name: 'audit',
         component: Audit,
-        meta: { title: t('audit.system_log'), iconActive: 'log', iconDeActive: 'noLog' },
+        meta: { titleKey: 'audit.system_log', iconActive: 'log', iconDeActive: 'noLog' },
       },
     ],
   },
