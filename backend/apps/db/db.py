@@ -571,6 +571,11 @@ def get_schema(ds: CoreDatasource):
 
 
 def get_tables(ds: CoreDatasource):
+    if equals_ignore_case(ds.type, "excel"):
+        # Excel imports share a database; only this datasource's sheets are visible.
+        sheets = json.loads(aes_decrypt(ds.configuration)).get("sheets") or []
+        return [TableSchema(sheet["tableName"], sheet.get("tableComment")) for sheet in sheets]
+
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if not equals_ignore_case(ds.type,
                                                                                                  "excel") else get_engine_config()
     db = DB.get_db(ds.type)
