@@ -1,7 +1,6 @@
 import os
-from http.client import HTTPException
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
