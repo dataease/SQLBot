@@ -20,9 +20,38 @@ TAPD、DBHub 保持启用；Playwright MCP 默认禁用。浏览器复现使用 
 
 ## 服务约定
 
-- **TAPD**：填写 SQLBot 对应的 `TAPD_WORKSPACE_ID`、个人用户名、令牌和入口。工具白名单与 DataEase V3 对齐，保留读取工具，并开放 `get_workflows_all_transitions`、`update_bug`、`update_story_or_task`、`create_comments`。写入仅在用户授权的任务范围内执行；更新前读取实体最新内容和适用工作流，更新后回读核对。不得将代码已提交等同于已合并、已部署或已验证。Python `mcp-server-tapd` 调用仍须显式传本项目 `workspace_id`；启动器不会自动注入每次调用。不要使用会另行加载其他个人凭据的包装入口。
+- **原有 TAPD（`tapd_mcp/`）**：填写 SQLBot 对应的 `TAPD_WORKSPACE_ID`、个人用户名、令牌和入口。工具白名单与 DataEase V3 对齐，保留读取工具，并开放 `get_workflows_all_transitions`、`update_bug`、`update_story_or_task`、`create_comments`。写入仅在用户授权的任务范围内执行；更新前读取实体最新内容和适用工作流，更新后回读核对。不得将代码已提交等同于已合并、已部署或已验证。Python `mcp-server-tapd` 调用仍须显式传本项目 `workspace_id`；启动器不会自动注入每次调用。不要使用会另行加载其他个人凭据的包装入口。
 - **Playwright MCP（历史兼容，默认禁用）**：使用支持 Chrome、`--user-data-dir` 和 `--output-dir` 参数的 `@playwright/mcp` 入口，并准备本机 Chrome。浏览器资料位于 `playwright_mcp/browser-profile/`，截图等产物位于 `playwright_mcp/output/`。`TEST_BASE_URL` 是本机示例，需按实际测试环境调整；`TEST_*` 仅供执行测试时按需使用，启动器不会自动登录。
 - **DBHub**：沿用参考项目针对 `@bytebase/dbhub@1.3.1` 的配置格式，入口须支持 `--config`。示例 DSN 已改为 PostgreSQL/sqlbot，仅用于展示格式。DSN 通过环境变量传递，`dbhub.toml` 为 `execute_sql` 设置 `readonly = true` 和最多 1000 行；数据库账号本身也必须只读。只在任务授权的测试环境使用，不用生产或共享业务库做配置验证。
+
+## TAPD 实现二选一
+
+`config.toml` 只注册一个 `tapd` 服务，由 `launch_tapd.py` 根据配置文件选择实现，避免同时加载两套工具：
+
+| 本地配置 | 使用的实现 |
+| --- | --- |
+| 存在 `tapd_official_mcp/.env.local` | 新增的官方 Python `mcp-server-tapd` |
+| 仅存在 `tapd_mcp/.env.local` | 原有 TAPD 启动器，行为保持不变 |
+| 两者均不存在 | 提示创建本地配置，不启动服务 |
+
+两份配置同时存在时，官方实现优先。选中后如果字段、入口或认证有误，直接报告错误，不自动换用另一份凭据。要切回原实现，移走官方的 `.env.local` 并重新加载 MCP。不要仅复制空模板而不填写。
+
+### 官方 Python TAPD MCP
+
+来源：https://cnb.cool/tapd.cn/skills/mcp-server-tapd 。`mcp-server-tapd==8.0.83` 要求 Python 3.13+，使用独立工具环境，SQLBot 后端继续使用 Python 3.11：
+
+```bash
+uv tool install --python 3.13 'mcp-server-tapd==8.0.83'
+uv tool dir
+cp .codex/tapd_official_mcp/.env.example .codex/tapd_official_mcp/.env.local
+chmod 600 .codex/tapd_official_mcp/.env.local
+```
+
+也可通过 `--python` 指定本机已有的 Python 3.13+ 解释器。填写新配置中的 `TAPD_ACCESS_TOKEN`，将 `uv tool dir` 输出目录下的 `mcp-server-tapd/bin/mcp-server-tapd` 填入 `TAPD_MCP_ENTRY`，同目录的 `python` 填入 `PYTHON_BIN`。保留模板的两个 TAPD URL。
+
+新实现独立读取 `tapd_official_mcp/.env.local`，不读取原有 TAPD 配置；不要求预填项目 ID 或用户名。个人令牌用于获取用户名，再通过只读工具 `get_user_participant_projects` 查找项目；读取缺陷时仍须显式传入 `workspace_id`。与原有实现共用 `config.toml` 工具白名单及上述写入授权规则；写入仅在用户授权的任务范围内执行，更新前读取最新内容和适用工作流，更新后回读核对。
+
+新启动器清除继承的 TAPD 身份和地址变量，并设置 `PYTHON_DOTENV_DISABLED=1`，禁用服务自动加载其他 `.env` 凭据。启动器离线检查不代表令牌有效，应再执行 MCP 握手和只读查询。
 
 ## 运行时
 
