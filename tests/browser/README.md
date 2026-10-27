@@ -100,3 +100,16 @@ npm --prefix tests/browser test -- --config=password.config.mjs
 需要先安装 `frontend` 依赖。独立 Vite 夹具监听 `127.0.0.1:4208`，加载当前 checkout 的真实 `PwdForm.vue`、`userApi` 和 HTTP 请求封装，替换会话/Store 边界，并通过 Playwright 拦截改密响应。覆盖中英文策略拒绝提示、保留表单、修改后重试成功、允许保存及网络失败提示。测试使用合成密码，不访问业务数据库；它不验证真实系统参数保存、鉴权、数据库事务或重新登录。
 
 后端对应离线测试为 `backend/tests/test_initial_password_policy.py`，提取实际函数并替换配置、用户和 Session 边界，验证开启/关闭策略、普通用户/管理员、旧密码与格式校验、拒绝时不写入。真实环境验收仍需在隔离账号上完成“开启策略 → 改密拒绝 → 合法改密 → 重新登录”。
+
+## 菜单语言与切换账号回归
+
+```sh
+npm --prefix tests/browser test -- --config=menu-language.config.mjs
+```
+
+需要 Node.js 20+、本机 Chrome 及已安装的 `frontend` 依赖。独立 Vite 夹具仅监听
+`127.0.0.1:4217`，加载当前 checkout 的真实静态/动态路由、用户 Store、i18n、
+`Menu.vue` 和 `MenuItem.vue`，替换账号 API、缓存、页面内容及导航守卫。
+测试模拟英语账号退出后另一账号登录，覆盖五种语言的普通导航、设置子菜单、
+切回英语、管理员菜单即时切换语言、普通成员的动态菜单过滤及扩展直接标题兼容。
+账号均为合成数据，不连接业务后端；本测试不替代真实登录、权限鉴权、xpack 路由或完整布局验收。

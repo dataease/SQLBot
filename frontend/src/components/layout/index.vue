@@ -45,7 +45,7 @@
           <el-icon v-if="item.meta.icon">
             <component :is="resolveIcon(item.meta.icon)" />
           </el-icon>
-          <span>{{ t(`menu.${item.meta.title}`) }}</span>
+          <span>{{ getMenuTitle(item.meta) }}</span>
         </el-menu-item>
       </el-menu>
 
@@ -140,7 +140,7 @@
             <el-icon v-if="item.meta.icon">
               <component :is="resolveIcon(item.meta.icon)" />
             </el-icon>
-            <span>{{ t(`menu.${item.meta.title}`) }}</span>
+            <span>{{ getMenuTitle(item.meta) }}</span>
           </el-menu-item>
         </el-menu>
       </div>
@@ -172,11 +172,13 @@ import icon_ai from '@/assets/svg/icon_ai.svg'
 import { ArrowLeftBold } from '@element-plus/icons-vue'
 import { useCache } from '@/utils/useCache'
 import { useI18n } from 'vue-i18n'
+import { useMenuTitle } from './useMenuTitle'
 import LanguageSelector from '@/components/Language-selector/index.vue'
 import AboutDialog from '@/components/about/index.vue'
 
 const aboutRef = ref()
 const { t } = useI18n()
+const getMenuTitle = useMenuTitle()
 const { wsCache } = useCache()
 const topLayout = ref(false)
 const router = useRouter()
@@ -216,9 +218,9 @@ const showSubmenu = computed(() => {
 ] */
 const currentPageTitle = computed(() => {
   if (route.path.includes('/system')) {
-    return 'System Settings'
+    return t('system.system_settings')
   }
-  return route.meta.title || 'Dashboard'
+  return getMenuTitle(route.meta) || t('dashboard.dashboard')
 })
 const resolveIcon = (iconName: any) => {
   const icons: Record<string, any> = {

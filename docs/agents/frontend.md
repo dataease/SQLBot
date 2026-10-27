@@ -73,6 +73,7 @@ request.get('/path', {
   - `userStore.isAdmin` 与 `isSpaceAdmin` 的路由差异；
   - xpack 静态脚本加载失败路径：`LicenseGenerator` 是无类型声明的 window 全局，登录/改密加密（`sqlbotEncrypt`）和动态路由注册都硬依赖它，脚本加载失败只提示并中断导航，没有降级。
 - 新路由必须配置名称、标题 i18n 和正确父布局；不要绕过已有访问控制。
+- 菜单路由的翻译键存入 `meta.titleKey`，由布局的 `useMenuTitle` 在渲染时翻译；不要在路由模块初始化时调用 `t()` 固定标题。扩展路由提供的 `meta.title` 作为直接显示的标题兼容保留。
 
 ## 视图、组件与样式
 
