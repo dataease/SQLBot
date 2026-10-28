@@ -68,6 +68,7 @@ defineExpose({
 <template>
   <el-drawer
     v-model="dialogFormVisible"
+    :close-on-press-escape="true"
     :title="t('parameter.execution_details')"
     destroy-on-close
     modal-class="execution-details"
