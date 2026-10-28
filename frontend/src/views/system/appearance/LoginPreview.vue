@@ -52,7 +52,7 @@
               </div>
             </div>
             <div v-if="isBtnShow(showSlogan)" class="login-welcome">
-              {{ pageSlogan ?? t('common.intelligent_questioning_platform') }}
+              {{ pageSlogan }}
             </div>
             <div v-else class="login-welcome"></div>
           </div>
@@ -103,6 +103,7 @@ import { propTypes } from '@/utils/propTypes'
 import { sanitizeHtml } from '@/utils/xss'
 import { isBtnShow } from '@/utils/utils'
 import { useI18n } from 'vue-i18n'
+import { resolveWelcome } from '@/i18n/welcome'
 import { computed, ref, onMounted, nextTick } from 'vue'
 import elementResizeDetectorMaker from 'element-resize-detector'
 const basePath = import.meta.env.VITE_API_BASE_URL
@@ -147,7 +148,9 @@ const pageBg = computed(() =>
       : baseUrl + props.bg
 )
 const pageName = computed(() => props.name)
-const pageSlogan = computed(() => props.slogan)
+const pageSlogan = computed(() =>
+  resolveWelcome(props.slogan, 'common.intelligent_questioning_platform', t)
+)
 const showFoot = computed(() => props.foot && props.foot === 'true')
 const pageFootContent = computed(() => {
   // Sanitize HTML content to prevent XSS attacks
