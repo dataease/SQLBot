@@ -38,6 +38,7 @@ const validateCbUrl = (rule, value, callback) => {
   const addr = getSQLBotAddr()
   if (value === addr || `${value}/` === addr) {
     callback()
+    return
   }
   callback(new Error(t('authentication.callback_domain_name_error')))
 }
@@ -187,7 +188,7 @@ const validate = () => {
     .patch(url, data)
     .then((res) => {
       if (res) {
-        ElMessage.success(t('ds.connection_success'))
+        ElMessage.success(t('authentication.cas_connection_success'))
       } else {
         ElMessage.error(t('ds.connection_failed'))
       }

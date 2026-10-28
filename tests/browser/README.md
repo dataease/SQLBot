@@ -130,3 +130,16 @@ npm --prefix tests/browser test -- --config=welcome-language.config.mjs
 不访问业务数据库或 LLM，不替代完整 SDK 握手、真实鉴权和持久化验收。
 后端 `tests/test_assistant_welcome_defaults.py` 提取真实 Schema 和保存函数，验证空字符串覆盖、
 省略字段保留、会话提交和缓存失效；它同样隔离鉴权与数据库。
+
+## CAS 地址与编辑组件回归
+
+```sh
+npm --prefix tests/browser test -- --config=cas.config.mjs
+```
+
+复用已安装的 frontend 依赖，独立 Vite 夹具仅监听 `127.0.0.1:4219`，加载真实
+`CasEditor.vue`。HTTP 请求边界替换为内存记录，不访问或修改认证源配置。覆盖根回调
+有无尾斜杠、历史 IdpUri 提交、错误回调拒绝、校验回调仅执行一次及连接检查提示。
+组件库只采纳首次校验结果，因此用原始校验函数的调用计数补充 DOM 提交断言。
+这不验证真实持久化、客户 CAS 服务或最终用户登录；后端地址、编码和票据回归在
+独立 xpack 仓库的 `tests/test_cas_urls.py`。
