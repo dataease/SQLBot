@@ -940,6 +940,7 @@
     "invalid": "无效",
     "valid": "有效",
     "cas_settings": "CAS 设置",
+    "cas_connection_success": "CAS 登录端点可达，请通过实际登录验证回调及账号。",
     "callback_domain_name": "回调地址",
     "callback_domain_name_error": "回调地址必须是当前访问域名",
     "field_mapping": "用户属性映射",

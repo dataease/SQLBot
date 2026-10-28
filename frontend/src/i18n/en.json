@@ -940,6 +940,7 @@
     "invalid": "Invalid",
     "valid": "Valid",
     "cas_settings": "CAS Settings",
+    "cas_connection_success": "CAS login endpoint is reachable. Sign in to verify the callback and account.",
     "callback_domain_name": "Callback Domain",
     "callback_domain_name_error": "Callback URL must match the current access domain",
     "field_mapping": "User Attribute Mapping",

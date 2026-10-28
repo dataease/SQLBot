@@ -940,6 +940,7 @@
     "invalid": "유효하지 않음",
     "valid": "유효함",
     "cas_settings": "CAS 설정",
+    "cas_connection_success": "CAS 로그인 엔드포인트에 연결할 수 있습니다. 실제 로그인으로 콜백과 계정을 확인하세요.",
     "callback_domain_name": "콜백 도메인",
     "callback_domain_name_error": "콜백 URL은 현재 접속 도메인과 일치해야 합니다",
     "field_mapping": "사용자 속성 매핑",
