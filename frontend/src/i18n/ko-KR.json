@@ -142,7 +142,7 @@
     "invalid_embedding_parameter": "유사도는 0~1 사이의 유한한 수여야 하며 후보 수는 양의 정수여야 합니다."
   },
   "prompt": {
-    "default_password:": "기본 비밀번호:{msg}",
+    "default_password": "기본 비밀번호:{msg}",
     "no_sql_sample": "현재 사용 가능한 SQL 샘플 라이브러리가 없습니다",
     "add_sql_sample": "SQL 샘플 라이브러리를 추가하세요",
     "no_prompt_words": "프롬프트가 없습니다",

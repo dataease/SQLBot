@@ -22,8 +22,8 @@
       <chat-component
         v-if="!loading"
         ref="chatRef"
-        :welcome="customSet.welcome"
-        :welcome-desc="customSet.welcome_desc"
+        :welcome="welcome"
+        :welcome-desc="welcomeDesc"
         :logo-assistant="logo"
       />
     </div>
@@ -31,16 +31,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  onBeforeMount,
-  nextTick,
-  onBeforeUnmount,
-  ref,
-  onMounted,
-  reactive,
-  computed,
-  watch,
-} from 'vue'
+import { onBeforeMount, nextTick, onBeforeUnmount, ref, onMounted, reactive, computed } from 'vue'
 import ChatComponent from '@/views/chat/index.vue'
 import LOGO from '@/assets/svg/logo-custom_small.svg'
 import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
@@ -50,7 +41,7 @@ import { useRoute } from 'vue-router'
 import { useAssistantStore } from '@/stores/assistant'
 import { setCurrentColor } from '@/utils/utils'
 import { useI18n } from 'vue-i18n'
-import { i18n } from '@/i18n'
+import { resolveWelcome } from '@/i18n/welcome'
 import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
 
@@ -147,27 +138,15 @@ onMounted(() => {
 })
 const customSet = reactive({
   name: '',
-  welcome: t('embedded.i_am_sqlbot'),
-  welcome_desc: t('embedded.data_analysis_now'),
+  welcome: '',
+  welcome_desc: '',
   theme: '#1CBA90',
   header_font_color: '#1F2329',
 }) as { [key: string]: any }
 
-// 记录哪些字段被服务端 API 配置覆盖过，避免被 locale watcher 覆盖
-const configuredKeys = new Set<string>()
-
-// 监听 locale 变化，动态更新未被子定义覆盖的翻译字段
-watch(
-  () => i18n.global.locale.value,
-  () => {
-    if (!configuredKeys.has('welcome')) {
-      customSet.welcome = t('embedded.i_am_sqlbot')
-    }
-    if (!configuredKeys.has('welcome_desc')) {
-      customSet.welcome_desc = t('embedded.data_analysis_now')
-    }
-  },
-  { immediate: true }
+const welcome = computed(() => resolveWelcome(customSet.welcome, 'embedded.i_am_sqlbot', t))
+const welcomeDesc = computed(() =>
+  resolveWelcome(customSet.welcome_desc, 'embedded.data_analysis_now', t)
 )
 
 const logo = ref()
@@ -243,7 +222,6 @@ onBeforeMount(async () => {
         ![null, undefined].includes(rawData[key])
       ) {
         customSet[key] = rawData[key]
-        configuredKeys.add(key)
       }
     }
 

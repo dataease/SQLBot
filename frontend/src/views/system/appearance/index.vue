@@ -128,7 +128,11 @@
                           :label="$t('system.welcome_message')"
                         />
                       </template>
-                      <el-input v-model="loginForm.slogan" maxlength="50" />
+                      <el-input
+                        v-model="loginForm.slogan"
+                        :placeholder="t('common.intelligent_questioning_platform')"
+                        maxlength="50"
+                      />
                     </el-form-item>
                     <!-- <el-form-item :label="t('system.footer')" prop="foot">
                   <el-switch v-model="loginForm.foot" active-value="true" inactive-value="false" />
@@ -186,10 +190,10 @@
                           ><custom_small v-if="themeColor !== 'default'"></custom_small>
                           <LOGO_fold v-else></LOGO_fold
                         ></el-icon>
-                        <span>{{ topForm.pc_welcome }}</span>
+                        <span>{{ welcome }}</span>
                       </div>
                       <div class="sub">
-                        {{ topForm.pc_welcome_desc }}
+                        {{ welcomeDesc }}
                       </div>
                       <el-button size="large" type="primary" class="greeting-btn">
                         <span class="inner-icon">
@@ -239,11 +243,7 @@
                   <div style="margin: 8px 0">
                     <el-input
                       v-model="topForm.pc_welcome"
-                      :placeholder="
-                        $t('datasource.please_enter') +
-                        $t('common.empty') +
-                        $t('system.welcome_message')
-                      "
+                      :placeholder="t('embedded.i_am_sqlbot')"
                       maxlength="50"
                     />
                   </div>
@@ -253,11 +253,7 @@
                   <div style="margin: 8px 0">
                     <el-input
                       v-model="topForm.pc_welcome_desc"
-                      :placeholder="
-                        $t('datasource.please_enter') +
-                        $t('common.empty') +
-                        $t('embedded.welcome_description')
-                      "
+                      :placeholder="t('qa.hint_description')"
                       type="textarea"
                       show-word-limit
                       maxlength="250"
@@ -291,6 +287,7 @@ import {
   ElMessage,
 } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
+import { normalizeWelcome, resolveWelcome } from '@/i18n/welcome'
 import { request } from '@/utils/request'
 import icon_side_fold_outlined from '@/assets/svg/icon_side-fold_outlined.svg'
 import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
@@ -347,7 +344,7 @@ const changedItemArray = ref<ConfigItem[]>([])
 const loginFormRef = ref<FormInstance>()
 const defaultLoginForm = reactive<LoginForm>({
   name: 'SQLBot',
-  slogan: t('common.intelligent_questioning_platform'),
+  slogan: '',
   foot: 'false',
   showSlogan: '0',
   footContent: '',
@@ -377,8 +374,8 @@ const defaultTopForm = {
   help: 'https://dataease.cn/sqlbot/v1/',
   showDoc: '0',
   showAbout: '0',
-  pc_welcome: t('embedded.i_am_sqlbot'),
-  pc_welcome_desc: t('qa.hint_description'),
+  pc_welcome: '',
+  pc_welcome_desc: '',
 }
 
 const topForm = reactive<{
@@ -388,6 +385,11 @@ const topForm = reactive<{
   pc_welcome: string
   pc_welcome_desc: string
 }>(cloneDeep(defaultTopForm))
+
+const welcome = computed(() => resolveWelcome(topForm.pc_welcome, 'embedded.i_am_sqlbot', t))
+const welcomeDesc = computed(() =>
+  resolveWelcome(topForm.pc_welcome_desc, 'qa.hint_description', t)
+)
 
 const isBlue = computed(() => {
   return themeColor.value === 'blue'
@@ -447,7 +449,8 @@ const saveHandler = () => {
 }
 const buildParam = () => {
   for (const key in loginForm) {
-    const item = loginForm[key as keyof typeof loginForm]
+    let item = loginForm[key as keyof typeof loginForm]
+    if (key === 'slogan') item = normalizeWelcome(item, 'common.intelligent_questioning_platform')
     if (key === 'footContent') {
       addChangeArray(key, item!, 'file')
     } else {
@@ -455,7 +458,9 @@ const buildParam = () => {
     }
   }
   for (const key in topForm) {
-    const item = topForm[key as keyof typeof topForm]
+    let item = topForm[key as keyof typeof topForm]
+    if (key === 'pc_welcome') item = normalizeWelcome(item, 'embedded.i_am_sqlbot')
+    if (key === 'pc_welcome_desc') item = normalizeWelcome(item, 'qa.hint_description')
     addChangeArray(key, item)
   }
   const formData = new FormData()
@@ -508,6 +513,12 @@ const init = () => {
           mobileLoginBg.value = pval
         }
       })
+      loginForm.slogan = normalizeWelcome(
+        loginForm.slogan,
+        'common.intelligent_questioning_platform'
+      )
+      topForm.pc_welcome = normalizeWelcome(topForm.pc_welcome, 'embedded.i_am_sqlbot')
+      topForm.pc_welcome_desc = normalizeWelcome(topForm.pc_welcome_desc, 'qa.hint_description')
     })
     .finally(() => {
       nextTick(() => {

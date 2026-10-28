@@ -120,13 +120,10 @@
                   ><custom_small v-if="appearanceStore.themeColor !== 'default'"></custom_small>
                   <LOGO_fold v-else></LOGO_fold
                 ></el-icon>
-                <span>{{ appearanceStore.pc_welcome ?? '你好，我是 SQLBot' }}</span>
+                <span>{{ pageWelcome }}</span>
               </div>
               <div class="sub">
-                {{
-                  appearanceStore.pc_welcome_desc ??
-                  '我可以查询数据、生成图表、检测数据异常、预测数据等赶快开启智能问数吧～'
-                }}
+                {{ pageWelcomeDesc }}
               </div>
             </template>
 
@@ -467,6 +464,7 @@ import ErrorInfo from './ErrorInfo.vue'
 import ChatToolBar from './ChatToolBar.vue'
 import { dsTypeWithImg } from '@/views/ds/js/ds-type'
 import { useI18n } from 'vue-i18n'
+import { resolveWelcome } from '@/i18n/welcome'
 import { find, forEach } from 'lodash-es'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import LOGO_fold from '@/assets/LOGO-fold.svg'
@@ -519,6 +517,12 @@ const customName = computed(() => {
   return ''
 })
 const { t } = useI18n()
+const pageWelcome = computed(() =>
+  resolveWelcome(appearanceStore.pc_welcome, 'embedded.i_am_sqlbot', t)
+)
+const pageWelcomeDesc = computed(() =>
+  resolveWelcome(appearanceStore.pc_welcome_desc, 'qa.hint_description', t)
+)
 
 const chatConfig = useChatConfigStore()
 

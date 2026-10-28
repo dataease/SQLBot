@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import Assistant from '@/views/embedded/AssistantPreview.vue'
-import { ref, unref, reactive, nextTick } from 'vue'
+import { ref, unref, reactive, nextTick, computed } from 'vue'
 import { type UploadUserFile, ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
+import { normalizeWelcome, resolveWelcome } from '@/i18n/welcome'
 import { request } from '@/utils/request'
 import { setCurrentColor } from '@/utils/utils'
 import { cloneDeep } from 'lodash-es'
@@ -69,14 +70,19 @@ const defaultSqlBotForm = reactive<SqlBotForm>({
   x_val: 30,
   y_val: 30,
   float_icon_drag: false,
-  welcome: t('embedded.i_am_sqlbot'),
-  welcome_desc: t('embedded.data_analysis_now'),
+  welcome: '',
+  welcome_desc: '',
   theme: '#1CBA90',
   header_font_color: '#1F2329',
   logo: '',
   float_icon: '',
 })
 const sqlBotForm = reactive<SqlBotForm>(cloneDeep(defaultSqlBotForm)) as { [key: string]: any }
+const welcome = computed(() => resolveWelcome(sqlBotForm.welcome, 'embedded.i_am_sqlbot', t))
+const welcomeDesc = computed(() =>
+  resolveWelcome(sqlBotForm.welcome_desc, 'embedded.data_analysis_now', t)
+)
+
 let rawData = {} as { [key: string]: any }
 const init = () => {
   Object.assign(sqlBotForm, cloneDeep(defaultSqlBotForm))
@@ -92,6 +98,9 @@ const init = () => {
       sqlBotForm[key] = rawData[key]
     }
   }
+
+  sqlBotForm.welcome = normalizeWelcome(sqlBotForm.welcome, 'embedded.i_am_sqlbot')
+  sqlBotForm.welcome_desc = normalizeWelcome(sqlBotForm.welcome_desc, 'embedded.data_analysis_now')
 
   if (!rawData.theme) {
     const { customColor, themeColor } = appearanceStore
@@ -141,7 +150,15 @@ const buildParam = () => {
       formData.append('files', newfile)
     })
   }
-  formData.append('data', JSON.stringify({ ...unref(sqlBotForm), id: currentId.value }))
+  formData.append(
+    'data',
+    JSON.stringify({
+      ...unref(sqlBotForm),
+      id: currentId.value,
+      welcome: normalizeWelcome(sqlBotForm.welcome, 'embedded.i_am_sqlbot'),
+      welcome_desc: normalizeWelcome(sqlBotForm.welcome_desc, 'embedded.data_analysis_now'),
+    })
+  )
   return formData
 }
 
@@ -168,7 +185,6 @@ const resetSqlBotForm = (reset2Default?: boolean) => {
   if (reset2Default) {
     logo.value = ''
     floatIcon.value = ''
-    sqlBotForm.restoreDefaults = true
     nextTick(() => {
       setPageCustomColor(sqlBotForm.theme)
       setPageHeaderFontColor(sqlBotForm.header_font_color)
@@ -242,8 +258,8 @@ defineExpose({
     <div class="ui-main">
       <div class="left-preview">
         <assistant
-          :welcome-desc="sqlBotForm.welcome_desc"
-          :welcome="sqlBotForm.welcome"
+          :welcome-desc="welcomeDesc"
+          :welcome="welcome"
           :name="appName"
           :logo="logo"
         ></assistant>
@@ -362,20 +378,14 @@ defineExpose({
           <el-form-item :label="$t('system.welcome_message')">
             <el-input
               v-model="sqlBotForm.welcome"
-              :placeholder="
-                $t('datasource.please_enter') + $t('common.empty') + $t('system.welcome_message')
-              "
+              :placeholder="t('embedded.i_am_sqlbot')"
               maxlength="50"
             />
           </el-form-item>
           <el-form-item :label="$t('embedded.welcome_description')">
             <el-input
               v-model="sqlBotForm.welcome_desc"
-              :placeholder="
-                $t('datasource.please_enter') +
-                $t('common.empty') +
-                $t('embedded.welcome_description')
-              "
+              :placeholder="t('embedded.data_analysis_now')"
               type="textarea"
               show-word-limit
               maxlength="200"

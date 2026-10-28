@@ -28,7 +28,7 @@
           }}</span>
         </div>
         <div v-if="appearanceStore.getShowSlogan" class="welcome">
-          {{ appearanceStore.slogan ?? $t('common.intelligent_questioning_platform') }}
+          {{ loginSlogan }}
         </div>
         <div v-else class="welcome" style="height: 0"></div>
         <div class="login-form">
@@ -88,6 +88,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
+import { resolveWelcome } from '@/i18n/welcome'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
@@ -103,6 +104,9 @@ const router = useRouter()
 const userStore = useUserStore()
 const appearanceStore = useAppearanceStoreWithOut()
 const { t } = useI18n()
+const loginSlogan = computed(() =>
+  resolveWelcome(appearanceStore.slogan, 'common.intelligent_questioning_platform', t)
+)
 const loginForm = ref({
   username: '',
   password: '',
