@@ -801,6 +801,26 @@ ORDER BY similarity DESC
 LIMIT :top_count
 """
 
+# 【改进点5】高级应用/嵌入态专用：应用锚 + 数据源锚叠加的向量检索
+# 语义：命中应用锚，且（所有数据源生效 或 绑定数据源数组包含当前所选 ds）
+embedding_sql_with_advanced_application_and_ds = """
+SELECT id, pid, word, similarity
+FROM
+(SELECT id, pid, word, oid, specific_ds, advanced_application, datasource_ids, enabled,
+( 1 - (embedding <=> :embedding_array) ) AS similarity
+FROM terminology AS child
+) TEMP
+WHERE similarity > :similarity AND oid = :oid AND enabled = true
+AND advanced_application = :advanced_application_id
+AND (
+    (specific_ds = false OR specific_ds IS NULL)
+    OR
+    (specific_ds = true AND datasource_ids IS NOT NULL AND datasource_ids @> jsonb_build_array(:datasource))
+)
+ORDER BY similarity DESC
+LIMIT :top_count
+"""
+
 
 def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasource: int = None,
                                advanced_application_id: Optional[int] = None, *, config: EmbeddingConfig | None = None):
@@ -823,6 +843,18 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
 
     if advanced_application_id is not None:
         stmt = stmt.where(Terminology.advanced_application == advanced_application_id)
+        # 【改进点6】高级应用/嵌入态叠加数据源过滤：放行"所有数据源"，过滤"绑定不含当前 ds"的术语
+        if datasource is not None:
+            stmt = stmt.where(
+                or_(
+                    or_(Terminology.specific_ds == False, Terminology.specific_ds.is_(None)),
+                    and_(
+                        Terminology.specific_ds == True,
+                        Terminology.datasource_ids.isnot(None),
+                        text("datasource_ids @> jsonb_build_array(:datasource)")
+                    )
+                )
+            )
     elif datasource is not None:
         stmt = stmt.where(
             or_(
@@ -854,7 +886,13 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
 
                 embedding = parse_valid_embedding(model.embed_query(word))
 
-                if advanced_application_id is not None:
+                if advanced_application_id is not None and datasource is not None:
+                    # 【改进点6】双锚齐备：应用锚 + 数据源过滤叠加
+                    results = session.execute(text(embedding_sql_with_advanced_application_and_ds),
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.terminology_similarity, 'top_count': config.terminology_top_count,
+                                               'advanced_application_id': advanced_application_id,
+                                               'datasource': datasource}).fetchall()
+                elif advanced_application_id is not None:
                     results = session.execute(text(embedding_sql_with_advanced_application),
                                               {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.terminology_similarity, 'top_count': config.terminology_top_count,
                                                'advanced_application_id': advanced_application_id}).fetchall()
