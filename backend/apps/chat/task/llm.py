@@ -42,7 +42,8 @@ from apps.data_training.curd.data_training import get_training_template
 from apps.datasource.crud.datasource import get_table_schema, get_tables_sample_data
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
 from apps.datasource.embedding.ds_embedding import get_ds_embedding
-from apps.datasource.models.datasource import CoreDatasource
+from apps.datasource.models.datasource import CoreDatasource, DatasourceConf
+from apps.datasource.utils.utils import aes_decrypt
 from apps.db.db import exec_sql, get_version, check_connection, get_sqlglot_dialect
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_ds
@@ -63,6 +64,59 @@ from common.utils.utils import SQLBotLogUtil, extract_nested_json, prepare_for_o
 warnings.filterwarnings("ignore")
 
 executor = ThreadPoolExecutor(max_workers=200)
+
+
+# ====================================================================
+# 【改进点1】嵌入态数据源身份翻译：连接指纹映射
+# 嵌入态 self.ds 为外部系统（DataEase）侧 AssistantOutDsSchema，其 id 与
+# SQLBot 侧 core_datasource.id 属不同 id 空间，无法直连。以连接指纹
+# (type, host, port, database, schema) —— 数据源的物理属性 —— 做匹配，
+# 不受两侧人工命名差异影响（名称匹配不可靠：异名同库会漏、同名异库会错命中）。
+# 规则：host 归一（localhost/::1/0.0.0.0 → 127.0.0.1，写法漂移实测存在）；
+#       database 必须参与（同实例多库仅靠 ip+port 不可分）；
+#       SSL 不参与匹配（DataEase→SQLBot 传输 VO 无 SSL 字段，两侧无对齐值）。
+# 映射失败返回 None → 检索回退为仅按高级应用锚（安全侧失效：少过滤而非错过滤）。
+# ====================================================================
+def _normalize_host(host) -> str:
+    """host 归一化：localhost/::1/0.0.0.0 与 127.0.0.1 视为同一地址。"""
+    h = (host or '').strip().lower()
+    return '127.0.0.1' if h in ('localhost', '::1', '0.0.0.0') else h
+
+
+def _ds_fingerprint(ds_type, host, port, database, schema='') -> tuple:
+    """连接指纹：数据源的物理身份五元组（schema 仅 PG 类有值，MySQL 恒为空串）。"""
+    return ((ds_type or '').strip().lower(), _normalize_host(host),
+            int(port or 0), (database or '').strip(), (schema or '').strip())
+
+
+def resolve_embedded_ds_id_by_fingerprint(session: Session, oid: int, out_ds) -> Optional[int]:
+    """嵌入态：按连接指纹把外部系统侧数据源映射到 SQLBot 侧 core_datasource.id。
+    out_ds 为 AssistantOutDsSchema（convert2schema 已解密，host/port/dataBase/db_schema 为明文）。
+    SQLBot 侧 configuration 经 aes_decrypt 解密为 DatasourceConf 后取同构字段比对。
+    映射失败返回 None，检索回退为仅按高级应用锚。"""
+    if out_ds is None:
+        return None
+    ds_type = (getattr(out_ds, 'type', '') or '').strip().lower()
+    if ds_type in ('excel', 'api', 'es'):   # 无物理连接语义的类型不参与指纹
+        return None
+    fp = _ds_fingerprint(ds_type, getattr(out_ds, 'host', None), getattr(out_ds, 'port', None),
+                         getattr(out_ds, 'dataBase', None), getattr(out_ds, 'db_schema', None))
+    try:
+        rows = session.execute(
+            select(CoreDatasource.id, CoreDatasource.type, CoreDatasource.configuration)
+            .where(CoreDatasource.oid == oid)
+        ).all()
+        for ds_id, ds_t, conf_enc in rows:
+            try:
+                conf = DatasourceConf(**json.loads(aes_decrypt(conf_enc)))
+            except Exception:
+                continue    # excel 等类型 configuration 结构不同，跳过
+            if _ds_fingerprint(ds_t, conf.host, conf.port, conf.database, conf.dbSchema) == fp:
+                return ds_id
+        return None
+    except Exception:
+        SQLBotLogUtil.error("resolve_embedded_ds_id_by_fingerprint failed")
+        return None
 
 dynamic_ds_types = [1, 3]
 dynamic_subsql_prefix = 'select * from sqlbot_dynamic_temp_table_'
@@ -383,15 +437,15 @@ class LLMService:
         calculate_ds_id = ds_id
         if self.current_assistant:
             calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
-            if self.current_assistant.type == 1:
-                calculate_ds_id = None
+            # 【改进点3】高级应用态不再丢弃 ds_id：保留用于数据源过滤，应用锚仍并行传递（双锚叠加）
         # 使用原始提取的关键词（未扩展）进行术语匹配，避免同义词重复查询
         match_text = self.chat_question.extracted_keywords or self.chat_question.question
         if self.current_assistant and self.current_assistant.type == 1:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
                                                                                    match_text,
                                                                                    calculate_oid,
-                                                                                   None, self.current_assistant.id, config=self.embedding_config)
+                                                                                   calculate_ds_id,
+                                                                                   self.current_assistant.id, config=self.embedding_config)
         else:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
                                                                                    match_text,
@@ -445,13 +499,12 @@ class LLMService:
         calculate_ds_id = ds_id
         if self.current_assistant:
             calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
-            if self.current_assistant.type == 1:
-                calculate_ds_id = None
+            # 【改进点4】高级应用态不再丢弃 ds_id：保留用于数据源过滤，应用锚仍并行传递（双锚叠加）
         if self.current_assistant and self.current_assistant.type == 1:
             self.chat_question.data_training, example_list = get_training_template(_session,
                                                                                    self.chat_question.question,
                                                                                    calculate_oid,
-                                                                                   None, self.current_assistant.id, config=self.embedding_config)
+                                                                                   calculate_ds_id, self.current_assistant.id, config=self.embedding_config)
         else:
             self.chat_question.data_training, example_list = get_training_template(_session,
                                                                                    self.chat_question.question,
@@ -918,6 +971,11 @@ class LLMService:
         if self.ds:
             oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+            # 【改进点2】嵌入态：外部系统（DataEase）侧数据源 id 与 SQLBot 侧不同空间，
+            # 按连接指纹 (type, host, port, database, schema) 映射出 SQLBot 侧 ds_id，
+            # 供术语/示例检索做数据源过滤（映射失败回退 None）
+            if ds_id is None:
+                ds_id = resolve_embedded_ds_id_by_fingerprint(_session, oid, self.ds)
 
             # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
             if self.embedding_config.keyword_enabled:
@@ -1400,6 +1458,11 @@ class LLMService:
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+                # 【改进点2】嵌入态：外部系统（DataEase）侧数据源 id 与 SQLBot 侧不同空间，
+                # 按连接指纹 (type, host, port, database, schema) 映射出 SQLBot 侧 ds_id，
+                # 供术语/示例检索做数据源过滤（映射失败回退 None）
+                if ds_id is None:
+                    ds_id = resolve_embedded_ds_id_by_fingerprint(_session, oid, self.ds)
 
                 # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
                 if self.embedding_config.keyword_enabled:
