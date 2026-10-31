@@ -481,6 +481,20 @@ ORDER BY similarity DESC
 LIMIT :top_count
 """
 
+# 【改进点7】高级应用/嵌入态专用：应用锚 + 数据源锚叠加的向量检索（示例侧单值绑定，精确等值）
+embedding_sql_in_advanced_application_and_ds = """
+SELECT id, advanced_application, question, similarity
+FROM
+(SELECT id, advanced_application, datasource, question, oid, enabled,
+( 1 - (embedding <=> :embedding_array) ) AS similarity
+FROM data_training AS child
+) TEMP
+WHERE similarity > :similarity and oid = :oid and advanced_application = :advanced_application and enabled = true
+and datasource = :datasource
+ORDER BY similarity DESC
+LIMIT :top_count
+"""
+
 
 def select_training_by_question(session: SessionDep, question: str, oid: int, datasource: Optional[int] = None,
                                 advanced_application_id: Optional[int] = None, *, config: EmbeddingConfig | None = None):
@@ -504,6 +518,9 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
     )
     if advanced_application_id is not None:
         stmt = stmt.where(and_(DataTraining.advanced_application == advanced_application_id))
+        # 【改进点8】高级应用/嵌入态叠加数据源过滤（示例侧单值绑定，精确等值）
+        if datasource is not None:
+            stmt = stmt.where(DataTraining.datasource == datasource)
     else:
         stmt = stmt.where(and_(DataTraining.datasource == datasource))
 
@@ -519,7 +536,13 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
 
                 embedding = parse_valid_embedding(model.embed_query(question))
 
-                if advanced_application_id is not None:
+                if advanced_application_id is not None and datasource is not None:
+                    # 【改进点8】双锚齐备：应用锚 + 数据源过滤叠加
+                    results = session.execute(text(embedding_sql_in_advanced_application_and_ds),
+                                              {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.data_training_similarity, 'top_count': config.data_training_top_count,
+                                               'advanced_application': advanced_application_id,
+                                               'datasource': datasource})
+                elif advanced_application_id is not None:
                     results = session.execute(text(embedding_sql_in_advanced_application),
                                               {'embedding_array': str(embedding), 'oid': oid, 'similarity': config.data_training_similarity, 'top_count': config.data_training_top_count,
                                                'advanced_application': advanced_application_id})
