@@ -54,6 +54,7 @@
   "i18n_ds_invalid": "데이터 소스 연결이 무효합니다",
   "i18n_ds_unsupported_file_format": "지원하지 않는 파일 형식입니다. XLS, XLSX 또는 CSV 파일을 업로드해 주세요.",
   "i18n_ds_upload_error": "파일 업로드 실패",
+  "i18n_ds_invalid_file_path": "잘못된 파일 경로입니다",
   "i18n_embedded": {
     "invalid_origin": "도메인 이름 검증 실패 【{origin}】",
     "missing_sign": "임베드 서명(SQLBOT-EMBEDDED-SIGN)이 누락되어 임베드 당사자의 신원을 확인할 수 없습니다.",

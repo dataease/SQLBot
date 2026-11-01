@@ -54,6 +54,7 @@
   "i18n_ds_invalid": "Datasource connection is invalid",
   "i18n_ds_unsupported_file_format": "Unsupported file format. Please upload an XLS, XLSX or CSV file.",
   "i18n_ds_upload_error": "Upload Failed",
+  "i18n_ds_invalid_file_path": "Invalid file path",
   "i18n_embedded": {
     "invalid_origin": "Domain name validation failed【{origin}】",
     "missing_sign": "Missing embedded signature (SQLBOT-EMBEDDED-SIGN); cannot verify the embedding party's identity.",
