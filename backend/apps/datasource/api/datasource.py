@@ -580,7 +580,15 @@ async def parse_excel(trans: Trans, file: UploadFile = File(..., description=f"{
 @router.post("/importToDb", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_import_to_db")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequest):
-    save_path = os.path.join(path, import_req.filePath)
+    # filePath comes from the client; it must resolve to a file inside the
+    # upload directory to prevent path traversal (CWE-22).
+    base_dir = os.path.realpath(path)
+    try:
+        save_path = os.path.realpath(os.path.join(base_dir, import_req.filePath))
+    except ValueError:  # e.g. an embedded null byte
+        raise HTTPException(400, trans('i18n_ds_invalid_file_path'))
+    if save_path == base_dir or os.path.commonpath([save_path, base_dir]) != base_dir:
+        raise HTTPException(400, trans('i18n_ds_invalid_file_path'))
     if not os.path.exists(save_path):
         raise HTTPException(400, "File not found")
 

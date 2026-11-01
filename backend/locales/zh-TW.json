@@ -54,6 +54,7 @@
   "i18n_ds_invalid": "數據源連接無效",
   "i18n_ds_unsupported_file_format": "檔案格式不支援，請上傳 XLS、XLSX 或 CSV 格式的檔案。",
   "i18n_ds_upload_error": "上傳文件失敗",
+  "i18n_ds_invalid_file_path": "檔案路徑無效",
   "i18n_embedded": {
     "invalid_origin": "網域校驗失敗【{origin}】",
     "missing_sign": "缺少嵌入簽名(SQLBOT-EMBEDDED-SIGN)，無法驗證嵌入方身分。",
