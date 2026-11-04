@@ -197,6 +197,49 @@ class TestMiniMaxIconFile(unittest.TestCase):
         self.assertGreater(size, 100, "Icon file should be reasonably sized")
 
 
+class TestAtlasCloudSupplierConfig(unittest.TestCase):
+    """Test the Atlas Cloud supplier entry, icon and i18n entries."""
+
+    LOCALES = ["en", "zh-CN", "zh-TW", "ko-KR", "th-TH"]
+
+    def setUp(self):
+        supplier_path = os.path.join(
+            PROJECT_ROOT, "frontend", "src", "entity", "supplier.ts"
+        )
+        with open(supplier_path, encoding="utf-8") as f:
+            self.supplier_content = f.read()
+        section = self.supplier_content.split("id: 16,", 1)[1]
+        self.section = section.split("/* {", 1)[0]
+
+    def test_entry(self):
+        self.assertEqual(self.supplier_content.count("id: 16"), 1)
+        self.assertIn("name: 'Atlas Cloud'", self.section)
+        self.assertIn("i18nKey: 'supplier.atlascloud'", self.section)
+        self.assertIn("icon: icon_atlascloud_colorful", self.section)
+        self.assertIn("api_domain: 'https://api.atlascloud.ai/v1'", self.section)
+
+    def test_uses_openai_protocol(self):
+        self.assertNotIn("type: 'vllm'", self.section)
+        self.assertNotIn("type: 'azure'", self.section)
+
+    def test_icon_file_is_png(self):
+        icon_path = os.path.join(
+            PROJECT_ROOT, "frontend", "src", "assets", "model",
+            "icon_atlascloud_colorful.png",
+        )
+        with open(icon_path, "rb") as f:
+            self.assertEqual(f.read(8), b"\x89PNG\r\n\x1a\n")
+
+    def test_i18n_in_all_locales(self):
+        for locale in self.LOCALES:
+            path = os.path.join(
+                PROJECT_ROOT, "frontend", "src", "i18n", f"{locale}.json"
+            )
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            self.assertEqual(data["supplier"]["atlascloud"], "Atlas Cloud", locale)
+
+
 class TestModelFactoryConfig(unittest.TestCase):
     """Test that backend model_factory.py can support MiniMax via OpenAI protocol."""
 

@@ -11,6 +11,7 @@ import icon_hsyq_colorful from '@/assets/model/icon_hsyq_colorful.png'
 // import icon_vllm_colorful from '@/assets/model/icon_vllm_colorful.png'
 import icon_common_openai from '@/assets/model/icon_common_openai.png'
 import icon_minimax_colorful from '@/assets/model/icon_minimax_colorful.png'
+import icon_atlascloud_colorful from '@/assets/model/icon_atlascloud_colorful.png'
 // import icon_azure_openAI_colorful from '@/assets/model/icon_Azure_OpenAI_colorful.png'
 
 type ModelArg = { key: string; val?: string | number; type: string; range?: string }
@@ -337,6 +338,25 @@ export const supplierList: Array<{
       },
     },
   }, */
+  {
+    id: 16,
+    name: 'Atlas Cloud',
+    i18nKey: 'supplier.atlascloud',
+    icon: icon_atlascloud_colorful,
+    model_config: {
+      0: {
+        api_domain: 'https://api.atlascloud.ai/v1',
+        common_args: [{ key: 'temperature', val: 0.7, type: 'number', range: '[0, 2]' }],
+        model_options: [
+          { name: 'deepseek-ai/deepseek-v4-flash' },
+          { name: 'moonshotai/kimi-k3' },
+          { name: 'zai-org/glm-5.2' },
+          { name: 'qwen/qwen3.6-plus' },
+          { name: 'minimaxai/minimax-m3' },
+        ],
+      },
+    },
+  },
   {
     id: 15,
     name: '通用OpenAI',
