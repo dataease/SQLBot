@@ -65,7 +65,7 @@ docker run -d \
 
 如你有更多问题，可以加入我们的技术交流群与我们交流。
 
-<img width="180" height="180" alt="contact_me_qr" src="https://github.com/user-attachments/assets/a4b84255-dbe1-43eb-b73f-2bc4ee13f037" />
+<img width="180" height="180" alt="contact_me_qr" src="https://github.com/user-attachments/assets/14594c13-fa1b-4085-a77e-0cff63b17180" />
 
 ## UI 展示
 
