@@ -832,7 +832,7 @@ const saveHandler = () => {
 
               <el-form-item prop="enable_custom_model" :label="t('embedded.useModel')">
                 <el-radio-group v-model="currentEmbedded.enable_custom_model">
-                  <el-radio :value="false">{{ t('embedded.defaultModel') }}</el-radio>
+                  <el-radio :value="false">{{ t('workspace_model.assistant_default') }}</el-radio>
                   <el-radio :value="true">{{ t('embedded.customModel') }}</el-radio>
                 </el-radio-group>
               </el-form-item>

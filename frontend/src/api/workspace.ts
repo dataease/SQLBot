@@ -24,3 +24,40 @@ export const workspaceModelMappingAdd = (aiModelId: any, data: any) =>
   request.post(`/system/aimodel/${aiModelId}/ws_mapping`, data)
 export const workspaceModelMappingDelete = (aiModelId: any, data: any) =>
   request.delete(`/system/aimodel/${aiModelId}/ws_mapping`, { data })
+
+export interface WorkspaceModelOption {
+  id: string
+  name: string
+  default_model: boolean
+  supplier: number
+}
+
+export interface WorkspaceModelSettings {
+  enable_custom_model: boolean
+  custom_model: string | null
+}
+
+export interface WorkspaceModelSettingsResult extends WorkspaceModelSettings {
+  models: WorkspaceModelOption[]
+  model_valid: boolean
+}
+
+export interface ModelImpact {
+  workspace_id: string
+  workspace_name: string
+  uses_default: boolean
+  assistants: string[]
+  models: WorkspaceModelOption[]
+}
+
+export interface ModelImpactResolution {
+  workspace_id: string
+  custom_model: string | null
+}
+
+export const workspaceModelSettings = (id: string): Promise<WorkspaceModelSettingsResult> =>
+  request.get(`/system/workspace/${id}/model`)
+export const workspaceModelSettingsUpdate = (id: string, data: WorkspaceModelSettings) =>
+  request.put(`/system/workspace/${id}/model`, data)
+export const modelWorkspaceImpact = (id: string, wsIds?: string[]): Promise<ModelImpact[]> =>
+  request.post(`/system/aimodel/${id}/workspace_impact`, wsIds ?? null)

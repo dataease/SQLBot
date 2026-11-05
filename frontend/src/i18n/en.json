@@ -1,4 +1,20 @@
 {
+  "workspace_model": {
+    "title": "Model management",
+    "system": "Use system default model",
+    "custom": "Specify model",
+    "default": "Workspace default model",
+    "select": "Select an authorized model, or leave empty",
+    "invalid": "Model deleted or authorization revoked. Select another model or clear it.",
+    "empty_hint": "Leaving this empty disables model calls for this workspace, including assistants and MCP.",
+    "system_hint": "Use the system default model regardless of workspace authorization. Assistant defaults follow this setting.",
+    "impact_title": "Affected workspaces",
+    "impact_hint": "Choose a replacement workspace default, or keep the unavailable configuration. Calls without another valid authorized model will stop, with no fallback.",
+    "resolve": "Select a replacement or confirm suspension",
+    "pause": "Keep unavailable default and suspend default calls",
+    "assistant_impact": "Assistants {names} still specify this model. Their calls will fail until their model settings are updated.",
+    "assistant_default": "Follow workspace default model"
+  },
   "menu": {
     "add_interface_credentials": "Please add interface credentials",
     "Data Q&A": "Data Q&A",

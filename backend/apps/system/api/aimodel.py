@@ -8,10 +8,12 @@ from sqlmodel import func, select, update, delete
 from apps.ai_model.model_factory import LLMConfig, LLMFactory
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
+from apps.system.crud.workspace_model import resolve_model_id, get_model_impacts, apply_model_impact_resolutions
+from apps.system.schemas.workspace_model import ModelMappingUpdate, ModelImpactResolution, ModelImpact
 from apps.system.models.system_model import AiModelDetail, AiModelWorkspaceMapping, AiModelBrief
 from apps.system.schemas.ai_model_schema import AiModelConfigItem, AiModelCreator, AiModelEditor, AiModelGridItem
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
-from common.core.deps import SessionDep, Trans, CurrentUser
+from common.core.deps import SessionDep, Trans, CurrentUser, CurrentAssistant
 from common.utils.crypto import sqlbot_decrypt
 from common.utils.time import get_timestamp
 from common.utils.utils import SQLBotLogUtil, prepare_model_arg
@@ -52,12 +54,8 @@ async def check_llm(info: AiModelCreator, trans: Trans):
 
 
 @router.get("/default", include_in_schema=False)
-async def check_default(session: SessionDep, trans: Trans):
-    db_model = session.exec(
-        select(AiModelDetail).where(AiModelDetail.default_model == True)
-    ).first()
-    if not db_model:
-        raise Exception(trans('i18n_llm.miss_default'))
+async def check_default(session: SessionDep, trans: Trans, current_user: CurrentUser, current_assistant: CurrentAssistant):
+    resolve_model_id(session, current_user.oid, trans, current_assistant)
 
 
 @router.put("/default/{id}", summary=f"{PLACEHOLDER_PREFIX}system_model_default",
@@ -198,13 +196,29 @@ async def update_model(
 async def delete_model(
         session: SessionDep,
         trans: Trans,
-        id: int = Path(description="ID")
+        current_user: CurrentUser,
+        id: int = Path(description="ID"),
+        resolutions: list[ModelImpactResolution] = Body(default=[]),
 ):
-    item = session.get(AiModelDetail, id)
+    item = session.exec(select(AiModelDetail).where(AiModelDetail.id == id).with_for_update()).first()
+    if item is None:
+        raise ValueError(trans('i18n_llm.model_unavailable'))
     if item.default_model:
         raise Exception(trans('i18n_llm.delete_default_error', key=item.name))
+    apply_model_impact_resolutions(session, id, None, resolutions, trans, actor=current_user)
+    session.exec(delete(AiModelWorkspaceMapping).where(AiModelWorkspaceMapping.ai_model_id == id))
     session.delete(item)
     session.commit()
+
+
+@router.post("/{id}/workspace_impact", response_model=list[ModelImpact], summary=f"{PLACEHOLDER_PREFIX}system_model_workspace_impact")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def model_workspace_impact(session: SessionDep, trans: Trans, id: int, ws_ids: list[str] | None = Body(default=None)):
+    impacts = get_model_impacts(session, id, None if ws_ids is None else [int(value) for value in ws_ids])
+    for impact in impacts:
+        if impact.workspace_name.startswith('i18n'):
+            impact.workspace_name = trans(impact.workspace_name)
+    return impacts
 
 
 @router.get("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping",
@@ -232,20 +246,28 @@ async def get_model_ws_mapping_by_id(
 @router.put("/{id}/ws_mapping", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_update",
             description=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_update")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.AI_MODEL, resource_id_expr="id", extract_params=False))
 async def update_model_ws_mapping_by_id(
         session: SessionDep,
+        trans: Trans,
+        current_user: CurrentUser,
         id: int = Path(description="ID"),
-        ws_ids: List[str] = Body(description="workspace id list"),
+        ws_ids: List[str] | ModelMappingUpdate = Body(description="workspace id list and impact resolutions"),
 ):
+    resolutions = ws_ids.resolutions if isinstance(ws_ids, ModelMappingUpdate) else []
+    ws_ids = ws_ids.ws_ids if isinstance(ws_ids, ModelMappingUpdate) else ws_ids
     if ws_ids is None:
         ws_ids = []
     # 提前去重
     ws_ids = list({int(ws_id) for ws_id in ws_ids})
 
-    db_model = session.get(AiModelDetail, id)
+    db_model = session.exec(select(AiModelDetail).where(AiModelDetail.id == id).with_for_update()).first()
     if not db_model:
         raise ValueError(f"AiModelDetail with id {id} not found")
 
+    existing_ids = session.exec(select(AiModelWorkspaceMapping.workspace_id).where(AiModelWorkspaceMapping.ai_model_id == id)).all()
+    removed_ids = list(set(existing_ids) - set(ws_ids))
+    apply_model_impact_resolutions(session, id, removed_ids, resolutions, trans, actor=current_user)
     # 根据 ai_model_id 更新关联的 workspace_id 列表
     # 1. 批量删除旧映射
     session.execute(
@@ -316,19 +338,25 @@ async def add_model_ws_mapping_by_id(
                summary=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_delete",
                description=f"{PLACEHOLDER_PREFIX}system_model_ws_mapping_delete")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
+@system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.AI_MODEL, resource_id_expr="id", extract_params=False))
 async def delete_model_ws_mapping_by_id(
         session: SessionDep,
+        trans: Trans,
+        current_user: CurrentUser,
         id: int = Path(description="ID"),
-        ws_ids: List[str] = Body(description="workspace id list"),
+        ws_ids: List[str] | ModelMappingUpdate = Body(description="workspace id list and impact resolutions"),
 ):
+    resolutions = ws_ids.resolutions if isinstance(ws_ids, ModelMappingUpdate) else []
+    ws_ids = ws_ids.ws_ids if isinstance(ws_ids, ModelMappingUpdate) else ws_ids
     if ws_ids is None:
         ws_ids = []
     ws_ids = list({int(ws_id) for ws_id in ws_ids})
 
-    db_model = session.get(AiModelDetail, id)
+    db_model = session.exec(select(AiModelDetail).where(AiModelDetail.id == id).with_for_update()).first()
     if not db_model:
         raise ValueError(f"AiModelDetail with id {id} not found")
 
+    apply_model_impact_resolutions(session, id, ws_ids, resolutions, trans, actor=current_user)
     # 只删除指定的映射
     if ws_ids:
         session.execute(

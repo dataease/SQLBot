@@ -650,10 +650,10 @@ const createNewChat = async () => {
     await chatApi.checkLLMModel()
   } catch (error: any) {
     console.error(error)
-    let errorMsg = t('model.default_miss')
+    const errorMsg =
+      typeof error.response?.data === 'string' ? error.response.data : t('model.default_miss')
     let confirm_text = t('datasource.got_it')
     if (userStore.isAdmin) {
-      errorMsg = t('model.default_miss_admin')
       confirm_text = t('model.to_config')
     }
     ElMessageBox.confirm(t('qa.ask_failed'), {
@@ -667,7 +667,7 @@ const createNewChat = async () => {
       showClose: false,
       callback: (val: string) => {
         if (userStore.isAdmin && val === 'confirm') {
-          router.push('/system/model')
+          router.push('/system/workspace')
         }
       },
     })

@@ -44,7 +44,7 @@ from apps.datasource.crud.permission import get_row_permission_filters, is_norma
 from apps.datasource.embedding.ds_embedding import get_ds_embedding
 from apps.datasource.models.datasource import CoreDatasource
 from apps.db.db import exec_sql, get_version, check_connection, get_sqlglot_dialect
-from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
+from apps.system.crud.workspace_model import resolve_model_id
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_ds
 from apps.system.crud.parameter_manage import get_groups
 from apps.system.crud.user import user_ws_list
@@ -223,26 +223,13 @@ class LLMService:
 
     @classmethod
     async def create(cls, *args, **kwargs):
-        specialized_model_id = None
-        _ai_model_list = []
-        if args[3]:
-            if args[1]:
-                ws_id = args[1].oid
-                _ai_model_list = get_ai_model_list_by_workspace(args[0], ws_id)
-            if args[3].enable_custom_model:
-                if args[3].custom_model:
-                    if any(str(model.id) == str(args[3].custom_model) for model in _ai_model_list):
-                        specialized_model_id = args[3].custom_model
-                        print("use custom model: id[" + specialized_model_id + "]")
-        # mcp call, custom model id
-        if args[2] and args[2].custom_model:
-            if args[1]:
-                ws_id = args[1].oid
-                _ai_model_list = get_ai_model_list_by_workspace(args[0], ws_id)
-            if any(str(model.id) == str(args[2].custom_model) for model in _ai_model_list):
-                specialized_model_id = args[2].custom_model
-                print("use custom model: id[" + specialized_model_id + "]")
-        config: LLMConfig = await get_default_config(specialized_model_id)
+        session, user, question, assistant = args[:4]
+        chat = session.get(Chat, question.chat_id)
+        if chat is None:
+            raise SingleMessageError(f"Chat with id {question.chat_id} not found")
+        trans = i18n(lang=user.language)
+        model_id = resolve_model_id(session, chat.oid, trans, assistant, question.custom_model)
+        config: LLMConfig = await get_default_config(model_id, trans=trans)
         # 构造函数可能同步调用宿主 API（type==1 高级应用动态数据源，
         # LLMService.__init__ -> AssistantOutDsFactory.get_instance -> requests.get），
         # 必须在工作线程执行，避免阻塞事件循环（Issue #1288）

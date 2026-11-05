@@ -10,6 +10,8 @@ from sqlmodel import Session, select
 from apps.ai_model.openai.llm import BaseChatOpenAI
 from apps.system.models.system_model import AiModelDetail
 from common.core.db import engine
+from common.error import SingleMessageError
+from common.utils.locale import I18n
 from common.utils.crypto import sqlbot_decrypt
 from common.utils.utils import prepare_model_arg
 from langchain_community.llms import VLLMOpenAI
@@ -145,12 +147,14 @@ class LLMFactory:
     return config """
 
 
-async def get_default_config(custom_model_id: Optional[int] = None) -> LLMConfig:
+async def get_default_config(custom_model_id: Optional[int] = None, *, trans=None) -> LLMConfig:
     with Session(engine) as session:
         db_model: AiModelDetail | None = None
         if custom_model_id:
             db_model = session.get(AiModelDetail, custom_model_id)
-        if not db_model:
+            if db_model is None:
+                raise SingleMessageError((trans or I18n()())('i18n_llm.model_unavailable'))
+        else:
             db_model = session.exec(
                 select(AiModelDetail).where(AiModelDetail.default_model == True)
             ).first()

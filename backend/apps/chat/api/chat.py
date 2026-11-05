@@ -319,11 +319,11 @@ async def question_answer_inner(session: SessionDep, current_user: CurrentUser, 
 
             elif command == QuickCommand.ANALYSIS:
                 return await analysis_or_predict(session, current_user, rec_id, 'analysis', current_assistant, in_chat,
-                                                 stream)
+                                                 stream, custom_model=request_question.custom_model)
 
             elif command == QuickCommand.PREDICT_DATA:
                 return await analysis_or_predict(session, current_user, rec_id, 'predict', current_assistant, in_chat,
-                                                 stream)
+                                                 stream, custom_model=request_question.custom_model)
             else:
                 raise Exception(f'Unknown command: {command.value}')
         else:
@@ -397,7 +397,8 @@ async def analysis_or_predict_question(session: SessionDep, current_user: Curren
 
 
 async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, chat_record_id: int, action_type: str,
-                              current_assistant: CurrentAssistant, in_chat: bool = True, stream: bool = True):
+                              current_assistant: CurrentAssistant, in_chat: bool = True, stream: bool = True,
+                              custom_model: str | int | None = None):
     try:
         if action_type != 'analysis' and action_type != 'predict':
             raise Exception(f"Type {action_type} Not Found")
@@ -429,7 +430,7 @@ async def analysis_or_predict(session: SessionDep, current_user: CurrentUser, ch
             raise Exception(
                 f"Chat record with id {chat_record_id} has not generated chart, do not support to analyze it")
 
-        request_question = ChatQuestion(chat_id=record.chat_id, question=record.question)
+        request_question = ChatQuestion(chat_id=record.chat_id, question=record.question, custom_model=custom_model)
 
         llm_service = await LLMService.create(session, current_user, request_question, current_assistant)
         llm_service.run_analysis_or_predict_task_async(session, action_type, record, in_chat, stream)

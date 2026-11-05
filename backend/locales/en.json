@@ -1,4 +1,6 @@
 {
+  "ws_model_settings": "Workspace model settings",
+  "system_model_workspace_impact": "Model change impact",
   "i18n_default_workspace": "Default Workspace",
   "i18n_ds_name_exist": "Name already exists",
   "i18n_concat_admin": "Please contact the administrator!",
@@ -47,6 +49,10 @@
     "permission_resource_limit": "Access denied or resource not found!"
   },
   "i18n_llm": {
+    "model_unavailable": "Model does not exist or is not authorized for this workspace. Contact an administrator.",
+    "workspace_unavailable": "Workspace is unavailable.",
+    "workspace_disabled": "Model calls are disabled for this workspace. Contact an administrator.",
+    "impact_confirmation_required": "Affected workspaces have changed. Confirm replacements or suspension of default calls again.",
     "validate_error": "Validation failed [{msg}]",
     "delete_default_error": "Cannot delete the default model [{key}]!",
     "miss_default": "Default large language model has not been configured"
