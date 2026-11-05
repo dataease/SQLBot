@@ -1152,11 +1152,22 @@ def get_sqlglot_dialect(ds_type: str) -> str:
 COMMON_DANGEROUS_FUNCTIONS = {'version', 'current_user', 'user', 'database'}
 
 # 特定数据库的危险函数
+# key 必须与 DB 枚举的 type 值一致（见 apps/db/constant.py），例如 PostgreSQL 的 type 是 'pg'，
+# 而不是 'postgresql'；写成后者会让该数据源的危险函数规则整条失效。
 DS_SPECIFIC_DANGEROUS_FUNCTIONS = {
     'mysql': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
     'doris': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
     'starrocks': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
-    'postgresql': {'pg_read_file', 'pg_write_file', 'lo_import', 'lo_export'},
+    'pg': {
+        # 服务端文件读写族：只读连接也可能借此读到数据库主机的本地文件
+        'pg_read_file',
+        'pg_read_binary_file',
+        'pg_ls_dir',
+        'pg_stat_file',
+        'pg_write_file',
+        'lo_import',
+        'lo_export',
+    },
     'sqlserver': {'EXEC', 'xp_cmdshell', 'sp_executesql'},
     'oracle': {'UTL_FILE', 'DBMS_PIPE', 'DBMS_LOCK'},
     'hive': {'ADD FILE', 'ADD JAR'},
