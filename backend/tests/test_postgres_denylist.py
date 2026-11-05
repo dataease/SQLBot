@@ -12,6 +12,7 @@ mismatch cannot silently disable a dialect again.
 from types import SimpleNamespace
 
 import pytest
+import sqlbot_xpack  # noqa: F401  # Initialize the published wheel before app imports.
 
 from apps.db.constant import DB
 from apps.db.db import (
