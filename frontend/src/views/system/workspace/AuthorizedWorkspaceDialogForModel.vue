@@ -5,6 +5,9 @@
     modal-class="authorized-workspace"
     width="840"
     :before-close="beforeClose"
+    :close-on-click-modal="false"
+    :close-on-press-escape="!saving"
+    :show-close="!saving"
   >
     <p class="mb-8 lighter" style="margin-top: 8px">{{ $t('authorized_space.select_space') }}</p>
     <div v-loading="loading" class="flex border" style="height: 428px; border-radius: 6px">
@@ -89,14 +92,15 @@
     </div>
 
     <template #footer>
-      <el-button secondary @click="centerDialogVisible = false">
+      <el-button secondary :disabled="saving" @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
-      <el-button type="primary" @click="handleConfirm">
+      <el-button type="primary" :loading="saving" @click="handleConfirm">
         {{ $t('common.confirm2') }}
       </el-button>
     </template>
   </el-dialog>
+  <ModelImpactDialog ref="modelImpactDialog" />
 </template>
 
 <script lang="ts" setup>
@@ -107,6 +111,7 @@ import Close from '@/assets/svg/icon_close_outlined_w.svg'
 import Search from '@/assets/svg/icon_search-outline_outlined.svg'
 import type { CheckboxValueType } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
+import ModelImpactDialog from './ModelImpactDialog.vue'
 
 const { t } = useI18n()
 const checkAll = ref(false)
@@ -115,6 +120,9 @@ const checkedWorkspace = ref<any[]>([])
 const workspace = ref<any[]>([])
 const search = ref('')
 const loading = ref(false)
+const saving = ref(false)
+const originalIds = ref<string[]>([])
+const modelImpactDialog = ref<InstanceType<typeof ModelImpactDialog>>()
 const centerDialogVisible = ref(false)
 const checkTableList = ref([] as any[])
 
@@ -178,6 +186,10 @@ const open = async (id: any) => {
     workspaceList(),
     workspaceModelMapping(id),
   ])
+  if (workspaceListResult.status !== 'fulfilled' || workspaceMappingResult.status !== 'fulfilled') {
+    loading.value = false
+    return
+  }
   workspace.value =
     workspaceListResult.status === 'fulfilled'
       ? JSON.parse(JSON.stringify(workspaceListResult.value))
@@ -191,22 +203,29 @@ const open = async (id: any) => {
       ? workspace.value.filter((ele: any) => workspaceMappingResult.value.includes(`${ele.id}`))
       : []
   )
+  originalIds.value = checkTableList.value.map((item) => String(item.id))
   loading.value = false
   centerDialogVisible.value = true
 }
 const emits = defineEmits(['refresh'])
-const handleConfirm = () => {
-  workspaceModelMappingUpdate(
-    oid,
-    checkTableList.value.map((ele: any) => `${ele.id}`)
-  ).then(() => {
+const handleConfirm = async () => {
+  if (saving.value) return
+  saving.value = true
+  try {
+    const wsIds = checkTableList.value.map((ele: any) => `${ele.id}`)
+    const removedIds = originalIds.value.filter((id) => !wsIds.includes(id))
+    const resolutions = await modelImpactDialog.value!.confirm(String(oid), removedIds)
+    if (resolutions === null) return
+    await workspaceModelMappingUpdate(oid, { ws_ids: wsIds, resolutions })
     beforeClose()
     emits('refresh')
     ElMessage({
       type: 'success',
       message: t('common.save_success'),
     })
-  })
+  } finally {
+    saving.value = false
+  }
 }
 
 const beforeClose = () => {

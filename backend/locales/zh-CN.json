@@ -1,4 +1,6 @@
 {
+  "ws_model_settings": "工作空间模型设置",
+  "system_model_workspace_impact": "模型变更影响",
   "i18n_default_workspace": "默认工作空间",
   "i18n_ds_name_exist": "名称已存在",
   "i18n_concat_admin": "请联系管理员！",
@@ -47,6 +49,10 @@
     "permission_resource_limit": "没有操作权限或资源不存在！"
   },
   "i18n_llm": {
+    "model_unavailable": "模型不存在或未授权给当前工作空间，请联系管理员重新配置",
+    "workspace_unavailable": "当前工作空间不可用",
+    "workspace_disabled": "当前工作空间已禁止模型调用，请联系管理员",
+    "impact_confirmation_required": "受影响的工作空间已变化，请重新确认替代模型或暂停默认调用",
     "validate_error": "校验失败[{msg}]",
     "delete_default_error": "无法删除默认模型[{key}]！",
     "miss_default": "尚未配置默认大语言模型"

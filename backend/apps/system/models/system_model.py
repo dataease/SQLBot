@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pydantic import field_serializer
+from sqlalchemy import false
 from sqlmodel import BigInteger, Field, Text, SQLModel
 
 from common.core.models import SnowflakeBase
@@ -53,6 +54,8 @@ class WorkspaceEditor(WorkspaceBase, BaseCreatorDTO):
 class WorkspaceModel(SnowflakeBase, WorkspaceBase, table=True):
     __tablename__ = "sys_workspace"
     create_time: int = Field(default=0, sa_type=BigInteger())
+    enable_custom_model: bool = Field(default=False, nullable=False, sa_column_kwargs={"server_default": false()})
+    custom_model: str | None = Field(default=None, max_length=255, nullable=True)
 
 
 class UserWsBaseModel(SQLModel):

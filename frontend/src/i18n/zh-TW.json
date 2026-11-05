@@ -1,4 +1,20 @@
 {
+  "workspace_model": {
+    "title": "模型管理",
+    "system": "使用系統預設模型",
+    "custom": "指定模型",
+    "default": "空間預設模型",
+    "select": "選擇已授權模型，可留空",
+    "invalid": "模型已刪除或取消授權，請重新選擇或清空",
+    "empty_hint": "留空將禁止該空間所有問數入口的模型呼叫，包括助手和 MCP。",
+    "system_hint": "使用系統預設模型，允許穿透工作空間授權；助手預設模型同步跟隨。",
+    "impact_title": "受影響的工作空間",
+    "impact_hint": "更換空間預設模型，或確認保留失效設定。未指定其他有效授權模型的呼叫將暫停，不會回退。",
+    "resolve": "請選擇替代模型或確認暫停",
+    "pause": "確認預設模型失效並暫停預設呼叫",
+    "assistant_impact": "助手 {names} 仍指定此模型，後續呼叫將報錯，需另行修改助手設定。",
+    "assistant_default": "跟隨工作空間預設模型"
+  },
   "menu": {
     "add_interface_credentials": "請新增介面憑證",
     "Data Q&A": "智慧問數",

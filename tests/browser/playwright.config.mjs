@@ -37,6 +37,11 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'workspace-model',
+      testMatch: 'workspace.model.spec.mjs',
+      use: { baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:5173' }
+    },
+    {
       name: 'tooling',
       testMatch: 'tooling.spec.mjs',
       use: { baseURL: demoUrl }

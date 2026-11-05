@@ -1,4 +1,5 @@
 import { request } from '@/utils/request'
+import type { ModelImpactResolution } from './workspace'
 
 export const modelApi = {
   queryAll: (keyword?: string) =>
@@ -23,7 +24,8 @@ export const modelApi = {
     }
     return request.put('/system/aimodel', param)
   },
-  delete: (id: number) => request.delete(`/system/aimodel/${id}`),
+  delete: (id: string | number, resolutions: ModelImpactResolution[] = []) =>
+    request.delete(`/system/aimodel/${id}`, { data: resolutions }),
   query: (id: number) => request.get(`/system/aimodel/${id}`),
   setDefault: (id: number) => request.put(`/system/aimodel/default/${id}`),
   check: (data: any) => request.fetchStream('/system/aimodel/status', data),

@@ -1,4 +1,20 @@
 {
+  "workspace_model": {
+    "title": "模型管理",
+    "system": "使用系统默认模型",
+    "custom": "指定模型",
+    "default": "空间默认模型",
+    "select": "选择已授权模型，可留空",
+    "invalid": "模型已删除或取消授权，请重新选择或清空",
+    "empty_hint": "留空将禁止该空间所有问数入口的模型调用，包括助手和 MCP。",
+    "system_hint": "使用系统默认模型，允许穿透工作空间授权；助手默认模型同步跟随。",
+    "impact_title": "受影响的工作空间",
+    "impact_hint": "更换空间默认模型，或确认保留失效配置。未指定其他有效授权模型的调用将暂停，不会回退。",
+    "resolve": "请选择替代模型或确认暂停",
+    "pause": "确认默认模型失效并暂停默认调用",
+    "assistant_impact": "助手 {names} 仍指定此模型，后续调用将报错，需另行修改助手配置。",
+    "assistant_default": "跟随工作空间默认模型"
+  },
   "menu": {
     "add_interface_credentials": "请添加接口凭证",
     "Data Q&A": "智能问数",

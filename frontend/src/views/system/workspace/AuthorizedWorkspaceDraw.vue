@@ -123,6 +123,7 @@
     ref="authorizedWorkspaceDialogForModelAdd"
     @refresh="refresh"
   />
+  <ModelImpactDialog ref="modelImpactDialog" />
 </template>
 
 <script lang="ts" setup>
@@ -134,6 +135,7 @@ import icon_block_outlined from '@/assets/svg/icon_block_outlined.svg'
 import AuthorizedWorkspaceDialogForModelAdd from './AuthorizedWorkspaceDialogForModelAdd.vue'
 import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import { useI18n } from 'vue-i18n'
+import ModelImpactDialog from './ModelImpactDialog.vue'
 
 const emit = defineEmits<{
   (e: 'refresh'): void
@@ -143,6 +145,8 @@ const { t } = useI18n()
 
 const drawerVisible = ref(false)
 const loading = ref(false)
+const saving = ref(false)
+const modelImpactDialog = ref<InstanceType<typeof ModelImpactDialog>>()
 const keywords = ref('')
 const oldKeywordsMember = ref('')
 const aiModelId = ref<string | null>(null)
@@ -283,9 +287,13 @@ const loadData = async () => {
   }
 }
 
-const deleteByIds = (ids: string[]) => {
-  if (!aiModelId.value || !ids.length) return
-  workspaceModelMappingDelete(aiModelId.value, ids).then(async () => {
+const deleteByIds = async (ids: string[]) => {
+  if (!aiModelId.value || !ids.length || saving.value) return
+  saving.value = true
+  try {
+    const resolutions = await modelImpactDialog.value!.confirm(aiModelId.value, ids)
+    if (resolutions === null) return
+    await workspaceModelMappingDelete(aiModelId.value, { ws_ids: ids, resolutions })
     ElMessage({
       type: 'success',
       message: t('workspace.removed_successfully'),
@@ -295,7 +303,9 @@ const deleteByIds = (ids: string[]) => {
     }
     syncSelectedRows()
     await loadData()
-  })
+  } finally {
+    saving.value = false
+  }
 }
 
 const deleteHandler = (row: any) => {

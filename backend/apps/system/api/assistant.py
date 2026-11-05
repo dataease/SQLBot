@@ -15,6 +15,7 @@ from apps.db.constant import DB
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.assistant import AssistantOutDs, AssistantOutDsFactory, get_assistant_info
 from apps.system.crud.assistant_manage import dynamic_upgrade_cors, get_ws_assistant, save
+from apps.system.crud.workspace_model import require_authorized_model
 from apps.system.models.system_model import AssistantModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
@@ -336,8 +337,10 @@ async def query_advanced_application(session: SessionDep, current_user: CurrentU
 @router.post("", summary=f"{PLACEHOLDER_PREFIX}assistant_create_api", description=f"{PLACEHOLDER_PREFIX}assistant_create_api")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 @system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.APPLICATION, result_id_expr="id"))
-async def add(request: Request, session: SessionDep, current_user: CurrentUser, creator: AssistantBase):
+async def add(request: Request, session: SessionDep, current_user: CurrentUser, trans: Trans, creator: AssistantBase):
     oid = current_user.oid if creator.type != 4 else 1
+    if creator.enable_custom_model:
+        require_authorized_model(session, oid, creator.custom_model, trans)
     return await save(request, session, creator, oid)
 
 
@@ -354,6 +357,8 @@ async def update(request: Request, session: SessionDep, current_user: CurrentUse
         update_data.oid = db_model.oid
     # create_time 不在请求体中，model_validate 会填默认值 0，更新时保留原值
     update_data.create_time = db_model.create_time
+    if update_data.enable_custom_model:
+        require_authorized_model(session, update_data.oid, update_data.custom_model, trans)
     db_model.sqlmodel_update(update_data)
     session.add(db_model)
     session.commit()

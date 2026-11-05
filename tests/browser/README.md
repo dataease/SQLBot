@@ -69,6 +69,18 @@ npm --prefix tests/browser run report
 
 新增业务回归时，将用例放在 `specs/`，并在配置中为实际项目增加明确的 `testMatch`；不要让应用用例误入工具自检项目。可按缺陷号建立文件，如 `tapd-1077724.spec.mjs`。优先 `getByRole/getByLabel` 等稳定定位，确有必要才给业务组件补 `data-testid`。回归必须包含能在修复前失败、修复后通过的行为断言；纯后端问题优先 Python 定向测试。
 
+## 工作空间模型界面回归
+
+工作空间模型设置的界面回归使用真实产品路由和组件，并以受控 API/xpack 身份适配器隔离外部服务：
+
+```sh
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 npm --prefix tests/browser test -- --project=workspace-model
+```
+
+该项目要求已启动前端，不访问真实后端或模型供应商；覆盖设置保存、取消、刷新回显，以及授权撤销和删除模型的影响确认。
+真实后端路由、权限、SQLite 持久化及本地模型请求由 `backend/tests/test_workspace_model_policy.py` 覆盖。
+两者不代表完整登录、真实 SQL 执行或部署验收。
+
 ## 登录状态和输出
 
 确需复用登录状态时，使用测试账号手动登录并保存到被忽略的 `.auth/`：

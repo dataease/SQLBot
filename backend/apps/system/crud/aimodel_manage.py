@@ -1,12 +1,13 @@
 from sqlmodel import Session, select, or_
 
 from apps.system.models.system_model import AiModelDetail, AiModelBrief, AiModelWorkspaceMapping
-from common.core.db import engine
-from common.utils.crypto import sqlbot_encrypt
-from common.utils.utils import SQLBotLogUtil
 
 
 async def async_model_info():
+    from common.core.db import engine
+    from common.utils.crypto import sqlbot_encrypt
+    from common.utils.utils import SQLBotLogUtil
+
     with Session(engine) as session:
         model_list = session.exec(select(AiModelDetail)).all()
         any_model_change = False

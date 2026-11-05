@@ -18,6 +18,7 @@ import { get_supplier } from '@/entity/supplier'
 import { highlightKeyword } from '@/utils/xss'
 import AuthorizedWorkspaceDialogForModel from '@/views/system/workspace/AuthorizedWorkspaceDialogForModel.vue'
 import AuthorizedWorkspaceDraw from '@/views/system/workspace/AuthorizedWorkspaceDraw.vue'
+import ModelImpactDialog from '@/views/system/workspace/ModelImpactDialog.vue'
 
 interface Model {
   ws_mapping_count: number | undefined
@@ -42,6 +43,7 @@ const activeType = ref('')
 const modelFormRef = ref()
 const cardRefs = ref<any[]>([])
 const showCardError = ref(false) // if you don`t want card mask error, just change this to false
+const modelImpactDialog = ref<InstanceType<typeof ModelImpactDialog>>()
 reactive({
   form: {
     id: '',
@@ -238,9 +240,11 @@ const deleteHandler = (item: any) => {
     cancelButtonText: t('common.cancel'),
     customClass: 'confirm-no_icon',
     autofocus: false,
-    callback: (value: string) => {
+    callback: async (value: string) => {
       if (value === 'confirm') {
-        modelApi.delete(item.id).then(() => {
+        const resolutions = await modelImpactDialog.value!.confirm(String(item.id))
+        if (resolutions === null) return
+        modelApi.delete(item.id, resolutions).then(() => {
           ElMessage({
             type: 'success',
             message: t('dashboard.delete_success'),
@@ -486,6 +490,7 @@ const submit = (item: any) => {
   </div>
   <AuthorizedWorkspaceDialogForModel ref="AuthorizedWorkspaceDialogForModelRef" @refresh="search" />
   <AuthorizedWorkspaceDraw ref="AuthorizedWorkspaceDrawRef" @refresh="search" />
+  <ModelImpactDialog ref="modelImpactDialog" />
 </template>
 
 <style lang="less" scoped>

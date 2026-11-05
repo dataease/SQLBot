@@ -4,6 +4,8 @@ from sqlmodel import exists, or_, select, delete as sqlmodel_delete, update as s
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.user import clean_user_cache
 from apps.system.crud.workspace import reset_single_user_oid, reset_user_oid
+from apps.system.crud.workspace_model import get_workspace_model_settings, save_workspace_model_settings
+from apps.system.schemas.workspace_model import WorkspaceModelSettings, WorkspaceModelSettingsOut
 from apps.system.models.system_model import UserWsModel, WorkspaceBase, WorkspaceEditor, WorkspaceModel
 from apps.system.models.user import UserModel
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
@@ -216,6 +218,24 @@ async def update(session: SessionDep, editor: WorkspaceEditor):
         raise HTTPException(f"WorkspaceModel with id {id} not found")
     db_model.name = editor.name
     session.add(db_model)
+
+@router.get("/{id}/model", response_model=WorkspaceModelSettingsOut, summary=f"{PLACEHOLDER_PREFIX}ws_model_settings")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def model_settings(session: SessionDep, trans: Trans, id: int):
+    workspace = session.get(WorkspaceModel, id)
+    if workspace is None:
+        raise HTTPException(status_code=404, detail=trans('i18n_llm.workspace_unavailable'))
+    return get_workspace_model_settings(session, workspace)
+
+
+@router.put("/{id}/model", summary=f"{PLACEHOLDER_PREFIX}ws_model_settings")
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def update_model_settings(session: SessionDep, current_user: CurrentUser, trans: Trans, id: int, editor: WorkspaceModelSettings):
+    workspace = session.exec(select(WorkspaceModel).where(WorkspaceModel.id == id).with_for_update()).first()
+    if workspace is None:
+        raise HTTPException(status_code=404, detail=trans('i18n_llm.workspace_unavailable'))
+    return save_workspace_model_settings(session, workspace, editor, trans, actor=current_user)
+
 
 @router.get("/{id}", response_model=WorkspaceModel, summary=f"{PLACEHOLDER_PREFIX}ws_query_api", description=f"{PLACEHOLDER_PREFIX}ws_query_api")
 @require_permissions(permission=SqlbotPermission(role=['admin']))    

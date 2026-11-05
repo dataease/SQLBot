@@ -16,6 +16,7 @@ import EmptyBackground from '@/views/dashboard/common/EmptyBackground.vue'
 import icon_form_outlined from '@/assets/svg/icon_moments-categories_outlined.svg'
 import assigned from '@/assets/svg/icon_assigned_outlined.svg'
 import AuthorizedWorkspaceDialog from './AuthorizedWorkspaceDialog.vue'
+import ModelSettingsDialog from './ModelSettingsDialog.vue'
 import rename from '@/assets/svg/icon_rename_outlined.svg'
 import icon_member from '@/assets/svg/icon_member.svg'
 import SuccessFilled from '@/assets/svg/gou_icon.svg'
@@ -37,6 +38,7 @@ const keywordsMember = ref('')
 const oldKeywordsMember = ref('')
 const workspaceFormRef = ref()
 const authorizedWorkspaceDialog = ref()
+const modelSettingsDialog = ref<InstanceType<typeof ModelSettingsDialog>>()
 const tableListWithSearch = computed(() => {
   if (!keyword.value) return tableList.value
   return tableList.value.filter((ele) =>
@@ -407,25 +409,30 @@ const handleCurrentChange = (val: number) => {
           {{ pageInfo.total }}
         </div>
         <div class="notes">
-          <el-button type="primary" @click="handleAddMember">
-            <template #icon>
-              <icon_add_outlined></icon_add_outlined>
-            </template>
-            {{ $t('workspace.add_member') }}
+          <el-button @click="modelSettingsDialog?.open(currentTable)">
+            {{ t('workspace_model.title') }}
           </el-button>
-          <el-input
-            v-model="keywordsMember"
-            clearable
-            style="width: 232px"
-            :placeholder="$t('workspace.name_username_email')"
-            @keydown.enter.exact.prevent="search"
-          >
-            <template #prefix>
-              <el-icon>
-                <icon_searchOutline_outlined class="svg-icon" />
-              </el-icon>
-            </template>
-          </el-input>
+          <div class="member-actions">
+            <el-button type="primary" @click="handleAddMember">
+              <template #icon>
+                <icon_add_outlined></icon_add_outlined>
+              </template>
+              {{ $t('workspace.add_member') }}
+            </el-button>
+            <el-input
+              v-model="keywordsMember"
+              clearable
+              style="width: 232px"
+              :placeholder="$t('workspace.name_username_email')"
+              @keydown.enter.exact.prevent="search"
+            >
+              <template #prefix>
+                <el-icon>
+                  <icon_searchOutline_outlined class="svg-icon" />
+                </el-icon>
+              </template>
+            </el-input>
+          </div>
         </div>
       </div>
       <div
@@ -601,6 +608,7 @@ const handleCurrentChange = (val: number) => {
       }}</el-button>
     </div>
   </el-dialog>
+  <ModelSettingsDialog ref="modelSettingsDialog" />
 </template>
 
 <style lang="less" scoped>
@@ -758,6 +766,15 @@ const handleCurrentChange = (val: number) => {
         align-items: center;
         justify-content: space-between;
         margin: 16px 0;
+      }
+
+      .member-actions {
+        display: flex;
+        align-items: center;
+
+        .ed-input {
+          margin-left: 12px;
+        }
       }
     }
 
