@@ -6,7 +6,7 @@ from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.system_schema import EMAIL_REGEX, PWD_REGEX, BaseUserDTO, UserInfoDTO, UserWs
 from common.core.deps import SessionDep
-from common.core.security import verify_md5pwd
+from common.core.security import get_password_hash, is_legacy_md5_pwd, verify_password
 from common.core.sqlbot_cache import cache, clear_cache
 from common.utils.locale import I18n, I18nHelper
 from common.utils.utils import SQLBotLogUtil
@@ -45,9 +45,24 @@ def authenticate(*, session: Session, account: str, password: str) -> BaseUserDT
     db_user = get_user_by_account(session=session, account=account)
     if not db_user:
         return None
-    if not verify_md5pwd(password, db_user.password):
+    if not verify_password(password, db_user.password):
         return None
+    upgrade_legacy_pwd_hash(session=session, user_id=db_user.id, password=password)
     return db_user
+
+
+def upgrade_legacy_pwd_hash(*, session: Session, user_id: int, password: str) -> None:
+    """Rewrite a just-verified legacy MD5 hash with bcrypt (issue #1432).
+
+    Only reached after `verify_password` accepted `password`, so the new hash is
+    derived from the same plaintext. The request-scoped session commits at the
+    end of the call (common.core.db.get_session).
+    """
+    db_user: UserModel = get_db_user(session=session, user_id=user_id)
+    if not db_user or not is_legacy_md5_pwd(db_user.password):
+        return
+    db_user.password = get_password_hash(password)
+    session.add(db_user)
 
 
 def user_ws_list(session: Session, uid: int, trans: Optional[I18n | I18nHelper] = None) -> list[UserWs]:

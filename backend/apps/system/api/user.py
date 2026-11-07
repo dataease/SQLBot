@@ -15,7 +15,7 @@ from common.audit.schemas.logger_decorator import LogConfig, system_log
 from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
 from common.core.schemas import PaginatedResponse, PaginationParams
-from common.core.security import default_md5_pwd, md5pwd, verify_md5pwd
+from common.core.security import default_pwd_hash, get_password_hash, verify_password
 from common.core.sqlbot_cache import clear_cache
 from common.core.config import settings
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
@@ -386,7 +386,7 @@ async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans,
     if not current_user.isAdmin:
         raise Exception(trans('i18n_permission.no_permission', url = " patch[/user/pwd/id],", msg = trans('i18n_permission.only_admin')))
     db_user: UserModel = get_db_user(session=session, user_id=id)
-    db_user.password = default_md5_pwd()
+    db_user.password = default_pwd_hash()
     session.add(db_user)
 
 @router.put("/pwd", summary=f"{PLACEHOLDER_PREFIX}update_pwd", description=f"{PLACEHOLDER_PREFIX}update_pwd")
@@ -397,11 +397,11 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
     if not check_pwd_format(new_pwd):
         raise Exception(trans('i18n_format_invalid', key = trans('i18n_user.password')))
     db_user: UserModel = get_db_user(session=session, user_id=current_user.id)
-    if not verify_md5pwd(editor.pwd, db_user.password):
+    if not verify_password(editor.pwd, db_user.password):
         raise Exception(trans('i18n_error', key = trans('i18n_user.password')))
     if await initial_pwd_disabled(session) and new_pwd == settings.DEFAULT_PWD:
         raise HTTPException(status_code=400, detail=trans('i18n_login.new_pwd_is_initial'))
-    db_user.password = md5pwd(new_pwd)
+    db_user.password = get_password_hash(new_pwd)
     session.add(db_user)
     return db_user
 
