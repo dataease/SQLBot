@@ -2,11 +2,15 @@
 
 Extract actual functions to avoid importing DB/xpack startup. These tests do not
 claim coverage of authentication middleware, decorators or real transactions.
+
+Guard update (issue #1432): stored passwords moved from unsalted MD5 digests to
+bcrypt, so the stubs now follow `get_password_hash` / `verify_password`. The
+assertions still pin what this guard always protected: password state only
+changes when the old credential and the new format are both accepted.
 """
 
 import ast
 import asyncio
-import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,6 +20,7 @@ import pytest
 from fastapi import HTTPException
 
 ROOT = Path(__file__).resolve().parents[2]
+BCRYPT_STUB_PREFIX = "bcrypt-stub$"
 
 
 def load_function(path, name, namespace):
@@ -40,13 +45,14 @@ def load_function(path, name, namespace):
     return namespace[name]
 
 
-def md5(value):
-    return hashlib.md5(value.encode()).hexdigest()
+def bcrypt_stub(value):
+    """Deterministic stand-in for `common.core.security.get_password_hash`."""
+    return f"{BCRYPT_STUB_PREFIX}{value}"
 
 
 @pytest.fixture
 def context():
-    user = SimpleNamespace(id=2, password=md5("OldPassword42!"))
+    user = SimpleNamespace(id=2, password=bcrypt_stub("OldPassword42!"))
     session = Mock()
     args = AsyncMock(
         return_value=[SimpleNamespace(pkey="login.initial_pwd_disabled", pval="true")]
@@ -55,8 +61,8 @@ def context():
         "get_group_args": args,
         "HTTPException": HTTPException,
         "get_db_user": Mock(return_value=user),
-        "md5pwd": md5,
-        "verify_md5pwd": lambda value, hashed: md5(value) == hashed,
+        "get_password_hash": bcrypt_stub,
+        "verify_password": lambda value, hashed: hashed == bcrypt_stub(value),
         "default_pwd": lambda: "InitialPassword42!",
         "settings": SimpleNamespace(DEFAULT_PWD="InitialPassword42!"),
     }
@@ -115,14 +121,14 @@ def test_disabled_off_allows_initial_password(context, value):
     user, session, args, _, _ = context
     args.return_value = [SimpleNamespace(pkey="login.initial_pwd_disabled", pval=value)]
     update(context)
-    assert user.password == md5("InitialPassword42!")
+    assert user.password == bcrypt_stub("InitialPassword42!")
     session.add.assert_called_once_with(user)
 
 
 def test_enabled_allows_other_password(context):
     user, session, _, _, _ = context
     update(context, new="DifferentPassword42!")
-    assert user.password == md5("DifferentPassword42!")
+    assert user.password == bcrypt_stub("DifferentPassword42!")
     session.add.assert_called_once_with(user)
 
 
