@@ -51,6 +51,7 @@
 - 修改 `backend/main.py` 的中间件顺序时，验证实际请求执行顺序（不能只看注册顺序）；`HostValidationMiddleware` 必须在认证/业务使用 Host 前拒绝非法值，并回归预检与正常请求。
 - Host 只允许合法域名 / IPv4 / IPv6 形态，不能包含 `/`、`@` 或空白。
 - 认证和助手 token 头由后端中间件与前端 request interceptor 处理；不要新增手工传递或复制 token 的路径。
+- 口令只以 bcrypt 存储（`common.core.security.get_password_hash`）；`md5pwd` / `verify_md5pwd` / `default_md5_pwd` 只用于校验并升级迁移前遗留的无盐 MD5 摘要，登录成功后必须改写为 bcrypt，禁止用它们写入新口令。
 - 页面嵌入协议必须保持：
   - 仅 `AssistantModel.type == 4` 可用 embedded 协议；
   - 先提取目标助手，再用 `app_secret` 验证签名；
