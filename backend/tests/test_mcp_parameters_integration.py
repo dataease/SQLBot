@@ -31,7 +31,7 @@ from test_embedding_parameters_integration import (  # noqa: F401
 
 from apps.system.models.system_model import AiModelDetail, UserWsModel
 from apps.system.models.user import UserModel
-from common.core.security import md5pwd
+from common.core.security import get_password_hash
 
 table_environment = table_contracts.table_environment
 
@@ -139,7 +139,7 @@ def test_mcp_network_task_uses_parameter_saved_by_another_api_process(
                 name="MCP test",
                 oid=1,
                 email="mcp@example.invalid",
-                password=md5pwd(password),
+                password=get_password_hash(password),
                 status=1,
             )
         )
