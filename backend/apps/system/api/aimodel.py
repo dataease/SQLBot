@@ -29,7 +29,7 @@ async def check_llm(info: AiModelCreator, trans: Trans):
     async def generate():
         try:
             additional_params = {item.key: prepare_model_arg(item.val) for item in info.config_list if
-                                 item.key and item.val}
+                                 item.key and item.val is not None and item.val != ""}
             config = LLMConfig(
                 model_type="openai" if info.protocol == 1 else "vllm",
                 model_name=info.base_model,
