@@ -312,3 +312,22 @@ def equals_ignore_case(str1: str, *args: str) -> bool:
         if str1.casefold() == arg.casefold():
             return True
     return False
+
+
+def safe_upload_name(file_name: str | None) -> str | None:
+    """Reduce a client-supplied upload name to a single safe path component (issue #1448).
+
+    The multipart file name is attacker-controlled and the same request may be
+    served by a POSIX or a Windows host, so both separators count as path
+    separators: `..\\..\\evil.xlsx` and a full client path such as
+    `C:\\Users\\me\\orders.xlsx` must not keep any directory part. A name that
+    still addresses another location after that reduction (empty, `.`, `..`, a
+    drive-relative or alternate-stream `:`, an embedded NUL) is rejected with
+    `None` so the caller answers 400 instead of writing anywhere.
+    """
+    if not file_name:
+        return None
+    name = file_name.replace("\\", "/").rsplit("/", 1)[-1].strip()
+    if not name or name in {".", ".."} or ":" in name or "\x00" in name:
+        return None
+    return name
