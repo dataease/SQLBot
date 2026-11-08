@@ -25,7 +25,7 @@ from common.audit.models.log_model import OperationType, OperationModules
 from common.audit.schemas.logger_decorator import LogConfig, system_log
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
-from common.utils.utils import SQLBotLogUtil
+from common.utils.utils import SQLBotLogUtil, safe_upload_name
 from ..crud.datasource import get_datasource_list, check_status, create_ds, update_ds, delete_ds, getTables, getFields, \
     update_table_and_fields, getTablesByDs, chooseTables, preview, updateTable, updateField, get_ds, fieldEnum, \
     check_status_by_id, sync_single_fields
@@ -37,6 +37,25 @@ from ..utils.excel import parse_excel_preview, read_import_dataframe
 
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
+
+
+def _excel_upload_path(filename: str, trans) -> str:
+    """Resolve a stored Excel file inside EXCEL_PATH (CWE-22, issue #1448).
+
+    `filename` must already be a single path component; this is the second
+    barrier that keeps the resolved path inside the upload directory even when
+    the host treats another character as a separator.
+    """
+    base_dir = os.path.realpath(path)
+    try:
+        save_path = os.path.realpath(os.path.join(base_dir, filename))
+        inside = os.path.commonpath([save_path, base_dir]) == base_dir
+    except ValueError:  # embedded NUL, different drives or malformed path
+        inside = False
+        save_path = ""
+    if not inside or save_path == base_dir:
+        raise HTTPException(400, trans('i18n_ds_invalid_file_path'))
+    return save_path
 
 
 @router.get("/ws/{oid}", include_in_schema=False)
@@ -326,13 +345,18 @@ async def field_enum(session: SessionDep, ds_id: int, id: int):
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def upload_excel(trans: Trans, session: SessionDep,
                        file: UploadFile = File(..., description=f"{PLACEHOLDER_PREFIX}ds_excel")):
-    ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv"}
+    ALLOWED_EXTENSIONS = {".xlsx", ".xls", ".csv"}
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
         raise HTTPException(400, trans('i18n_ds_unsupported_file_format'))
 
+    file_name = safe_upload_name(file.filename)
+    if not file_name:
+        raise HTTPException(400, trans('i18n_ds_invalid_file_path'))
+
     os.makedirs(path, exist_ok=True)
-    filename = f"{file.filename.split('.')[0]}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}.{file.filename.split('.')[1]}"
-    save_path = os.path.join(path, filename)
+    name_root, name_ext = os.path.splitext(file_name)
+    filename = f"{name_root}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}{name_ext}"
+    save_path = _excel_upload_path(filename, trans)
     with open(save_path, "wb") as f:
         f.write(await file.read())
 
@@ -561,9 +585,14 @@ async def parse_excel(trans: Trans, file: UploadFile = File(..., description=f"{
     if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
         raise HTTPException(400, trans('i18n_ds_unsupported_file_format'))
 
+    file_name = safe_upload_name(file.filename)
+    if not file_name:
+        raise HTTPException(400, trans('i18n_ds_invalid_file_path'))
+
     os.makedirs(path, exist_ok=True)
-    filename = f"{file.filename.split('.')[0].split('/')[-1]}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}.{file.filename.split('.')[-1]}"
-    save_path = os.path.join(path, filename)
+    name_root, name_ext = os.path.splitext(file_name)
+    filename = f"{name_root}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}{name_ext}"
+    save_path = _excel_upload_path(filename, trans)
     with open(save_path, "wb") as f:
         f.write(await file.read())
 
