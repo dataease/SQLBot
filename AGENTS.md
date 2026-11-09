@@ -70,8 +70,8 @@ SQLBot 让业务用户用自然语言提问，基于已配置的数据源生成�
 
 ### Issue tracker
 
-处理 Issue 或发布规格、任务时，使用 dataease/SQLBot 的 GitHub Issues；
-操作约定见 `docs/agents/issue-tracker.md`。
+处理 Issue，或创建、更新 spec、tickets、关联及附件前，先读取
+`docs/agents/issue-tracker.md`，按其中的平台路由和对应操作约定执行。
 
 ### Triage labels
 
