@@ -25,6 +25,7 @@ from sqlalchemy import text, update
 from sqlbot_xpack.config.model import SysArgModel
 from sqlmodel import Session, create_engine
 from test_embedding_parameters import parameter_app, save, values
+from test_query_embedding import embedding_model
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.ai_model.model_factory import LLMConfig
@@ -93,7 +94,7 @@ def knowledge_environment(monkeypatch, request):
     monkeypatch.setattr(
         EmbeddingModelCache,
         "get_model",
-        lambda: SimpleNamespace(embed_query=lambda _query: [1.0, 0.0]),
+        lambda: embedding_model(limit=512),
     )
     monkeypatch.setattr(settings, "EMBEDDING_ENABLED", True)
     monkeypatch.setattr(settings, "EMBEDDING_TERMINOLOGY_TOP_COUNT", 1)
@@ -317,7 +318,8 @@ from types import SimpleNamespace
 from sqlmodel import Session, create_engine
 from apps.ai_model.embedding import EmbeddingModelCache
 from test_embedding_parameters_integration import question_task, recall
-EmbeddingModelCache.get_model = staticmethod(lambda: SimpleNamespace(embed_query=lambda _: [1.0, 0.0]))
+from test_query_embedding import embedding_model
+EmbeddingModelCache.get_model = staticmethod(lambda: embedding_model(limit=512))
 db = create_engine(os.environ['SQLBOT_TEST_DATABASE_URL'], connect_args={'options': '-csearch_path=' + os.environ['SQLBOT_TEST_SCHEMA'] + ',public'})
 with Session(db) as session:
     result = recall(question_task(session, int(os.environ['SQLBOT_TEST_CHAT_ID'])), session)

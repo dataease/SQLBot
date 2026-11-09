@@ -346,8 +346,9 @@ class AiModelQuestion(BaseModel):
     def datasource_sys_question(self):
         return get_datasource_template()['system'].format(lang=self.lang, sqlbot_name=self.sqlbot_name)
 
-    def datasource_user_question(self, datasource_list: str = "[]"):
-        return get_datasource_template()['user'].format(lang=self.lang, question=self.question, data=datasource_list)
+    def datasource_user_question(self, datasource_list: str = "[]", *, question: str | None = None):
+        return get_datasource_template()['user'].format(
+            lang=self.lang, question=self.question if question is None else question, data=datasource_list)
 
     def guess_sys_question(self, articles_number: int = 4):
         return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number,

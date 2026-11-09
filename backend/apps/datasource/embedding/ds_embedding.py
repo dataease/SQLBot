@@ -3,6 +3,7 @@
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.ai_model.query_embedding import QueryEmbeddingUnavailable, embed_query
 from apps.datasource.embedding.metadata_chunks import read_metadata
 from apps.datasource.embedding.utils import (
     batch_cosine_similarity,
@@ -47,7 +48,7 @@ def get_ds_embedding(
                 )
             )
         query = parse_valid_embedding(
-            EmbeddingModelCache.get_model().embed_query(question)
+            embed_query(EmbeddingModelCache.get_model(), question, stage="datasource")
         )
         if any(len(vector) != len(query) for chunks in vectors for vector in chunks):
             raise ValueError("Query and metadata dimensions differ")
@@ -65,6 +66,12 @@ def get_ds_embedding(
             f"limit={config.datasource_count}"
         )
         return selected
+    except QueryEmbeddingUnavailable as exc:
+        SQLBotLogUtil.info(
+            f"[embedding] stage=datasource action=fallback reason={exc.reason} "
+            f"candidate_count={len(_ds_list)} result_count={len(_ds_list)}"
+        )
+        return _ds_list
     except Exception as exc:
         traceback.print_exc()
         SQLBotLogUtil.info(

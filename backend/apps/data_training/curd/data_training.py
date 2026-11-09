@@ -7,6 +7,7 @@ from sqlalchemy import case, and_, select, func, delete, update, or_
 from sqlalchemy import text
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.ai_model.query_embedding import QueryEmbeddingUnavailable, embed_query
 from apps.datasource.embedding.utils import parse_valid_embedding
 from apps.data_training.models.data_training_model import DataTrainingInfo, DataTraining, DataTrainingInfoResult
 from apps.datasource.models.datasource import CoreDatasource
@@ -517,7 +518,7 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
             try:
                 model = EmbeddingModelCache.get_model()
 
-                embedding = parse_valid_embedding(model.embed_query(question))
+                embedding = parse_valid_embedding(embed_query(model, question, stage="sql_example"))
 
                 if advanced_application_id is not None:
                     results = session.execute(text(embedding_sql_in_advanced_application),
@@ -530,6 +531,9 @@ def select_training_by_question(session: SessionDep, question: str, oid: int, da
                 for row in results:
                     _list.append(DataTraining(id=row.id, question=row.question))
 
+            except QueryEmbeddingUnavailable:
+                # Keep literal hits; the guard records the specific fallback reason.
+                pass
             except Exception:
                 traceback.print_exc()
                 session.rollback()

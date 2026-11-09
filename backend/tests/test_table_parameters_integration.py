@@ -102,6 +102,12 @@ class QuestionProvider:
 
     def stream(self, messages):
         context = "\n".join(message.content for message in messages)
+        # Completion is a separate model boundary; contexts here track the
+        # datasource/SQL calls this existing contract is intended to inspect.
+        if messages[0].content.startswith("Complete the current data question"):
+            current = json.loads(messages[-1].content)["current"]["question"]
+            yield AIMessageChunk(content=json.dumps({"question": current}))
+            return
         self.contexts.append(context)
         if "【Schema】" in context:
             table = (
@@ -505,7 +511,8 @@ from sqlmodel import Session, create_engine
 import test_table_parameters_integration as contract
 from apps.ai_model.embedding import EmbeddingModelCache
 import apps.chat.task.llm as tasks
-EmbeddingModelCache.get_model = staticmethod(lambda: SimpleNamespace(embed_query=lambda _: [1.0, 0.0]))
+from test_query_embedding import embedding_model
+EmbeddingModelCache.get_model = staticmethod(lambda: embedding_model(limit=512))
 db = create_engine(os.environ['SQLBOT_TEST_DATABASE_URL'], connect_args={'options': '-csearch_path=' + os.environ['SQLBOT_TEST_SCHEMA'] + ',public'})
 tasks.session_maker = scoped_session(sessionmaker(bind=db, class_=Session))
 tasks.get_version = lambda _: ''
