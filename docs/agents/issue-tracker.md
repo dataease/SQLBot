@@ -7,7 +7,7 @@
 也不自动向两个平台发布。读取或更新已有单据时沿用其所在平台。
 
 - GitHub：使用 gh CLI，并显式指定 `--repo dataease/SQLBot`，操作见下文。
-- TAPD：先核对当前仓库对应的 TAPD 项目空间及 `workspace_id`；发布和关联操作见 [TAPD 发布约定](tapd.md)。
+- TAPD：先核对当前仓库对应的 TAPD 项目空间及 `workspace_id`；创建或更新 spec、tickets、依赖及附件时，按 [TAPD 发布约定](tapd.md)完成发布和双向索引核对。
 
 平台确认可以在整理内容期间提出，但确认前不创建远端单据。
 
