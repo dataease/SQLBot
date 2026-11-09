@@ -6,7 +6,6 @@ explicit disposable-PostgreSQL opt-in as the other embedding integration tests.
 """
 
 from concurrent.futures import ThreadPoolExecutor
-from threading import local
 from types import SimpleNamespace
 
 import pytest
@@ -26,6 +25,7 @@ from apps.datasource.embedding.table_embedding import calc_table_embedding
 from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
 from common.core.embedding_config import load_embedding_config
 from common.utils import embedding_threads
+from common.utils.metadata_scheduler import MetadataScheduler
 
 
 @pytest.fixture(scope="module")
@@ -43,12 +43,10 @@ def test_saved_metadata_covers_all_actual_model_inputs(
     database, _client, ds_id = table_environment
     sessions = scoped_session(sessionmaker(bind=database, class_=Session))
     monkeypatch.setattr(embedding_threads, "session_maker", sessions)
-    recorded_inputs = {"save_table_embedding": [], "save_ds_embedding": []}
-    futures = []
-    job = local()
+    all_inputs = []
 
     def embed_documents(texts):
-        recorded_inputs[job.name].extend(texts)
+        all_inputs.extend(texts)
         return local_model.embed_documents(texts)
 
     monkeypatch.setattr(
@@ -60,20 +58,11 @@ def test_saved_metadata_covers_all_actual_model_inputs(
             embed_query=local_model.embed_query,
         ),
     )
-    with ThreadPoolExecutor(max_workers=2) as executor:
-
-        def submit(function, *args):
-            def observed_job():
-                job.name = function.__name__
-                return function(*args)
-
-            future = executor.submit(observed_job)
-            futures.append(future)
-            return future
-
-        monkeypatch.setattr(
-            embedding_threads, "executor", SimpleNamespace(submit=submit)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        scheduler = MetadataScheduler(
+            embedding_threads._run_metadata_batch, executor=executor
         )
+        monkeypatch.setattr(embedding_threads, "metadata_scheduler", scheduler)
         with Session(database) as session:
             table = session.query(CoreTable).filter(CoreTable.ds_id == ds_id).first()
             table_id = table.id
@@ -115,8 +104,14 @@ def test_saved_metadata_covers_all_actual_model_inputs(
                     session, session.get(CoreDatasource, ds_id)
                 ),
             }
-        for future in futures:
-            future.result(timeout=30)
+        embedding_threads.fill_empty_table_and_ds_embeddings().result(timeout=30)
+        scheduler.shutdown()
+    with Session(database) as session:
+        table_chunk_count = len(read_table_vectors(session, table_id))
+    recorded_inputs = {
+        "save_table_embedding": all_inputs[:table_chunk_count],
+        "save_ds_embedding": all_inputs[table_chunk_count:],
+    }
     for job_name, inputs in recorded_inputs.items():
         original = originals[job_name]
         assert inputs
