@@ -86,8 +86,8 @@ Endpoint 命名沿既有风格：
 1. `POST /chat/start` 与 `POST /chat/assistant/start` 在工作空间内创建会话，并可绑定初始数据源或助手上下文。
 2. `POST /chat/question` 先解析快速命令。普通问题进入 `stream_sql`；`/regenerate` 直接再生。`/analysis` 和 `/predict` 在会话内会直接拒绝（temporary not supported），实际通过 `POST /record/{chat_record_id}/{action_type}` 触发。
 3. `stream_sql` 构造 `LLMService`，创建 `ChatRecord`，并启动异步执行。
-4. 已绑定数据源时，服务先提取关键词并扩展术语，再筛选适用的术语、SQL 示例和自定义提示词，随后组装 SQL 消息；筛选的作用域、命中和组合规则见 `docs/agents/knowledge-enhancement.md`。
-5. 未绑定数据源时，先由模型选择数据源；服务随后校验数据源访问权和连接可用性。
+4. 问数任务先执行一次问题补全（`apps/chat/task/question_completion.py`），结果在本任务复用，模型失败或输出无效时使用原始问题；不受关键词开关控制，不覆盖原始提问和 SQL 历史。已绑定数据源时，服务随后仅从补全意图提取业务词并按知识作用域扩展同义词，再筛选适用的术语、SQL 示例和自定义提示词，随后组装 SQL 消息；筛选的作用域、命中和组合规则见 `docs/agents/knowledge-enhancement.md`。
+5. 未绑定数据源时，复用本轮补全问题进行数据源向量预筛选与模型选择；实际向量输入先按部署 tokenizer 检查，超限或无法编码则保留原本合法候选。单候选直接选定，动态数据源不增加静态向量预筛选；模型返回的 ID 必须属于本次候选集合才可写入会话。选定后复用同轮补全结果，后续追问沿用会话数据源。
 6. 模型生成 SQL 后，服务解析 SQL、对照允许的表元数据校验引用表，并按需应用行权限或助手动态 SQL 变换。
 7. 服务执行最终 SQL，规范化大数字和带限定名的列结果，并持久化查询结果。
 8. 模型基于实际使用的表结构生成图表配置；服务校验并持久化配置。非会话式流式调用还可请求渲染图片。

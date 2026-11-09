@@ -9,6 +9,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
+from test_query_embedding import embedding_model
 
 from apps.datasource.embedding.table_embedding import (
     calc_keyword_score,
@@ -317,7 +318,7 @@ class TestExpandWithTerminology:
     def test_expand_hit(self):
         """匹配术语的关键词应扩展同义词。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = [
             self._make_term(1, "销售", pid=None),
             self._make_term(2, "sales", pid=1),
             self._make_term(3, "selling", pid=1),
@@ -332,7 +333,7 @@ class TestExpandWithTerminology:
     def test_no_hit(self):
         """未匹配任何术语的关键词应保持不变。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = [
             self._make_term(1, "客户", pid=None),
         ]
 
@@ -346,7 +347,7 @@ class TestExpandWithTerminology:
         terms = [self._make_term(1, "销售", pid=None)]
         for i in range(15):
             terms.append(self._make_term(100 + i, f"synonym_{i}", pid=1))
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = terms
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = terms
 
         result = expand_with_terminology("销售", session, oid=1)
         keywords = [kw.strip() for kw in result.split(',') if kw.strip()]
@@ -355,7 +356,7 @@ class TestExpandWithTerminology:
     def test_empty_terminology(self):
         """空术语表应返回原始关键词。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = []
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = []
 
         result = expand_with_terminology("销售额,部门", session, oid=1)
         assert result == "销售额,部门"
@@ -374,7 +375,7 @@ class TestExpandWithTerminology:
     def test_oid_zero_should_still_query(self):
         """oid=0 不应被视为假值 — 它是有效的组织 ID。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = [
             self._make_term(1, "销售", pid=None, oid=0),
             self._make_term(2, "revenue", pid=1, oid=0),
         ]
@@ -392,7 +393,7 @@ class TestExpandWithTerminology:
     def test_case_insensitive_match(self):
         """术语匹配应忽略大小写。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = [
             self._make_term(1, "Sales", pid=None),
             self._make_term(2, "revenue", pid=1),
         ]
@@ -409,7 +410,7 @@ class TestExpandWithTerminology:
     def test_multiple_keywords_expansion(self):
         """多个关键词应各自独立扩展。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = [
             self._make_term(1, "销售", pid=None),
             self._make_term(2, "sales", pid=1),
             self._make_term(3, "部门", pid=None),
@@ -424,7 +425,7 @@ class TestExpandWithTerminology:
     def test_child_term_word_also_matches(self):
         """如果关键词匹配子术语的词，应扩展父术语和兄弟术语。"""
         session = MagicMock()
-        session.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        session.query.return_value.filter.return_value.filter.return_value.limit.return_value.all.return_value = [
             self._make_term(1, "销售", pid=None),
             self._make_term(2, "sales", pid=1),
             self._make_term(3, "selling", pid=1),
@@ -463,7 +464,8 @@ class TestCalcTableEmbedding:
         mock_settings.TABLE_EMBEDDING_ALPHA = 0.4
         mock_settings.TABLE_EMBEDDING_COUNT = 10
 
-        mock_model = MagicMock()
+        mock_model = embedding_model(limit=512)
+        mock_model.embed_query = MagicMock()
         mock_model.embed_query.return_value = [1.0, 0.0, 0.0]
         mock_embed_cache.get_model.return_value = mock_model
 
@@ -491,7 +493,8 @@ class TestCalcTableEmbedding:
         mock_settings.TABLE_EMBEDDING_KEYWORD_ENABLED = False
         mock_settings.TABLE_EMBEDDING_COUNT = 10
 
-        mock_model = MagicMock()
+        mock_model = embedding_model(limit=512)
+        mock_model.embed_query = MagicMock()
         mock_model.embed_query.return_value = [1.0, 0.0, 0.0]
         mock_embed_cache.get_model.return_value = mock_model
 
@@ -512,7 +515,8 @@ class TestCalcTableEmbedding:
         mock_settings.TABLE_EMBEDDING_KEYWORD_ENABLED = True
         mock_settings.TABLE_EMBEDDING_COUNT = 10
 
-        mock_model = MagicMock()
+        mock_model = embedding_model(limit=512)
+        mock_model.embed_query = MagicMock()
         mock_model.embed_query.return_value = [1.0, 0.0, 0.0]
         mock_embed_cache.get_model.return_value = mock_model
 
@@ -535,7 +539,8 @@ class TestCalcTableEmbedding:
         mock_settings.TABLE_EMBEDDING_ALPHA = 0.4
         mock_settings.TABLE_EMBEDDING_COUNT = 10
 
-        mock_model = MagicMock()
+        mock_model = embedding_model(limit=512)
+        mock_model.embed_query = MagicMock()
         mock_model.embed_query.return_value = [1.0, 0.0, 0.0]
         mock_embed_cache.get_model.return_value = mock_model
 
@@ -565,7 +570,8 @@ class TestCalcTableEmbedding:
         mock_settings.TABLE_EMBEDDING_ALPHA = 0.4
         mock_settings.TABLE_EMBEDDING_COUNT = 10
 
-        mock_model = MagicMock()
+        mock_model = embedding_model(limit=512)
+        mock_model.embed_query = MagicMock()
         mock_model.embed_query.return_value = [1.0, 0.0]
         mock_embed_cache.get_model.return_value = mock_model
 
@@ -594,7 +600,8 @@ class TestCalcTableEmbedding:
         mock_settings.TABLE_EMBEDDING_COUNT = 10
 
         # 让 embed_query 抛出意外错误
-        mock_model = MagicMock()
+        mock_model = embedding_model(limit=512)
+        mock_model.embed_query = MagicMock()
         mock_model.embed_query.side_effect = RuntimeError("模型加载失败")
         mock_embed_cache.get_model.return_value = mock_model
 
@@ -620,7 +627,8 @@ class TestExplicitTableSelection:
             config.TABLE_EMBEDDING_KEYWORD_ENABLED = True
             config.TABLE_EMBEDDING_COUNT = 10
             config.TABLE_EMBEDDING_ALPHA = 0.4
-            cache.get_model.return_value.embed_query.return_value = [1.0, 0.0]
+            cache.get_model.return_value = embedding_model(limit=512)
+            cache.get_model.return_value.embed_query = MagicMock(return_value=[1.0, 0.0])
             self.cache, self.config = cache, config
             yield
 

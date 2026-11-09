@@ -533,7 +533,8 @@ def get_tables_sample_data(session: SessionDep, current_user: CurrentUser, ds: C
 
 def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDatasource, question: str,
                      embedding: bool = True, table_list: list[str] = None,
-                     keywords: str = None, *, config: EmbeddingConfig = None) -> tuple[str, list]:
+                     keywords: str = None, *, config: EmbeddingConfig = None,
+                     retrieval_question: str = None) -> tuple[str, list]:
     schema_str = ""
     table_objs = get_table_obj_by_ds(session=session, current_user=current_user, ds=ds)
     if len(table_objs) == 0:
@@ -596,7 +597,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
         candidate_count = len(tables)
         try:
             tables = calc_table_embedding(tables, question, session=session, oid=current_user.oid,
-                                          keywords=keywords, config=config)
+                                          keywords=keywords, config=config, retrieval_question=retrieval_question)
             SQLBotLogUtil.info(
                 f"[embedding] stage=table ds_id={ds.id} action=selection_result vector_enabled=True "
                 f"candidate_count={candidate_count} result_count={len(tables)} "

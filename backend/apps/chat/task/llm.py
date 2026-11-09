@@ -4,6 +4,7 @@ import json
 import os
 import re
 import traceback
+import time
 import urllib.parse
 import warnings
 from concurrent.futures import ThreadPoolExecutor, Future
@@ -38,6 +39,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     get_chat_chart_config, trigger_log_error
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj, SystemPromptMessage, HumanPromptMessage, AIPromptMessage
+from apps.chat.task.question_completion import COMPLETION_PROMPT, QuestionCompletion
 from apps.data_training.curd.data_training import get_training_template
 from apps.datasource.crud.datasource import get_table_schema, get_tables_sample_data
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
@@ -126,6 +128,7 @@ class LLMService:
     def __init__(self, session: Session, current_user: CurrentUser, chat_question: ChatQuestion,
                  current_assistant: Optional[CurrentAssistant] = None, no_reasoning: bool = False,
                  embedding: bool = False, config: LLMConfig = None):
+        self.question_completion: QuestionCompletion | None = None
         self.embedding_config = load_embedding_config(session)
         self.sql_message = []
         self.chart_message = []
@@ -370,11 +373,12 @@ class LLMService:
         calculate_ds_id = ds_id
         if self.current_assistant:
             calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
-            if self.current_assistant.type == 1:
+            if self.current_assistant.type in dynamic_ds_types:
                 calculate_ds_id = None
         # 使用原始提取的关键词（未扩展）进行术语匹配，避免同义词重复查询
-        match_text = self.chat_question.extracted_keywords or self.chat_question.question
-        if self.current_assistant and self.current_assistant.type == 1:
+        match_text = self.chat_question.extracted_keywords or (
+            self.question_completion.text if self.question_completion else self.chat_question.question)
+        if self.current_assistant and self.current_assistant.type in dynamic_ds_types:
             self.chat_question.terminologies, term_list = get_terminology_template(_session,
                                                                                    match_text,
                                                                                    calculate_oid,
@@ -423,25 +427,87 @@ class LLMService:
                                                                                 OperationEnum.FILTER_CUSTOM_PROMPT],
                                                                             full_message=prompt_list)
 
+    def complete_question(self, _session: Session) -> QuestionCompletion:
+        """Prepare retrieval intent once; never replace the SQL question/history."""
+        if self.question_completion is not None:
+            return self.question_completion
+        original = self.chat_question.question
+        history = self.generate_sql_logs[-1].messages if self.generate_sql_logs else []
+        if self.chat_question.regenerate_record_id:
+            prior = next((log for log in self.generate_sql_logs
+                          if log.pid == self.chat_question.regenerate_record_id), None)
+            history = prior.messages if prior else []
+        questions = []
+        for message in history or []:
+            if message.get("sqlbot_system") or message.get("type") != "human":
+                continue
+            match = re.search(r"<user-question>(.*?)</user-question>", message.get("content", ""), re.DOTALL)
+            if match and match.group(1).strip():
+                questions.append(match.group(1).strip())
+        count = self.base_message_round_count_limit
+        questions = questions[-count:] if count > 0 else []
+        messages = [SystemPromptMessage(content=COMPLETION_PROMPT)]
+        messages.append(HumanMessage(content=json.dumps({
+            "history": [{"turn": index, "question": question}
+                        for index, question in enumerate(questions, start=1)],
+            "current": {"turn": len(questions) + 1, "question": original},
+        }, ensure_ascii=False)))
+        started = time.monotonic()
+        usage = {}
+        completed = original
+        reason = "completed"
+        try:
+            response = "".join(chunk.get("content", "") or ""
+                               for chunk in process_stream(self.llm.stream(messages), usage))
+            try:
+                # Unwrap only a complete JSON fence; parse the entire payload so
+                # malformed parents or multiple objects cannot yield a child intent.
+                payload = response.strip()
+                fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```", payload,
+                                      flags=re.DOTALL | re.IGNORECASE)
+                if fenced:
+                    payload = fenced.group(1)
+                value = json.loads(payload)
+                candidate = value.get("question") if isinstance(value, dict) else None
+                if not isinstance(candidate, str) or not candidate.strip():
+                    raise ValueError("Missing completed question")
+                completed = candidate.strip()
+            except (ValueError, TypeError):
+                reason = "invalid_output"
+        except Exception:
+            reason = "model_error"
+        result = QuestionCompletion(original=original, text=completed, reason=reason,
+                                    token_usage=usage, elapsed_ms=(time.monotonic() - started) * 1000)
+        self.question_completion = result
+        SQLBotLogUtil.info("[retrieval] " + json.dumps({
+            "stage": "question_completion", "chat_id": self.chat_question.chat_id,
+            "record_id": self.record.id, "input": original, "query": completed,
+            "reason": reason, "model_calls": result.model_calls,
+            "token_usage": usage, "elapsed_ms": result.elapsed_ms,
+        }, ensure_ascii=False))
+        return result
+
     def filter_training_template(self, _session: Session, oid: int = None, ds_id: int = None):
         self.current_logs[OperationEnum.FILTER_SQL_EXAMPLE] = start_log(session=_session,
                                                                         operate=OperationEnum.FILTER_SQL_EXAMPLE,
                                                                         record_id=self.record.id,
                                                                         local_operation=True)
+        retrieval_question = (self.question_completion.text if self.question_completion
+                              else self.chat_question.question)
         calculate_oid = oid
         calculate_ds_id = ds_id
         if self.current_assistant:
             calculate_oid = self.current_assistant.oid if self.current_assistant.type != 4 else self.oid
-            if self.current_assistant.type == 1:
+            if self.current_assistant.type in dynamic_ds_types:
                 calculate_ds_id = None
-        if self.current_assistant and self.current_assistant.type == 1:
+        if self.current_assistant and self.current_assistant.type in dynamic_ds_types:
             self.chat_question.data_training, example_list = get_training_template(_session,
-                                                                                   self.chat_question.question,
+                                                                                   retrieval_question,
                                                                                    calculate_oid,
                                                                                    None, self.current_assistant.id, config=self.embedding_config)
         else:
             self.chat_question.data_training, example_list = get_training_template(_session,
-                                                                                   self.chat_question.question,
+                                                                                   retrieval_question,
                                                                                    calculate_oid,
                                                                                    calculate_ds_id, config=self.embedding_config)
         SQLBotLogUtil.info(
@@ -455,50 +521,51 @@ class LLMService:
                                                                           OperationEnum.FILTER_SQL_EXAMPLE],
                                                                       full_message=example_list)
 
+    def prepare_keywords(self, _session: Session, oid: int, ds_id: int | None):
+        """Prepare and persist scoped keywords for both datasource paths."""
+        # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
+        if self.embedding_config.keyword_enabled:
+            is_error, kw_result = self.extract_keywords(_session)
+            if is_error:
+                raise SingleMessageError(kw_result)
+            if kw_result:
+                self.chat_question.extracted_keywords = kw_result
+                SQLBotLogUtil.info(f"提取的关键词: {kw_result}")
+                # 术语同义词扩展（用于表匹配，不用于术语模板查询）
+                expanded = expand_with_terminology(
+                    kw_result, _session,
+                    self.current_assistant.oid if self.current_assistant and self.current_assistant.type != 4 else oid,
+                    datasource=ds_id,
+                    advanced_application_id=(self.current_assistant.id if self.current_assistant
+                                             and self.current_assistant.type in dynamic_ds_types else None))
+                self.chat_question.expanded_keywords = expanded
+                SQLBotLogUtil.info(f"扩展后的关键词: {expanded}")
+                # 持久化到 record，供后续独立接口（如 generate_analysis）使用
+                save_extracted_keywords(_session, self.record.id,
+                                        expanded_keywords=expanded, extracted_keywords=kw_result)
+
     def extract_keywords(self, _session: Session) -> tuple[bool, str]:
         """从用户问题中提取核心业务实体词。
 
         使用 LLM 提取名词性业务实体，忽略时间词、动作词、修饰词。
-        支持上下文历史，可根据对话上下文理解用户意图。
+        使用本轮已补全意图，避免重新继承已被替换或撤销的历史条件。
         提取结果可复用于表匹配、术语扩展等环节。
 
         Returns:
             (is_error, result) 元组：
                 - (False, keywords) 成功，关键词逗号分隔
-                - (True, error_message) 错误（LLM 失败或非查数据意图）
+                - (False, "") 无有效业务词或模型失败，由检索使用补全意图回退
         """
         system_prompt = self.chat_question.extract_keywords_sys_prompt()
 
         keywords_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         keywords_msg.append(SystemPromptMessage(content=system_prompt))
 
-        # 加载上下文历史（仅取用户的历史提问，不含 AI 生成的 SQL 等回复）
-        last_sql_messages: List[dict[str, Any]] = self.generate_sql_logs[-1].messages if len(
-            self.generate_sql_logs) > 0 else []
-        if self.chat_question.regenerate_record_id:
-            _temp_log = next(
-                filter(lambda obj: obj.pid == self.chat_question.regenerate_record_id, self.generate_sql_logs), None)
-            last_sql_messages: List[dict[str, Any]] = _temp_log.messages if _temp_log else []
-
-        # 排除系统提示词和 AI 回复，只保留用户的历史提问
-        last_user_messages = [
-            obj for obj in last_sql_messages
-            if obj.get("sqlbot_system") != True and obj.get('type') == 'human'
-        ]
-
-        if last_user_messages:
-            last_rounds = get_last_conversation_rounds(last_user_messages, rounds=self.base_message_round_count_limit)
-            for _msg_dict in last_rounds:
-                content = _msg_dict.get('content', '')
-                # 提取 <user-question> 标签内的用户原始提问，排除 error-msg 等干扰信息
-                match = re.search(r'<user-question>(.*?)</user-question>', content, re.DOTALL)
-                if match:
-                    question_text = match.group(1).strip()
-                    if question_text:
-                        keywords_msg.append(HumanMessage(content=question_text))
-
-        # 当前问题
-        keywords_msg.append(HumanMessage(content=self.chat_question.question))
+        # Completion already resolved history replacements and cancellations. Replaying
+        # old questions here can reintroduce conditions the current turn revoked.
+        retrieval_question = (self.question_completion.text if self.question_completion
+                              else self.chat_question.question)
+        keywords_msg.append(HumanMessage(content=retrieval_question))
 
         self.current_logs[OperationEnum.EXTRACT_KEYWORDS] = start_log(
             session=_session,
@@ -512,14 +579,30 @@ class LLMService:
         full_thinking_text = ''
         full_text = ''
         token_usage = {}
-        res = process_stream(self.llm.stream(keywords_msg), token_usage)
-        for chunk in res:
-            if chunk.get('content'):
-                full_text += chunk.get('content')
-            if chunk.get('reasoning_content'):
-                full_thinking_text += chunk.get('reasoning_content')
+        started = time.monotonic()
+        reason = "extracted"
+        try:
+            res = process_stream(self.llm.stream(keywords_msg), token_usage)
+            for chunk in res:
+                if chunk.get('content'):
+                    full_text += chunk.get('content')
+                if chunk.get('reasoning_content'):
+                    full_thinking_text += chunk.get('reasoning_content')
+        except Exception:
+            reason = "model_error"
+            full_text = ''
 
         result_text = full_text.strip()
+        if reason != "model_error" and (not result_text or result_text == 'EMPTY'
+                                        or result_text.startswith('ERROR:NOT_DATA_QUERY')):
+            reason = "empty_output"
+        SQLBotLogUtil.info("[retrieval] " + json.dumps({
+            "stage": "keyword_extraction", "chat_id": self.chat_question.chat_id,
+            "record_id": self.record.id, "input": retrieval_question,
+            "query": result_text if reason == "extracted" else retrieval_question,
+            "reason": reason, "model_calls": 1, "token_usage": token_usage,
+            "elapsed_ms": (time.monotonic() - started) * 1000,
+        }, ensure_ascii=False))
 
         keywords_msg.append(AIMessage(result_text))
         self.current_logs[OperationEnum.EXTRACT_KEYWORDS] = end_log(
@@ -530,12 +613,9 @@ class LLMService:
             token_usage=token_usage
         )
 
-        if result_text.startswith('ERROR:NOT_DATA_QUERY'):
-            # return True, '您的问题似乎不是查询数据的问题，请提出与数据查询相关的问题。'
-            return False, ''
-
-        if result_text == 'EMPTY' or not result_text:
-            self.chat_question.extracted_keywords = self.chat_question.question
+        if reason != "extracted":
+            self.chat_question.extracted_keywords = ''
+            self.chat_question.expanded_keywords = ''
             return False, ''
 
         self.chat_question.extracted_keywords = result_text
@@ -548,7 +628,9 @@ class LLMService:
                                                                   local_operation=True)
 
         # 使用扩展后的关键词进行表匹配（包含同义词，匹配更全面）
-        keywords = self.chat_question.expanded_keywords or self.chat_question.question
+        retrieval_question = (self.question_completion.text if self.question_completion
+                              else self.chat_question.question)
+        keywords = self.chat_question.expanded_keywords or None
 
         self.chat_question.db_schema, tables = self.out_ds_instance.get_db_schema(
             self.ds.id, self.chat_question.question) if self.out_ds_instance else get_table_schema(
@@ -556,7 +638,7 @@ class LLMService:
             current_user=self.current_user,
             ds=self.ds,
             question=self.chat_question.question,
-            keywords=keywords, config=self.embedding_config)
+            keywords=keywords, config=self.embedding_config, retrieval_question=retrieval_question)
 
         SQLBotLogUtil.info(
             f"[embedding] stage=table_context chat_id={self.chat_question.chat_id} "
@@ -761,6 +843,8 @@ class LLMService:
         yield {'recommended_question': self.record.recommended_question}
 
     def select_datasource(self, _session: Session):
+        retrieval_question = (self.question_completion.text if self.question_completion
+                              else self.chat_question.question)
         datasource_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         datasource_msg.append(SystemPromptMessage(self.chat_question.datasource_sys_question()))
         if self.current_assistant and self.current_assistant.type != 4:
@@ -792,7 +876,7 @@ class LLMService:
             if self.embedding_config.table_enabled and (
                     not self.current_assistant or (self.current_assistant and self.current_assistant.type not in dynamic_ds_types)):
                 _ds_list = get_ds_embedding(_session, _ds_list, self.out_ds_instance,
-                                            self.chat_question.question, self.current_assistant, config=self.embedding_config)
+                                            retrieval_question, self.current_assistant, config=self.embedding_config)
                 # yield {'content': '{"id":' + str(ds.get('id')) + '}'}
             else:
                 reason = 'disabled' if not self.embedding_config.table_enabled else 'dynamic_datasource'
@@ -806,7 +890,8 @@ class LLMService:
             for _ds in _ds_list:
                 _ds_list_dict.append(_ds)
             datasource_msg.append(
-                HumanMessage(self.chat_question.datasource_user_question(orjson.dumps(_ds_list_dict).decode())))
+                HumanMessage(self.chat_question.datasource_user_question(orjson.dumps(_ds_list_dict).decode(),
+                                                                         question=retrieval_question)))
 
             self.current_logs[OperationEnum.CHOOSE_DATASOURCE] = start_log(session=_session,
                                                                            ai_modal_id=self.chat_question.ai_modal_id,
@@ -856,6 +941,8 @@ class LLMService:
             data: dict = _ds_list[0] if ignore_auto_select else ds
 
             if data.get('id') and data.get('id') != 0:
+                if not any(candidate.get('id') == data['id'] for candidate in _ds_list):
+                    raise SingleMessageError(self.trans('i18n_permission.permission_resource_limit'))
                 _datasource = data['id']
                 _chat = _session.get(Chat, self.record.chat_id)
                 _chat.datasource = _datasource
@@ -906,21 +993,7 @@ class LLMService:
             oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
             ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
-            # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
-            if self.embedding_config.keyword_enabled:
-                is_error, kw_result = self.extract_keywords(_session)
-                if is_error:
-                    raise SingleMessageError(kw_result)
-                if kw_result:
-                    self.chat_question.extracted_keywords = kw_result
-                    SQLBotLogUtil.info(f"提取的关键词: {kw_result}")
-                    # 术语同义词扩展（用于表匹配，不用于术语模板查询）
-                    expanded = expand_with_terminology(kw_result, _session, oid)
-                    self.chat_question.expanded_keywords = expanded
-                    SQLBotLogUtil.info(f"扩展后的关键词: {expanded}")
-                    # 持久化到 record，供后续独立接口（如 generate_analysis）使用
-                    save_extracted_keywords(_session, self.record.id,
-                                            expanded_keywords=expanded, extracted_keywords=kw_result)
+            self.prepare_keywords(_session, oid, ds_id)
 
             self.filter_terminology_template(_session, oid, ds_id)
 
@@ -1384,25 +1457,12 @@ class LLMService:
         _session = None
         try:
             _session = session_maker()
+            self.complete_question(_session)
             if self.ds:
                 oid = self.ds.oid if isinstance(self.ds, CoreDatasource) else 1
                 ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
-                # 提取关键词（前置步骤，结果复用于术语匹配和表匹配）
-                if self.embedding_config.keyword_enabled:
-                    is_error, kw_result = self.extract_keywords(_session)
-                    if is_error:
-                        raise SingleMessageError(kw_result)
-                    if kw_result:
-                        self.chat_question.extracted_keywords = kw_result
-                        SQLBotLogUtil.info(f"提取的关键词: {kw_result}")
-                        # 术语同义词扩展（用于表匹配，不用于术语模板查询）
-                        expanded = expand_with_terminology(kw_result, _session, oid)
-                        self.chat_question.expanded_keywords = expanded
-                        SQLBotLogUtil.info(f"扩展后的关键词: {expanded}")
-                        # 持久化到 record，供后续独立接口（如 generate_analysis）使用
-                        save_extracted_keywords(_session, self.record.id,
-                                                expanded_keywords=expanded, extracted_keywords=kw_result)
+                self.prepare_keywords(_session, oid, ds_id)
 
                 self.filter_terminology_template(_session, oid, ds_id)
 
