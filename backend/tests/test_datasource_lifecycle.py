@@ -22,6 +22,7 @@ from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTab
 from apps.datasource.models.metadata_embedding import MetadataEmbedding
 from common.core.config import settings
 from common.utils import embedding_threads
+from common.utils.metadata_scheduler import MetadataScheduler
 
 
 @pytest.fixture
@@ -40,11 +41,13 @@ def environment(monkeypatch):
     maker = scoped_session(sessionmaker(bind=database, class_=Session))
     jobs = []
     monkeypatch.setattr(embedding_threads, "session_maker", maker)
-    monkeypatch.setattr(
-        embedding_threads,
-        "executor",
-        SimpleNamespace(submit=lambda function, *args: jobs.append((function, args))),
+    scheduler = MetadataScheduler(
+        embedding_threads._run_metadata_batch,
+        executor=SimpleNamespace(
+            submit=lambda function, *args: jobs.append((function, args))
+        ),
     )
+    monkeypatch.setattr(embedding_threads, "metadata_scheduler", scheduler)
     monkeypatch.setattr(settings, "TABLE_EMBEDDING_ENABLED", True)
     with TestClient(
         parameter_app(database, monkeypatch), raise_server_exceptions=False

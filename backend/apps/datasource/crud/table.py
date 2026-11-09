@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.embedding.metadata_chunks import (
@@ -83,6 +83,27 @@ def _resource_input(session, record):
     )
 
 
+def _resource_ids(session, resource, ids):
+    """Keyset pages with a high-water mark; concurrent saves schedule another pass."""
+    upper = session.execute(select(func.max(resource.id))).scalar_one()
+    session.commit()
+    if upper is None:
+        return
+    last = None
+    while True:
+        query = select(resource.id).where(resource.id <= upper).order_by(resource.id)
+        if last is not None:
+            query = query.where(resource.id > last)
+        if ids is not None:
+            query = query.where(resource.id.in_(ids))
+        page = list(session.execute(query.limit(32)).scalars())
+        session.commit()
+        if not page:
+            return
+        yield from page
+        last = page[-1]
+
+
 def _generate(session_maker, resource, ids=None, config=None):
     session = session_maker()
     failed = []
@@ -90,13 +111,9 @@ def _generate(session_maker, resource, ids=None, config=None):
         config = config or load_embedding_config(session)
         if not config.table_enabled:
             return
-        query = select(resource.id).order_by(resource.id)
-        if ids is not None:
-            query = query.where(resource.id.in_(ids))
-        pending = list(session.execute(query).scalars())
         resource_type = "table" if resource is CoreTable else "datasource"
         session.commit()
-        for key in pending:
+        for key in _resource_ids(session, resource, ids):
             for attempt in range(3):
                 try:
                     lock_embedding_resource(session, resource.__tablename__, key)
@@ -159,9 +176,8 @@ def _generate(session_maker, resource, ids=None, config=None):
         session_maker.remove()
 
 
-def run_fill_empty_table_and_ds_embedding(session_maker):
-    # Each startup/reenable is an independent recoverable scan. Resource locks
-    # deduplicate work across workers and are released even when a process dies.
+def run_metadata_embedding_batch(session_maker, table_ids, datasource_ids, scan=False):
+    # One snapshot at actual worker start, shared by both kinds of resource.
     session = session_maker()
     try:
         config = load_embedding_config(session)
@@ -170,13 +186,20 @@ def run_fill_empty_table_and_ds_embedding(session_maker):
     if not config.table_enabled:
         return
     failures = []
-    for resource in (CoreTable, CoreDatasource):
+    for resource, ids in ((CoreTable, table_ids), (CoreDatasource, datasource_ids)):
+        if not scan and not ids:
+            continue
         try:
-            _generate(session_maker, resource, config=config)
+            _generate(session_maker, resource, None if scan else ids, config=config)
         except EmbeddingGenerationError as exc:
             failures.extend(exc.ids)
     if failures:
         raise EmbeddingGenerationError("datasource_metadata", failures)
+
+
+def run_fill_empty_table_and_ds_embedding(session_maker):
+    # Each startup/reenable is recoverable; no durable scan completion marker.
+    run_metadata_embedding_batch(session_maker, [], [], scan=True)
 
 
 def save_table_embedding(session_maker, ids: list[int]):

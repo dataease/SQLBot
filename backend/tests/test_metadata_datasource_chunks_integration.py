@@ -28,6 +28,7 @@ from apps.datasource.models.datasource import (
 )
 from common.core.embedding_config import load_embedding_config
 from common.utils import embedding_threads
+from common.utils.metadata_scheduler import MetadataScheduler
 
 
 @pytest.fixture
@@ -45,10 +46,15 @@ def datasource_environment(table_environment, monkeypatch):
             futures.append(future)
             return future
 
-        monkeypatch.setattr(
-            embedding_threads, "executor", SimpleNamespace(submit=submit)
+        scheduler = MetadataScheduler(
+            embedding_threads._run_metadata_batch,
+            executor=SimpleNamespace(submit=submit, shutdown=executor.shutdown),
         )
-        yield database, client, ds_id, sessions, futures, model
+        monkeypatch.setattr(embedding_threads, "metadata_scheduler", scheduler)
+        try:
+            yield database, client, ds_id, sessions, futures, model
+        finally:
+            scheduler.shutdown()
     sessions.remove()
 
 
