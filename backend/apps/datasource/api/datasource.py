@@ -33,7 +33,7 @@ from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj, \
     TableSchemaResponse, ColumnSchemaResponse, PreviewResponse, ImportRequest
-from ..utils.excel import parse_excel_preview, read_import_dataframe
+from ..utils.excel import is_csv_file, parse_excel_preview, read_import_dataframe
 
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
 path = settings.EXCEL_PATH
@@ -363,7 +363,7 @@ async def upload_excel(trans: Trans, session: SessionDep,
     def inner():
         sheets = []
         engine = get_engine_conn()
-        if filename.endswith(".csv"):
+        if is_csv_file(filename):
             df = pd.read_csv(save_path, engine='c')
             tableName = f"sheet1_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
             sheets.append({"tableName": tableName, "tableComment": ""})
@@ -633,7 +633,7 @@ async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequ
             field_mapping = {f.fieldName: f.fieldType for f in fields}
             try:
                 df = read_import_dataframe(save_path, sheet_name, field_mapping)
-                if save_path.endswith(".csv"):
+                if is_csv_file(save_path):
                     sheet_name = "Sheet1"
             except Exception as e:
                 raise HTTPException(500, f"{trans('i18n_ds_upload_error')}: {str(e)}")

@@ -122,3 +122,15 @@ def test_normal_names_keep_their_own_stem_and_extension(parse_harness):
     stored = response.json()["filePath"]
     assert stored.startswith("a.b_") and stored.endswith(".xlsx"), stored
     assert (parse_harness.upload_dir / stored).is_file()
+
+
+def test_legacy_upload_imports_mixed_case_csv(harness, monkeypatch):
+    insert = Mock()
+    monkeypatch.setattr(datasource, "insert_pg", insert)
+    response = harness.client.post(
+        UPLOAD_URL, files={"file": ("orders.CsV", b"units\n3\n7\n", "text/csv")}
+    )
+    assert response.status_code == 200, response.text
+    insert.assert_called_once()
+    frame = insert.call_args.args[0]
+    assert frame.to_dict("records") == [{"units": 3}, {"units": 7}]

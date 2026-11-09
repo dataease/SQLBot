@@ -22,6 +22,10 @@ USER_TYPE_TO_PANDAS = {
 }
 
 
+def is_csv_file(file_path: str) -> bool:
+    return file_path.lower().endswith(".csv")
+
+
 def infer_field_type(dtype) -> str:
     dtype_str = str(dtype)
     return FIELD_TYPE_MAP.get(dtype_str, 'string')
@@ -51,7 +55,7 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
         column: 'object' if field_type == 'int' else USER_TYPE_TO_PANDAS.get(field_type, 'string')
         for column, field_type in field_mapping.items()
     }
-    if save_path.endswith('.csv'):
+    if is_csv_file(save_path):
         df = pd.read_csv(save_path, engine='c', dtype=dtype_dict)
     else:
         df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine', dtype=dtype_dict)
@@ -68,7 +72,7 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
 
 def parse_excel_preview(save_path: str, max_rows: int = 10):
     sheets_data = []
-    if save_path.endswith(".csv"):
+    if is_csv_file(save_path):
         df = pd.read_csv(save_path, engine='c')
         fields = []
         for col in df.columns:
