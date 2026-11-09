@@ -18,7 +18,7 @@ from test_embedding_parameters_integration import (  # noqa: F401
 from apps.ai_model.model_factory import LLMConfig
 from apps.chat.models.chat_model import Chat, ChatFinishStep, ChatQuestion, ChatRecord
 from apps.chat.task.llm import LLMService
-from apps.datasource.crud.table import _table_input
+from apps.datasource.crud.table import _resource_input, _table_input
 from apps.datasource.embedding.metadata_chunks import fingerprint, publish_metadata
 from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
 from apps.datasource.models.metadata_embedding import MetadataEmbedding
@@ -86,6 +86,9 @@ def table_environment(knowledge_environment, monkeypatch):  # noqa: F811
                 _table_input(session, table),
                 [json.loads(table.embedding)],
             )
+        publish_metadata(
+            session, "datasource", ds.id, _resource_input(session, ds), [[1, 0]]
+        )
         session.commit()
     yield database, client, ds_id
     sessions.remove()
@@ -296,6 +299,15 @@ def add_datasource_candidates(database):
                 embedding="[1,0]",
             )
         )
+        session.flush()
+        for datasource in session.query(CoreDatasource).all():
+            publish_metadata(
+                session,
+                "datasource",
+                datasource.id,
+                _resource_input(session, datasource),
+                [json.loads(datasource.embedding)],
+            )
         session.commit()
 
 
@@ -350,8 +362,13 @@ def test_incomplete_datasource_vectors_keep_original_candidate_dtos(
             .filter(CoreDatasource.name == "second_candidate")
             .one()
         )
-        ds.embedding = bad_vector
-        session.add(ds)
+        record = session.get(MetadataEmbedding, ("datasource", ds.id))
+        try:
+            record.vectors = json.dumps([json.loads(bad_vector)])
+        except (TypeError, ValueError):
+            record.vectors = "broken"
+        record.vectors_hash = fingerprint(record.vectors)
+        session.add(record)
         session.commit()
     current = task(database, None)
     current.llm = QuestionProvider(datasource={"id": ds_id, "name": "accessible"})
