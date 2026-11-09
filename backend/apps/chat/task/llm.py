@@ -452,13 +452,25 @@ class LLMService:
                         for index, question in enumerate(questions, start=1)],
             "current": {"turn": len(questions) + 1, "question": original},
         }, ensure_ascii=False)))
+        log_messages = [{'type': msg.type, 'content': msg.content} for msg in messages]
+        self.current_logs[OperationEnum.COMPLETE_QUESTION] = start_log(
+            session=_session,
+            ai_modal_id=self.chat_question.ai_modal_id,
+            ai_modal_name=self.chat_question.ai_modal_name,
+            operate=OperationEnum.COMPLETE_QUESTION,
+            record_id=self.record.id,
+            full_message=log_messages,
+        )
         started = time.monotonic()
         usage = {}
+        response = ''
+        reasoning_content = ''
         completed = original
         reason = "completed"
         try:
-            response = "".join(chunk.get("content", "") or ""
-                               for chunk in process_stream(self.llm.stream(messages), usage))
+            for chunk in process_stream(self.llm.stream(messages), usage):
+                response += chunk.get("content", "") or ""
+                reasoning_content += chunk.get("reasoning_content", "") or ""
             try:
                 # Unwrap only a complete JSON fence; parse the entire payload so
                 # malformed parents or multiple objects cannot yield a child intent.
@@ -478,6 +490,21 @@ class LLMService:
             reason = "model_error"
         result = QuestionCompletion(original=original, text=completed, reason=reason,
                                     token_usage=usage, elapsed_ms=(time.monotonic() - started) * 1000)
+        # Preserve raw/partial output separately from the effective retrieval question.
+        log_messages.append({
+            'type': 'ai', 'content': response,
+            'completion': {'reason': reason, 'question': completed},
+        })
+        log = end_log(
+            session=_session,
+            log=self.current_logs[OperationEnum.COMPLETE_QUESTION],
+            full_message=log_messages,
+            reasoning_content=reasoning_content,
+            token_usage=usage,
+        )
+        if reason != "completed":
+            log = trigger_log_error(_session, log)
+        self.current_logs[OperationEnum.COMPLETE_QUESTION] = log
         self.question_completion = result
         SQLBotLogUtil.info("[retrieval] " + json.dumps({
             "stage": "question_completion", "chat_id": self.chat_question.chat_id,

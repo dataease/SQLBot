@@ -48,6 +48,7 @@ class OperationEnum(Enum):
     EXECUTE_SQL = '12'
     GENERATE_PICTURE = '13'
     EXTRACT_KEYWORDS = '14'
+    COMPLETE_QUESTION = '15'
 
 
 class ChatFinishStep(Enum):

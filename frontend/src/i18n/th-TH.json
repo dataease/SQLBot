@@ -871,6 +871,7 @@
       "GENERATE_DYNAMIC_SQL": "สร้าง SQL แบบไดนามิก",
       "CHOOSE_TABLE": "จับคู่ตารางข้อมูล (Schema)",
       "FILTER_TERMS": "จับคู่คำศัพท์",
+      "COMPLETE_QUESTION": "เติมคำถามให้สมบูรณ์",
       "EXTRACT_KEYWORDS": "ดึงคีย์เวิร์ด",
       "FILTER_SQL_EXAMPLE": "จับคู่ตัวอย่าง SQL",
       "FILTER_CUSTOM_PROMPT": "จับคู่พรอมป์ต์ที่กำหนดเอง",
