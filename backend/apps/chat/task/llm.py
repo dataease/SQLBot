@@ -39,7 +39,7 @@ from apps.chat.curd.chat import save_question, save_sql_answer, save_sql, \
     get_chat_chart_config, trigger_log_error
 from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameChat, ChatLog, OperationEnum, \
     ChatFinishStep, AxisObj, SystemPromptMessage, HumanPromptMessage, AIPromptMessage
-from apps.chat.task.question_completion import COMPLETION_PROMPT, QuestionCompletion
+from apps.chat.task.question_completion import QuestionCompletion
 from apps.data_training.curd.data_training import get_training_template
 from apps.datasource.crud.datasource import get_table_schema, get_tables_sample_data
 from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
@@ -446,7 +446,7 @@ class LLMService:
                 questions.append(match.group(1).strip())
         count = self.base_message_round_count_limit
         questions = questions[-count:] if count > 0 else []
-        messages = [SystemPromptMessage(content=COMPLETION_PROMPT)]
+        messages = [SystemPromptMessage(content=self.chat_question.complete_question_sys_prompt())]
         messages.append(HumanMessage(content=json.dumps({
             "history": [{"turn": index, "question": question}
                         for index, question in enumerate(questions, start=1)],
