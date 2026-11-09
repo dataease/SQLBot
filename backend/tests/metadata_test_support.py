@@ -25,3 +25,14 @@ def read_table_vectors(session, table_id):
 
     table = session.get(CoreTable, table_id)
     return read_metadata(session, "table", table_id, _table_input(session, table))
+
+
+def read_datasource_vectors(session, datasource_id):
+    from apps.datasource.crud.table import _resource_input
+    from apps.datasource.embedding.metadata_chunks import read_metadata
+    from apps.datasource.models.datasource import CoreDatasource
+
+    datasource = session.get(CoreDatasource, datasource_id)
+    return read_metadata(
+        session, "datasource", datasource_id, _resource_input(session, datasource)
+    )

@@ -4,7 +4,11 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
-from metadata_test_support import metadata_model, read_table_vectors
+from metadata_test_support import (
+    metadata_model,
+    read_datasource_vectors,
+    read_table_vectors,
+)
 from sqlalchemy import JSON, Integer, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -100,7 +104,7 @@ def test_queued_metadata_task_observes_switch_at_actual_start(environment, monke
     )
     run_jobs(jobs)
     with Session(database) as session:
-        assert get_ds(session, 1).embedding == "[0.6, 0.8]"
+        assert read_datasource_vectors(session, 1) == [[0.6, 0.8]]
         assert read_table_vectors(session, 1) == [[0.6, 0.8]]
 
 
