@@ -261,6 +261,9 @@ class AiModelQuestion(BaseModel):
     sample_data: str = ""
     sqlbot_name: str = "SQLBot"
 
+    def complete_question_sys_prompt(self) -> str:
+        return get_sql_template()["complete_question"]
+
     def extract_keywords_sys_prompt(self) -> str:
         return get_sql_template().get("extract_keywords").format(lang=self.lang,
                                                                      sqlbot_name=self.sqlbot_name)

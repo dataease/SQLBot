@@ -19,6 +19,18 @@ from apps.chat.models.chat_model import Chat, ChatRecord
 table_environment = contracts.table_environment
 
 
+def is_completion_request(messages):
+    try:
+        transcript = json.loads(messages[-1].content)
+    except (ValueError, TypeError):
+        return False
+    return (
+        isinstance(transcript, dict)
+        and isinstance(transcript.get("history"), list)
+        and isinstance(transcript.get("current"), dict)
+    )
+
+
 def test_completed_intent_selects_source_then_preserves_original_sql_question(
     table_environment, monkeypatch
 ):
@@ -185,7 +197,7 @@ class EntryProvider:
 
     def stream(self, messages):
         context = "\n".join(str(m.content) for m in messages)
-        if messages[0].content.startswith("Complete the current data question"):
+        if is_completion_request(messages):
             stage = "completion"
             result = {"question": "sales totals last year excluding refunds"}
         elif "SELECT id FROM vector_beta" in " ".join(
@@ -591,7 +603,7 @@ def test_failed_completion_uses_original_for_source_selection(
     provider = EntryProvider(ds_id)
 
     def stream(messages):
-        if messages[0].content.startswith("Complete the current data question"):
+        if is_completion_request(messages):
             raise RuntimeError("controlled completion failure")
         if limit == 5 and "【Schema】" not in "\n".join(m.content for m in messages):
             assert calls == []
