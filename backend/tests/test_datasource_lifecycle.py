@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
+from metadata_test_support import metadata_model, read_table_vectors
 from sqlalchemy import JSON, Integer, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -14,6 +15,7 @@ from apps.ai_model.embedding import EmbeddingModelCache
 from apps.datasource.crud.datasource import get_ds, updateField
 from apps.datasource.crud.table import get_tables_by_ds_id
 from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
+from apps.datasource.models.metadata_embedding import MetadataEmbedding
 from common.core.config import settings
 from common.utils import embedding_threads
 
@@ -29,6 +31,7 @@ def environment(monkeypatch):
         table.c.id.type = Integer()
         if model is CoreDatasource:
             table.c.table_relation.type = JSON()
+    MetadataEmbedding.__table__.to_metadata(metadata)
     metadata.create_all(database)
     maker = scoped_session(sessionmaker(bind=database, class_=Session))
     jobs = []
@@ -89,7 +92,7 @@ def test_queued_metadata_task_observes_switch_at_actual_start(environment, monke
     monkeypatch.setattr(
         EmbeddingModelCache,
         "get_model",
-        lambda: SimpleNamespace(embed_query=lambda _: [0.6, 0.8]),
+        lambda: metadata_model([0.6, 0.8]),
     )
     assert (
         save(client, [{"pkey": "embedding.table_enabled", "pval": True}]).status_code
@@ -98,7 +101,7 @@ def test_queued_metadata_task_observes_switch_at_actual_start(environment, monke
     run_jobs(jobs)
     with Session(database) as session:
         assert get_ds(session, 1).embedding == "[0.6, 0.8]"
-        assert get_tables_by_ds_id(session, 1)[0].embedding == "[0.6, 0.8]"
+        assert read_table_vectors(session, 1) == [[0.6, 0.8]]
 
 
 @pytest.mark.parametrize("value", [0, 1, "yes", "0", None, [], 0.5])

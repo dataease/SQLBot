@@ -2,6 +2,7 @@
 
 from sqlalchemy import update
 
+from apps.datasource.embedding.metadata_chunks import invalidate_chunks
 from apps.datasource.models.datasource import CoreDatasource, CoreTable
 
 
@@ -17,3 +18,7 @@ def invalidate_metadata(session, ds_id: int, table_ids=()):
             .where(CoreTable.ds_id == ds_id, CoreTable.id.in_(table_ids))
             .values(embedding=None)
         )
+
+    invalidate_chunks(session, "datasource", [ds_id])
+    if table_ids:
+        invalidate_chunks(session, "table", table_ids)

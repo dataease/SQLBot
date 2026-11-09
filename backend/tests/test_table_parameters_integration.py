@@ -18,7 +18,10 @@ from test_embedding_parameters_integration import (  # noqa: F401
 from apps.ai_model.model_factory import LLMConfig
 from apps.chat.models.chat_model import Chat, ChatFinishStep, ChatQuestion, ChatRecord
 from apps.chat.task.llm import LLMService
+from apps.datasource.crud.table import _table_input
+from apps.datasource.embedding.metadata_chunks import fingerprint, publish_metadata
 from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
+from apps.datasource.models.metadata_embedding import MetadataEmbedding
 from apps.datasource.utils.utils import aes_encrypt
 from apps.terminology.models.terminology_model import Terminology
 from common.core.config import settings
@@ -27,7 +30,7 @@ from common.core.config import settings
 @pytest.fixture
 def table_environment(knowledge_environment, monkeypatch):  # noqa: F811
     database, client, _chat_id = knowledge_environment
-    for model in (CoreDatasource, CoreTable, CoreField, DsRules):
+    for model in (CoreDatasource, CoreTable, CoreField, DsRules, MetadataEmbedding):
         model.__table__.create(database)
     monkeypatch.setattr(settings, "TABLE_EMBEDDING_ENABLED", True)
     monkeypatch.setattr(settings, "TABLE_EMBEDDING_COUNT", 10)
@@ -73,6 +76,15 @@ def table_environment(knowledge_environment, monkeypatch):  # noqa: F811
                     field_type="INTEGER",
                     field_index=1,
                 )
+            )
+        session.flush()
+        for table in session.query(CoreTable).all():
+            publish_metadata(
+                session,
+                "table",
+                table.id,
+                _table_input(session, table),
+                [json.loads(table.embedding)],
             )
         session.commit()
     yield database, client, ds_id
@@ -230,8 +242,13 @@ def test_incomplete_table_vectors_preserve_all_eligible_context(
         table = (
             session.query(CoreTable).filter(CoreTable.table_name == "sales_alpha").one()
         )
-        table.embedding = bad_vector
-        session.add(table)
+        record = session.get(MetadataEmbedding, ("table", table.id))
+        try:
+            record.vectors = json.dumps([json.loads(bad_vector)])
+        except (TypeError, ValueError):
+            record.vectors = "broken"
+        record.vectors_hash = fingerprint(record.vectors)
+        session.add(record)
         session.commit()
     schema = run(task(database, ds_id))
     assert all(name in schema for name in ("sales_alpha", "vector_beta", "other_gamma"))
@@ -583,6 +600,10 @@ def test_column_permissions_also_bound_relation_context(table_environment):
             }
         ]
         session.add(ds)
+        session.flush()
+        publish_metadata(
+            session, "table", beta.id, _table_input(session, beta), [[1, 0]]
+        )
         session.commit()
     schema = run(task(database, ds_id, user_id=2))
     assert "vector_beta" in schema and "secret_join" not in schema

@@ -6,6 +6,7 @@ import time
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.datasource.embedding.metadata_chunks import table_scores
 from apps.datasource.embedding.utils import (
     batch_cosine_similarity,
     cosine_similarity,
@@ -228,16 +229,19 @@ def calc_keyword_score(
     return round(best_score * match_rate, 2)
 
 
-def _score_table_vectors(tables: list[dict], query_embedding) -> int:
+def _score_table_vectors(tables: list[dict], query_embedding, session=None) -> int:
     """Validate the complete candidate set before publishing any vector scores."""
-    embeddings = [parse_valid_embedding(table.get('embedding')) for table in tables]
-    similarities = batch_cosine_similarity(parse_valid_embedding(query_embedding), embeddings)
+    if session is not None:
+        similarities = table_scores(session, tables, query_embedding)
+    else:
+        embeddings = [parse_valid_embedding(table.get('embedding')) for table in tables]
+        similarities = batch_cosine_similarity(parse_valid_embedding(query_embedding), embeddings)
     for table, similarity in zip(tables, similarities, strict=True):
         table['cosine_similarity'] = float(similarity)
-    return len(embeddings)
+    return len(tables)
 
 
-def calc_table_embedding(tables: list[dict], question: str, session=None, oid: int = None,
+def calc_table_embedding(tables: list[dict], question: str, session=None, oid: int = None,  # noqa: ARG001 - retained for caller compatibility
                          keywords: str = None, *, config: EmbeddingConfig = None):
     """使用向量相似度和关键词匹配的融合评分计算表的相关性分数。
 
@@ -260,7 +264,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         config = load_embedding_config(session)
     if not keywords or not (config.keyword_enabled if config else settings.TABLE_EMBEDDING_KEYWORD_ENABLED):
         # 回退到纯向量匹配
-        return _calc_vector_only(tables, question, config=config)
+        return _calc_vector_only(tables, question, config=config, session=session)
 
     _list = []
     for table in tables:
@@ -288,7 +292,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         SQLBotLogUtil.info(f"[perf] embed_query 耗时 {t1 - t0:.3f}s")
 
         # A partial vector set must never exclude otherwise eligible tables.
-        vector_count = _score_table_vectors(_list, q_embedding)
+        vector_count = _score_table_vectors(_list, q_embedding, session=session)
 
         t2 = time.time()
         SQLBotLogUtil.info(f"[perf] 向量相似度计算耗时 {t2 - t1:.3f}s，共 {vector_count} 张表")
@@ -352,7 +356,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         return _select_tables(tables, question, apply_limit=False)
 
 
-def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingConfig = None):
+def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingConfig = None, session=None):
     """Rank by vector similarity while retaining explicitly mentioned tables."""
     _list = []
     for table in tables:
@@ -372,7 +376,7 @@ def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingCon
             start_time = time.time()
             q_embedding = model.embed_query(question)
 
-            vector_count = _score_table_vectors(_list, q_embedding)
+            vector_count = _score_table_vectors(_list, q_embedding, session=session)
 
             _list.sort(key=lambda x: x['cosine_similarity'], reverse=True)
             _list = _select_tables(_list, question, count=config.table_count if config else None)

@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from metadata_test_support import metadata_model, read_table_vectors
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlmodel import Session
 from test_embedding_parameters import save, values
@@ -11,6 +12,8 @@ from test_embedding_parameters_integration import (  # noqa: F401
     pytestmark,
 )
 from test_table_parameters_integration import table_environment  # noqa: F401
+
+from apps.datasource.embedding.metadata_chunks import invalidate_chunks
 
 
 @pytest.fixture
@@ -361,7 +364,7 @@ def test_in_flight_generation_never_publishes_superseded_metadata(
         return [0, 1] if "latest content" in value else [1, 0]
 
     monkeypatch.setattr(
-        EmbeddingModelCache, "get_model", lambda: SimpleNamespace(embed_query=embed)
+        EmbeddingModelCache, "get_model", lambda: metadata_model(embed=embed)
     )
     with Session(database) as session:
         table = next(t for t in get_tables_by_ds_id(session, ds_id) if t.checked)
@@ -370,6 +373,7 @@ def test_in_flight_generation_never_publishes_superseded_metadata(
         field_id = field.id
         if resource == "table":
             table.embedding = None
+            invalidate_chunks(session, "table", [table_id])
         else:
             session.get(CoreDatasource, ds_id).embedding = None
         session.commit()
@@ -422,7 +426,10 @@ def test_in_flight_generation_never_publishes_superseded_metadata(
             if resource == "table"
             else crud.get_ds(session, ds_id)
         )
-        assert result.embedding == "[0.0, 1.0]"
+        if resource == "table":
+            assert read_table_vectors(session, table_id) == [[0, 1]]
+        else:
+            assert result.embedding == "[0.0, 1.0]"
         if resource == "table":
             assert crud.get_ds(session, ds_id).embedding is None
     assert "latest content" in inputs[-1]
