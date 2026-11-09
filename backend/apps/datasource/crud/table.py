@@ -3,6 +3,12 @@ import json
 from sqlalchemy import select, update
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.datasource.embedding.metadata_chunks import (
+    encode_metadata,
+    invalidate_chunks,
+    publish_metadata,
+    read_metadata,
+)
 from apps.datasource.embedding.utils import parse_valid_embedding
 from common.core.deps import SessionDep
 from common.core.embedding_config import load_embedding_config
@@ -17,6 +23,9 @@ from .embedding_state import invalidate_metadata
 
 
 def delete_table_by_ds_id(session: SessionDep, id: int):
+    ids = [row[0] for row in session.query(CoreTable.id).filter(CoreTable.ds_id == id)]
+    invalidate_chunks(session, "datasource", [id])
+    invalidate_chunks(session, "table", ids)
     session.query(CoreTable).filter(CoreTable.ds_id == id).delete(
         synchronize_session=False
     )
@@ -95,7 +104,11 @@ def _generate(session_maker, resource, ids=None, config=None):
         query = select(resource.id, resource.embedding).order_by(resource.id)
         if ids is not None:
             query = query.where(resource.id.in_(ids))
-        pending = [key for key, vector in session.execute(query) if _missing(vector)]
+        pending = [
+            key
+            for key, vector in session.execute(query)
+            if resource is CoreTable or _missing(vector)
+        ]
         session.commit()
         for key in pending:
             for attempt in range(3):
@@ -103,13 +116,26 @@ def _generate(session_maker, resource, ids=None, config=None):
                     lock_embedding_resource(session, resource.__tablename__, key)
                     session.expire_all()
                     record = session.get(resource, key)
-                    if record is None or not _missing(record.embedding):
+                    if record is None or (
+                        resource is not CoreTable and not _missing(record.embedding)
+                    ):
                         session.commit()
                         break
                     original = _resource_input(session, record)
-                    vector = parse_valid_embedding(
-                        EmbeddingModelCache.get_model().embed_query(original)
-                    )
+                    if resource is CoreTable:
+                        try:
+                            read_metadata(session, "table", key, original)
+                            session.commit()
+                            break
+                        except (TypeError, ValueError):
+                            pass
+                        vector = encode_metadata(
+                            original, EmbeddingModelCache.get_model()
+                        )
+                    else:
+                        vector = parse_valid_embedding(
+                            EmbeddingModelCache.get_model().embed_query(original)
+                        )
                     # Writers invalidate parent first, then child, in the same
                     # transaction as metadata. Match that order for publication.
                     # The provider call above holds no business row locks.
@@ -138,7 +164,9 @@ def _generate(session_maker, resource, ids=None, config=None):
                         if attempt == 2:
                             failed.append(key)
                         continue
-                    if _missing(current.embedding):
+                    if resource is CoreTable:
+                        publish_metadata(session, "table", key, original, vector)
+                    elif _missing(current.embedding):
                         session.execute(
                             update(resource)
                             .where(resource.id == key)
