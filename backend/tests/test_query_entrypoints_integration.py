@@ -46,7 +46,14 @@ class RouteProvider:
             }
         else:
             result = {"question": "show vector_beta totals for last year"}
-        yield AIMessageChunk(content=json.dumps(result))
+        yield AIMessageChunk(
+            content=json.dumps(result),
+            usage_metadata={
+                "input_tokens": 20,
+                "output_tokens": 10,
+                "total_tokens": 30,
+            },
+        )
 
 
 @pytest.fixture
@@ -166,6 +173,24 @@ def test_http_question_and_regenerate_keep_original_and_complete_each_new_task(
     assert all(record.data for record in result)
     # Exactly one additional preparation call per question, including regeneration.
     assert len(provider.messages) == 9
+    for record in result:
+        response = client.get(f"/chat/record/{record.id}/log")
+        assert response.status_code == 200, response.text
+        history = response.json()
+        completion = [
+            step for step in history["steps"] if step["operate"] == "COMPLETE_QUESTION"
+        ]
+        assert len(completion) == 1
+        assert completion[0]["total_tokens"] == 30
+        assert not completion[0]["error"]
+        assert (
+            json.loads(completion[0]["message"][1]["content"])["current"]["question"]
+            == record.question
+        )
+        assert history["total_tokens"] == 90
+        usage = client.get(f"/chat/record/{record.id}/usage")
+        assert usage.status_code == 200, usage.text
+        assert usage.json()["total_tokens"] == 90
     sql_messages = [
         messages
         for messages in provider.messages

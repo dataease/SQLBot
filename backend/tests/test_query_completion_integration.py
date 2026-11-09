@@ -9,8 +9,10 @@ import pytest
 import test_embedding_parameters_integration as contracts
 import test_table_parameters_integration as table_contracts
 from langchain_core.messages import AIMessageChunk
-from sqlmodel import Session
+from sqlmodel import Session, select
 
+from apps.chat.curd.chat import get_chat_log_history
+from apps.chat.models.chat_model import ChatLog
 from apps.data_training.models.data_training_model import DataTraining
 
 knowledge_environment = contracts.knowledge_environment
@@ -19,6 +21,94 @@ pytestmark = pytest.mark.skipif(
     os.environ.get("SQLBOT_RUN_EMBEDDING_INTEGRATION") != "1",
     reason="explicit disposable PostgreSQL integration opt-in required",
 )
+
+
+@pytest.mark.parametrize("outcome", ["completed", "invalid_output", "model_error"])
+def test_completion_persists_model_process_and_counts_usage_once(
+    table_environment, outcome
+):
+    database, client, ds_id = table_environment
+    table_contracts.configure(
+        client, enabled=False, table_enabled=False, keyword_enabled=False
+    )
+    current = table_contracts.task(database, ds_id, question="last year instead")
+    current.chat_question.ai_modal_id = 123
+    response = (
+        json.dumps({"question": "sales for last year"})
+        if outcome == "completed"
+        else "partial output"
+    )
+
+    def stream(messages):
+        if "【Schema】" in "\n".join(m.content for m in messages):
+            yield AIMessageChunk(
+                content=json.dumps(
+                    {
+                        "success": True,
+                        "sql": "SELECT id FROM sales_alpha",
+                        "tables": ["sales_alpha"],
+                    }
+                )
+            )
+            return
+        yield AIMessageChunk(
+            content=response,
+            additional_kwargs={"reasoning_content": "controlled reasoning"},
+            usage_metadata={
+                "input_tokens": 25,
+                "output_tokens": 15,
+                "total_tokens": 40,
+            },
+        )
+        if outcome == "model_error":
+            raise RuntimeError("controlled stream failure")
+
+    current.llm = SimpleNamespace(stream=stream)
+    table_contracts.run(current)
+    # Reusing completion must neither call the provider nor write another log.
+    current.complete_question(None)
+    with Session(database) as session:
+        logs = session.exec(
+            select(ChatLog).where(ChatLog.pid == current.record.id)
+        ).all()
+        completion_logs = [
+            log for log in logs if log.operate.name == "COMPLETE_QUESTION"
+        ]
+        assert len(completion_logs) == 1
+        log = completion_logs[0]
+        assert log.ai_modal_id == 123
+        assert log.base_modal == current.chat_question.ai_modal_name
+        assert log.finish_time >= log.start_time
+        assert not log.local_operation
+        assert log.error == (outcome != "completed")
+        assert log.reasoning_content == "controlled reasoning"
+        assert log.token_usage["total_tokens"] == 40
+        assert (
+            json.loads(log.messages[1]["content"])["current"]["question"]
+            == "last year instead"
+        )
+        assert log.messages[-1]["content"] == response
+        assert log.messages[-1]["completion"] == {
+            "reason": outcome,
+            "question": "sales for last year"
+            if outcome == "completed"
+            else "last year instead",
+        }
+        history = get_chat_log_history(session, current.record.id, current.current_user)
+        step = next(
+            step for step in history.steps if step.operate == "COMPLETE_QUESTION"
+        )
+        assert step.total_tokens == 40
+        assert step.error == log.error
+        assert step.duration is not None
+        assert history.total_tokens == 40
+        assert (
+            get_chat_log_history(
+                session, current.record.id, current.current_user, True
+            ).total_tokens
+            == 40
+        )
+    assert current.chat_question.question == "last year instead"
 
 
 @pytest.mark.parametrize("fence", [None, "json", ""])
