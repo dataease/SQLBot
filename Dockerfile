@@ -99,7 +99,8 @@ COPY --from=sqlbot-builder /opt/sqlbot/app/ /opt/sqlbot/app/
 COPY --from=sqlbot-ui-builder /tmp/frontend/dist/ /opt/sqlbot/frontend/dist/
 COPY --from=ssr-builder /app/ /opt/sqlbot/g2-ssr/
 COPY g2-ssr/supervisord.conf /etc/supervisor/conf.d/g2-ssr.conf
-COPY --from=vector-model /opt/maxkb/app/model /opt/sqlbot/models
+# SQLBot runs this embedding model with PyTorch; omit its duplicate ONNX export.
+COPY --from=vector-model --exclude=embedding/shibing624_text2vec-base-chinese/onnx /opt/maxkb/app/model /opt/sqlbot/models
 
 WORKDIR ${SQLBOT_HOME}/app
 

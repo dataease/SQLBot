@@ -10,6 +10,8 @@
 4. 运行层：`Dockerfile-base` 的 `pg-base` 阶段使用固定摘要的 PostgreSQL 17 Bookworm pgvector 镜像，并统一更新继承的 Debian 系统包。后续阶段加入 Python、Node 和共享运行库。`Dockerfile-build-base` 使用同一个 PostgreSQL 底层，复用 Python、Node 和 uv，并单独安装与标准 Bookworm 图形库匹配的开发包。最终运行基础镜像 `sqlbot-python-pg` 还包含 Oracle 客户端及许可证校验器。图形库从 Bookworm 源码包构建，HarfBuzz 应用 CVE-2023-25193 上游补丁，GDK Pixbuf 禁用未使用的 TIFF 加载器。应用镜像复制前端、后端、g2-ssr、字体、向量模型和启动脚本，并使用 dmPython wheel 提供的达梦客户端库。
 5. 启动脚本依次准备 PostgreSQL、supervisor/g2-ssr、MCP 服务和主 FastAPI 服务。
 
+应用镜像保留默认中文向量模型的 PyTorch 权重和 tokenizer，复制模型时排除同一模型未使用的 ONNX 导出。修改模型打包内容时，应在断网容器中验证默认模型可以加载并生成向量。
+
 修改路径、端口、依赖或构建脚本时，必须核对最终运行目录仍是 `/opt/sqlbot` 布局，且数据、图片、日志和字体路径没有断开。
 
 ## 本地验证
