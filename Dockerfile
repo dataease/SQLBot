@@ -95,7 +95,9 @@ ENV POSTGRES_PASSWORD=Password123@pg
 # Copy necessary files from builder
 COPY start.sh /opt/sqlbot/app/start.sh
 COPY g2-ssr/*.ttf /usr/share/fonts/truetype/liberation/
-COPY --from=sqlbot-builder /opt/sqlbot/app/ /opt/sqlbot/app/
+COPY --from=sqlbot-builder \
+    --exclude=.venv/lib/python3.11/site-packages/torch/test \
+    /opt/sqlbot/app/ /opt/sqlbot/app/
 COPY --from=sqlbot-ui-builder /tmp/frontend/dist/ /opt/sqlbot/frontend/dist/
 COPY --from=ssr-builder /app/ /opt/sqlbot/g2-ssr/
 COPY g2-ssr/supervisord.conf /etc/supervisor/conf.d/g2-ssr.conf
