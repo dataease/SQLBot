@@ -7,7 +7,7 @@
 1. 前端构建：在 Node 22 Bookworm 镜像中对 `frontend/` 执行 `npm install` 和 `npm run build`，产物进入 `/opt/sqlbot/frontend/dist`。
 2. 后端构建：从运行基础镜像派生编译层，使用 uv 同时解析应用依赖和镜像专用安全约束，构建 PostgreSQL 和 SQL Server 驱动，使其链接运行层系统库。`uv.lock` 不入库，构建会重新解析依赖。
 3. 图表服务构建：复制 `g2-ssr/app.js`、`package.json` 和 `charts/`，从源码构建 canvas，使其使用运行层的 Debian 图形库。编译层和运行层使用相同的 Node 主版本和 Debian 发行版。
-4. 运行层：`Dockerfile-pg-base` 基于 PostgreSQL 17 Bookworm 安装系统安全更新和 pgvector。`Dockerfile-base` 在此基础上加入 Python、Node、Oracle 客户端及许可证校验器。图形库从 Bookworm 源码包构建，HarfBuzz 应用 CVE-2023-25193 上游补丁，GDK Pixbuf 禁用未使用的 TIFF 加载器。应用镜像复制前端、后端、g2-ssr、字体、向量模型和启动脚本，并使用 dmPython wheel 提供的达梦客户端库。
+4. 运行层：`Dockerfile-base` 的 `pg-base` 阶段基于 PostgreSQL 17 Bookworm 统一更新继承的 Debian 系统包并安装 pgvector。后续阶段只安装本层所需依赖，加入 Python、Node、Oracle 客户端及许可证校验器。图形库从 Bookworm 源码包构建，HarfBuzz 应用 CVE-2023-25193 上游补丁，GDK Pixbuf 禁用未使用的 TIFF 加载器。应用镜像复制前端、后端、g2-ssr、字体、向量模型和启动脚本，并使用 dmPython wheel 提供的达梦客户端库。
 5. 启动脚本依次准备 PostgreSQL、supervisor/g2-ssr、MCP 服务和主 FastAPI 服务。
 
 修改路径、端口、依赖或构建脚本时，必须核对最终运行目录仍是 `/opt/sqlbot` 布局，且数据、图片、日志和字体路径没有断开。
@@ -56,9 +56,9 @@ node --check g2-ssr/charts/<changed-file.js>
 
 规则：
 
-- `build-base-and-push` 通过 `docker-bake.hcl` 先构建 PostgreSQL 层，再产出 `sqlbot-python-pg` 基础镜像。PostgreSQL 中间镜像只在构建图中使用。
+- `build-base-and-push` 使用 `docker buildx build -f Dockerfile-base` 构建 `sqlbot-python-pg`。构建时刷新上游镜像，PostgreSQL 阶段随同一次构建完成。
 - 构建应用镜像时，通过 `SQLBOT_RUNTIME_IMAGE` 传入已验证的基础镜像标签或 digest。`build-and-push` 的 `runtimeBaseImage` 输入支持此覆盖。默认使用阿里云 `latest`。
-- 本地执行 `docker buildx bake -f docker-bake.hcl --load app` 可按顺序构建三层。单独验证基础镜像时，将目标改为 `base`。
+- 本地执行 `docker buildx build -f Dockerfile-base --load -t sqlbot-python-pg:local .` 构建基础镜像。构建应用镜像时，用 `--build-arg SQLBOT_RUNTIME_IMAGE` 传入当前构建器可访问的基础镜像标签或摘要。单独验证 PostgreSQL 阶段时使用 `--target pg-base`。漏洞复扫以最终应用镜像为准。
 - 这些工作流都是发布/分发流程，不要因为普通代码修改建议运行。
 - `latest` 只应在正式发布时启用。
 - arm64 和 amd64 的依赖、驱动和包名必须同时考虑。

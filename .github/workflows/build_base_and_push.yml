@@ -44,16 +44,19 @@ jobs:
           ref: ${{ github.ref_name }}
       - name: Prepare
         id: prepare
-        env:
-          DOCKER_IMAGE: ${{ secrets.ALIYUN_REGISTRY_HOST }}/dataease/sqlbot-python-pg
-          TAG_NAME: ${{ inputs.dockerImageTag }}
-          TAG_NAME_WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
         run: |
-          tags="$DOCKER_IMAGE:$TAG_NAME"
-          if [[ "$TAG_NAME_WITH_LATEST" == 'true' ]]; then
-            tags="$tags,$DOCKER_IMAGE:${TAG_NAME%%.*},$DOCKER_IMAGE:latest"
+          DOCKER_IMAGE=${{ secrets.ALIYUN_REGISTRY_HOST }}/dataease/sqlbot-python-pg
+          DOCKER_PLATFORMS=${{ github.event.inputs.architecture }}
+          TAG_NAME=${{ github.event.inputs.dockerImageTag }}
+          TAG_NAME_WITH_LATEST=${{ github.event.inputs.dockerImageTagWithLatest }}
+          if [[ ${TAG_NAME_WITH_LATEST} == 'true' ]]; then            
+            DOCKER_IMAGE_TAGS="--tag ${DOCKER_IMAGE}:${TAG_NAME} --tag ${DOCKER_IMAGE}:${TAG_NAME%%.*} --tag ${DOCKER_IMAGE}:latest"
+          else
+            DOCKER_IMAGE_TAGS="--tag ${DOCKER_IMAGE}:${TAG_NAME}"
           fi
-          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} --memory-swap -1 \
+            --build-arg DOCKER_IMAGE_TAG=${{ github.event.inputs.dockerImageTag }} --build-arg BUILD_AT=$(TZ=Asia/Shanghai date +'%Y-%m-%dT%H:%M') --build-arg GITHUB_COMMIT=`git rev-parse --short HEAD` --no-cache \
+            ${DOCKER_IMAGE_TAGS} .
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -65,12 +68,8 @@ jobs:
           username: ${{ secrets.ALIYUN_REGISTRY_USERNAME }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
       - name: Docker Buildx (build-and-push)
-        env:
-          SQLBOT_BASE_TAGS: ${{ steps.prepare.outputs.tags }}
-          SQLBOT_BASE_PLATFORMS: ${{ inputs.architecture }}
         run: |
-          docker buildx bake -f docker-bake.hcl --pull --no-cache --provenance=false --sbom=false \
-            --set 'base.output=type=image,push=true,oci-mediatypes=false' base
+          docker buildx build --pull -f Dockerfile-base --output "type=image,push=true,oci-mediatypes=false" --provenance=false --sbom=false ${{ steps.prepare.outputs.buildx_args }}
 
   build-and-push-to-dockerhub:
     if: ${{ contains(github.event.inputs.registry, 'dockerhub') }}
@@ -82,16 +81,19 @@ jobs:
           ref: ${{ github.ref_name }}
       - name: Prepare
         id: prepare
-        env:
-          DOCKER_IMAGE: dataease/sqlbot-python-pg
-          TAG_NAME: ${{ inputs.dockerImageTag }}
-          TAG_NAME_WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
         run: |
-          tags="$DOCKER_IMAGE:$TAG_NAME"
-          if [[ "$TAG_NAME_WITH_LATEST" == 'true' ]]; then
-            tags="$tags,$DOCKER_IMAGE:${TAG_NAME%%.*},$DOCKER_IMAGE:latest"
+          DOCKER_IMAGE=dataease/sqlbot-python-pg
+          DOCKER_PLATFORMS=${{ github.event.inputs.architecture }}
+          TAG_NAME=${{ github.event.inputs.dockerImageTag }}          
+          TAG_NAME_WITH_LATEST=${{ github.event.inputs.dockerImageTagWithLatest }}
+          if [[ ${TAG_NAME_WITH_LATEST} == 'true' ]]; then            
+            DOCKER_IMAGE_TAGS="--tag ${DOCKER_IMAGE}:${TAG_NAME} --tag ${DOCKER_IMAGE}:${TAG_NAME%%.*} --tag ${DOCKER_IMAGE}:latest"
+          else
+            DOCKER_IMAGE_TAGS="--tag ${DOCKER_IMAGE}:${TAG_NAME}"
           fi
-          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} --memory-swap -1 \
+            --build-arg DOCKER_IMAGE_TAG=${{ github.event.inputs.dockerImageTag }} --build-arg BUILD_AT=$(TZ=Asia/Shanghai date +'%Y-%m-%dT%H:%M') --build-arg GITHUB_COMMIT=`git rev-parse --short HEAD` --no-cache \
+            ${DOCKER_IMAGE_TAGS} .
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -102,9 +104,5 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Docker Buildx (build-and-push)
-        env:
-          SQLBOT_BASE_TAGS: ${{ steps.prepare.outputs.tags }}
-          SQLBOT_BASE_PLATFORMS: ${{ inputs.architecture }}
         run: |
-          docker buildx bake -f docker-bake.hcl --pull --no-cache --provenance=false --sbom=false \
-            --set 'base.output=type=image,push=true,oci-mediatypes=false' base
+          docker buildx build --pull -f Dockerfile-base --output "type=image,push=true,oci-mediatypes=false" --provenance=false --sbom=false ${{ steps.prepare.outputs.buildx_args }}
