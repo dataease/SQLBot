@@ -248,16 +248,12 @@ function install_docker_compose() {
               chmod +x /usr/bin/docker-compose
            else
               log_content "在线安装 docker-compose"
-              local arch compose_download
-              arch="$(sqlbot_docker_arch)" || exit 1
-              compose_download="$(mktemp)" || exit 1
-              if ! sqlbot_download_docker_compose "$arch" "$compose_download" ||
-                 ! install -m 0755 "$compose_download" /usr/local/bin/docker-compose; then
-                  rm -f "$compose_download"
+              curl -L https://resource.fit2cloud.com/docker/compose/releases/download/v5.7.0/docker-compose-$(uname -s | tr A-Z a-z)-$(uname -m) -o /usr/local/bin/docker-compose 2>&1 | tee -a ${CURRENT_DIR}/install.log
+              if [[ ! -f /usr/local/bin/docker-compose ]];then
                   log_content "docker-compose 下载失败，请稍候重试"
                   exit 1
               fi
-              rm -f "$compose_download"
+              chmod +x /usr/local/bin/docker-compose
               ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
            fi
        fi
@@ -316,7 +312,6 @@ function start_sqlbot() {
 }
 
 function main() {
-    source "${CURRENT_DIR}/docker-release.sh" || exit 1
     check_and_prepare_env_params
     set_run_base_path
     prepare_sqlbot_run_base

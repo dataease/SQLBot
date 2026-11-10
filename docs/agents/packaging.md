@@ -63,7 +63,6 @@ node --check g2-ssr/charts/<changed-file.js>
 - `latest` 只应在正式发布时启用。
 - arm64 和 amd64 的依赖、驱动和包名必须同时考虑。
 - 离线包会替换 `SQLBOT_TAG` 并生成 version 文件；不要在源码里提交生成后的 tag。
-- `installer/docker-release.sh` 统一离线包中的 Docker Engine 和 Compose 版本，按架构校验官方发布件。在线首次安装的 Engine 仍由宿主机软件源提供。若系统没有 Compose 插件，则从相同的官方发布件安装独立命令。已有 Docker 和 Compose 由宿主机维护。
 - xpack 工作流会 checkout 独立仓库；不要把本地 `sqlbot-xpack/` 目录当作它的输入。
 
 ## 发布顺序
