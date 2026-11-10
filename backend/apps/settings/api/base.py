@@ -1,4 +1,5 @@
 import os
+import unicodedata
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -21,6 +22,9 @@ async def download_excel(req: FileRequest):
     # 该文件名由导出接口生成，是单个文件名：带目录分量、盘符或控制字符的取值
     # 一律拒绝，不做静默改写；校验先于文件系统访问，避免用拒绝结果反推任意路径
     # 是否存在。
+    # 必须在 strip 或文件名清理前拒绝控制字符，避免将非法输入改写为合法文件名。
+    if any(unicodedata.category(char) == "Cc" for char in req.file):
+        raise HTTPException(400, "Only support _error.xlsx")
     raw_name = (req.file or "").strip()
     file_name = safe_upload_name(req.file)
     if not file_name or file_name != raw_name or not file_name.endswith("_error.xlsx"):
@@ -45,5 +49,5 @@ async def download_excel(req: FileRequest):
     return FileResponse(
         path=file_path,
         filename=file_name,
-        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
