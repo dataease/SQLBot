@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1
+ARG POSTGRES_IMAGE=postgres:17-bookworm
+FROM ${POSTGRES_IMAGE}
+
+# Retain the PostgreSQL 17 data directory and install pgvector from PGDG.
+RUN apt-get -o APT::Update::Error-Mode=any update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y --no-remove dist-upgrade \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-17-pgvector \
+    && rm -rf /var/lib/apt/lists/* \
+    && test "$PG_MAJOR" = 17 \
+    && test "$PGDATA" = /var/lib/postgresql/data \
+    && test -f "$(pg_config --sharedir)/extension/vector.control"

@@ -4,10 +4,10 @@
 
 运行镜像由多个阶段组成：
 
-1. 前端构建：`frontend/` 执行 `npm install` 和 `npm run build`，产物进入 `/opt/sqlbot/frontend/dist`。
-2. 后端构建：复制 `backend/`，使用 base 镜像中的 uv 安装依赖。以根 `Dockerfile` 为准：中间层包含 `uv sync --frozen` 尝试，最终层执行 `uv sync --extra cpu --default-index https://pypi.org/simple`，使用官方 PyPI 作为默认源，不是全程冻结安装。`uv.lock` 不入库，不能据此承诺全新 checkout 的依赖可复现；`|| echo` 的提示也不能证明失败只因缺少 lock，需检查实际构建日志。
-3. 图表服务构建：复制 `g2-ssr/app.js`、`package.json` 和 `charts/`，安装 Node 依赖和 canvas 相关库。
-4. 运行层：基于含 PostgreSQL / Python 的 base 镜像，复制前端、后端、g2-ssr、字体、向量模型和启动脚本。
+1. 前端构建：在 Node 22 Bookworm 镜像中对 `frontend/` 执行 `npm install` 和 `npm run build`，产物进入 `/opt/sqlbot/frontend/dist`。
+2. 后端构建：从运行基础镜像派生编译层，使用 uv 同时解析应用依赖和镜像专用安全约束，构建 PostgreSQL 和 SQL Server 驱动，使其链接运行层系统库。`uv.lock` 不入库，构建会重新解析依赖。
+3. 图表服务构建：复制 `g2-ssr/app.js`、`package.json` 和 `charts/`，从源码构建 canvas，使其使用运行层的 Debian 图形库。编译层和运行层使用相同的 Node 主版本和 Debian 发行版。
+4. 运行层：`Dockerfile-pg-base` 基于 PostgreSQL 17 Bookworm 安装系统安全更新和 pgvector。`Dockerfile-base` 在此基础上加入 Python、Node、Oracle 客户端及许可证校验器。图形库从 Bookworm 源码包构建，HarfBuzz 应用 CVE-2023-25193 上游补丁，GDK Pixbuf 禁用未使用的 TIFF 加载器。应用镜像复制前端、后端、g2-ssr、字体、向量模型和启动脚本，并使用 dmPython wheel 提供的达梦客户端库。
 5. 启动脚本依次准备 PostgreSQL、supervisor/g2-ssr、MCP 服务和主 FastAPI 服务。
 
 修改路径、端口、依赖或构建脚本时，必须核对最终运行目录仍是 `/opt/sqlbot` 布局，且数据、图片、日志和字体路径没有断开。
@@ -56,11 +56,14 @@ node --check g2-ssr/charts/<changed-file.js>
 
 规则：
 
-- 根 `Dockerfile` 的构建阶段还依赖 `registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest`，该镜像不在本仓库工作流中构建（外部维护）；`build-base-and-push` 只产出 `sqlbot-python-pg` base 镜像。
+- `build-base-and-push` 通过 `docker-bake.hcl` 先构建 PostgreSQL 层，再产出 `sqlbot-python-pg` 基础镜像。PostgreSQL 中间镜像只在构建图中使用。
+- 构建应用镜像时，通过 `SQLBOT_RUNTIME_IMAGE` 传入已验证的基础镜像标签或 digest。`build-and-push` 的 `runtimeBaseImage` 输入支持此覆盖。默认使用阿里云 `latest`。
+- 本地执行 `docker buildx bake -f docker-bake.hcl --load app` 可按顺序构建三层。单独验证基础镜像时，将目标改为 `base`。
 - 这些工作流都是发布/分发流程，不要因为普通代码修改建议运行。
 - `latest` 只应在正式发布时启用。
 - arm64 和 amd64 的依赖、驱动和包名必须同时考虑。
 - 离线包会替换 `SQLBOT_TAG` 并生成 version 文件；不要在源码里提交生成后的 tag。
+- `installer/docker-release.sh` 统一离线包中的 Docker Engine 和 Compose 版本，按架构校验官方发布件。在线首次安装的 Engine 仍由宿主机软件源提供。若系统没有 Compose 插件，则从相同的官方发布件安装独立命令。已有 Docker 和 Compose 由宿主机维护。
 - xpack 工作流会 checkout 独立仓库；不要把本地 `sqlbot-xpack/` 目录当作它的输入。
 
 ## 发布顺序

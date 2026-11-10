@@ -41,7 +41,6 @@ jobs:
       - name: Prepare package files
         env:
           TAG_NAME: ${{ github.event.inputs.dockerImageTag }}
-          DOCKER_DOWNLOAD_SERVER: ${{ secrets.DOCKER_DOWNLOAD_SERVER }}
           ALIYUN_REGISTRY_HOST: ${{ secrets.ALIYUN_REGISTRY_HOST }}
           ALIYUN_OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
           ALIYUN_OSS_BUCKET_ENDPOINT: ${{ secrets.ALIYUN_OSS_BUCKET_ENDPOINT }}
@@ -85,17 +84,8 @@ jobs:
             docker save $image_path  | gzip > images/$image_name.tar.gz
           done
           
-          DOCKER_VERSION="docker-27.2.0"
-          DOCKER_COMPOSE_VERSION="v2.29.2"
-
-          wget ${DOCKER_DOWNLOAD_SERVER}/download/${ARCH}/${DOCKER_VERSION}.tgz
-          wget ${DOCKER_DOWNLOAD_SERVER}/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-${ARCH} && mv docker-compose-linux-${ARCH} docker-compose && chmod +x docker-compose
-          tar -zxvf ${DOCKER_VERSION}.tgz
-          rm -rf ${DOCKER_VERSION}.tgz
-          mv docker bin && mkdir docker && mv bin docker/
-          mv docker-compose docker/bin
-          wget https://resource-fit2cloud-com.oss-cn-hangzhou.aliyuncs.com/docker/docker.service
-          mkdir docker/service && mv docker.service docker/service/
+          source ./docker-release.sh
+          sqlbot_prepare_docker_bundle "$ARCH"
 
           if [[ $ARCH == 'x86_64' ]]; then
             #打包离线包
