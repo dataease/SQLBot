@@ -13,6 +13,7 @@ layer or xpack module is involved.
 
 import os
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 from fastapi import FastAPI
@@ -66,6 +67,31 @@ def test_report_in_the_upload_directory_is_served(api):
     assert response.status_code == 200, response.text
     assert response.content == REPORT
     assert "orders_error.xlsx" in response.headers.get("content-disposition", "")
+
+
+@pytest.mark.parametrize(
+    "control", ["\x00", "\x01", "\t", "\n", "\r", "\x1f", "\x7f", "\x85", "\x9f"]
+)
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "{control}{name}_error.xlsx",
+        "{name}{control}_error.xlsx",
+        "{name}_error.xlsx{control}",
+    ],
+)
+def test_control_characters_are_rejected_before_filesystem_access(
+    api, control, pattern
+):
+    # Patch only the route's os reference, preserving TestClient's filesystem use.
+    path = Mock(wraps=os.path)
+    api.monkeypatch.setattr(settings_api, "os", SimpleNamespace(path=path))
+    for name in ("orders", "missing"):
+        response = request(api, pattern.format(control=control, name=name))
+        assert response.status_code == 400, response.text
+        assert response.json() == {"detail": "Only support _error.xlsx"}
+    path.realpath.assert_not_called()
+    path.isfile.assert_not_called()
 
 
 def test_name_with_a_directory_part_is_not_resolved_as_a_path(api):
