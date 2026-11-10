@@ -1,59 +1,116 @@
-FROM python:3.11-slim-bookworm AS python-builder
-FROM registry.cn-qingdao.aliyuncs.com/dataease/postgres:17.6
+# syntax=docker/dockerfile:1
+ARG PYTHON_IMAGE=python:3.11-slim-bookworm
+ARG NODE_IMAGE=node:22-bookworm-slim
 
-# python environment
-COPY --from=python-builder /usr/local /usr/local
+ARG PGVECTOR_IMAGE=pgvector/pgvector:pg17-bookworm@sha256:7d0a41464797aeb9862dfdc0bbf1526b82cfd324cdd8036df19e3545f4a9ccb8
 
-RUN python --version && pip --version
+FROM ${PGVECTOR_IMAGE} AS pg-base
+# Refresh inherited Debian packages and keep the bundled pgvector extension.
+RUN apt-get -o APT::Update::Error-Mode=any update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y --no-remove dist-upgrade \
+    && rm -rf /var/lib/apt/lists/* \
+    && test "$PG_MAJOR" = 17 \
+    && test "$PGDATA" = /var/lib/postgresql/data \
+    && test -f "$(pg_config --sharedir)/extension/vector.control" \
+    && test -f "$(pg_config --pkglibdir)/vector.so"
 
-# Install uv tool
+FROM ${PYTHON_IMAGE} AS python-builder
+ARG PIP_VERSION=26.3
+# Refresh the installed pip and the wheel used by ensurepip to seed new venvs.
+RUN set -eu; \
+    wheels="$(mktemp -d)"; \
+    python -m pip --isolated download --no-cache-dir --only-binary=:all: --no-deps \
+        --index-url https://pypi.org/simple --dest "$wheels" "pip==$PIP_VERSION"; \
+    python -m pip --isolated install --no-index --no-cache-dir "$wheels"/pip-*.whl; \
+    ensurepip_dir="$(python -c 'from pathlib import Path; import ensurepip; print(Path(ensurepip.__file__).parent)')"; \
+    rm "$ensurepip_dir"/_bundled/pip-*.whl; \
+    mv "$wheels"/pip-*.whl "$ensurepip_dir/_bundled/"; \
+    sed -i "s/^_PIP_VERSION = .*/_PIP_VERSION = \"$PIP_VERSION\"/" "$ensurepip_dir/__init__.py"; \
+    test "$(python -m ensurepip --version)" = "pip $PIP_VERSION"; \
+    rmdir "$wheels"
+
+FROM ${NODE_IMAGE} AS node-runtime
+
+FROM pg-base AS graphics-builder
+# Install the trust store before enabling HTTPS in this disposable stage.
+RUN apt-get -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+        build-essential ca-certificates curl dpkg-dev
+
+# Build against the signed Bookworm source index.
+RUN sed -i 's|http://deb.debian.org/|https://deb.debian.org/|g' /etc/apt/sources.list.d/debian.sources \
+    && sed 's/^Types: deb$/Types: deb-src/' /etc/apt/sources.list.d/debian.sources \
+        > /etc/apt/sources.list.d/sqlbot-src.sources \
+    && apt-get -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 build-dep -y --no-install-recommends harfbuzz gdk-pixbuf
+
+COPY docker/build-graphics.sh /tmp/build-graphics.sh
+RUN sh /tmp/build-graphics.sh
+
+FROM pg-base AS runtime-tools
+
+COPY --from=python-builder /usr/local/ /usr/local/
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 COPY --from=ghcr.io/astral-sh/uv:0.7.8 /uv /uvx /bin/
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wait-for-it \
-    build-essential \
-    curl \
-    gnupg \
-    gcc \
-    g++ \
-    libcairo2-dev \
-    libpango1.0-dev \
-    libjpeg-dev \
-    libgif-dev \
-    librsvg2-dev \
-    supervisor \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && curl -qL https://www.npmjs.com/install.sh | sh - \
-    && apt-get install -y nodejs \
-    && curl -L --connect-timeout 60 -m 1800 https://fit2cloud-support.oss-cn-beijing.aliyuncs.com/xpack-license/get-validator-linux | sh \
+FROM runtime-tools AS runtime-deps
+
+# Add the libraries needed by Python, chart rendering and database clients.
+RUN --mount=type=bind,from=graphics-builder,source=/out,target=/tmp/graphics \
+    --mount=type=bind,from=graphics-builder,source=/etc/ssl/certs/ca-certificates.crt,target=/tmp/debian-ca.crt \
+    sed -i 's|http://deb.debian.org/|https://deb.debian.org/|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::https::CaInfo=/tmp/debian-ca.crt -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::https::CaInfo=/tmp/debian-ca.crt -o Acquire::Retries=3 install -y --no-install-recommends \
+        ca-certificates curl wait-for-it supervisor tzdata unzip \
+        libaio1 libbz2-1.0 libcairo2 libexpat1 libffi8 libfreetype6 \
+        libgdbm6 libgdbm-compat4 libgif7 libjpeg62-turbo liblzma5 \
+        libncursesw6 libpango-1.0-0 libpangocairo-1.0-0 libpixman-1-0 \
+        libpq5 libreadline8 librsvg2-2 libsqlite3-0 libssl3 libuuid1 zlib1g \
+        /tmp/graphics/*.deb \
     && rm -rf /var/lib/apt/lists/* \
-    && chmod g+xr /usr/bin/ld.so \
-    && chmod g+x /usr/local/bin/python*
+    && python -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl' \
+    && node --version \
+    && test "$PG_MAJOR" = 17 \
+    && test "$PGDATA" = /var/lib/postgresql/data \
+    && ! dpkg-query -W libtiff6 2>/dev/null \
+    && test -z "$(find /usr/lib -name 'libpixbufloader-tiff.so' -o -name 'libtiff.so*')" \
+    && test -f "$(pg_config --sharedir)/extension/vector.control"
 
-# Download Oracle instant client
-ENV DB_CLIENT=/opt/sqlbot/db_client
-ENV LD_LIBRARY_PATH="${DB_CLIENT}/oracle_instant_client:${LD_LIBRARY_PATH}"
+FROM runtime-deps AS runtime-base
+
 ARG TARGETARCH
-RUN apt-get update && \
-    apt-get install -y unzip libaio1 && \
-    mkdir -p ${DB_CLIENT} && \
-    if [ "$TARGETARCH" = "amd64" ]; then \
-      echo "Building for x86_64"; \
-      curl -L -o app.zip https://download.oracle.com/otn_software/linux/instantclient/2326000/instantclient-basic-linux.x64-23.26.0.0.0.zip; \
-    elif [ "$TARGETARCH" = "arm64" ]; then \
-      echo "Building for ARM64"; \
-      curl -L -o app.zip https://download.oracle.com/otn_software/linux/instantclient/2390000/instantclient-basic-linux.arm64-23.9.0.25.07.zip; \
-    fi && \
-    unzip app.zip -d ${DB_CLIENT} && \
-    rm app.zip && \
-    rm -rf /var/lib/apt/lists/* && \
-    mv ${DB_CLIENT}/instantclient* ${DB_CLIENT}/oracle_instant_client
-
-# Download DM library
+ENV DB_CLIENT=/opt/sqlbot/db_client
 ENV DM_HOME=/opt/dmdbms
-ENV LD_LIBRARY_PATH=$DM_HOME/bin:$LD_LIBRARY_PATH
-RUN curl -L -o dm.zip https://resource-fit2cloud-com.oss-cn-hangzhou.aliyuncs.com/sqlbot/dm/$TARGETARCH.zip && \
-    mkdir -p $DM_HOME/bin && \
-    unzip dm.zip -d $DM_HOME/bin && \
-    chmod -R +x $DM_HOME/bin && \
-    rm -rf dm.zip
+ENV LD_LIBRARY_PATH=/opt/dmdbms/bin:/opt/sqlbot/db_client/oracle_instant_client
+
+# Install the existing Oracle client and license validator for the target CPU.
+# The application image supplies the DM client through its dmPython wheel.
+RUN --mount=type=cache,id=sqlbot-oracle-downloads,target=/var/cache/sqlbot-oracle,sharing=locked set -eu; \
+    case "$TARGETARCH" in \
+      amd64) oracle_path=2326000/instantclient-basic-linux.x64-23.26.0.0.0.zip ;; \
+      arm64) oracle_path=2390000/instantclient-basic-linux.arm64-23.9.0.25.07.zip ;; \
+      *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac; \
+    mkdir -p "$DB_CLIENT" "$DM_HOME/bin"; \
+    archive="/var/cache/sqlbot-oracle/${oracle_path##*/}"; \
+    oracle_url="https://download.oracle.com/otn_software/linux/instantclient/$oracle_path"; \
+    if ! unzip -tq "$archive" >/dev/null 2>&1; then \
+      for attempt in 1 2 3 4; do \
+        if curl -fsSL --connect-timeout 15 --max-time 600 -C - -o "$archive" "$oracle_url"; then \
+          if unzip -tq "$archive" >/dev/null 2>&1; then break; fi; \
+          rm -f "$archive"; \
+        fi; \
+        if [ "$attempt" = 4 ]; then echo 'Oracle Instant Client download did not complete.' >&2; exit 1; fi; \
+      done; \
+    fi; \
+    unzip -q "$archive" -d "$DB_CLIENT"; \
+    mv "$DB_CLIENT"/instantclient_* "$DB_CLIENT/oracle_instant_client"; \
+    validator="/usr/local/bin/validator_linux_$TARGETARCH"; \
+    curl -fsSL --retry 3 --connect-timeout 60 --max-time 1800 \
+        -o "$validator" "https://fit2cloud-support.oss-cn-beijing.aliyuncs.com/xpack-license/validator_linux_$TARGETARCH"; \
+    chmod 0755 "$validator"; \
+    ln -s "$validator" /usr/local/bin/validator_linux; \
+    ln -s "$validator" /usr/local/bin/validator; \
+    ln -s "$validator" /usr/bin/validator; \
+    chmod g+xr /usr/bin/ld.so; \
+    chmod g+x /usr/local/bin/python*

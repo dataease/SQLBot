@@ -14,6 +14,14 @@ on:
         default: false
         required: true
         type: boolean
+      runtimeBaseImage:
+        description: 'SQLBot runtime base image (optional tag or digest override)'
+        required: false
+        type: string
+      builderBaseImage:
+        description: 'SQLBot build base image paired with the runtime base (optional tag or digest)'
+        required: false
+        type: string
       architecture:
         description: 'Architecture'
         required: true
@@ -80,8 +88,11 @@ jobs:
           username: ${{ secrets.ALIYUN_REGISTRY_USERNAME }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
       - name: Docker Buildx (build-and-push)
+        env:
+          SQLBOT_RUNTIME_IMAGE: ${{ inputs.runtimeBaseImage || 'registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-python-pg:latest' }}
+          SQLBOT_BUILD_IMAGE: ${{ inputs.builderBaseImage || 'registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-build-base:latest' }}
         run: |
-          docker buildx build --provenance=false --sbom=false --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
+          docker buildx build --build-arg SQLBOT_RUNTIME_IMAGE --build-arg SQLBOT_BUILD_IMAGE --provenance=false --sbom=false --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
 
   build-and-push-to-dockerhub:
     if: ${{ contains(github.event.inputs.registry, 'dockerhub') }}
@@ -128,5 +139,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Docker Buildx (build-and-push)
+        env:
+          SQLBOT_RUNTIME_IMAGE: ${{ inputs.runtimeBaseImage || 'docker.io/dataease/sqlbot-python-pg:latest' }}
+          SQLBOT_BUILD_IMAGE: ${{ inputs.builderBaseImage || 'docker.io/dataease/sqlbot-build-base:latest' }}
         run: |
-          docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
+          docker buildx build --build-arg SQLBOT_RUNTIME_IMAGE --build-arg SQLBOT_BUILD_IMAGE --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}

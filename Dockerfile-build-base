@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1
+ARG NODE_IMAGE=node:22-bookworm-slim
+ARG SQLBOT_RUNTIME_TOOLS_IMAGE=sqlbot-runtime-tools
+
+FROM ${NODE_IMAGE} AS node-tools
+FROM ${SQLBOT_RUNTIME_TOOLS_IMAGE} AS runtime-tools
+FROM pg-base
+
+# Use the same interpreters and PGDG packages as runtime. Bookworm development
+# packages require the stock graphics libraries, which stay in this builder.
+COPY --from=runtime-tools /usr/local/ /usr/local/
+COPY --from=runtime-tools /bin/uv /bin/uvx /bin/
+COPY --from=node-tools /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && npm --version
+
+# Install the toolchain for the Python drivers and native chart modules once.
+RUN apt-get -o APT::Update::Error-Mode=any update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        build-essential pkg-config libpq-dev libssl-dev libkrb5-dev \
+        ca-certificates curl libbz2-1.0 libffi8 libgdbm6 libgdbm-compat4 \
+        liblzma5 libncursesw6 libreadline8 libsqlite3-0 \
+        libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev \
+        libpixman-1-dev libfreetype6-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl'
+
+# Match the FreeTDS release used by pymssql 2.4.6 wheels and link it to
+# the runtime's maintained OpenSSL and Kerberos libraries.
+RUN set -eu; \
+    curl -fsSL --retry 3 https://www.freetds.org/files/stable/freetds-1.5.19.tar.gz -o /tmp/freetds.tar.gz; \
+    echo 'ff70d0c8ae8dd23e7b1314274d6e9d30b479998415760b3fa656754b737c2bd6  /tmp/freetds.tar.gz' | sha256sum -c -; \
+    mkdir /tmp/freetds; \
+    tar -xzf /tmp/freetds.tar.gz --strip-components=1 -C /tmp/freetds; \
+    cd /tmp/freetds; \
+    ./configure --prefix=/usr/local --sysconfdir=/etc/freetds --enable-msdblib \
+        --with-tdsver=auto --with-openssl=yes --with-gnutls=no --enable-krb5 \
+        --disable-static --disable-odbc --disable-apps --disable-server --disable-pool; \
+    make -j "$(nproc)"; \
+    make install; \
+    install -D -m 0644 COPYING_LIB.txt /usr/local/share/doc/freetds/COPYING_LIB.txt; \
+    ldconfig; \
+    cd /; \
+    rm -rf /tmp/freetds /tmp/freetds.tar.gz
+ENV LINK_FREETDS_STATICALLY=NO \
+    PYMSSQL_FREETDS=/usr/local
