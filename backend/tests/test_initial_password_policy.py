@@ -14,6 +14,9 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import HTTPException
+from starlette.concurrency import run_in_threadpool
+
+from common.core.passwords import hash_password, verify_password
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -55,8 +58,9 @@ def context():
         "get_group_args": args,
         "HTTPException": HTTPException,
         "get_db_user": Mock(return_value=user),
-        "md5pwd": md5,
-        "verify_md5pwd": lambda value, hashed: md5(value) == hashed,
+        "get_password_hash": hash_password,
+        "verify_password": verify_password,
+        "run_in_threadpool": run_in_threadpool,
         "default_pwd": lambda: "InitialPassword42!",
         "settings": SimpleNamespace(DEFAULT_PWD="InitialPassword42!"),
     }
@@ -115,14 +119,16 @@ def test_disabled_off_allows_initial_password(context, value):
     user, session, args, _, _ = context
     args.return_value = [SimpleNamespace(pkey="login.initial_pwd_disabled", pval=value)]
     update(context)
-    assert user.password == md5("InitialPassword42!")
+    assert user.password.startswith("$argon2id$")
+    assert verify_password("InitialPassword42!", user.password)
     session.add.assert_called_once_with(user)
 
 
 def test_enabled_allows_other_password(context):
     user, session, _, _, _ = context
     update(context, new="DifferentPassword42!")
-    assert user.password == md5("DifferentPassword42!")
+    assert user.password.startswith("$argon2id$")
+    assert verify_password("DifferentPassword42!", user.password)
     session.add.assert_called_once_with(user)
 
 

@@ -100,3 +100,18 @@ uv run ruff format --check <changed-file.py...>
 - 没有为了通过测试削弱安全约束；
 - 默认测试不隐式访问外部服务；集成验证的环境、选择方式和限制已说明，提交中不含密钥；
 - 本次暂存和提交的 diff 只包含任务相关变更；用户原有无关改动保留原样。
+
+## 本地密码升级回归
+
+`tests/test_local_password_hashes.py` 默认在临时 SQLite 中运行真实 SQLModel、路由、事务与认证/权限中间件。覆盖历史 MD5、包装格式、直接 Argon2id、初始密码策略、创建/Excel 导入/重置/改密、两种 MCP 密码入口与已有 token、嵌入/普通及高级助手认证、摘要响应隔离、并发重置保护和迁移中断重跑。审计落盘为隔离边界；多数用例替换传输解密，另有真实 wheel RSA 加解密用例，密钥只生成在测试数据库中。
+
+显式 PostgreSQL 验证使用已授权的开发数据库，每个用例创建并清理独立随机 schema，不读取既有用户记录：
+
+```bash
+cd backend
+uv run --no-sync pytest -q tests/test_local_password_hashes.py tests/test_initial_password_policy.py tests/test_embedded_auth_bypass_fix.py
+# 在进程环境中安全提供 SQLBOT_TEST_DATABASE_URL，不把凭据写入命令或日志。
+SQLBOT_PASSWORD_TEST_PG=1 uv run --no-sync pytest -q tests/test_local_password_hashes.py
+```
+
+迁移用例分别执行历史 `001` 初始化与 `075`、以及 `075` 的重跑/中断恢复；显式 PostgreSQL 模式另从空 schema 执行全链升级、一级降级和重新升级。完整迁移测试的 `search_path` 只能包含当前测试 schema，禁止添加 `public`；共享扩展类型使用显式类型限定名。执行前检查实际连接的 schema/search_path，防止 Alembic 从共享 schema 读取版本表并更新业务表。现有 `tests/browser/password.config.mjs` 为真实改密组件的隔离浏览器回归，拦截 HTTP 响应，不等同于完整部署的 UI 验收。嵌入用例验证服务端签名/身份链，不模拟宿主浏览器 SDK 握手。交付必须区分这些层级。
