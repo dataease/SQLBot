@@ -1026,6 +1026,7 @@
     "tencent_cloud": "텐센트 클라우드",
     "volcano_engine": "볼케이노 엔진",
     "minimax": "MiniMax",
+    "atlascloud": "Atlas Cloud",
     "generic_openai": "범용 OpenAI"
   },
   "modelType": {

@@ -1026,6 +1026,7 @@
     "tencent_cloud": "Tencent Cloud",
     "volcano_engine": "Volcano Engine",
     "minimax": "MiniMax",
+    "atlascloud": "Atlas Cloud",
     "generic_openai": "OpenAI แบบทั่วไป"
   },
   "modelType": {
