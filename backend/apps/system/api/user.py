@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import Optional
+from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, File, HTTPException, Path, Query, UploadFile
 from sqlmodel import SQLModel, case, or_, select, delete as sqlmodel_delete
 from apps.system.crud.user import check_account_exists, check_email_exists, check_email_format, check_pwd_format, get_db_user, single_delete, user_ws_options
@@ -15,7 +16,7 @@ from common.audit.schemas.logger_decorator import LogConfig, system_log
 from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
 from common.core.schemas import PaginatedResponse, PaginationParams
-from common.core.security import default_md5_pwd, md5pwd, verify_md5pwd
+from common.core.security import default_password_hash, get_password_hash, verify_password
 from common.core.sqlbot_cache import clear_cache
 from common.core.config import settings
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
@@ -208,7 +209,7 @@ async def pager(
         user_id = item['id']
         merged[user_id].append(ws_oid)
         if user_id not in extra_attrs:
-            extra_attrs[user_id] = {k: v for k, v in item.items() if k != "ws_oid"}
+            extra_attrs[user_id] = {k: v for k, v in item.items() if k not in {"ws_oid", "password"}}
 
     # 组合结果
     result = [
@@ -280,6 +281,7 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
         raise Exception(trans('i18n_format_invalid', key = f"{trans('i18n_user.email')} [{creator.email}]"))
     #data = creator.model_dump(exclude_unset=True)
     data = creator.model_dump()
+    data["password"] = await run_in_threadpool(default_password_hash)
     user_model = UserModel.model_validate(data)
     #user_model.create_time = get_timestamp()
     user_model.language = "zh-CN"
@@ -297,7 +299,7 @@ async def create(session: SessionDep, creator: UserCreator, trans: Trans):
         session.add_all(db_model_list)
         user_model.oid = creator.oid_list[0]   
     session.add(user_model)
-    return user_model
+    return user_model.model_dump(exclude={"password"})
 
     
 @router.put("", summary=f"{PLACEHOLDER_PREFIX}user_update_api", description=f"{PLACEHOLDER_PREFIX}user_update_api")
@@ -386,7 +388,7 @@ async def pwdReset(session: SessionDep, current_user: CurrentUser, trans: Trans,
     if not current_user.isAdmin:
         raise Exception(trans('i18n_permission.no_permission', url = " patch[/user/pwd/id],", msg = trans('i18n_permission.only_admin')))
     db_user: UserModel = get_db_user(session=session, user_id=id)
-    db_user.password = default_md5_pwd()
+    db_user.password = await run_in_threadpool(default_password_hash)
     session.add(db_user)
 
 @router.put("/pwd", summary=f"{PLACEHOLDER_PREFIX}update_pwd", description=f"{PLACEHOLDER_PREFIX}update_pwd")
@@ -397,13 +399,13 @@ async def pwdUpdate(session: SessionDep, current_user: CurrentUser, trans: Trans
     if not check_pwd_format(new_pwd):
         raise Exception(trans('i18n_format_invalid', key = trans('i18n_user.password')))
     db_user: UserModel = get_db_user(session=session, user_id=current_user.id)
-    if not verify_md5pwd(editor.pwd, db_user.password):
+    if not await run_in_threadpool(verify_password, editor.pwd, db_user.password):
         raise Exception(trans('i18n_error', key = trans('i18n_user.password')))
     if await initial_pwd_disabled(session) and new_pwd == settings.DEFAULT_PWD:
         raise HTTPException(status_code=400, detail=trans('i18n_login.new_pwd_is_initial'))
-    db_user.password = md5pwd(new_pwd)
+    db_user.password = await run_in_threadpool(get_password_hash, new_pwd)
     session.add(db_user)
-    return db_user
+    return {"id": db_user.id}
 
     
 @router.patch("/status", summary=f"{PLACEHOLDER_PREFIX}update_status", description=f"{PLACEHOLDER_PREFIX}update_status")

@@ -1,12 +1,13 @@
 from typing import Annotated
+from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from apps.system.schemas.logout_schema import LogoutSchema
 from apps.system.schemas.system_schema import BaseUserDTO, LoginPwdEditor
 from common.core.deps import SessionDep, Trans
 from common.utils.crypto import sqlbot_decrypt
-from ..crud.user import authenticate, check_pwd_format, clean_user_cache, get_db_user
-from common.core.security import create_access_token, default_pwd, md5pwd, verify_md5pwd
+from ..crud.user import authenticate, upgrade_password, check_pwd_format, clean_user_cache, get_db_user
+from common.core.security import create_access_token, default_pwd, get_password_hash, verify_password
 from datetime import timedelta
 from common.core.config import settings
 from common.core.schemas import Token
@@ -32,7 +33,7 @@ async def local_login(
 ) -> Token:
     origin_account = await sqlbot_decrypt(form_data.username)
     origin_pwd = await sqlbot_decrypt(form_data.password)
-    user: BaseUserDTO = authenticate(session=session, account=origin_account, password=origin_pwd)
+    user: BaseUserDTO = await run_in_threadpool(authenticate, session=session, account=origin_account, password=origin_pwd)
     if not user:
         raise HTTPException(status_code=400, detail=trans('i18n_login.account_pwd_error'))
     if not user.oid or user.oid == 0:
@@ -44,9 +45,10 @@ async def local_login(
     if (
         user.id != 1
         and await initial_pwd_disabled(session)
-        and verify_md5pwd(default_pwd(), user.password)
+        and await run_in_threadpool(verify_password, default_pwd(), user.password)
     ):
         return Token(access_token='', need_change_pwd=True)
+    await run_in_threadpool(upgrade_password, session=session, user=user, password=origin_pwd)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     user_dict = user.to_dict()
     return Token(
@@ -65,7 +67,7 @@ async def login_change_pwd(session: SessionDep, trans: Trans, editor: LoginPwdEd
     origin_account = await sqlbot_decrypt(editor.account)
     origin_pwd = await sqlbot_decrypt(editor.pwd)
     new_pwd = await sqlbot_decrypt(editor.new_pwd)
-    user: BaseUserDTO = authenticate(session=session, account=origin_account, password=origin_pwd)
+    user: BaseUserDTO = await run_in_threadpool(authenticate, session=session, account=origin_account, password=origin_pwd)
     if not user:
         raise HTTPException(status_code=400, detail=trans('i18n_login.account_pwd_error'))
     if user.origin is not None and user.origin != 0:
@@ -75,10 +77,10 @@ async def login_change_pwd(session: SessionDep, trans: Trans, editor: LoginPwdEd
     if await initial_pwd_disabled(session) and new_pwd == default_pwd():
         raise HTTPException(status_code=400, detail=trans('i18n_login.new_pwd_is_initial'))
     db_user = get_db_user(session=session, user_id=user.id)
-    db_user.password = md5pwd(new_pwd)
+    db_user.password = await run_in_threadpool(get_password_hash, new_pwd)
     session.add(db_user)
     await clean_user_cache(user.id)
-    return db_user
+    return {"id": db_user.id}
 
 @router.post("/logout")
 async def logout(session: SessionDep, request: Request, dto: LogoutSchema):

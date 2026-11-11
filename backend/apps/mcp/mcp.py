@@ -5,6 +5,7 @@ from datetime import timedelta
 from typing import Optional
 
 import jwt
+from starlette.concurrency import run_in_threadpool
 from fastapi import HTTPException, status, APIRouter
 # from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
@@ -16,7 +17,7 @@ from apps.chat.models.chat_model import ChatMcp, CreateChat, ChatStart, McpQuest
     ChatFinishStep, McpDs, ChatToken, WsMcp, Chat
 from apps.datasource.crud.datasource import get_datasource_list
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
-from apps.system.crud.user import authenticate, user_ws_options
+from apps.system.crud.user import authenticate, upgrade_password, user_ws_options
 from apps.system.crud.user import get_db_user
 from apps.system.models.system_model import UserWsModel
 from apps.system.models.user import UserModel
@@ -40,12 +41,13 @@ router = APIRouter(tags=["mcp"], prefix="/mcp")
 
 @router.post("/access_token", operation_id="access_token")
 async def access_token(session: SessionDep, chat: ChatToken):
-    user: BaseUserDTO = authenticate(session=session, account=chat.username, password=chat.password)
-    if not user:
+    user: BaseUserDTO = await run_in_threadpool(authenticate, session=session, account=chat.username, password=chat.password)
+    if not user or user.status != 1 or user.origin not in (None, 0):
         raise HTTPException(status_code=400, detail="Incorrect account or password")
 
     if not user.oid or user.oid == 0:
         raise HTTPException(status_code=400, detail="No associated workspace, Please contact the administrator")
+    await run_in_threadpool(upgrade_password, session=session, user=user, password=chat.password)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     user_dict = user.to_dict()
     t = Token(access_token=create_access_token(
@@ -101,12 +103,13 @@ async def mcp_start(session: SessionDep, trans: Trans, chat: ChatStart):
         res_token = chat.token
         user = get_user(session, chat.token)
     else:
-        user = authenticate(session=session, account=chat.username, password=chat.password)
-        if not user:
+        user = await run_in_threadpool(authenticate, session=session, account=chat.username, password=chat.password)
+        if not user or user.status != 1 or user.origin not in (None, 0):
             raise HTTPException(status_code=400, detail="Incorrect account or password")
 
         if not user.oid or user.oid == 0:
             raise HTTPException(status_code=400, detail="No associated workspace, Please contact the administrator")
+        await run_in_threadpool(upgrade_password, session=session, user=user, password=chat.password)
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         user_dict = user.to_dict()
         t = Token(access_token=create_access_token(
