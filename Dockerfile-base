@@ -51,7 +51,7 @@ FROM pg-base AS runtime-tools
 
 COPY --from=python-builder /usr/local/ /usr/local/
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
-COPY --from=ghcr.io/astral-sh/uv:0.7.8 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13.7@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 /uv /uvx /bin/
 
 FROM runtime-tools AS runtime-deps
 
