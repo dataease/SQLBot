@@ -59,6 +59,7 @@ node --check g2-ssr/charts/<changed-file.js>
 规则：
 
 - `build-base-and-push` 使用 `docker buildx bake -f docker-bake.hcl base build-base` 生成并发布同一批次的 `sqlbot-python-pg` 和 `sqlbot-build-base`。两个镜像共享 PostgreSQL 底层和语言工具。图形运行库的补丁只影响运行基础镜像的构建。
+- 基础镜像标签为输入版本加北京时间日期（如 `v1.10.4-20261111`），同一次工作流中的两个镜像和所有仓库共用该标签，并在 Actions 摘要中显示。同版本同一天重跑会更新同一标签。正式发布选项还会生成原版本、主版本和 `latest` 别名。
 - 构建应用镜像时，`SQLBOT_RUNTIME_IMAGE` 和 `SQLBOT_BUILD_IMAGE` 可传入同一批次的基础镜像标签或 digest。工作流对应的输入为 `runtimeBaseImage` 和 `builderBaseImage`，各发布任务默认使用目标仓库中对应的 `latest` 标签。
 - 本地执行 `docker buildx bake -f docker-bake.hcl --load base build-base` 构建两个基础镜像，或执行 `docker buildx bake -f docker-bake.hcl --load app` 构建完整应用镜像。单独验证 PostgreSQL 镜像时使用 `docker buildx build -f Dockerfile-base --target pg-base --load -t sqlbot-pg-base:local .`。漏洞复扫以最终应用镜像为准。
 - 这些工作流都是发布/分发流程，不要因为普通代码修改建议运行。
