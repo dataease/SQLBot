@@ -89,8 +89,8 @@ jobs:
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
       - name: Docker Buildx (build-and-push)
         env:
-          SQLBOT_RUNTIME_IMAGE: ${{ inputs.runtimeBaseImage || 'registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-python-pg:latest' }}
-          SQLBOT_BUILD_IMAGE: ${{ inputs.builderBaseImage || 'registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-build-base:latest' }}
+          SQLBOT_RUNTIME_IMAGE: ${{ inputs.runtimeBaseImage || format('{0}/dataease/sqlbot-python-pg:latest', secrets.ALIYUN_REGISTRY_HOST) }}
+          SQLBOT_BUILD_IMAGE: ${{ inputs.builderBaseImage || format('{0}/dataease/sqlbot-build-base:latest', secrets.ALIYUN_REGISTRY_HOST) }}
         run: |
           docker buildx build --build-arg SQLBOT_RUNTIME_IMAGE --build-arg SQLBOT_BUILD_IMAGE --provenance=false --sbom=false --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
 
