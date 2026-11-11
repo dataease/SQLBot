@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       dockerImageTag:
-        description: 'Base image version prefix (YYYYMMDD is appended automatically)'
+        description: 'Base image version tag'
         default: 'v0.9.0'
         required: true
       dockerImageTagWithLatest:
-        description: 'Publish version, major-version and latest aliases (official releases only)'
+        description: 'Also publish the latest tag (official releases only)'
         default: false
         required: true
         type: boolean
@@ -34,22 +34,7 @@ on:
           - dockerhub, aliyun-registry
 
 jobs:
-  prepare-tags:
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.tag.outputs.image_tag }}
-    steps:
-      - name: Generate dated base image tag
-        id: tag
-        env:
-          VERSION_TAG: ${{ inputs.dockerImageTag }}
-        run: |
-          image_tag="$VERSION_TAG-$(TZ=Asia/Shanghai date +'%Y%m%d')"
-          printf 'image_tag=%s\n' "$image_tag" >> "$GITHUB_OUTPUT"
-          printf 'Base image tag: `%s`\n' "$image_tag" >> "$GITHUB_STEP_SUMMARY"
-
   build-and-push-to-aliyun-registry:
-    needs: prepare-tags
     if: ${{ contains(github.event.inputs.registry, 'aliyun') }}
     runs-on: ubuntu-latest
     steps:
@@ -62,14 +47,13 @@ jobs:
         env:
           DOCKER_IMAGE: ${{ secrets.ALIYUN_REGISTRY_HOST }}/dataease/sqlbot-python-pg
           TAG_NAME: ${{ inputs.dockerImageTag }}
-          DATED_TAG: ${{ needs.prepare-tags.outputs.image_tag }}
           TAG_NAME_WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
         run: |
           image_tags() {
             local image="$1"
-            local tags="$image:$DATED_TAG"
+            local tags="$image:$TAG_NAME"
             if [[ "$TAG_NAME_WITH_LATEST" == 'true' ]]; then
-              tags="$tags,$image:$TAG_NAME,$image:${TAG_NAME%%.*},$image:latest"
+              tags="$tags,$image:latest"
             fi
             printf '%s' "$tags"
           }
@@ -97,7 +81,6 @@ jobs:
             --set 'build-base.output=type=image,push=true,oci-mediatypes=false' base build-base
 
   build-and-push-to-dockerhub:
-    needs: prepare-tags
     if: ${{ contains(github.event.inputs.registry, 'dockerhub') }}
     runs-on: ubuntu-latest
     steps:
@@ -110,14 +93,13 @@ jobs:
         env:
           DOCKER_IMAGE: dataease/sqlbot-python-pg
           TAG_NAME: ${{ inputs.dockerImageTag }}
-          DATED_TAG: ${{ needs.prepare-tags.outputs.image_tag }}
           TAG_NAME_WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
         run: |
           image_tags() {
             local image="$1"
-            local tags="$image:$DATED_TAG"
+            local tags="$image:$TAG_NAME"
             if [[ "$TAG_NAME_WITH_LATEST" == 'true' ]]; then
-              tags="$tags,$image:$TAG_NAME,$image:${TAG_NAME%%.*},$image:latest"
+              tags="$tags,$image:latest"
             fi
             printf '%s' "$tags"
           }
