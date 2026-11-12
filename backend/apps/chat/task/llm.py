@@ -1578,21 +1578,20 @@ class LLMService:
             sql_operate = OperationEnum.GENERATE_SQL
             sql, tables = self.check_sql(session=_session, res=full_sql_text, operate=sql_operate)
 
-            if not settings.SQLBOT_SKIP_TABLE_CHECK:
-                # 表名安全检查：用 sqlglot 解析真实 SQL，不信任 AI 返回的 tables
-                actual_tables = extract_tables_from_sql(sql, ds_type=self.ds.type)
-                if not actual_tables:
-                    raise SingleMessageError(
-                        "SQL parsing failed: unable to extract table names. "
-                        "This may indicate an unsupported SQL syntax or a security issue."
-                    )
-                allowed_tables = set(self.table_name_list)
-                unauthorized_tables = actual_tables - allowed_tables
-                if unauthorized_tables:
-                    raise SingleMessageError(
-                        f"SQL contains unauthorized tables: {', '.join(unauthorized_tables)}. "
-                        f"Allowed tables: {', '.join(allowed_tables)}"
-                    )
+            # 表名安全检查：用 sqlglot 解析真实 SQL，不信任 AI 返回的 tables
+            actual_tables = extract_tables_from_sql(sql, ds_type=self.ds.type)
+            if not actual_tables:
+                raise SingleMessageError(
+                    "SQL parsing failed: unable to extract table names. "
+                    "This may indicate an unsupported SQL syntax or a security issue."
+                )
+            allowed_tables = set(self.table_name_list)
+            unauthorized_tables = actual_tables - allowed_tables
+            if unauthorized_tables and not settings.SQLBOT_SKIP_TABLE_CHECK:
+                raise SingleMessageError(
+                    f"SQL contains unauthorized tables: {', '.join(unauthorized_tables)}. "
+                    f"Allowed tables: {', '.join(allowed_tables)}"
+                )
 
             if ((not self.current_assistant or is_page_embedded) and is_normal_user(
                     self.current_user)) or use_dynamic_ds:
