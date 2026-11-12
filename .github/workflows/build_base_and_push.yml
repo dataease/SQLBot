@@ -33,94 +33,141 @@ on:
           - dockerhub
           - dockerhub, aliyun-registry
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-push-to-aliyun-registry:
-    if: ${{ contains(github.event.inputs.registry, 'aliyun') }}
-    runs-on: ubuntu-latest
+  build:
+    name: Build (${{ matrix.registry }}, ${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        registry: ${{ fromJSON(inputs.registry == 'dockerhub, aliyun-registry' && '["dockerhub","aliyun-registry"]' || format('["{0}"]', inputs.registry)) }}
+        arch: ${{ fromJSON(inputs.architecture == 'linux/amd64,linux/arm64' && '["amd64","arm64"]' || (inputs.architecture == 'linux/arm64' && '["arm64"]' || '["amd64"]')) }}
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    env:
+      IMAGE_NAMESPACE: ${{ matrix.registry == 'aliyun-registry' && format('{0}/dataease', secrets.ALIYUN_REGISTRY_HOST) || 'dataease' }}
+      VERSION_TAG: ${{ inputs.dockerImageTag }}
+      WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
+      MULTI_ARCH: ${{ inputs.architecture == 'linux/amd64,linux/arm64' }}
+      ARCH: ${{ matrix.arch }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
-      - name: Prepare
-        id: prepare
-        env:
-          DOCKER_IMAGE: ${{ secrets.ALIYUN_REGISTRY_HOST }}/dataease/sqlbot-python-pg
-          TAG_NAME: ${{ inputs.dockerImageTag }}
-          TAG_NAME_WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
-        run: |
-          image_tags() {
-            local image="$1"
-            local tags="$image:$TAG_NAME"
-            if [[ "$TAG_NAME_WITH_LATEST" == 'true' ]]; then
-              tags="$tags,$image:latest"
-            fi
-            printf '%s' "$tags"
-          }
-          printf '%s=%s\n' \
-            runtime_tags "$(image_tags "$DOCKER_IMAGE")" \
-            build_tags "$(image_tags "${DOCKER_IMAGE%/*}/sqlbot-build-base")" >> "$GITHUB_OUTPUT"
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+          ref: ${{ github.sha }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Aliyun Registry
+        if: matrix.registry == 'aliyun-registry'
         uses: docker/login-action@v4
         with:
           registry: ${{ secrets.ALIYUN_REGISTRY_HOST }}
           username: ${{ secrets.ALIYUN_REGISTRY_USERNAME }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
-      - name: Docker Buildx (build-and-push)
-        env:
-          SQLBOT_BASE_TAGS: ${{ steps.prepare.outputs.runtime_tags }}
-          SQLBOT_BUILD_TAGS: ${{ steps.prepare.outputs.build_tags }}
-          SQLBOT_BASE_PLATFORMS: ${{ inputs.architecture }}
-        run: |
-          docker buildx bake -f docker-bake.hcl --pull --no-cache --provenance=false --sbom=false \
-            --set 'base.output=type=image,push=true,oci-mediatypes=false' \
-            --set 'build-base.output=type=image,push=true,oci-mediatypes=false' base build-base
-
-  build-and-push-to-dockerhub:
-    if: ${{ contains(github.event.inputs.registry, 'dockerhub') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-      - name: Prepare
-        id: prepare
-        env:
-          DOCKER_IMAGE: dataease/sqlbot-python-pg
-          TAG_NAME: ${{ inputs.dockerImageTag }}
-          TAG_NAME_WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
-        run: |
-          image_tags() {
-            local image="$1"
-            local tags="$image:$TAG_NAME"
-            if [[ "$TAG_NAME_WITH_LATEST" == 'true' ]]; then
-              tags="$tags,$image:latest"
-            fi
-            printf '%s' "$tags"
-          }
-          printf '%s=%s\n' \
-            runtime_tags "$(image_tags "$DOCKER_IMAGE")" \
-            build_tags "$(image_tags "${DOCKER_IMAGE%/*}/sqlbot-build-base")" >> "$GITHUB_OUTPUT"
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
+        if: matrix.registry == 'dockerhub'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Docker Buildx (build-and-push)
-        env:
-          SQLBOT_BASE_TAGS: ${{ steps.prepare.outputs.runtime_tags }}
-          SQLBOT_BUILD_TAGS: ${{ steps.prepare.outputs.build_tags }}
-          SQLBOT_BASE_PLATFORMS: ${{ inputs.architecture }}
+      - name: Build both base images
+        shell: bash
         run: |
+          runtime_image="$IMAGE_NAMESPACE/sqlbot-python-pg"
+          build_image="$IMAGE_NAMESPACE/sqlbot-build-base"
+          output='type=image,push=true,oci-mediatypes=false'
+          if [[ "$MULTI_ARCH" == true ]]; then
+            # Publish the architecture manifests by digest for the merge job.
+            export SQLBOT_BASE_TAGS="$runtime_image"
+            export SQLBOT_BUILD_TAGS="$build_image"
+            output+=',push-by-digest=true,name-canonical=true'
+          else
+            export SQLBOT_BASE_TAGS="$runtime_image:$VERSION_TAG"
+            export SQLBOT_BUILD_TAGS="$build_image:$VERSION_TAG"
+            if [[ "$WITH_LATEST" == true ]]; then
+              SQLBOT_BASE_TAGS+=",$runtime_image:latest"
+              SQLBOT_BUILD_TAGS+=",$build_image:latest"
+            fi
+          fi
+
+          export SQLBOT_BASE_PLATFORMS="linux/$ARCH"
           docker buildx bake -f docker-bake.hcl --pull --no-cache --provenance=false --sbom=false \
-            --set 'base.output=type=image,push=true,oci-mediatypes=false' \
-            --set 'build-base.output=type=image,push=true,oci-mediatypes=false' base build-base
+            --metadata-file "$RUNNER_TEMP/base-metadata.json" \
+            --set "base.output=$output" --set "build-base.output=$output" base build-base
+
+          if [[ "$MULTI_ARCH" == true ]]; then
+            jq -e '{
+              base: .base["containerimage.digest"],
+              "build-base": .["build-base"]["containerimage.digest"]
+            } | select(all(.[]; tostring | test("^sha256:[a-f0-9]{64}$")))' \
+              "$RUNNER_TEMP/base-metadata.json" > "$RUNNER_TEMP/$ARCH.json"
+          fi
+      - name: Save architecture digests
+        if: env.MULTI_ARCH == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-digests-${{ matrix.registry }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/${{ matrix.arch }}.json
+          if-no-files-found: error
+          overwrite: true
+
+  publish:
+    name: Publish multi-platform tags (${{ matrix.registry }})
+    if: inputs.architecture == 'linux/amd64,linux/arm64'
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        registry: ${{ fromJSON(inputs.registry == 'dockerhub, aliyun-registry' && '["dockerhub","aliyun-registry"]' || format('["{0}"]', inputs.registry)) }}
+    runs-on: ubuntu-24.04
+    env:
+      IMAGE_NAMESPACE: ${{ matrix.registry == 'aliyun-registry' && format('{0}/dataease', secrets.ALIYUN_REGISTRY_HOST) || 'dataease' }}
+      VERSION_TAG: ${{ inputs.dockerImageTag }}
+      WITH_LATEST: ${{ inputs.dockerImageTagWithLatest }}
+    steps:
+      - name: Download architecture digests
+        uses: actions/download-artifact@v4
+        with:
+          pattern: base-digests-${{ matrix.registry }}-*
+          path: ${{ runner.temp }}/base-digests
+          merge-multiple: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Aliyun Registry
+        if: matrix.registry == 'aliyun-registry'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ secrets.ALIYUN_REGISTRY_HOST }}
+          username: ${{ secrets.ALIYUN_REGISTRY_USERNAME }}
+          password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
+      - name: Login to Docker Hub
+        if: matrix.registry == 'dockerhub'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Publish both image manifests
+        shell: bash
+        working-directory: ${{ runner.temp }}/base-digests
+        run: |
+          read_digest() {
+            jq -er --arg target "$1" '.[$target] | strings | select(test("^sha256:[a-f0-9]{64}$"))' "$2.json"
+          }
+
+          runtime_amd64=$(read_digest base amd64)
+          runtime_arm64=$(read_digest base arm64)
+          build_amd64=$(read_digest build-base amd64)
+          build_arm64=$(read_digest build-base arm64)
+
+          publish_image() {
+            local image="$1" amd64="$2" arm64="$3"
+            local tags=(-t "$image:$VERSION_TAG")
+            if [[ "$WITH_LATEST" == true ]]; then
+              tags+=(-t "$image:latest")
+            fi
+            docker buildx imagetools create "${tags[@]}" "$image@$amd64" "$image@$arm64"
+          }
+
+          publish_image "$IMAGE_NAMESPACE/sqlbot-python-pg" "$runtime_amd64" "$runtime_arm64"
+          publish_image "$IMAGE_NAMESPACE/sqlbot-build-base" "$build_amd64" "$build_arm64"

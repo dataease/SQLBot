@@ -38,7 +38,6 @@ target "base" {
 target "build-base" {
   dockerfile = "Dockerfile-build-base"
   contexts = {
-    pg-base             = "target:pg-base"
     sqlbot-runtime-tools = "target:runtime-tools"
   }
   platforms  = compact(split(",", SQLBOT_BASE_PLATFORMS))

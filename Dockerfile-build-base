@@ -3,13 +3,10 @@ ARG NODE_IMAGE=node:22-bookworm-slim
 ARG SQLBOT_RUNTIME_TOOLS_IMAGE=sqlbot-runtime-tools
 
 FROM ${NODE_IMAGE} AS node-tools
-FROM ${SQLBOT_RUNTIME_TOOLS_IMAGE} AS runtime-tools
-FROM pg-base
+FROM ${SQLBOT_RUNTIME_TOOLS_IMAGE}
 
 # Use the same interpreters and PGDG packages as runtime. Bookworm development
 # packages require the stock graphics libraries, which stay in this builder.
-COPY --from=runtime-tools /usr/local/ /usr/local/
-COPY --from=runtime-tools /bin/uv /bin/uvx /bin/
 COPY --from=node-tools /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
