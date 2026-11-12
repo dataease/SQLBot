@@ -7,7 +7,7 @@
 1. 前端构建：在 Node 22 Bookworm 镜像中对 `frontend/` 执行 `npm install` 和 `npm run build`，产物进入 `/opt/sqlbot/frontend/dist`。
 2. 后端构建：使用 `Dockerfile-build-base` 提前构建 FreeTDS 并准备编译器及开发库，应用构建使用 uv 同时解析应用依赖和镜像专用安全约束，构建 PostgreSQL 和 SQL Server 驱动，使其链接运行层系统库。`uv.lock` 不入库，构建会重新解析依赖。
 3. 图表服务构建：复制 `g2-ssr/app.js`、`package.json` 和 `charts/`，使用同一构建基础镜像从源码构建 canvas，使其使用运行层的 Debian 图形库。
-4. 运行层：`Dockerfile-base` 的 `pg-base` 阶段使用固定摘要的 PostgreSQL 17 Bookworm pgvector 镜像，并统一更新继承的 Debian 系统包。后续阶段加入 Python、Node 和共享运行库。`Dockerfile-build-base` 使用同一个 PostgreSQL 底层，复用 Python、Node 和 uv，并单独安装与标准 Bookworm 图形库匹配的开发包。最终运行基础镜像 `sqlbot-python-pg` 还包含 Oracle 客户端及许可证校验器。图形库从 Bookworm 源码包构建，HarfBuzz 应用 CVE-2023-25193 上游补丁，GDK Pixbuf 禁用未使用的 TIFF 加载器。应用镜像复制前端、后端、g2-ssr、字体、向量模型和启动脚本，并使用 dmPython wheel 提供的达梦客户端库。
+4. 运行层：`Dockerfile-base` 的 `pg-base` 阶段使用固定摘要的 PostgreSQL 17 Bookworm pgvector 镜像，并统一更新继承的 Debian 系统包。后续阶段加入 Python、Node 和共享运行库。`Dockerfile-build-base` 直接继承 `runtime-tools` 阶段，共用 PostgreSQL、Python、Node 和 uv 的镜像层，并单独安装与标准 Bookworm 图形库匹配的开发包。最终运行基础镜像 `sqlbot-python-pg` 还包含 Oracle 客户端及许可证校验器。图形库从 Bookworm 源码包构建，HarfBuzz 应用 CVE-2023-25193 上游补丁，GDK Pixbuf 禁用未使用的 TIFF 加载器。应用镜像复制前端、后端、g2-ssr、字体、向量模型和启动脚本，并使用 dmPython wheel 提供的达梦客户端库。
 5. 启动脚本依次准备 PostgreSQL、supervisor/g2-ssr、MCP 服务和主 FastAPI 服务。
 
 应用镜像保留默认中文向量模型的 PyTorch 权重和 tokenizer，复制模型时排除同一模型未使用的 ONNX 导出。修改模型打包内容时，应在断网容器中验证默认模型可以加载并生成向量。
@@ -59,6 +59,7 @@ node --check g2-ssr/charts/<changed-file.js>
 规则：
 
 - `build-base-and-push` 使用 `docker buildx bake -f docker-bake.hcl base build-base` 生成并发布同一批次的 `sqlbot-python-pg` 和 `sqlbot-build-base`。两个镜像共享 PostgreSQL 底层和语言工具。图形运行库的补丁只影响运行基础镜像的构建。
+- AMD64 和 ARM64 分别在 `ubuntu-24.04` 和 `ubuntu-24.04-arm` 上原生构建。双架构构建先将各架构镜像按摘要推到目标仓库，全部构建任务成功后，再分别为两个基础镜像合成多架构清单。单架构构建直接发布所选架构的镜像。
 - 两个基础镜像在所选仓库中使用相同的版本标签（如 `v1.10.4`）。启用 `dockerImageTagWithLatest` 时额外发布 `latest`。重跑同一版本会更新该版本标签。
 - 构建应用镜像时，`SQLBOT_RUNTIME_IMAGE` 和 `SQLBOT_BUILD_IMAGE` 可传入同一批次的基础镜像标签或 digest。工作流对应的输入为 `runtimeBaseImage` 和 `builderBaseImage`，各发布任务默认使用目标仓库中对应的 `latest` 标签。
 - 本地执行 `docker buildx bake -f docker-bake.hcl --load base build-base` 构建两个基础镜像，或执行 `docker buildx bake -f docker-bake.hcl --load app` 构建完整应用镜像。单独验证 PostgreSQL 镜像时使用 `docker buildx build -f Dockerfile-base --target pg-base --load -t sqlbot-pg-base:local .`。漏洞复扫以最终应用镜像为准。
