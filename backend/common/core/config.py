@@ -117,6 +117,9 @@ class Settings(BaseSettings):
     # 默认关闭，防止通过元数据查询泄露数据库结构
     SQLBOT_ALLOW_METADATA_QUERIES: bool = False
 
+    # 启动配置：显式开启时跳过生成 SQL 的表名提取和白名单检查
+    SQLBOT_SKIP_TABLE_CHECK: bool = False
+
     PARSE_REASONING_BLOCK_ENABLED: bool = True
     DEFAULT_REASONING_CONTENT_START: str = '<think>'
     DEFAULT_REASONING_CONTENT_END: str = '</think>'
@@ -136,6 +139,7 @@ class Settings(BaseSettings):
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
 
     @field_validator('SQL_DEBUG',
+                     'SQLBOT_SKIP_TABLE_CHECK',
                      'EMBEDDING_ENABLED',
                      'GENERATE_SQL_QUERY_LIMIT_ENABLED',
                      'PARSE_REASONING_BLOCK_ENABLED',
