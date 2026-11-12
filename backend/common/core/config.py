@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     # 默认关闭，防止通过元数据查询泄露数据库结构
     SQLBOT_ALLOW_METADATA_QUERIES: bool = False
 
-    # 启动配置：显式开启时跳过生成 SQL 的表名提取和白名单检查
+    # 启动配置：显式开启时跳过生成 SQL 的表白名单检查，仍须成功提取表名
     SQLBOT_SKIP_TABLE_CHECK: bool = False
 
     PARSE_REASONING_BLOCK_ENABLED: bool = True

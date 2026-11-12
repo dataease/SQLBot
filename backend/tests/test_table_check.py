@@ -92,8 +92,6 @@ def test_default_allows_known_tables_and_cte_aliases(task, sql):
             "SELECT id FROM sales UNION ALL SELECT id FROM secret_payroll",
             "unauthorized tables: secret_payroll",
         ),
-        ("SELECT 1", "unable to extract table names"),
-        ("SELECT (", "unable to extract table names"),
     ],
 )
 def test_default_rejects_invalid_or_unknown_tables_before_save_and_execute(
@@ -107,16 +105,37 @@ def test_default_rejects_invalid_or_unknown_tables_before_save_and_execute(
     task.execute_sql.assert_not_called()
 
 
-@pytest.mark.parametrize("sql", ["SELECT * FROM secret_payroll", "SELECT 1"])
-def test_explicit_skip_bypasses_extraction_and_keeps_remaining_flow(
+@pytest.mark.parametrize("skip", [False, True])
+@pytest.mark.parametrize("sql", ["SELECT 1", "SELECT ("])
+def test_missing_tables_are_rejected_even_when_whitelist_check_is_skipped(
+    task, monkeypatch, sql, skip
+):
+    monkeypatch.setattr(llm.settings, "SQLBOT_SKIP_TABLE_CHECK", skip)
+    result = run(task, sql)
+    assert result["success"] is False
+    assert "unable to extract table names" in result["message"]
+    task.save_error.assert_called_once()
+    task.generate_filter.assert_not_called()
+    task.check_save_sql.assert_not_called()
+    task.execute_sql.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT * FROM secret_payroll",
+        "SELECT id FROM sales UNION ALL SELECT id FROM secret_payroll",
+    ],
+)
+def test_explicit_skip_only_bypasses_whitelist_check_and_keeps_remaining_flow(
     task, monkeypatch, sql
 ):
     monkeypatch.setattr(llm.settings, "SQLBOT_SKIP_TABLE_CHECK", True)
-    extract = Mock(side_effect=AssertionError("table extraction must be skipped"))
+    extract = Mock(wraps=llm.extract_tables_from_sql)
     monkeypatch.setattr(llm, "extract_tables_from_sql", extract)
     result = run(task, sql)
     assert result["success"] is True
-    extract.assert_not_called()
+    extract.assert_called_once_with(sql, ds_type="pg")
     task.generate_filter.assert_called_once()
     task.check_save_sql.assert_called_once()
     task.execute_sql.assert_called_once_with(sql=sql)
@@ -127,8 +146,8 @@ def test_explicit_skip_bypasses_extraction_and_keeps_remaining_flow(
     "sql",
     [
         "DELETE FROM sales",
-        "SELECT pg_read_file('/etc/passwd')",
-        "SHOW TABLES",
+        "SELECT pg_read_file('/etc/passwd') FROM sales",
+        "DESCRIBE sales",
     ],
 )
 def test_skip_keeps_database_execution_guards(task, monkeypatch, sql):
