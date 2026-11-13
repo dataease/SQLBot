@@ -2,7 +2,7 @@
 ARG PYTHON_IMAGE=python:3.11-slim-bookworm
 ARG NODE_IMAGE=node:22-bookworm-slim
 
-ARG PGVECTOR_IMAGE=pgvector/pgvector:pg17-bookworm@sha256:7d0a41464797aeb9862dfdc0bbf1526b82cfd324cdd8036df19e3545f4a9ccb8
+ARG PGVECTOR_IMAGE=pgvector/pgvector:pg17-bookworm@sha256:b513c48566e4777cd3370451400000c78eda6a08131d68f4c31d4a76f27bd8fd
 
 FROM ${PGVECTOR_IMAGE} AS pg-base
 # Refresh inherited Debian packages and keep the bundled pgvector extension.
