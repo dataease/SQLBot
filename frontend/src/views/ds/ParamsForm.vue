@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { nextTick, ref } from 'vue'
+import { datasourceApi } from '@/api/datasource'
 import DatasourceForm from './DatasourceForm.vue'
 import icon_close_outlined from '@/assets/svg/operate/ope-close.svg'
 
@@ -22,7 +23,8 @@ const save = () => {
   datasourceFormRef.value.tableListSave()
 }
 
-const open = (item: any) => {
+const open = async (item: any) => {
+  item = await datasourceApi.getDs(item.id)
   datasourceConfigVisible.value = true
   nextTick(() => {
     datasourceFormRef.value.initForm(item, true)

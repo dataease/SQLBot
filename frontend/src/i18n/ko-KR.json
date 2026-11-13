@@ -435,6 +435,7 @@
       "host": "호스트명/IP 주소",
       "port": "포트",
       "username": "사용자명",
+      "keep_saved_value": "비워 두면 저장된 값을 유지합니다",
       "password": "비밀번호",
       "database": "데이터베이스",
       "connect_mode": "연결 방식",

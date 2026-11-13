@@ -3,6 +3,7 @@ from common.utils.embedding_threads import run_save_table_embeddings, run_save_d
 import asyncio
 import hashlib
 import io
+import json
 import os
 import traceback
 import uuid
@@ -28,11 +29,14 @@ from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.utils import SQLBotLogUtil, safe_upload_name
 from ..crud.datasource import get_datasource_list, check_status, create_ds, update_ds, delete_ds, getTables, getFields, \
     update_table_and_fields, getTablesByDs, chooseTables, preview, updateTable, updateField, get_ds, fieldEnum, \
-    check_status_by_id, sync_single_fields
+    check_status_by_id, sync_single_fields, seal_browser_configuration
 from ..crud.field import get_fields_by_table_id
 from ..crud.table import get_tables_by_ds_id
 from ..models.datasource import CoreDatasource, CreateDatasource, TableObj, CoreTable, CoreField, FieldObj, \
     TableSchemaResponse, ColumnSchemaResponse, PreviewResponse, ImportRequest
+from ..utils.utils import (
+    DatasourceConfigurationError, DatasourceKeyError, aes_decrypt, parse_configuration,
+)
 from ..utils.excel import parse_excel_preview, read_import_dataframe
 
 router = APIRouter(tags=["Datasource"], prefix="/datasource")
@@ -58,27 +62,64 @@ def _excel_upload_path(filename: str, trans) -> str:
     return save_path
 
 
+def _safe_datasource(ds: CoreDatasource) -> dict:
+    return ds.model_dump(exclude={"configuration"})
+
+
+def _browser_configuration(session: SessionDep, user: CurrentUser, trans: Trans, ds: CoreDatasource):
+    previous = None
+    if ds.id:
+        saved = get_ds(session, ds.id)
+        if saved is None or saved.oid != user.oid:
+            raise HTTPException(404, trans('i18n_ds_invalid'))
+        if saved.type == ds.type:
+            previous = saved.configuration
+    try:
+        ds.configuration = seal_browser_configuration(ds.configuration, previous)
+    except DatasourceConfigurationError:
+        raise HTTPException(400, trans('i18n_ds_invalid')) from None
+    except DatasourceKeyError:
+        raise HTTPException(503, trans('i18n_ds_storage_unavailable')) from None
+
+
 @router.get("/ws/{oid}", include_in_schema=False)
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def query_by_oid(session: SessionDep, user: CurrentUser, oid: int) -> List[CoreDatasource]:
-    return get_datasource_list(session=session, user=user, oid=oid)
+async def query_by_oid(session: SessionDep, user: CurrentUser, oid: int):
+    return [_safe_datasource(ds) for ds in get_datasource_list(session=session, user=user, oid=oid)]
 
 
-@router.get("/list", response_model=List[CoreDatasource], summary=f"{PLACEHOLDER_PREFIX}ds_list",
+@router.get("/list", response_model=List[CoreDatasource], response_model_exclude={"__all__": {"configuration"}}, summary=f"{PLACEHOLDER_PREFIX}ds_list",
             description=f"{PLACEHOLDER_PREFIX}ds_list_description")
 async def datasource_list(session: SessionDep, user: CurrentUser):
-    return get_datasource_list(session=session, user=user)
+    return [_safe_datasource(ds) for ds in get_datasource_list(session=session, user=user)]
 
 
 @router.post("/get/{id}", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_get")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin'], keyExpression="id", type='ds'))
-async def get_datasource(session: SessionDep, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
-    return get_ds(session, id)
+async def get_datasource(session: SessionDep, user: CurrentUser, trans: Trans, id: int = Path(..., description=f"{PLACEHOLDER_PREFIX}ds_id")):
+    ds = get_ds(session, id)
+    if ds is None or ds.oid != user.oid:
+        raise HTTPException(404, trans('i18n_ds_invalid'))
+    result = _safe_datasource(ds)
+    if ds.configuration:
+        try:
+            configuration = parse_configuration(aes_decrypt(ds.configuration))
+        except (DatasourceKeyError, DatasourceConfigurationError):
+            raise HTTPException(503, trans('i18n_ds_storage_unavailable')) from None
+        editable_fields = {
+            "host", "port", "username", "database", "dbSchema", "filename", "sheets",
+            "mode", "timeout", "lowVersion", "ssl", "poolSize", "engine",
+        }
+        result["configuration"] = json.dumps({
+            field: configuration[field] for field in editable_fields if field in configuration
+        })
+    return result
 
 
 @router.post("/check", response_model=bool, summary=f"{PLACEHOLDER_PREFIX}ds_check")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def check(session: SessionDep, trans: Trans, ds: CoreDatasource):
+async def check(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
+    _browser_configuration(session, user, trans, ds)
     def inner():
         return check_status(session, trans, ds, True)
 
@@ -95,11 +136,16 @@ async def check_by_id(session: SessionDep, trans: Trans,
     return await asyncio.to_thread(inner)
 
 
-@router.post("/add", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_add")
+@router.post("/add", response_model=CoreDatasource, response_model_exclude={"configuration"}, summary=f"{PLACEHOLDER_PREFIX}ds_add")
 @system_log(LogConfig(operation_type=OperationType.CREATE, module=OperationModules.DATASOURCE, result_id_expr="id"))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def add(session: SessionDep, trans: Trans, user: CurrentUser, ds: CreateDatasource):
-    return await create_ds(session, trans, user, ds)
+    try:
+        return _safe_datasource(await create_ds(session, trans, user, ds))
+    except DatasourceConfigurationError:
+        raise HTTPException(400, trans('i18n_ds_invalid')) from None
+    except DatasourceKeyError:
+        raise HTTPException(503, trans('i18n_ds_storage_unavailable')) from None
 
 
 @router.post("/chooseTables/{id}", response_model=None, summary=f"{PLACEHOLDER_PREFIX}ds_choose_tables")
@@ -112,13 +158,18 @@ async def choose_tables(session: SessionDep, trans: Trans, tables: List[CoreTabl
     await asyncio.to_thread(inner)
 
 
-@router.post("/update", response_model=CoreDatasource, summary=f"{PLACEHOLDER_PREFIX}ds_update")
+@router.post("/update", response_model=CoreDatasource, response_model_exclude={"configuration"}, summary=f"{PLACEHOLDER_PREFIX}ds_update")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin'], type='ds', keyExpression="ds.id"))
 @system_log(
     LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.DATASOURCE, resource_id_expr="ds.id"))
 async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
     def inner():
-        return update_ds(session, trans, user, ds)
+        try:
+            return _safe_datasource(update_ds(session, trans, user, ds))
+        except DatasourceConfigurationError:
+            raise HTTPException(400, trans('i18n_ds_invalid')) from None
+        except DatasourceKeyError:
+            raise HTTPException(503, trans('i18n_ds_storage_unavailable')) from None
 
     return await asyncio.to_thread(inner)
 
@@ -139,7 +190,8 @@ async def get_tables(session: SessionDep, id: int = Path(..., description=f"{PLA
 
 @router.post("/getTablesByConf", response_model=List[TableSchemaResponse], summary=f"{PLACEHOLDER_PREFIX}ds_get_tables")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def get_tables_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasource):
+async def get_tables_by_conf(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
+    _browser_configuration(session, user, trans, ds)
     try:
         def inner():
             return getTablesByDs(session, ds)
@@ -158,7 +210,8 @@ async def get_tables_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasour
 
 @router.post("/getSchemaByConf", response_model=List[str], summary=f"{PLACEHOLDER_PREFIX}ds_get_schema")
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
-async def get_schema_by_conf(session: SessionDep, trans: Trans, ds: CoreDatasource):
+async def get_schema_by_conf(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
+    _browser_configuration(session, user, trans, ds)
     try:
         def inner():
             return get_schema(ds)

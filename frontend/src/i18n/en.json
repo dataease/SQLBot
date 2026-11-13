@@ -435,6 +435,7 @@
       "host": "Host/Ip",
       "port": "Port",
       "username": "Username",
+      "keep_saved_value": "Leave blank to keep the saved value",
       "password": "Password",
       "database": "Database",
       "connect_mode": "Connect Mode",

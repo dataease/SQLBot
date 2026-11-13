@@ -57,6 +57,7 @@
     "delete_default_error": "Cannot delete the default model [{key}]!",
     "miss_default": "Default large language model has not been configured"
   },
+  "i18n_ds_storage_unavailable": "Datasource configuration storage is unavailable. Check the storage keys and configuration.",
   "i18n_ds_invalid": "Datasource connection is invalid",
   "i18n_ds_unsupported_file_format": "Unsupported file format. Please upload an XLS, XLSX or CSV file.",
   "i18n_ds_upload_error": "Upload Failed",

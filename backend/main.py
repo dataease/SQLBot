@@ -16,6 +16,13 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from alembic import command
+from sqlmodel import Session
+
+from apps.datasource.utils.configuration_migration import (
+    has_versioned_configurations, migrate_datasource_configurations,
+)
+from apps.datasource.utils.utils import initialize_datasource_keys
+from common.core.db import engine
 from apps.api import api_router
 from apps.swagger.i18n import PLACEHOLDER_PREFIX, tags_metadata, i18n_list
 from apps.swagger.i18n import get_translation, DEFAULT_LANG
@@ -67,6 +74,9 @@ def shutdown_resources() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations()
+    with Session(engine) as session:
+        keys = initialize_datasource_keys(has_versioned_configurations(session))
+        migrate_datasource_configurations(session, keys)
     init_sqlbot_cache()
     init_dynamic_cors(app)
     init_terminology_embedding_data()

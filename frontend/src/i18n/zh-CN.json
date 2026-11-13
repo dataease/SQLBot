@@ -435,6 +435,7 @@
       "host": "主机名/IP地址",
       "port": "端口",
       "username": "用户名",
+      "keep_saved_value": "留空则沿用已保存的值",
       "password": "密码",
       "database": "数据库",
       "connect_mode": "连接方式",

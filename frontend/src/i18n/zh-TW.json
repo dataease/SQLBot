@@ -435,6 +435,7 @@
       "host": "主機名/IP位址",
       "port": "連接埠",
       "username": "使用者名稱",
+      "keep_saved_value": "留空則沿用已儲存的值",
       "password": "密碼",
       "database": "資料庫",
       "connect_mode": "連線方式",

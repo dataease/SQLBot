@@ -9,7 +9,9 @@ from sqlmodel import select
 
 from apps.datasource.crud.permission import get_column_permission_fields, get_row_permission_filters, is_normal_user
 from apps.datasource.embedding.table_embedding import calc_table_embedding
-from apps.datasource.utils.utils import aes_decrypt
+from apps.datasource.utils.utils import (
+    DatasourceConfigurationError, aes_decrypt, aes_encrypt, decode_legacy_configuration, parse_configuration,
+)
 from apps.db.constant import DB
 from apps.db.db import get_tables, get_fields, exec_sql, check_connection
 from apps.db.engine import get_engine_config, get_engine_conn
@@ -40,6 +42,23 @@ def get_ds(session: SessionDep, id: int):
     statement = select(CoreDatasource).where(CoreDatasource.id == id)
     datasource = session.exec(statement).first()
     return datasource
+
+
+def seal_browser_configuration(configuration: str, previous: str | None = None) -> str:
+    incoming = parse_configuration(decode_legacy_configuration(configuration))
+    if previous:
+        saved = parse_configuration(aes_decrypt(previous))
+        retained = {field: saved[field] for field in ("password", "extraJdbc")
+                    if field not in incoming and saved.get(field)}
+        # Never send a stored secret to a destination selected by the request.
+        destination = ("host", "port", "username", "database", "dbSchema", "mode", "engine", "ssl", "extraJdbc")
+        defaults = DatasourceConf().model_dump()
+        existing = {**defaults, **saved}
+        candidate = {**existing, **incoming}
+        if retained and any(candidate[field] != existing[field] for field in destination):
+            raise DatasourceConfigurationError("Connection settings changed while retaining credentials")
+        incoming = {**saved, **incoming}
+    return aes_encrypt(json.dumps(incoming)).decode("ascii")
 
 
 def check_status_by_id(session: SessionDep, trans: Trans, ds_id: int, is_raise: bool = False):
@@ -79,6 +98,7 @@ async def create_ds(session: SessionDep, trans: Trans, user: CurrentUser, create
     ds.oid = user.oid if user.oid is not None else 1
     ds.status = "Success"
     ds.type_name = DB.get_db(ds.type).db_name
+    ds.configuration = seal_browser_configuration(ds.configuration)
     record = CoreDatasource(**ds.model_dump())
     session.add(record)
     session.flush()
@@ -104,9 +124,21 @@ def update_ds(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreData
     check_name(session, trans, user, ds)
     # status = check_status(session, trans, ds)
     ds.status = "Success"
-    record = session.exec(select(CoreDatasource).where(CoreDatasource.id == ds.id)).first()
+    record = session.exec(
+        select(CoreDatasource)
+        .where(CoreDatasource.id == ds.id, CoreDatasource.oid == user.oid)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).first()
+    if record is None:
+        raise HTTPException(404, trans('i18n_ds_invalid'))
+    if "configuration" in ds.model_fields_set:
+        previous = record.configuration if ds.type in (None, record.type) else None
+        ds.configuration = seal_browser_configuration(ds.configuration, previous)
+    elif "type" in ds.model_fields_set and ds.type != record.type:
+        raise DatasourceConfigurationError("Changing datasource type requires a new configuration")
     invalidate_metadata(session, record.id)
-    update_data = ds.model_dump(exclude_unset=True, exclude={"embedding"})
+    update_data = ds.model_dump(exclude_unset=True, exclude={"embedding", "id", "oid"})
     for field, value in update_data.items():
         setattr(record, field, value)
     session.add(record)

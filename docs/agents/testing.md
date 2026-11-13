@@ -115,3 +115,7 @@ SQLBOT_PASSWORD_TEST_PG=1 uv run --no-sync pytest -q tests/test_local_password_h
 ```
 
 迁移用例分别执行历史 `001` 初始化与 `075`、以及 `075` 的重跑/中断恢复；显式 PostgreSQL 模式另从空 schema 执行全链升级、一级降级和重新升级。完整迁移测试的 `search_path` 只能包含当前测试 schema，禁止添加 `public`；共享扩展类型使用显式类型限定名。执行前检查实际连接的 schema/search_path，防止 Alembic 从共享 schema 读取版本表并更新业务表。现有 `tests/browser/password.config.mjs` 为真实改密组件的隔离浏览器回归，拦截 HTTP 响应，不等同于完整部署的 UI 验收。嵌入用例验证服务端签名/身份链，不模拟宿主浏览器 SDK 握手。交付必须区分这些层级。
+
+## 数据源配置加密回归
+
+`backend/tests/test_datasource_configuration_crypto.py` 默认执行合成配置的离线加密回归。显式设置 `SQLBOT_DATASOURCE_TEST_DATABASE_URL` 后，在指定隔离 PostgreSQL 数据库内创建并清理随机 schema，执行配置迁移和真实 FastAPI 数据源路由测试。HTTP 测试注入合成身份，保留工作空间权限检查，隔离审计写入与 embedding 调度。预览使用真实连接，查询通过正常执行函数验证。
