@@ -1057,5 +1057,27 @@
     "create": "创建",
     "to_doc": "查看 API",
     "trigger_limit": "最多支持创建 {0} 个 API Key"
+  },
+  "agent_token": {
+    "title": "Agent 令牌",
+    "info_tips": "Agent 令牌供 Claude、Codex 等外部 Agent 通过 sqlbot-mcp 查询数据，以你的身份和权限访问，只能调用 sqlbot-mcp 的查询工具。令牌只在创建时显示一次，请妥善保管；泄露后请立即停用或删除。",
+    "create": "创建令牌",
+    "name": "名称",
+    "name_placeholder": "例如：我的 Claude",
+    "name_required": "请输入令牌名称",
+    "token": "令牌",
+    "scope": "数据源范围",
+    "scope_all": "跟随我的全部数据源权限",
+    "scope_selected": "仅限选定的数据源",
+    "datasource_placeholder": "选择数据源",
+    "datasource_required": "请至少选择一个数据源",
+    "last_used": "最近使用",
+    "never_used": "从未使用",
+    "trigger_limit": "最多支持创建 {0} 个 Agent 令牌",
+    "delete_confirm": "删除后使用该令牌的 Agent 将立即无法访问，是否删除令牌：{msg}？",
+    "created_title": "令牌已创建",
+    "created_tip": "请立即复制并保存令牌，关闭后将无法再次查看：",
+    "claude_config": "在 Claude Code 中添加 MCP：",
+    "done": "我已保存"
   }
 }

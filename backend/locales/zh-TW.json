@@ -206,7 +206,10 @@
     "reset_pwd": "重置密碼",
     "update_pwd": "更新密碼",
     "update_status": "更新狀態",
-    "update_table_relation": "變更表關係"
+    "update_table_relation": "變更表關係",
+    "agent_token": "Agent 權杖",
+    "agent_mcp": "Agent 問數（sqlbot-mcp）",
+    "execute_sql": "執行 SQL"
   },
   "i18n_table_not_exist": "當前表不存在",
   "i18n_variable": {
@@ -217,5 +220,14 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "向量參數 {key} 無效。相似度與權重必須是 0～1 的有限數值，候選數量必須是正整數。"
+  },
+  "i18n_agent_token": {
+    "name_invalid": "權杖名稱不能為空，且不超過 64 個字元",
+    "workspace_required": "目前帳號未關聯工作空間",
+    "limit": "最多只能建立 {limit} 個 Agent 權杖",
+    "datasource_required": "至少選擇一個資料來源，或不限制資料來源",
+    "datasource_invalid": "所選資料來源不存在或不屬於目前工作空間",
+    "not_found": "權杖不存在",
+    "generate_failed": "權杖產生失敗，請重試"
   }
 }

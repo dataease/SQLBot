@@ -24,6 +24,8 @@ class OperationModules(str, Enum):
     THEME = "theme"  # 外观配置
     PARAMS_SETTING = "params_setting"  # 参数配置
     API_KEY = "api_key"  # api key
+    AGENT_TOKEN = "agent_token"  # sqlbot-mcp 访问令牌
+    AGENT_MCP = "agent_mcp"  # sqlbot-mcp 工具调用
     LOG_SETTING = "log_setting"  # api key
     SETTING = "setting"  # 设置
     SYSTEM_MANAGEMENT = "system_management"  # 系统管理
@@ -50,6 +52,7 @@ class OperationType(str, Enum):
     CREATE_OR_UPDATE = "create_or_update"
     ANALYSIS = "analysis"
     PREDICTION = "prediction"
+    EXECUTE_SQL = "execute_sql"
 
 class SystemLogsResource(SQLModel, table=True):
     __tablename__ = "sys_logs_resource"

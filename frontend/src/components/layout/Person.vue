@@ -15,6 +15,7 @@ import icon_done_outlined from '@/assets/svg/icon_done_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import PwdForm from './PwdForm.vue'
 import Apikey from './Apikey.vue'
+import AgentToken from './AgentToken.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { userApi } from '@/api/auth'
@@ -48,6 +49,7 @@ const platFlag = computed(() => {
 })
 const dialogVisible = ref(false)
 const apikeyDialogVisible = ref(false)
+const agentTokenDialogVisible = ref(false)
 const aboutRef = ref()
 const languageList = computed(() => [
   {
@@ -101,6 +103,10 @@ const closePwd = () => {
 }
 const openApikey = () => {
   apikeyDialogVisible.value = true
+}
+const openAgentToken = () => {
+  popoverRef.value?.hide()
+  agentTokenDialogVisible.value = true
 }
 const toAbout = () => {
   aboutRef.value?.open()
@@ -157,6 +163,12 @@ const logout = async () => {
             <icon_api_key></icon_api_key>
           </el-icon>
           <div class="datasource-name">API Key</div>
+        </div>
+        <div class="popover-item" @click="openAgentToken">
+          <el-icon size="16">
+            <icon_api_key></icon_api_key>
+          </el-icon>
+          <div class="datasource-name">{{ $t('agent_token.title') }}</div>
         </div>
         <el-popover :teleported="false" popper-class="system-language" placement="right">
           <template #reference>
@@ -219,6 +231,9 @@ const logout = async () => {
   </el-dialog>
   <el-dialog v-model="apikeyDialogVisible" title="API Key" width="840">
     <apikey v-if="apikeyDialogVisible" ref="apikeyRef" />
+  </el-dialog>
+  <el-dialog v-model="agentTokenDialogVisible" :title="t('agent_token.title')" width="960">
+    <agent-token v-if="agentTokenDialogVisible" />
   </el-dialog>
   <AboutDialog ref="aboutRef" />
 </template>

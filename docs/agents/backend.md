@@ -15,6 +15,8 @@
 - 项目同时存在 `crud` 和 `curd` 拼写；不要为统一命名制造无关重构。
 - 新 router 注册到 `backend/apps/api.py`。
 - 应用组装、中间件、MCP 和 MCP 图片静态挂载属于 `backend/main.py`；`init_fastapi_app` 在此触发 xpack 初始化，前端 dist 静态挂载与 `/xpack_static` 提取由 xpack 包内完成（见 `docs/agents/xpack.md`）。
+- MCP 服务进程（`main:mcp_app`，8001）有两个入口：`/mcp` 由 `fastapi_mcp` 把 `apps/mcp/mcp.py` 的 HTTP 接口暴露为工具（SSE）；`/sqlbot-mcp` 是 `apps/mcp/sqlbot_mcp/` 用官方 `mcp` SDK 编写的无模型服务（Streamable HTTP，无状态）。`/sqlbot-mcp` 的扩展点：新工具在 `tools/` 新建模块并登记到 `TOOL_MODULES`；鉴权、限流、审计分别实现 `Authenticator`、`RateLimiter`、`AuditSink` 并传给 `build_sqlbot_mcp`；工具只依赖 `AgentPrincipal`，不读请求头。
+- SQL 校验与方言差异分别在 `apps/db/sql_guard/`、`apps/db/dialect/`，规则见 `docs/agents/security.md`。
 - SQLModel 结构变更必须配套 Alembic 迁移；细节见 `docs/agents/migrations.md`。
 - 用户可见后端消息使用 `backend/locales/`，不要硬编码新文案。
 

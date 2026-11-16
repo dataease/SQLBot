@@ -1057,5 +1057,27 @@
     "create": "Create",
     "to_doc": "View API",
     "trigger_limit": "Supports up to {0} API Keys"
+  },
+  "agent_token": {
+    "title": "Agent tokens",
+    "info_tips": "Agent tokens let external agents such as Claude or Codex query data through sqlbot-mcp. They act with your identity and permissions and can only call sqlbot-mcp query tools. A token is shown only once when created; keep it safe and disable or delete it immediately if it leaks.",
+    "create": "Create token",
+    "name": "Name",
+    "name_placeholder": "e.g. My Claude",
+    "name_required": "Enter a token name",
+    "token": "Token",
+    "scope": "Datasources",
+    "scope_all": "All datasources I can access",
+    "scope_selected": "Selected datasources only",
+    "datasource_placeholder": "Select datasources",
+    "datasource_required": "Select at least one datasource",
+    "last_used": "Last used",
+    "never_used": "Never",
+    "trigger_limit": "You can create at most {0} agent tokens",
+    "delete_confirm": "Agents using this token will lose access immediately. Delete token {msg}?",
+    "created_title": "Token created",
+    "created_tip": "Copy and store the token now. It will not be shown again:",
+    "claude_config": "Add the MCP server in Claude Code:",
+    "done": "I have saved it"
   }
 }

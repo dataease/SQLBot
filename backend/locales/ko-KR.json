@@ -206,7 +206,10 @@
     "reset_pwd": "비밀번호 재설정",
     "update_pwd": "비밀번호 업데이트",
     "update_status": "상태 업데이트",
-    "update_table_relation": "테이블 관계 변경"
+    "update_table_relation": "테이블 관계 변경",
+    "agent_token": "에이전트 토큰",
+    "agent_mcp": "에이전트 질의 (sqlbot-mcp)",
+    "execute_sql": "SQL 실행"
   },
   "i18n_table_not_exist": "현재 테이블이 존재하지 않습니다",
   "i18n_variable": {
@@ -217,5 +220,14 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "벡터 매개변수 {key}이(가) 유효하지 않습니다. 유사도와 가중치는 0~1 사이의 유한한 수, 후보 수는 양의 정수여야 합니다."
+  },
+  "i18n_agent_token": {
+    "name_invalid": "토큰 이름은 필수이며 64자를 넘을 수 없습니다",
+    "workspace_required": "이 계정은 워크스페이스에 연결되어 있지 않습니다",
+    "limit": "에이전트 토큰은 최대 {limit}개까지 만들 수 있습니다",
+    "datasource_required": "데이터 소스를 하나 이상 선택하거나 제한하지 마세요",
+    "datasource_invalid": "선택한 데이터 소스가 없거나 현재 워크스페이스에 속하지 않습니다",
+    "not_found": "토큰을 찾을 수 없습니다",
+    "generate_failed": "토큰 생성에 실패했습니다. 다시 시도하세요"
   }
 }

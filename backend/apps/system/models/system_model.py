@@ -109,3 +109,25 @@ class ApiKeyBaseModel(SQLModel):
 
 class ApiKeyModel(SnowflakeBase, ApiKeyBaseModel, table=True):
     __tablename__ = "sys_apikey"
+
+
+class AgentTokenModel(SnowflakeBase, table=True):
+    """Bearer token an external agent uses to call the SQLBot MCP server.
+
+    The token acts as its owner (``uid``) inside one workspace (``oid``). Only a
+    SHA-256 digest of the secret is stored; ``token_prefix`` locates the row.
+    ``allowed_ds_ids`` optionally narrows the owner's datasources (JSON list of
+    ids as strings); ``None`` follows the owner's permissions.
+    """
+
+    __tablename__ = "sys_agent_token"
+    name: str = Field(max_length=255, nullable=False)
+    uid: int = Field(nullable=False, sa_type=BigInteger(), index=True)
+    oid: int = Field(nullable=False, sa_type=BigInteger())
+    token_prefix: str = Field(max_length=32, nullable=False, unique=True, index=True)
+    token_hash: str = Field(max_length=128, nullable=False)
+    status: bool = Field(default=True, nullable=False)
+    allowed_ds_ids: Optional[str] = Field(default=None, sa_type=Text(), nullable=True)
+    create_time: int = Field(default=0, sa_type=BigInteger())
+    last_used_time: Optional[int] = Field(default=None, sa_type=BigInteger(), nullable=True)
+    last_used_ip: Optional[str] = Field(default=None, max_length=64, nullable=True)
