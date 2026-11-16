@@ -46,10 +46,20 @@ def serve_controlled_process(app_name, port):
 
 
 @pytest.fixture
-def environment(tmp_path):
+def environment(tmp_path, monkeypatch):
+    import base64
+    import secrets
+
     url = make_url(os.environ["SQLBOT_TEST_DATABASE_URL"])
+    # Datasource configurations are encrypted with a per-deployment key; this
+    # process (seeding) and the child server must share one throwaway key file.
+    keys_file = tmp_path / "datasource-keys.json"
+    keys_file.write_text(json.dumps({"active": "it", "keys": {"it": base64.b64encode(
+        secrets.token_bytes(32)).decode()}}))
+    monkeypatch.setenv("SQLBOT_DATASOURCE_KEYS_FILE", str(keys_file))
     env = dict(os.environ)
     env.update({
+        "SQLBOT_DATASOURCE_KEYS_FILE": str(keys_file),
         "POSTGRES_SERVER": url.host or "127.0.0.1",
         "POSTGRES_PORT": str(url.port or 5432),
         "POSTGRES_USER": url.username or "",
@@ -115,7 +125,7 @@ def _seed(env_info):
         conf = {"host": url.host, "port": url.port or 5432, "username": url.username, "password": url.password,
                 "database": url.database, "dbSchema": "hr", "timeout": 10}
         DatasourceConf(**conf)
-        # aes_encrypt returns bytes; datasources store the base64 text.
+        # aes_encrypt returns bytes; datasources store the text form.
         configuration = aes_encrypt(json.dumps(conf)).decode()
         hr = CoreDatasource(name="hr", description="hr data", type="pg", type_name="PostgreSQL",
                             configuration=configuration, oid=10, create_by=1, status="Success",
