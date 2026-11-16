@@ -534,6 +534,16 @@
     "get_schema": "Get Schema"
   },
   "model": {
+    "discovery_loading": "Fetching...",
+    "discovery_retry": "Retry",
+    "discovery_input_hint": "Search or enter a model ID manually",
+
+    "discovery_fetch": "Get model list",
+    "discovery_success": "Fetched {count} models",
+    "discovery_empty": "No models returned. You can enter a model ID manually.",
+    "discovery_failed": "Failed to fetch models. Check the address or credentials; you can enter a model ID manually.",
+    "discovery_key_reset": "The API address changed. Re-enter the API Key if authentication is required.",
+
     "int": "Integer",
     "float": "Float",
     "string": "String",

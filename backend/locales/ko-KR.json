@@ -216,5 +216,13 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "벡터 매개변수 {key}이(가) 유효하지 않습니다. 유사도와 가중치는 0~1 사이의 유한한 수, 후보 수는 양의 정수여야 합니다."
-  }
+  },
+  "i18n_model_discovery": {
+    "address": "API 기본 주소가 잘못되었습니다.",
+    "credentials": "인증에 실패했습니다. API Key를 확인하세요.",
+    "unsupported": "이 서비스는 모델 목록을 지원하지 않습니다.",
+    "failed": "모델 목록을 가져오지 못했습니다. 모델 ID를 직접 입력할 수 있습니다.",
+    "invalid": "모델 목록 형식이 잘못되었거나 크기 제한을 초과했습니다.",
+    "timeout": "모델 목록 요청 시간이 초과되었습니다."
+}
 }

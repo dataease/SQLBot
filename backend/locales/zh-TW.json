@@ -216,5 +216,13 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "向量參數 {key} 無效。相似度與權重必須是 0～1 的有限數值，候選數量必須是正整數。"
-  }
+  },
+  "i18n_model_discovery": {
+    "address": "API 基底位址無效。",
+    "credentials": "驗證失敗，請檢查 API Key。",
+    "unsupported": "此服務不支援取得模型清單。",
+    "failed": "取得模型清單失敗，可手動輸入模型 ID。",
+    "invalid": "模型清單格式無效或超出大小限制。",
+    "timeout": "取得模型清單逾時。"
+}
 }

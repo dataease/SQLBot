@@ -216,5 +216,13 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "向量参数 {key} 无效。相似度和权重必须是 0～1 的有限数值，候选数量必须是正整数。"
-  }
+  },
+  "i18n_model_discovery": {
+    "address": "API 基地址无效。",
+    "credentials": "鉴权失败，请检查 API Key。",
+    "unsupported": "此服务不支持获取模型列表。",
+    "failed": "获取模型列表失败，可手动输入模型 ID。",
+    "invalid": "模型列表格式无效或超出大小限制。",
+    "timeout": "获取模型列表超时。"
+}
 }

@@ -155,3 +155,19 @@ npm --prefix tests/browser test -- --config=cas.config.mjs
 组件库只采纳首次校验结果，因此用原始校验函数的调用计数补充 DOM 提交断言。
 这不验证真实持久化、客户 CAS 服务或最终用户登录；后端地址、编码和票据回归在
 独立 xpack 仓库的 `tests/test_cas_urls.py`。
+
+## 通用 OpenAI 模型列表回归
+
+```sh
+npm --prefix tests/browser test -- --config=model-discovery.config.mjs
+```
+
+独立 Vite 夹具仅监听 `127.0.0.1:4231`，加载真实 `ModelForm.vue`、供应商配置和
+模型 API 封装，替换 HTTP 边界，以合成配置验证列表去重、手动输入和提交、加载期间
+禁止重复请求、地址变化清空 Key、过期响应忽略及失败/空列表保留历史模型与高级参数。
+另以真实 `Model.vue` 验证保留原抽屉尺寸、取消/保存按钮、高级设置默认展开，
+并检查新增模型列表功能的原型状态；夹具使用内存模型详情，不访问业务数据库或真实供应商，
+不替代完整登录、模型持久化和真实供应商连接验证。
+后端 `tests/test_model_discovery.py` 覆盖真实 HTTP 客户端及本机隔离服务、错误分类、
+协议/路径约束、响应上限，并提取实际 handler 配合真实权限装饰器验证身份拒绝路径；
+不代表完整应用中间件和路由注册集成验证。
