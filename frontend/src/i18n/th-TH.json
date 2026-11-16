@@ -535,6 +535,16 @@
     "get_schema": "ดึง Schema"
   },
   "model": {
+    "discovery_loading": "กำลังดึง...",
+    "discovery_retry": "ดึงอีกครั้ง",
+    "discovery_input_hint": "ค้นหาหรือป้อน ID โมเดลด้วยตนเอง",
+
+    "discovery_fetch": "ดึงรายการโมเดล",
+    "discovery_success": "ดึงโมเดลแล้ว {count} รายการ",
+    "discovery_empty": "ไม่มีโมเดลที่ส่งกลับ คุณสามารถป้อน ID โมเดลด้วยตนเองได้",
+    "discovery_failed": "ดึงรายการไม่สำเร็จ โปรดตรวจสอบที่อยู่หรือข้อมูลรับรอง หรือป้อน ID โมเดลด้วยตนเอง",
+    "discovery_key_reset": "ที่อยู่ API เปลี่ยนแล้ว หากต้องยืนยันตัวตน โปรดป้อน API Key อีกครั้ง",
+
     "int": "จำนวนเต็ม",
     "float": "เลขทศนิยม",
     "string": "ข้อความ",

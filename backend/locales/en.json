@@ -217,5 +217,13 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "Invalid embedding parameter: {key}. Similarities and weights must be finite numbers from 0 to 1; candidate counts must be positive integers."
-  }
+  },
+  "i18n_model_discovery": {
+    "address": "Invalid API base address.",
+    "credentials": "Authentication failed. Check the API Key.",
+    "unsupported": "This service does not support model listing.",
+    "failed": "Model listing failed. You can enter a model ID manually.",
+    "invalid": "The model list is invalid or exceeds the size limit.",
+    "timeout": "Fetching models timed out."
+}
 }
