@@ -153,8 +153,12 @@ _Avoid_: App Secret（验签密钥，不是透传凭据）
 _Avoid_: app_id（仅用于反查应用，无认证作用）、Assistant Certificate
 
 **MCP**:
-以独立服务进程暴露问数工具集的集成形态，调用者以真实用户身份接入，数据权限按该用户计算。
+以独立服务进程暴露问数工具集的集成形态，调用者以真实用户身份接入，数据权限按该用户计算。MCP 服务进程上有两个入口：`/mcp` 把问数流程整体暴露出去，由 SQLBot 的模型生成 SQL；`/sqlbot-mcp` 是无模型入口，由外部 Agent 自己写 SQL，SQLBot 只提供上下文和受控执行。
 _Avoid_: Ordinary Assistant、Page-embedded Assistant
+
+**Agent Token / Agent 令牌**:
+用户自助创建、供外部 Agent 调用 `/sqlbot-mcp` 的 Bearer 凭据（`sk-sqlbot-` 前缀），绑定创建者和一个工作空间，可再收窄到部分数据源；只能访问 `/sqlbot-mcp`，库中只存摘要。
+_Avoid_: API Key（可调用全部 API 的 AK/SK 签名凭据）
 
 **Dashboard / 仪表板**:
 由会话图表快照与文本、Tab 组件组成的画布；图表组件是会话记录的配置快照，数据在查看时实时查询。

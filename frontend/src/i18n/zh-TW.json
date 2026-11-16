@@ -1059,5 +1059,27 @@
     "create": "建立",
     "to_doc": "檢視 API",
     "trigger_limit": "最多支援建立 {0} 個 API Key"
+  },
+  "agent_token": {
+    "title": "Agent 權杖",
+    "info_tips": "Agent 權杖供 Claude、Codex 等外部 Agent 透過 sqlbot-mcp 查詢資料，以你的身分和權限存取，只能呼叫 sqlbot-mcp 的查詢工具。權杖只在建立時顯示一次，請妥善保管；外洩後請立即停用或刪除。",
+    "create": "建立權杖",
+    "name": "名稱",
+    "name_placeholder": "例如：我的 Claude",
+    "name_required": "請輸入權杖名稱",
+    "token": "權杖",
+    "scope": "資料來源範圍",
+    "scope_all": "跟隨我的全部資料來源權限",
+    "scope_selected": "僅限選定的資料來源",
+    "datasource_placeholder": "選擇資料來源",
+    "datasource_required": "請至少選擇一個資料來源",
+    "last_used": "最近使用",
+    "never_used": "從未使用",
+    "trigger_limit": "最多支援建立 {0} 個 Agent 權杖",
+    "delete_confirm": "刪除後使用該權杖的 Agent 將立即無法存取，是否刪除權杖：{msg}？",
+    "created_title": "權杖已建立",
+    "created_tip": "請立即複製並保存權杖，關閉後將無法再次查看：",
+    "claude_config": "在 Claude Code 中新增 MCP：",
+    "done": "我已保存"
   }
 }

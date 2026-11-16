@@ -24,6 +24,7 @@ from apps.datasource.utils.configuration_migration import (
 from apps.datasource.utils.utils import initialize_datasource_keys
 from common.core.db import engine
 from apps.api import api_router
+from apps.mcp.sqlbot_mcp.server import DEFAULT_MOUNT_PATH as SQLBOT_MCP_PATH, build_sqlbot_mcp, mount_sqlbot_mcp
 from apps.swagger.i18n import PLACEHOLDER_PREFIX, tags_metadata, i18n_list
 from apps.swagger.i18n import get_translation, DEFAULT_LANG
 from apps.system.crud.aimodel_manage import async_model_info
@@ -220,7 +221,14 @@ if settings.SQLBOT_DOC_ENABLED:
         )
 
 
-mcp_app = FastAPI()
+@asynccontextmanager
+async def mcp_lifespan(_app: FastAPI):
+    # sqlbot-mcp (Streamable HTTP) needs its session manager running.
+    async with sqlbot_mcp_lifespan():
+        yield
+
+
+mcp_app = FastAPI(lifespan=mcp_lifespan)
 mcp_app.add_middleware(McpClientIpForwardMiddleware)
 # mcp server, images path
 images_path = settings.MCP_IMAGE_PATH
@@ -239,6 +247,11 @@ mcp = FastApiMCP(
 )
 
 mcp.mount(mcp_app)
+
+# sqlbot-mcp: model-free tools for external agents, authenticated by agent
+# tokens (Authorization: Bearer sk-sqlbot-...). Independent of the legacy /mcp.
+sqlbot_mcp_server = build_sqlbot_mcp()
+sqlbot_mcp_lifespan = mount_sqlbot_mcp(mcp_app, sqlbot_mcp_server, SQLBOT_MCP_PATH)
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:

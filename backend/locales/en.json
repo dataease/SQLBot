@@ -207,7 +207,10 @@
     "reset_pwd": "Reset Password",
     "update_pwd": "Update Password",
     "update_status": "Update Status",
-    "update_table_relation": "Change Table Relation"
+    "update_table_relation": "Change Table Relation",
+    "agent_token": "Agent token",
+    "agent_mcp": "Agent query (sqlbot-mcp)",
+    "execute_sql": "Execute SQL"
   },
   "i18n_table_not_exist": "Table not exist",
   "i18n_variable": {
@@ -218,5 +221,14 @@
   },
   "i18n_parameter": {
     "invalid_embedding_parameter": "Invalid embedding parameter: {key}. Similarities and weights must be finite numbers from 0 to 1; candidate counts must be positive integers."
+  },
+  "i18n_agent_token": {
+    "name_invalid": "Token name is required and must be at most 64 characters",
+    "workspace_required": "This account is not associated with a workspace",
+    "limit": "You can create at most {limit} agent tokens",
+    "datasource_required": "Select at least one datasource, or do not restrict datasources",
+    "datasource_invalid": "A selected datasource does not exist or is not in the current workspace",
+    "not_found": "Token not found",
+    "generate_failed": "Failed to generate a token, please retry"
   }
 }

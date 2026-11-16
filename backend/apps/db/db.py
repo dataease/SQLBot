@@ -24,6 +24,10 @@ from sqlalchemy.orm import sessionmaker
 from apps.datasource.models.datasource import DatasourceConf, CoreDatasource, TableSchema, ColumnSchema
 from apps.datasource.utils.utils import aes_decrypt
 from apps.db.constant import DB, ConnectType
+from apps.db.dialect import dialect_registry
+from apps.db.sql_guard import BASIC as GUARD_BASIC, SqlRejected, build_context as build_guard_context, \
+    get_pipeline as get_guard_pipeline
+from apps.db.sql_guard import basic as sql_guard_basic
 from apps.db.engine import get_engine_config
 from apps.system.crud.assistant import get_out_ds_conf
 from apps.system.schemas.system_schema import AssistantOutDsSchema
@@ -877,7 +881,31 @@ def convert_mssql_value(value, col_idx, string_col_idx_set, is_mssql):
     return value
 
 
-def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=False):
+def _fetch_rows(cursor_or_result, max_rows: Optional[int]):
+    """fetchall()，或在给定上限时最多取 max_rows 行（用于不能改写 LIMIT 的方言）。"""
+    if max_rows is None:
+        return cursor_or_result.fetchall()
+    return cursor_or_result.fetchmany(max_rows)
+
+
+def _apply_statement_timeout(session, ds, timeout_seconds: Optional[int]):
+    """按方言策略设置单条语句超时；返回恢复回调。方言不支持时返回 None 且不报错。"""
+    if not timeout_seconds:
+        return None
+    policy = dialect_registry.find(ds.type)
+    if policy is None or policy.apply_timeout is None:
+        SQLBotLogUtil.warning(f"Statement timeout is not supported for datasource type {ds.type}")
+        return None
+    return policy.apply_timeout(session.connection(), int(timeout_seconds))
+
+
+def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=False,
+             timeout_seconds: Optional[int] = None, max_rows: Optional[int] = None):
+    """执行只读 SQL。
+
+    timeout_seconds：按方言策略设置单条语句超时（仅 sqlalchemy 连接、且方言支持时生效）。
+    max_rows：最多读取的行数，用于无法通过改写 SQL 限行的方言；不传则读取全部（原有行为）。
+    """
     while sql.endswith(';'):
         sql = sql[:-1]
     # check execute sql only contain read operations
@@ -890,150 +918,120 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
         with get_session(ds) as session:
             # 获取当前数据库方言
             dialect_name = session.bind.dialect.name
-
-            with session.execute(text(sql)) as result:
-                try:
-                    columns = result.keys()._keys if origin_column else [item.lower() for item in result.keys()._keys]
-
-                    # SQL Server varchar 等字符串列需做 GBK 编码转换
-                    is_mssql = dialect_name == 'mssql'
-                    string_cols = []
-
-                    fields_info = []
-
-                    for col_idx, col_name in enumerate(columns):
-                        is_numeric = False
-                        try:
-                            type_code = result.cursor.description[col_idx][1]
-                            is_numeric = is_numeric_type_code(type_code, dialect_name)
-                            if is_mssql and is_mssql_string_type_code(type_code):
-                                string_cols.append(col_idx)
-                        except (IndexError, AttributeError):
-                            pass
-
-                        fields_info.append({
-                            "name": col_name,
-                            "is_numeric": is_numeric
-                        })
-
-                    string_col_idx_set = set(string_cols)
-
-                    res = result.fetchall()
-                    result_list = [
-                        {str(columns[i]): convert_mssql_value(convert_value(value), i, string_col_idx_set, is_mssql)
-                         for i, value in enumerate(tuple_item)} for tuple_item in
-                        res
-                    ]
-                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                            "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
-                except Exception as ex:
-                    raise ParseSQLResultError(str(ex))
-    else:
-        conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
-        # extra_config_dict = get_extra_config(conf)
-        if equals_ignore_case(ds.type, 'dm'):
-            with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
-                try:
-                    cursor.execute(sql, timeout=conf.timeout)
-                    res = cursor.fetchall()
-                    columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
-                                                                                                field in
-                                                                                                cursor.description]
-                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'dm')
-                    result_list = [
-                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
-                        res
-                    ]
-                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                            "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
-                except Exception as ex:
-                    raise ParseSQLResultError(str(ex))
-        elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
-            with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
-                try:
-                    cursor.execute(sql)
-                    res = cursor.fetchall()
-                    columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
-                                                                                                field in
-                                                                                                cursor.description]
-                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'mysql')
-                    result_list = [
-                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
-                        res
-                    ]
-                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                            "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
-                except Exception as ex:
-                    raise ParseSQLResultError(str(ex))
-        elif equals_ignore_case(ds.type, 'redshift'):
-            with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
-                try:
-                    cursor.execute(sql)
-                    res = cursor.fetchall()
-                    columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
-                                                                                                field in
-                                                                                                cursor.description]
-                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'postgresql')
-                    result_list = [
-                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
-                        res
-                    ]
-                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                            "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
-                except Exception as ex:
-                    raise ParseSQLResultError(str(ex))
-        elif equals_ignore_case(ds.type, 'kingbase'):
-            with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
-                try:
-                    cursor.execute(sql)
-                    res = cursor.fetchall()
-                    columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
-                                                                                                field in
-                                                                                                cursor.description]
-                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'postgresql')
-                    result_list = [
-                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
-                        res
-                    ]
-                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                            "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
-                except Exception as ex:
-                    raise ParseSQLResultError(str(ex))
-        elif equals_ignore_case(ds.type, 'es'):
+            restore_timeout = _apply_statement_timeout(session, ds, timeout_seconds)
             try:
-                res, raw_columns = get_es_data_by_http(conf, sql)
-                columns = [field.get('name') for field in raw_columns] if origin_column else [field.get('name').lower()
-                                                                                              for
-                                                                                              field in
-                                                                                              raw_columns]
-                fields_info = build_fields_info_from_es(raw_columns, origin_column)
-                result_list = [
-                    {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
-                    res
-                ]
-                return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                        "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
-            except Exception as ex:
-                raise Exception(str(ex))
-        elif equals_ignore_case(ds.type, 'hive'):
-            with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
+                return _exec_sqlalchemy(session, sql, dialect_name, origin_column, max_rows)
+            finally:
+                if restore_timeout is not None:
+                    try:
+                        restore_timeout()
+                    except Exception:
+                        SQLBotLogUtil.exception("Failed to restore statement timeout")
+    return _exec_driver(ds, sql, origin_column, max_rows)
+
+
+def _encode_sql(sql: str) -> str:
+    return bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))
+
+
+def _exec_sqlalchemy(session, sql: str, dialect_name: str, origin_column, max_rows: Optional[int]):
+    with session.execute(text(sql)) as result:
+        try:
+            columns = result.keys()._keys if origin_column else [item.lower() for item in result.keys()._keys]
+
+            # SQL Server varchar 等字符串列需做 GBK 编码转换
+            is_mssql = dialect_name == 'mssql'
+            string_cols = []
+
+            fields_info = []
+
+            for col_idx, col_name in enumerate(columns):
+                is_numeric = False
                 try:
-                    # Hive uses backticks for identifiers; normalize quoted identifiers as a compatibility fallback.
-                    hive_sql = re.sub(r'"([A-Za-z_][A-Za-z0-9_]*)"', r'`\1`', sql)
-                    cursor.execute(hive_sql)
-                    res = cursor.fetchall()
-                    columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
-                                                                                                field in
-                                                                                                cursor.description]
-                    fields_info = build_fields_info_from_cursor(cursor, origin_column, 'hive')
-                    result_list = [
-                        {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in
-                        res
-                    ]
-                    return {"fields": columns, "data": result_list, "fields_info": fields_info,
-                            "sql": bytes.decode(base64.b64encode(bytes(hive_sql, 'utf-8')))}
-                except Exception as ex:
-                    raise ParseSQLResultError(str(ex))
+                    type_code = result.cursor.description[col_idx][1]
+                    is_numeric = is_numeric_type_code(type_code, dialect_name)
+                    if is_mssql and is_mssql_string_type_code(type_code):
+                        string_cols.append(col_idx)
+                except (IndexError, AttributeError):
+                    pass
+
+                fields_info.append({
+                    "name": col_name,
+                    "is_numeric": is_numeric
+                })
+
+            string_col_idx_set = set(string_cols)
+
+            res = _fetch_rows(result, max_rows)
+            result_list = [
+                {str(columns[i]): convert_mssql_value(convert_value(value), i, string_col_idx_set, is_mssql)
+                 for i, value in enumerate(tuple_item)} for tuple_item in
+                res
+            ]
+            return {"fields": columns, "data": result_list, "fields_info": fields_info, "sql": _encode_sql(sql)}
+        except Exception as ex:
+            raise ParseSQLResultError(str(ex))
+
+
+def _hive_sql(sql: str) -> str:
+    # Hive uses backticks for identifiers; normalize quoted identifiers as a compatibility fallback.
+    return re.sub(r'"([A-Za-z_][A-Za-z0-9_]*)"', r'`\1`', sql)
+
+
+# py_driver 数据源的执行差异：(字段类型码族, SQL 预处理, 是否传驱动级超时)。
+# 新增 py_driver 数据源时在此登记一行，不必复制执行流程。
+_DRIVER_EXEC_PROFILES = {
+    'dm': ('dm', None, True),
+    'doris': ('mysql', None, False),
+    'starrocks': ('mysql', None, False),
+    'redshift': ('postgresql', None, False),
+    'kingbase': ('postgresql', None, False),
+    'hive': ('hive', _hive_sql, False),
+}
+
+
+def _exec_driver(ds, sql: str, origin_column, max_rows: Optional[int]):
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
+    ds_key = (ds.type or '').lower()
+    if ds_key == 'es':
+        try:
+            res, raw_columns = get_es_data_by_http(conf, sql)
+            if max_rows is not None:
+                res = res[:max_rows]
+            columns = [field.get('name') for field in raw_columns] if origin_column else [field.get('name').lower()
+                                                                                          for field in raw_columns]
+            fields_info = build_fields_info_from_es(raw_columns, origin_column)
+            result_list = [
+                {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in res
+            ]
+            return {"fields": columns, "data": result_list, "fields_info": fields_info, "sql": _encode_sql(sql)}
+        except Exception as ex:
+            raise Exception(str(ex))
+
+    profile = _DRIVER_EXEC_PROFILES.get(ds_key)
+    if profile is None:
+        # 与旧实现一致：未登记的 py_driver 类型不执行
+        return None
+    type_family, prepare_sql, driver_timeout = profile
+    exec_sql_text = prepare_sql(sql) if prepare_sql else sql
+    with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
+        try:
+            if driver_timeout:
+                cursor.execute(exec_sql_text, timeout=conf.timeout)
+            else:
+                cursor.execute(exec_sql_text)
+            res = _fetch_rows(cursor, max_rows)
+            columns = [field[0] for field in cursor.description] if origin_column else [field[0].lower() for
+                                                                                        field in
+                                                                                        cursor.description]
+            fields_info = build_fields_info_from_cursor(cursor, origin_column, type_family)
+            result_list = [
+                {str(columns[i]): convert_value(value) for i, value in enumerate(tuple_item)} for tuple_item in res
+            ]
+            return {"fields": columns, "data": result_list, "fields_info": fields_info,
+                    "sql": _encode_sql(exec_sql_text)}
+        except Exception as ex:
+            raise ParseSQLResultError(str(ex))
 
 
 def build_fields_info_from_cursor(cursor, origin_column, db_type='postgresql'):
@@ -1138,58 +1136,34 @@ def build_fields_info_from_es(raw_columns, origin_column):
 
 
 def get_sqlglot_dialect(ds_type: str) -> str:
-    """根据数据源类型获取 sqlglot dialect"""
-    if equals_ignore_case(ds_type, 'mysql', 'doris', 'starrocks'):
-        return 'mysql'
-    elif equals_ignore_case(ds_type, 'sqlServer'):
-        return 'tsql'
-    elif equals_ignore_case(ds_type, 'hive'):
-        return 'hive'
-    return None
+    """根据数据源类型获取 sqlglot dialect（来自 apps/db/dialect 的方言策略注册表）"""
+    policy = dialect_registry.find(ds_type)
+    return policy.sqlglot_dialect if policy else None
 
 
-# 通用危险函数（适用于所有数据库）
-COMMON_DANGEROUS_FUNCTIONS = {'version', 'current_user', 'user', 'database'}
+# 通用危险函数（适用于所有数据库）；规则本体在 apps/db/sql_guard/basic.py
+COMMON_DANGEROUS_FUNCTIONS = set(sql_guard_basic.COMMON_DANGEROUS_FUNCTIONS)
 
-# 特定数据库的危险函数
-# key 必须与 DB 枚举的 type 值一致（见 apps/db/constant.py），例如 PostgreSQL 的 type 是 'pg'，
-# 而不是 'postgresql'；写成后者会让该数据源的危险函数规则整条失效。
+# 特定数据库的危险函数，由方言策略注册表派生（新增数据源类型请注册 DialectPolicy，
+# 不要直接改这里）。key 与 DB 枚举的 type 值一致（小写）。
 DS_SPECIFIC_DANGEROUS_FUNCTIONS = {
-    'mysql': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
-    'doris': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
-    'starrocks': {'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE'},
-    'pg': {
-        # 服务端文件读写族：只读连接也可能借此读到数据库主机的本地文件
-        'pg_read_file',
-        'pg_read_binary_file',
-        'pg_ls_dir',
-        'pg_stat_file',
-        'pg_write_file',
-        'lo_import',
-        'lo_export',
-    },
-    'sqlserver': {'EXEC', 'xp_cmdshell', 'sp_executesql'},
-    'oracle': {'UTL_FILE', 'DBMS_PIPE', 'DBMS_LOCK'},
-    'hive': {'ADD FILE', 'ADD JAR'},
+    key: set(dialect_registry.get(key).dangerous_functions)
+    for key in sorted(dialect_registry.types())
+    if dialect_registry.get(key).dangerous_functions
 }
 
 # 危险模式正则表达式（用于检查特殊语法）
 import re
 
-DANGEROUS_PATTERNS = [
-    r'\bINTO\s+OUTFILE\b',
-    r'\bINTO\s+DUMPFILE\b',
-    r'\bEXEC\s*\(',
-    r'\bCOPY\s+.*\bTO\s+PROGRAM\b',
-]
+DANGEROUS_PATTERNS = list(sql_guard_basic.DANGEROUS_PATTERNS)
 
 
 def get_dangerous_functions(ds_type: str) -> set:
     """获取危险函数（通用 + 特定数据源）"""
     functions = COMMON_DANGEROUS_FUNCTIONS.copy()
-    ds_key = ds_type.lower() if ds_type else ''
-    if ds_key in DS_SPECIFIC_DANGEROUS_FUNCTIONS:
-        functions.update(DS_SPECIFIC_DANGEROUS_FUNCTIONS[ds_key])
+    policy = dialect_registry.find(ds_type)
+    if policy:
+        functions.update(policy.dangerous_functions)
     return functions
 
 
@@ -1206,70 +1180,25 @@ def check_dangerous_functions(statements: list, ds_type: str) -> bool:
     return True
 
 
+# 规则拒绝（可展示给调用方）时返回 (False, reason)；以下 code 表示无法完成检查，
+# 沿用旧行为抛出 ValueError("Parse SQL Error: ...")。
+_GUARD_ERROR_CODES = {"parse_error", "check_error", "rewrite_error", "unsupported_dialect"}
+
+
 def check_sql_read(sql: str, ds: CoreDatasource | AssistantOutDsSchema) -> tuple[bool, str]:
     """
-    检查 SQL 是否为安全的只读查询
-    返回: (是否安全, 错误原因)
+    检查 SQL 是否为安全的只读查询（apps/db/sql_guard 的 basic 规则集）
+    返回: (是否安全, 错误原因)；无法解析时抛出 ValueError
     """
     try:
-        normalized_sql = sql.strip().lstrip("(").strip()
-        first_keyword = normalized_sql.split(None, 1)[0].upper() if normalized_sql else ""
-
-        # 根据配置决定是否允许元数据查询
-        if settings.SQLBOT_ALLOW_METADATA_QUERIES:
-            allowed_read_commands = {"SELECT", "WITH", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"}
-        else:
-            allowed_read_commands = {"SELECT", "WITH"}
-
-        denied_write_commands = {
-            "INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER",
-            "TRUNCATE", "MERGE", "COPY", "REPLACE", "GRANT", "REVOKE",
-            "USE", "SET", "CALL"
-        }
-
-        if not first_keyword:
-            raise ValueError("Parse SQL Error")
-        if first_keyword in denied_write_commands:
-            return False, f"Write operation '{first_keyword}' is not allowed"
-
-        # 1. 使用正则检查特殊模式
-        for pattern in DANGEROUS_PATTERNS:
-            if re.search(pattern, sql, re.IGNORECASE):
-                return False, f"SQL contains dangerous pattern: {pattern}"
-
-        dialect = get_sqlglot_dialect(ds.type)
-        statements = sqlglot.parse(sql, dialect=dialect)
-
-        if not statements:
-            raise ValueError("Parse SQL Error")
-
-        # 2. 使用 sqlglot 检查函数调用
-        dangerous_functions = get_dangerous_functions(ds.type)
-        dangerous_functions_upper = {f.upper() for f in dangerous_functions}
-        for stmt in statements:
-            if stmt:
-                for func in stmt.find_all(exp.Anonymous):
-                    if func.name.upper() in dangerous_functions_upper:
-                        return False, f"SQL contains dangerous function: {func.name}"
-
-        # 3. 检查写操作类型
-        write_types = (
-            exp.Insert, exp.Update, exp.Delete,
-            exp.Create, exp.Drop, exp.Alter,
-            exp.Merge, exp.Copy
-        )
-
-        for stmt in statements:
-            if stmt is None:
-                continue
-            if isinstance(stmt, write_types):
-                return False, f"SQL contains write operation: {type(stmt).__name__}"
-
-        if first_keyword not in allowed_read_commands:
-            return False, f"SQL command '{first_keyword}' is not allowed. Only SELECT and WITH are permitted"
-
+        ctx = build_guard_context(sql, ds.type, allow_metadata_queries=settings.SQLBOT_ALLOW_METADATA_QUERIES)
+        get_guard_pipeline(GUARD_BASIC).run(ctx)
         return True, ""
-
+    except SqlRejected as e:
+        if e.code in _GUARD_ERROR_CODES:
+            detail = e.reason
+            raise ValueError(detail if detail.startswith("Parse SQL Error: ") else f"Parse SQL Error: {detail}")
+        return False, e.reason
     except Exception as e:
         raise ValueError(f"Parse SQL Error: {e}")
 

@@ -14,6 +14,8 @@ SQLBOT_SKIP_TABLE_CHECK=true
 
 开启后仅跳过表白名单检查，可能允许查询数据源账号可读取的未勾选表。真实表名提取始终执行，无法提取表名时仍拒绝 SQL。SQL 只读、危险函数、元数据查询控制、行权限处理及行数限制仍按原有流程执行。
 
+该开关只影响网页问数和 `/mcp` 的模型生成 SQL；`/sqlbot-mcp` 的外部提交 SQL 始终做表和列检查。
+
 ## 数据源存储密钥
 
 默认无需配置。API 首次启动时会在持久化目录 `UPLOAD_DIR/.secrets/datasource-keys.json` 自动生成部署专用密钥，默认完整路径为 `/opt/sqlbot/data/file/.secrets/datasource-keys.json`。保留现有 `file` 数据卷，API 和 MCP 使用同一文件。若数据库已有新版密文而密钥文件缺失，启动会停止，请恢复原密钥文件。
@@ -36,3 +38,21 @@ python3 -c 'import base64,json,secrets; key=base64.b64encode(secrets.token_bytes
 轮换时先停止该部署的 API 和 MCP，保留旧密钥，加入新密钥并将 `active` 切换到新标识，原子替换文件。启动 API，等待现有配置重新加密，再恢复其他进程。用当前密钥文件验证数据库备份恢复后，可从在线文件移除旧密钥。历史备份所需密钥应离线保留至备份过期。恢复时先准备匹配该备份的密钥文件，再启动 API。已暴露的旧 ECB 密文仍可解密，应轮换对应数据源自身的凭据。
 
 浏览器写入仍兼容旧请求编码，部署通过 HTTPS 保护传输。数据源列表和写入响应省略配置，授权编辑详情仅提供表单字段，密码和额外连接参数留空表示沿用。连接目标变化时需要重新提供已保存的敏感连接字段。API 客户端可发送显式空字符串清除密码或额外连接参数。
+
+## sqlbot-mcp（无模型 Agent 入口）
+
+`/sqlbot-mcp` 让 Claude、Codex 等外部 Agent 自己写 SQL，SQLBot 不调用模型，只提供数据源、表结构、术语、SQL 示例，并在行列权限、只读校验、语句超时和行数上限下执行。它和 `/mcp` 跑在同一个 MCP 进程上（`uvicorn main:mcp_app --port 8001`）。
+
+1. 在网页右上角个人菜单打开“Agent 令牌”，创建令牌（可限定数据源）。令牌只显示一次，以创建者身份和当前工作空间生效。
+2. 在 Agent 中添加 MCP（Streamable HTTP）：
+
+   ```bash
+   claude mcp add --transport http sqlbot-mcp http://<host>:8001/sqlbot-mcp \
+     --header "Authorization: Bearer sk-sqlbot-..."
+   ```
+
+   只支持 stdio 的客户端可用 `npx mcp-remote http://<host>:8001/sqlbot-mcp --header "Authorization: Bearer sk-sqlbot-..."` 桥接。
+
+工具：`agent_list_datasources`、`agent_get_query_context`、`agent_list_tables`、`agent_describe_tables`、`agent_execute_sql`。执行记录写入创建者的会话历史（来源为 MCP），调用写入操作日志。
+
+部署注意：8001 端口应只对内网或可信网络开放；按令牌限流使用 `security_config` 的 `rate_limit_per_minute`（进程内计数，多 worker 时每个 worker 单独计数）；语句超时目前在 PostgreSQL / Excel / MySQL 生效，其他数据源依赖连接配置的超时；数据源连接账号建议只授予只读权限。

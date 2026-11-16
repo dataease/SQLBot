@@ -1059,5 +1059,27 @@
     "create": "생성",
     "to_doc": "API 보기",
     "trigger_limit": "최대 {0}개의 API 키 생성 지원"
+  },
+  "agent_token": {
+    "title": "에이전트 토큰",
+    "info_tips": "에이전트 토큰을 사용하면 Claude, Codex 같은 외부 에이전트가 sqlbot-mcp로 데이터를 조회할 수 있습니다. 토큰은 사용자의 신원과 권한으로 동작하며 sqlbot-mcp 조회 도구만 호출할 수 있습니다. 토큰은 생성할 때 한 번만 표시되므로 안전하게 보관하고, 유출되면 즉시 비활성화하거나 삭제하세요.",
+    "create": "토큰 생성",
+    "name": "이름",
+    "name_placeholder": "예: 내 Claude",
+    "name_required": "토큰 이름을 입력하세요",
+    "token": "토큰",
+    "scope": "데이터 소스 범위",
+    "scope_all": "내가 접근할 수 있는 모든 데이터 소스",
+    "scope_selected": "선택한 데이터 소스만",
+    "datasource_placeholder": "데이터 소스 선택",
+    "datasource_required": "데이터 소스를 하나 이상 선택하세요",
+    "last_used": "마지막 사용",
+    "never_used": "사용 기록 없음",
+    "trigger_limit": "에이전트 토큰은 최대 {0}개까지 만들 수 있습니다",
+    "delete_confirm": "이 토큰을 사용하는 에이전트는 즉시 접근할 수 없게 됩니다. 토큰 {msg}을(를) 삭제할까요?",
+    "created_title": "토큰이 생성되었습니다",
+    "created_tip": "지금 토큰을 복사해 보관하세요. 다시 표시되지 않습니다:",
+    "claude_config": "Claude Code에 MCP 서버 추가:",
+    "done": "저장했습니다"
   }
 }
