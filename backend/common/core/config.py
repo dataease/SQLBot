@@ -113,6 +113,12 @@ class Settings(BaseSettings):
     GENERATE_SQL_QUERY_LIMIT_ENABLED: bool = True
     GENERATE_SQL_QUERY_HISTORY_ROUND_COUNT: int = 3
 
+    # 问数完成后自动生成分析结论；分析中的派生数值先由补充 SQL 计算
+    CHAT_AUTO_ANALYSIS_ENABLED: bool = True
+    ANALYSIS_SUPPLEMENTARY_QUERY_MAX: int = 3  # 每次分析最多执行的补充查询数，0 表示不补充
+    ANALYSIS_PLAN_DATA_ROWS: int = 50  # 规划补充查询时提供给模型的结果行数上限
+    ANALYSIS_SUPPLEMENTARY_TIMEOUT: float = 120  # 等待补充计算的最长秒数，超时则不使用补充结果
+
     # 安全配置：是否允许元数据查询（SHOW/DESCRIBE/DESC/EXPLAIN）
     # 默认关闭，防止通过元数据查询泄露数据库结构
     SQLBOT_ALLOW_METADATA_QUERIES: bool = False
@@ -147,6 +153,7 @@ class Settings(BaseSettings):
                      'TABLE_EMBEDDING_ENABLED',
                      'TABLE_EMBEDDING_KEYWORD_ENABLED',
                      'SAMPLE_DATA_ENABLED',
+                     'CHAT_AUTO_ANALYSIS_ENABLED',
                      mode='before')
     @classmethod
     def lowercase_bool(cls, v: Any) -> Any:

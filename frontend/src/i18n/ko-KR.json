@@ -877,7 +877,9 @@
       "FILTER_SQL_EXAMPLE": "SQL 예시 매칭",
       "FILTER_CUSTOM_PROMPT": "사용자 정의 프롬프트 매칭",
       "EXECUTE_SQL": "SQL 실행",
-      "GENERATE_PICTURE": "이미지 생성"
+      "GENERATE_PICTURE": "이미지 생성",
+      "ANALYSIS_PLAN": "분석 계산 계획",
+      "ANALYSIS_QUERY": "분석 계산 SQL 실행"
     },
     "log_system": "대화 템플릿",
     "log_question": "현재 질문",

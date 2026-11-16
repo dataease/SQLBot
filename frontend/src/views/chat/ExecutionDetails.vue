@@ -134,7 +134,11 @@ defineExpose({
             :item="ele"
             :error="error"
           />
-          <LogDataQuery v-else-if="ele.operate_key === 'EXECUTE_SQL'" :item="ele" :error="error" />
+          <LogDataQuery
+            v-else-if="ele.operate_key === 'EXECUTE_SQL' || ele.operate_key === 'ANALYSIS_QUERY'"
+            :item="ele"
+            :error="error"
+          />
           <LogGeneratePicture
             v-else-if="ele.operate_key === 'GENERATE_PICTURE'"
             :item="ele"

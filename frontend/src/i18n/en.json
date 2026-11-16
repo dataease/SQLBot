@@ -877,7 +877,9 @@
       "FILTER_SQL_EXAMPLE": "Match SQL Examples",
       "FILTER_CUSTOM_PROMPT": "Match Custom Prompts",
       "EXECUTE_SQL": "Execute SQL",
-      "GENERATE_PICTURE": "Generate Picture"
+      "GENERATE_PICTURE": "Generate Picture",
+      "ANALYSIS_PLAN": "Plan Analysis Calculations",
+      "ANALYSIS_QUERY": "Execute Analysis SQL"
     },
     "log_system": "Conversation Template",
     "log_question": "Current Question",

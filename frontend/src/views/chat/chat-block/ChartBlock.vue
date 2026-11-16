@@ -153,6 +153,19 @@ const chartType = computed<ChartTypes>({
   },
 })
 
+// 表格的单元格和表头固定 30px 一行（S2 默认值）；行数少时按内容收缩高度，避免大片空白
+const TABLE_ROW_HEIGHT = 30
+const TABLE_EXTRA_SPACE = 18 // 边框和横向滚动条的空间
+const CHART_BLOCK_HEIGHT = 352
+const chartBlockStyle = computed(() => {
+  const rowCount = data.value?.length ?? 0
+  if (props.enlarge || chartType.value !== 'table' || rowCount === 0) {
+    return undefined
+  }
+  const contentHeight = (rowCount + 1) * TABLE_ROW_HEIGHT + TABLE_EXTRA_SPACE
+  return { height: `${Math.min(contentHeight, CHART_BLOCK_HEIGHT)}px` }
+})
+
 const chartTypeList = computed(() => {
   const _list = []
   if (chartObject.value) {
@@ -610,7 +623,7 @@ function getBaseAxis() {
     </div>
 
     <template v-if="message?.record?.chart">
-      <div class="chart-block">
+      <div class="chart-block" :style="chartBlockStyle">
         <DisplayChartBlock
           :id="chartId"
           ref="chartRef"

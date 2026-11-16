@@ -1,93 +1,105 @@
 <p align="center"><img src="https://resource-fit2cloud-com.oss-cn-hangzhou.aliyuncs.com/sqlbot/sqlbot.png" alt="SQLBot" width="300" /></p>
-<h3 align="center">基于大模型和 RAG 的智能问数系统</h3>
-
-<p align="center">
-  <a href="https://trendshift.io/repositories/14540" target="_blank"><img src="https://trendshift.io/api/badge/repositories/14540" alt="dataease%2FSQLBot | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/dataease/SQLBot/releases/latest"><img src="https://img.shields.io/github/v/release/dataease/SQLBot" alt="Latest release"></a>
-  <a href="https://github.com/dataease/SQLBot"><img src="https://img.shields.io/github/stars/dataease/SQLBot?color=%231890FF&style=flat-square" alt="Stars"></a>    
-  <a href="https://hub.docker.com/r/dataease/SQLbot"><img src="https://img.shields.io/docker/pulls/dataease/sqlbot?label=downloads" alt="Download"></a><br/>
-</p>
-
-<p align="center">
-  <a href="README.md"><img alt="中文(简体)" src="https://img.shields.io/badge/中文(简体)-d9d9d9"></a>
-  <a href="/docs/README.en.md"><img alt="English" src="https://img.shields.io/badge/English-d9d9d9"></a>
-</p>
+<h3 align="center">基于大模型和 RAG 的智能问数系统（二次开发版）</h3>
 <hr/>
 
-SQLBot 是一款基于大语言模型和 RAG 的智能问数系统，由 DataEase 开源项目组匠心出品。借助 SQLBot，用户可以实现对话式数据分析（ChatBI），快速提炼获取所需的数据信息及可视化图表，并且支持进一步开展智能分析。
+本项目基于开源项目 [dataease/SQLBot](https://github.com/dataease/SQLBot) 二次开发。在原有"自然语言提问 → 生成 SQL → 返回数据和图表"的基础上，增加了问数后自动生成分析结论的能力，分析中用到的派生数值由数据库计算，不由大模型心算。
 
-## 工作原理
+## 二次开发内容
 
-<img width="1153" height="563" alt="image" src="https://github.com/user-attachments/assets/8bc40db1-2602-4b68-9802-b9be36281967" />
+| 功能 | 说明 |
+| --- | --- |
+| 问数后自动分析 | 问数完成后自动生成分析结论，不需要再手动点击"数据分析"按钮。可以用 `CHAT_AUTO_ANALYSIS_ENABLED` 关闭。 |
+| 补充计算 SQL | 生成分析前，大模型先规划占比、环比、合计这类派生指标的补充查询（最多 `ANALYSIS_SUPPLEMENTARY_QUERY_MAX` 条）。补充查询只能访问本次问数已授权的表，并且只允许只读语句，校验通过后在数据库执行，分析结论引用执行结果，减少数值错误。 |
+| 执行过程可见 | "执行详情"里新增"规划分析计算"和"执行分析计算 SQL"两个步骤，分析过程的思考内容也会展示出来。 |
+| 切换会话不丢进度 | 回答生成过程中切换到其他会话再切回来，页面会继续轮询并显示后端的执行进度，直到回答完成。 |
+| 失败提示 | 分析生成失败时给出明确的错误信息（已覆盖中、英、繁中、韩、泰五种语言）。 |
 
-## 核心优势
+主要改动位置：`backend/apps/chat/task/llm.py`、`backend/templates/template.yaml`、`backend/common/core/config.py`、`frontend/src/views/chat/`。单元测试位于 `backend/tests/test_chat_auto_analysis.py`。
 
-- **开箱即用**：仅需简单配置大模型与数据源，无需复杂开发，即可快速开启智能问数；依托大模型自然语言理解与 SQL 生成能力，结合 RAG 技术，实现高质量 Text-to-SQL 转换。
-- **安全可控**：提供工作空间级资源隔离机制，构建清晰数据边界，保障数据访问安全；支持细粒度数据权限配置，强化权限管控能力，确保使用过程合规可控。
-- **易于集成**：支持多种集成方式，提供 Web 嵌入、弹窗嵌入、MCP 调用等能力；能够快速嵌入到 n8n、Dify、MaxKB、DataEase 等应用，让各类应用快速拥有智能问数能力。
-- **越问越准**：支持自定义提示词、术语库配置，可维护 SQL 示例校准逻辑，精准匹配业务场景；高效运营，基于用户交互数据持续迭代优化，问数效果随使用逐步提升，越问越准。
+## 部署（Docker，推荐）
 
-## 快速开始
+### 1. 环境要求
 
-### 安装部署
+- Linux 服务器或 WSL2，4 核 8 GB 内存以上，磁盘可用空间 20 GB 以上
+- Docker 20.10+，并安装 Docker Compose v2（`docker compose version` 能正常输出）
+- 构建时要能访问 `registry.cn-qingdao.aliyuncs.com`、`ghcr.io`、npm 源和 PyPI
+- 一个可用的大模型 API（OpenAI 兼容接口即可，例如 DeepSeek、通义千问）
 
-准备一台 Linux 服务器，安装好 [Docker](https://docs.docker.com/get-docker/)，执行以下一键安装脚本：
+### 2. 获取代码并配置
 
 ```bash
-docker run -d \
-  --name sqlbot \
-  --restart unless-stopped \
-  -p 8000:8000 \
-  -p 8001:8001 \
-  -v ./data/sqlbot/excel:/opt/sqlbot/data/excel \
-  -v ./data/sqlbot/file:/opt/sqlbot/data/file \
-  -v ./data/sqlbot/images:/opt/sqlbot/images \
-  -v ./data/sqlbot/logs:/opt/sqlbot/app/logs \
-  -v ./data/postgresql:/var/lib/postgresql/data \
-  --privileged=true \
-  dataease/sqlbot
+git clone <本仓库地址> SQLBot
+cd SQLBot
+
+cp .env.example .env
+# 把 .env 里的 SECRET_KEY 替换为随机值
+sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
 ```
 
-你也可以通过 [1Panel 应用商店](https://apps.fit2cloud.com/1panel) 快速部署 SQLBot。
+### 3. 构建并启动
 
-如果是内网环境，你可以通过 [离线安装包方式](https://community.fit2cloud.com/#/products/sqlbot/downloads) 部署 SQLBot。
+```bash
+docker compose up -d --build
+```
 
-### 访问方式
+镜像从本仓库源码构建，第一次构建需要 10 到 30 分钟，视网络情况而定。查看启动日志：
 
-- 在浏览器中打开: http://<你的服务器IP>:8000/
-- 用户名: admin
-- 密码: SQLBot@123456
+```bash
+docker compose logs -f sqlbot
+```
 
-### 联系我们
+日志出现 `Uvicorn running on http://0.0.0.0:8000` 表示启动完成。
 
-如你有更多问题，可以加入我们的技术交流群与我们交流。
+### 4. 访问
 
-<img width="180" height="180" alt="contact_me_qr" src="https://github.com/user-attachments/assets/14594c13-fa1b-4085-a77e-0cff63b17180" />
+- 地址：`http://<服务器IP>:8000/`
+- 用户名：`admin`
+- 密码：`SQLBot@123456`
 
-## UI 展示
+### 5. 首次使用
 
-  <tr>
-    <img alt="q&a" src="https://github.com/user-attachments/assets/55526514-52f3-4cfe-98ec-08a986259280"   />
-  </tr>
+1. 登录后进入"系统管理 → AI 模型配置"，添加一个大模型并设为默认模型。
+2. 进入"数据源"，添加一个数据库连接（MySQL、PostgreSQL 等），选择要问数的表。
+3. 回到"智能问数"，选择该数据源后提问，例如"各地区上月销售额及占比"。回答完成后会自动生成分析结论，点开"执行详情"可以看到补充计算的 SQL。
 
-## 飞致云旗下的其他明星项目
+### 停止与清理
 
-- [DataEase](https://github.com/dataease/dataease/) - 人人可用的开源 BI 工具
-- [1Panel](https://github.com/1panel-dev/1panel/) - 现代化、开源的 Linux 服务器运维管理面板
-- [MaxKB](https://github.com/1panel-dev/MaxKB/) - 强大易用的企业级智能体平台
-- [JumpServer](https://github.com/jumpserver/jumpserver/) - 广受欢迎的开源堡垒机
-- [Cordys CRM](https://github.com/1Panel-dev/CordysCRM) - 新一代的开源 AI CRM 系统
-- [Halo](https://github.com/halo-dev/halo/) - 强大易用的开源建站工具
-- [MeterSphere](https://github.com/metersphere/metersphere/) - 新一代的开源持续测试工具
+```bash
+docker compose down        # 停止服务，数据保留在 ./data 目录
+rm -rf ./data              # 如需清空全部数据（不可恢复）
+```
 
-## License
+## 配置项
 
-本仓库遵循 [FIT2CLOUD Open Source License](LICENSE) 开源协议，该许可证本质上是 GPLv3，但有一些额外的限制。
+在 `.env` 中设置，修改后执行 `docker compose up -d` 生效。
 
-你可以基于 SQLBot 的源代码进行二次开发，但是需要遵守以下规定：
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `SECRET_KEY` | 无，必填 | JWT 签名密钥 |
+| `SERVER_IMAGE_HOST` | `http://localhost:8001/images/` | MCP 返回图表图片时使用的地址，外部访问时改成服务器 IP |
+| `CHAT_AUTO_ANALYSIS_ENABLED` | `true` | 问数完成后是否自动生成分析 |
+| `ANALYSIS_SUPPLEMENTARY_QUERY_MAX` | `3` | 每次分析最多执行的补充查询数，`0` 表示不做补充计算 |
+| `ANALYSIS_PLAN_DATA_ROWS` | `50` | 规划补充查询时提供给大模型的结果行数上限 |
+| `ANALYSIS_SUPPLEMENTARY_TIMEOUT` | `120` | 等待补充计算的最长秒数，超时则不使用补充结果 |
+
+## 运行测试
+
+```bash
+cd backend
+uv sync
+uv run pytest tests/test_chat_auto_analysis.py
+```
+
+## 常见问题
+
+- **启动报 `Set a unique SECRET_KEY in .env`**：没有创建 `.env` 或其中没有 `SECRET_KEY`，按第 2 步处理。
+- **构建时拉取镜像失败**：检查服务器能否访问 `registry.cn-qingdao.aliyuncs.com` 和 `ghcr.io`，必要时为 Docker 配置代理或镜像加速。
+- **8000 / 8001 端口被占用**：修改 `docker-compose.yaml` 中 `ports` 的左侧端口，例如 `18000:8000`。
+- **提问没有回答**：确认已配置默认大模型，并且服务器能访问该模型的 API 地址。
+
+## 致谢与 License
+
+本项目基于 [dataease/SQLBot](https://github.com/dataease/SQLBot)（飞致云 DataEase 开源项目组）二次开发，遵循原项目的 [FIT2CLOUD Open Source License](LICENSE)。该协议本质上是 GPLv3，并附加以下限制：
 
 - 不能替换和修改 SQLBot 的 Logo 和版权信息；
 - 二次开发后的衍生作品必须遵守 GPL V3 的开源义务。

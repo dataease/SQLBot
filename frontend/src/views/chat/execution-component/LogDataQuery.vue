@@ -23,10 +23,19 @@ const message = computed(() => {
 const title = computed(() => {
   return t('chat.query_count_title', [message.value.count])
 })
+// 分析补充查询的日志额外记录了查询目的和 SQL
+const isAnalysisQuery = computed(() => props.item?.operate_key === 'ANALYSIS_QUERY')
 </script>
 
 <template>
   <BaseContent class="base-container">
+    <div v-if="isAnalysisQuery" class="item-list">
+      <div class="inner-item">
+        <div v-if="message.purpose" class="inner-item-title">{{ message.purpose }}</div>
+        <div v-if="message.sql" class="inner-item-description">{{ message.sql }}</div>
+        <div v-if="item.error && message.error" class="inner-title">{{ message.error }}</div>
+      </div>
+    </div>
     <template v-if="item.error">
       {{ error }}
     </template>

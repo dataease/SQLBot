@@ -10,3 +10,15 @@ backend/.gitignore
 backend/README.md
 backend/scripts
 backend/.DS_Store
+backend/logs
+backend/.pytest_cache
+backend/.ruff_cache
+
+# Frontend
+frontend/node_modules
+frontend/dist
+
+# Local runtime data and secrets
+.env
+data
+.git

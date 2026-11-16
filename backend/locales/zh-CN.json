@@ -76,7 +76,8 @@
     "timezone_mismatch": "签名中的时区信息与签名时间不一致，已阻止嵌入。"
   },
   "i18n_chat": {
-    "record_id_in_mcp": "响应ID: "
+    "record_id_in_mcp": "响应ID: ",
+    "analysis_failed": "分析生成失败：{msg}"
   },
   "i18n_terminology": {
     "terminology_not_exists": "该术语不存在",
