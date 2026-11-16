@@ -95,6 +95,35 @@ def extract_tables_from_sql(sql: str, ds_type: str = None) -> set:
     return tables
 
 
+def parse_analysis_plan(text: str, max_queries: int) -> List[Dict[str, str]]:
+    """解析补充查询规划，丢弃格式不合法的条目；SQL 的安全校验在执行前进行。"""
+    if max_queries <= 0:
+        return []
+    json_str = extract_nested_json(text)
+    if json_str is None:
+        return []
+    try:
+        data = orjson.loads(json_str)
+    except Exception:
+        return []
+    items = data.get('queries') if isinstance(data, dict) else data
+    if not isinstance(items, list):
+        return []
+    queries: List[Dict[str, str]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        sql = item.get('sql')
+        if not isinstance(sql, str) or not sql.strip():
+            continue
+        purpose = item.get('purpose')
+        queries.append({'purpose': purpose.strip() if isinstance(purpose, str) else '',
+                        'sql': sql.strip().rstrip(';').strip()})
+        if len(queries) >= max_queries:
+            break
+    return queries
+
+
 class LLMService:
     ds: CoreDatasource
     chat_question: ChatQuestion
@@ -688,22 +717,32 @@ class LLMService:
                                                                 full_message=self.chat_question.db_schema)
         return tables
 
-    def generate_analysis(self, _session: Session):
+    def generate_analysis(self, _session: Session, in_main_task: bool = False,
+                          supplementary_results: Optional[List[Dict[str, Any]]] = None):
+        """生成分析结论。
+
+        in_main_task 为 True 时在问数主流程中调用：沿用本次已匹配的术语；supplementary_results 是由数据库
+        预先计算的派生数值（见 start_analysis_supplementary_queries）。
+        """
         fields = self.get_fields_from_chart(_session)
         self.chat_question.fields = orjson.dumps(fields).decode()
         data = get_chat_chart_data(_session, self.record.id)
-        self.chat_question.data = orjson.dumps(data.get('data')).decode()
+        rows = data.get('data') or []
+        self.chat_question.data = orjson.dumps(rows).decode()
+        self.chat_question.data_row_count = len(rows)
+        self.chat_question.supplementary_results = orjson.dumps(
+            supplementary_results).decode() if supplementary_results else ''
         analysis_msg: List[Union[BaseMessage, dict[str, Any]]] = []
-
-        # 从 record 加载已提取的关键词（SQL 生成阶段已持久化）
-        if self.record.extracted_keywords:
-            self.chat_question.extracted_keywords = self.record.extracted_keywords
-        if self.record.expanded_keywords:
-            self.chat_question.expanded_keywords = self.record.expanded_keywords
 
         ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
 
-        self.filter_terminology_template(_session, self.oid, ds_id)
+        if not in_main_task:
+            # 从 record 加载已提取的关键词（SQL 生成阶段已持久化）
+            if self.record.extracted_keywords:
+                self.chat_question.extracted_keywords = self.record.extracted_keywords
+            if self.record.expanded_keywords:
+                self.chat_question.expanded_keywords = self.record.expanded_keywords
+            self.filter_terminology_template(_session, self.oid, ds_id)
 
         self.filter_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS, self.oid, ds_id)
 
@@ -748,6 +787,128 @@ class LLMService:
                                                             token_usage=token_usage)
         self.record = save_analysis_answer(session=_session, record_id=self.record.id,
                                            answer=orjson.dumps({'content': full_analysis_text}).decode())
+
+    def start_analysis_supplementary_queries(self, tables: List[str], fields: List[str],
+                                             rows: List[dict]) -> Optional[Future]:
+        """在独立线程中规划并执行补充查询，与图表生成并行；返回 None 表示本次不补充。"""
+        if not settings.ANALYSIS_SUPPLEMENTARY_QUERY_MAX > 0 or not tables:
+            return None
+        if not isinstance(self.ds, CoreDatasource) or self.out_ds_instance:
+            return None
+        # 规划只读取这份快照，主线程生成图表时修改 chat_question 不会互相影响
+        plan_question = self.chat_question.model_copy()
+        plan_question.fields = orjson.dumps(fields).decode()
+        plan_question.data = orjson.dumps(rows[:max(settings.ANALYSIS_PLAN_DATA_ROWS, 1)]).decode()
+        plan_question.data_row_count = len(rows)
+        return executor.submit(self._run_analysis_supplementary_queries_in_session, list(tables), plan_question)
+
+    def _run_analysis_supplementary_queries_in_session(self, tables: List[str],
+                                                       plan_question: ChatQuestion) -> List[Dict[str, Any]]:
+        # 后台线程使用自己的数据库会话，不与主流程共享
+        with Session(engine) as session:
+            return self.run_analysis_supplementary_queries(session, tables, plan_question)
+
+    @staticmethod
+    def collect_analysis_supplementary_results(future: Optional[Future]) -> List[Dict[str, Any]]:
+        if future is None:
+            return []
+        try:
+            return future.result(timeout=settings.ANALYSIS_SUPPLEMENTARY_TIMEOUT)
+        except Exception:
+            traceback.print_exc()
+            return []
+
+    def run_analysis_supplementary_queries(self, _session: Session, tables: List[str],
+                                           plan_question: ChatQuestion) -> List[Dict[str, Any]]:
+        """规划并执行分析所需的补充查询，结论中的派生数值由数据库计算，失败时降级为无补充结果。"""
+        max_queries = settings.ANALYSIS_SUPPLEMENTARY_QUERY_MAX
+        if max_queries <= 0 or not isinstance(self.ds, CoreDatasource) or self.out_ds_instance:
+            return []
+        try:
+            # 行权限由模型改写 SQL 实现，补充查询只在无需行权限时执行，避免绕过权限
+            if (not self.current_assistant or self.current_assistant.type == 4) and is_normal_user(
+                    self.current_user):
+                if get_row_permission_filters(session=_session, current_user=self.current_user, ds=self.ds,
+                                              tables=tables):
+                    return []
+
+            plan_question.analysis_schema, _ = get_table_schema(session=_session, current_user=self.current_user,
+                                                                ds=self.ds, question=plan_question.question,
+                                                                embedding=False, table_list=tables)
+            plan_text = self.generate_analysis_plan(_session, plan_question, max_queries)
+        except Exception:
+            traceback.print_exc()
+            return []
+
+        results: List[Dict[str, Any]] = []
+        for query in parse_analysis_plan(plan_text, max_queries):
+            results.append(self.execute_analysis_query(_session, query))
+        return results
+
+    def generate_analysis_plan(self, _session: Session, plan_question: ChatQuestion, max_queries: int) -> str:
+        plan_msg: List[Union[BaseMessage, dict[str, Any]]] = [
+            SystemPromptMessage(content=plan_question.analysis_plan_sys_question(max_queries)),
+            HumanMessage(content=plan_question.analysis_plan_user_question())]
+        # 在后台线程运行，日志用局部变量，不写共享的 current_logs
+        log = start_log(session=_session, ai_modal_id=plan_question.ai_modal_id,
+                        ai_modal_name=plan_question.ai_modal_name, operate=OperationEnum.ANALYSIS_PLAN,
+                        record_id=self.record.id,
+                        full_message=[{'type': msg.type,
+                                       'sqlbot_system': getattr(msg, 'sqlbot_system', False) is True,
+                                       'content': msg.content} for msg in plan_msg])
+        full_thinking_text = ''
+        full_plan_text = ''
+        token_usage = {}
+        try:
+            for chunk in process_stream(self.llm.stream(plan_msg), token_usage):
+                if chunk.get('content'):
+                    full_plan_text += chunk.get('content')
+                if chunk.get('reasoning_content'):
+                    full_thinking_text += chunk.get('reasoning_content')
+        except Exception:
+            trigger_log_error(_session, log)
+            raise
+
+        plan_msg.append(AIMessage(full_plan_text))
+        end_log(session=_session, log=log,
+                full_message=[{'type': msg.type,
+                               'sqlbot_system': getattr(msg, 'sqlbot_system', False) is True,
+                               'content': msg.content} for msg in plan_msg],
+                reasoning_content=full_thinking_text, token_usage=token_usage)
+        return full_plan_text
+
+    def execute_analysis_query(self, _session: Session, query: Dict[str, str]) -> Dict[str, Any]:
+        purpose = query.get('purpose', '')
+        sql = query.get('sql', '')
+        log = start_log(session=_session, operate=OperationEnum.ANALYSIS_QUERY, record_id=self.record.id,
+                        local_operation=True)
+        result: Dict[str, Any] = {'purpose': purpose, 'sql': sql}
+        try:
+            # 与主流程相同的表白名单校验：用 sqlglot 提取真实表名（排除 CTE 别名）
+            actual_tables = extract_tables_from_sql(sql, ds_type=self.ds.type)
+            if not actual_tables:
+                raise SingleMessageError('SQL parsing failed: unable to extract table names')
+            unauthorized_tables = actual_tables - set(self.table_name_list)
+            if unauthorized_tables:
+                raise SingleMessageError(f"SQL contains unauthorized tables: {', '.join(unauthorized_tables)}")
+            # exec_sql 内部会再做只读校验
+            exec_result = self.execute_sql(sql=sql)
+            data = DataFormat.convert_large_numbers_in_object_array(exec_result.get('data'))
+            data = DataFormat.normalize_qualified_sql_column_keys_in_object_array(data) or []
+            limit = settings.ANALYSIS_PLAN_DATA_ROWS
+            result['data'] = prepare_for_orjson(data[:limit]) if data else []
+            if data and len(data) > limit:
+                result['truncated'] = True
+            end_log(session=_session, log=log, full_message={'purpose': purpose, 'sql': sql, 'count': len(data)})
+        except Exception as e:
+            SQLBotLogUtil.warning(f"analysis supplementary query failed: {e}")
+            # 错误会传给模型和执行详情，只保留最后一行，不暴露 traceback 和内部路径
+            error = (str(e).strip().splitlines() or [type(e).__name__])[-1][:500]
+            result['error'] = error
+            end_log(session=_session, log=log, full_message={'purpose': purpose, 'sql': sql, 'count': 0,
+                                                             'error': error})
+            trigger_log_error(_session, log)
+        return result
 
     def generate_predict(self, _session: Session):
         fields = self.get_fields_from_chart(_session)
@@ -1482,6 +1643,7 @@ class LLMService:
                  finish_step: ChatFinishStep = ChatFinishStep.GENERATE_CHART, return_img: bool = True):
         json_result: Dict[str, Any] = {'success': True}
         _session = None
+        analysis_future: Optional[Future] = None
         try:
             _session = session_maker()
             self.complete_question(_session)
@@ -1689,6 +1851,11 @@ class LLMService:
                     yield json_result
                 return
 
+            # 分析所需的补充计算只依赖 SQL 结果，与图表生成并行，减少等待
+            if in_chat and settings.CHAT_AUTO_ANALYSIS_ENABLED:
+                analysis_future = self.start_analysis_supplementary_queries(
+                    sorted(actual_tables), result.get('fields') or [], result.get('data') or [])
+
             # generate chart
             used_tables_schema, used_tables = self.out_ds_instance.get_db_schema(
                 self.ds.id, self.chat_question.question, embedding=False,
@@ -1734,6 +1901,25 @@ class LLMService:
                         df_safe = DataFormat.safe_convert_to_string(df)
                         markdown_table = df_safe.to_markdown(index=False)
                         yield markdown_table + '\n\n'
+
+            if in_chat and settings.CHAT_AUTO_ANALYSIS_ENABLED:
+                # 自动生成分析结论；失败只影响分析部分，SQL、数据和图表照常展示
+                try:
+                    supplementary_results = self.collect_analysis_supplementary_results(analysis_future)
+                    analysis_future = None
+                    for chunk in self.generate_analysis(_session, in_main_task=True,
+                                                        supplementary_results=supplementary_results):
+                        yield 'data:' + orjson.dumps(
+                            {'content': chunk.get('content'), 'reasoning_content': chunk.get('reasoning_content'),
+                             'type': 'analysis-result'}).decode() + '\n\n'
+                    yield 'data:' + orjson.dumps({'type': 'info', 'msg': 'analysis generated'}).decode() + '\n\n'
+                except Exception as e:
+                    traceback.print_exc()
+                    if self.current_logs.get(OperationEnum.ANALYSIS):
+                        trigger_log_error(_session, self.current_logs[OperationEnum.ANALYSIS])
+                    yield 'data:' + orjson.dumps(
+                        {'content': self.trans('i18n_chat.analysis_failed', msg=str(e)),
+                         'type': 'analysis-error'}).decode() + '\n\n'
 
             if in_chat:
                 yield 'data:' + orjson.dumps({'type': 'finish'}).decode() + '\n\n'
@@ -1795,6 +1981,9 @@ class LLMService:
                     json_result['message'] = error_msg
                     yield json_result
         finally:
+            if analysis_future is not None:
+                # 图表等后续步骤失败时，未取用的补充计算不再需要
+                analysis_future.cancel()
             self.finish(_session)
             session_maker.remove()
 

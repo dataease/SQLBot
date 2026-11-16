@@ -3,6 +3,7 @@ import BaseAnswer from './BaseAnswer.vue'
 import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord, questionApi } from '@/api/chat.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import ChartBlock from '@/views/chat/chat-block/ChartBlock.vue'
+import MdComponent from '@/views/chat/component/MdComponent.vue'
 import JSONBig from 'json-bigint'
 
 const props = withDefaults(
@@ -13,7 +14,11 @@ const props = withDefaults(
     currentChat?: ChatInfo
     message?: ChatMessage
     loading?: boolean
-    reasoningName: 'sql_answer' | 'chart_answer' | Array<'sql_answer' | 'chart_answer'>
+    reasoningName:
+      | 'sql_answer'
+      | 'chart_answer'
+      | 'analysis_thinking'
+      | Array<'sql_answer' | 'chart_answer' | 'analysis_thinking'>
   }>(),
   {
     recordId: undefined,
@@ -120,6 +125,8 @@ const sendMessage = async () => {
 
     let sql_answer = ''
     let chart_answer = ''
+    let analysis_answer = ''
+    let analysis_answer_thinking = ''
 
     let tempResult = ''
 
@@ -211,6 +218,15 @@ const sendMessage = async () => {
               case 'chart':
                 _currentChat.value.records[index.value].chart = data.content
                 break
+              case 'analysis-result':
+                analysis_answer += data.content ?? ''
+                analysis_answer_thinking += data.reasoning_content ?? ''
+                _currentChat.value.records[index.value].analysis = analysis_answer
+                _currentChat.value.records[index.value].analysis_thinking = analysis_answer_thinking
+                break
+              case 'analysis-error':
+                _currentChat.value.records[index.value].analysis = data.content
+                break
               case 'datasource':
                 if (!_currentChat.value.datasource) {
                   _currentChat.value.datasource = data.id
@@ -290,6 +306,11 @@ defineExpose({ sendMessage, index: () => index.value, stop })
       :message="message"
       :record-id="recordId"
       :loading-data="loadingData"
+    />
+    <MdComponent
+      v-if="message.record?.analysis"
+      :message="message.record.analysis"
+      style="margin-top: 12px"
     />
     <slot></slot>
     <template #tool>

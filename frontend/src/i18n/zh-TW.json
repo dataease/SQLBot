@@ -877,7 +877,9 @@
       "FILTER_SQL_EXAMPLE": "匹配 SQL 範例",
       "FILTER_CUSTOM_PROMPT": "匹配自訂提示詞",
       "EXECUTE_SQL": "執行 SQL",
-      "GENERATE_PICTURE": "產生圖片"
+      "GENERATE_PICTURE": "產生圖片",
+      "ANALYSIS_PLAN": "規劃分析計算",
+      "ANALYSIS_QUERY": "執行分析計算 SQL"
     },
     "log_system": "對話範本",
     "log_question": "本次提問",

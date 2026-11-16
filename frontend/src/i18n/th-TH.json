@@ -877,7 +877,9 @@
       "FILTER_SQL_EXAMPLE": "จับคู่ตัวอย่าง SQL",
       "FILTER_CUSTOM_PROMPT": "จับคู่พรอมป์ต์ที่กำหนดเอง",
       "EXECUTE_SQL": "ดำเนินการ SQL",
-      "GENERATE_PICTURE": "สร้างรูปภาพ"
+      "GENERATE_PICTURE": "สร้างรูปภาพ",
+      "ANALYSIS_PLAN": "วางแผนการคำนวณเพื่อวิเคราะห์",
+      "ANALYSIS_QUERY": "รัน SQL คำนวณเพื่อวิเคราะห์"
     },
     "log_system": "เทมเพลตบทสนทนา",
     "log_question": "คำถามครั้งนี้",

@@ -76,7 +76,8 @@
     "timezone_mismatch": "ข้อมูลเขตเวลาในลายเซ็นไม่สอดคล้องกับเวลาในลายเซ็น จึงบล็อกการฝัง"
   },
   "i18n_chat": {
-    "record_id_in_mcp": "รหัสการตอบกลับ: "
+    "record_id_in_mcp": "รหัสการตอบกลับ: ",
+    "analysis_failed": "สร้างการวิเคราะห์ไม่สำเร็จ: {msg}"
   },
   "i18n_terminology": {
     "terminology_not_exists": "ไม่พบคำศัพท์นี้",

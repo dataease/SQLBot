@@ -76,7 +76,8 @@
     "timezone_mismatch": "서명의 시간대 정보가 서명 시간과 일치하지 않아 임베드를 차단했습니다."
   },
   "i18n_chat": {
-    "record_id_in_mcp": "응답 ID: "
+    "record_id_in_mcp": "응답 ID: ",
+    "analysis_failed": "분석 생성 실패: {msg}"
   },
   "i18n_terminology": {
     "terminology_not_exists": "이 용어가 존재하지 않습니다",

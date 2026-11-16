@@ -229,7 +229,7 @@
                     :record-id="message.record?.id"
                     :loading="isTyping"
                     :message="message"
-                    :reasoning-name="['sql_answer', 'chart_answer']"
+                    :reasoning-name="['sql_answer', 'chart_answer', 'analysis_thinking']"
                     @scroll-bottom="scrollToBottom"
                     @finish="onChartAnswerFinish"
                     @error="onChartAnswerError"
@@ -264,23 +264,6 @@
                           </el-tooltip>
                           <template v-if="message.record?.chart">
                             <div class="divider"></div>
-                            <div>
-                              <el-button
-                                class="tool-btn"
-                                text
-                                :disabled="isTyping"
-                                @click="clickAnalysis(message.record?.id)"
-                              >
-                                <span class="tool-btn-inner">
-                                  <el-icon size="18">
-                                    <icon_screen_outlined />
-                                  </el-icon>
-                                  <span class="btn-text">
-                                    {{ t('chat.data_analysis') }}
-                                  </span>
-                                </span>
-                              </el-button>
-                            </div>
                             <div>
                               <el-button
                                 class="tool-btn"
@@ -472,7 +455,6 @@ import icon_new_chat_outlined from '@/assets/svg/icon_new_chat_outlined.svg'
 import icon_sidebar_outlined from '@/assets/svg/icon_sidebar_outlined.svg'
 import icon_sidebar_outlined_nofill from '@/assets/embedded/icon_sidebar_outlined_nofill.svg'
 import icon_replace_outlined from '@/assets/svg/icon_replace_outlined.svg'
-import icon_screen_outlined from '@/assets/svg/icon_screen_outlined.svg'
 import icon_start_outlined from '@/assets/svg/icon_start_outlined.svg'
 import logo_fold from '@/assets/svg/logo-custom_small.svg'
 import icon_send_filled from '@/assets/svg/icon_send_filled.svg'
@@ -587,7 +569,87 @@ const computedMessages = computed<Array<ChatMessage>>(() => {
 
 const goEmpty = (func?: (...p: any[]) => void, ...param: any[]) => {
   inputMessage.value = ''
+  stopResumeRunningRecord()
   stop(func, ...param)
+}
+
+// 切换会话会中断前端的流式连接，但后端任务会继续执行；切回时轮询记录，直到后端完成
+const RESUME_POLL_INTERVAL = 2000
+const RESUME_MAX_AGE = 10 * 60 * 1000 // 超过该时长仍未完成的记录视为已中断，不再显示思考中
+let resumeTimer: ReturnType<typeof setTimeout> | undefined
+
+function stopResumeRunningRecord() {
+  if (resumeTimer) {
+    clearTimeout(resumeTimer)
+    resumeTimer = undefined
+  }
+}
+
+function isRecordRunning(record?: ChatRecord) {
+  if (!record || record.id === undefined || record.finish || record.first_chat) {
+    return false
+  }
+  if (record.error && record.error.trim() !== '') {
+    return false
+  }
+  if (record.create_time) {
+    const createTime = new Date(record.create_time).getTime()
+    if (!isNaN(createTime) && Date.now() - createTime > RESUME_MAX_AGE) {
+      return false
+    }
+  }
+  return true
+}
+
+function resumeRunningRecord() {
+  stopResumeRunningRecord()
+  const chatId = currentChatId.value
+  const records = currentChat.value.records
+  const running = records[records.length - 1]
+  if (chatId === undefined || !isRecordRunning(running)) {
+    return
+  }
+  isTyping.value = true
+  const recordId = running.id
+
+  const poll = () => {
+    chatApi
+      .get(chatId)
+      .then((res) => {
+        if (currentChatId.value !== chatId) return
+        const fresh = chatApi.toChatInfo(res)?.records.find((r: ChatRecord) => r.id === recordId)
+        const current = currentChat.value.records.find((r: ChatRecord) => r.id === recordId)
+        if (!fresh || !current) {
+          isTyping.value = false
+          return
+        }
+        // 只更新这条记录；图表数据由完成后的 get_chart_data 单独加载
+        const loadedData = current.data
+        Object.assign(current, fresh)
+        current.data = loadedData
+        if (isRecordRunning(current)) {
+          resumeTimer = setTimeout(poll, RESUME_POLL_INTERVAL)
+          return
+        }
+        resumeTimer = undefined
+        if (current.error && current.error.trim() !== '') {
+          onChartAnswerError(recordId as number)
+          return
+        }
+        chatApi.get_chart_data(recordId).then((data) => {
+          current.data = data
+          scrollToBottom()
+        })
+        onChartAnswerFinish(recordId as number)
+      })
+      .catch(() => {
+        // 网络抖动时继续重试，记录过期后 isRecordRunning 会结束轮询
+        if (currentChatId.value === chatId) {
+          resumeTimer = setTimeout(poll, RESUME_POLL_INTERVAL)
+        }
+      })
+  }
+  resumeTimer = setTimeout(poll, RESUME_POLL_INTERVAL)
 }
 
 let scrollTime: any
@@ -699,6 +761,7 @@ function getChatList(callback?: () => void) {
 
 function onClickHistory(chat: ChatInfo) {
   scrollToBottom()
+  resumeRunningRecord()
   forEach(chat?.records, (record: ChatRecord) => {
     // getChatData(record.id)
     if (record.predict_record_id) {
@@ -798,6 +861,7 @@ function onChartAnswerError(id: number) {
 }
 
 function onChatStop() {
+  stopResumeRunningRecord()
   loading.value = false
   isTyping.value = false
   console.debug('onChatStop')
@@ -822,6 +886,7 @@ const sendMessage = async (
     return
   }
   if (!inputMessage.value.trim()) return
+  stopResumeRunningRecord()
 
   loading.value = true
   isTyping.value = true
@@ -900,46 +965,6 @@ function askAgain(message: ChatMessage) {
   nextTick(() => {
     sendMessage(regenerate_record_id)
   })
-}
-
-async function clickAnalysis(id?: number) {
-  const baseRecord = find(currentChat.value.records, (value) => id === value.id)
-  if (baseRecord == undefined) {
-    return
-  }
-
-  loading.value = true
-  isTyping.value = true
-
-  const currentRecord = new ChatRecord()
-  currentRecord.create_time = new Date()
-  currentRecord.chat_id = baseRecord.chat_id
-  currentRecord.question = baseRecord.question
-  currentRecord.chart = baseRecord.chart
-  currentRecord.data = baseRecord.data
-  currentRecord.analysis_record_id = id
-  currentRecord.analysis = ''
-
-  currentChat.value.records.push(currentRecord)
-
-  nextTick(async () => {
-    const index = currentChat.value.records.length - 1
-    if (analysisAnswerRef.value) {
-      if (analysisAnswerRef.value instanceof Array) {
-        for (let i = 0; i < analysisAnswerRef.value.length; i++) {
-          const _index = analysisAnswerRef.value[i].index()
-          if (index === _index) {
-            await analysisAnswerRef.value[i].sendMessage()
-            break
-          }
-        }
-      } else {
-        await analysisAnswerRef.value.sendMessage()
-      }
-    }
-  })
-
-  return
 }
 
 function getRecordUsage(recordId: any) {
@@ -1164,6 +1189,7 @@ onBeforeUnmount(() => {
   clearInterval(time)
   clearInterval(scrollTime)
   clearTimeout(scrollingTime)
+  stopResumeRunningRecord()
 })
 </script>
 

@@ -12,7 +12,7 @@ from sqlmodel import SQLModel, Field
 
 from apps.db.constant import DB
 from apps.template.filter.generator import get_permissions_template
-from apps.template.generate_analysis.generator import get_analysis_template
+from apps.template.generate_analysis.generator import get_analysis_template, get_analysis_plan_template
 from apps.template.generate_chart.generator import get_chart_template
 from apps.template.generate_dynamic.generator import get_dynamic_template
 from apps.template.generate_guess_question.generator import get_guess_question_template
@@ -49,6 +49,8 @@ class OperationEnum(Enum):
     GENERATE_PICTURE = '13'
     EXTRACT_KEYWORDS = '14'
     COMPLETE_QUESTION = '15'
+    ANALYSIS_PLAN = '16'
+    ANALYSIS_QUERY = '17'
 
 
 class ChatFinishStep(Enum):
@@ -260,6 +262,9 @@ class AiModelQuestion(BaseModel):
     regenerate_record_id: Optional[int] = None
     sample_data: str = ""
     sqlbot_name: str = "SQLBot"
+    analysis_schema: str = ""
+    data_row_count: int = 0
+    supplementary_results: str = ""
 
     def complete_question_sys_prompt(self) -> str:
         return get_sql_template()["complete_question"]
@@ -338,7 +343,19 @@ class AiModelQuestion(BaseModel):
                                                         custom_prompt=self.custom_prompt, sqlbot_name=self.sqlbot_name)
 
     def analysis_user_question(self):
-        return get_analysis_template()['user'].format(fields=self.fields, data=self.data)
+        return get_analysis_template()['user'].format(question=self.question, sql=self.sql, fields=self.fields,
+                                                      data=self.data,
+                                                      supplementary_results=self.supplementary_results)
+
+    def analysis_plan_sys_question(self, max_queries: int):
+        return get_analysis_plan_template()['system'].format(lang=self.lang, sqlbot_name=self.sqlbot_name,
+                                                             engine=self.engine, schema=self.analysis_schema,
+                                                             terminologies=self.terminologies,
+                                                             max_queries=max_queries)
+
+    def analysis_plan_user_question(self):
+        return get_analysis_plan_template()['user'].format(question=self.question, sql=self.sql, fields=self.fields,
+                                                           data=self.data, row_count=self.data_row_count)
 
     def predict_sys_question(self):
         return get_predict_template()['system'].format(lang=self.lang, custom_prompt=self.custom_prompt,

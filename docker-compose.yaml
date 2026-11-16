@@ -1,6 +1,10 @@
 services:
   sqlbot:
-    image: dataease/sqlbot
+    # 从本仓库源码构建，包含二次开发的全部改动
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sqlbot-custom:latest
     container_name: sqlbot
     restart: always
     privileged: true
@@ -20,11 +24,16 @@ services:
       PROJECT_NAME: "SQLBot"
       DEFAULT_PWD: "SQLBot@123456"
       # MCP settings
-      SERVER_IMAGE_HOST: http://YOUR_SERVE_IP:MCP_PORT/images/
+      SERVER_IMAGE_HOST: ${SERVER_IMAGE_HOST:-http://localhost:8001/images/}
       # Auth & Security
       SECRET_KEY: ${SECRET_KEY:?Set a unique SECRET_KEY in .env before starting SQLBot}
       # CORS settings
       BACKEND_CORS_ORIGINS: "http://localhost,http://localhost:5173,https://localhost,https://localhost:5173"
+      # Auto analysis (二次开发新增)
+      CHAT_AUTO_ANALYSIS_ENABLED: ${CHAT_AUTO_ANALYSIS_ENABLED:-true}
+      ANALYSIS_SUPPLEMENTARY_QUERY_MAX: ${ANALYSIS_SUPPLEMENTARY_QUERY_MAX:-3}
+      ANALYSIS_PLAN_DATA_ROWS: ${ANALYSIS_PLAN_DATA_ROWS:-50}
+      ANALYSIS_SUPPLEMENTARY_TIMEOUT: ${ANALYSIS_SUPPLEMENTARY_TIMEOUT:-120}
       # Logging
       LOG_LEVEL: "INFO"
       SQL_DEBUG: False
