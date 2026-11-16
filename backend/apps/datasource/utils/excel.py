@@ -52,7 +52,14 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
         for column, field_type in field_mapping.items()
     }
     if save_path.endswith('.csv'):
+        # The CSV parser cannot read datetime64 dtypes directly.
+        datetime_columns = [column for column, field_type in field_mapping.items() if field_type == 'datetime']
+        for column in datetime_columns:
+            dtype_dict[column] = 'string'
         df = pd.read_csv(save_path, engine='c', dtype=dtype_dict)
+        for column in datetime_columns:
+            if column in df.columns:
+                df[column] = df[column].astype(USER_TYPE_TO_PANDAS['datetime'])
     else:
         df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine', dtype=dtype_dict)
     for column, field_type in field_mapping.items():
