@@ -77,7 +77,13 @@
             <el-input v-model="form.username" clearable />
           </el-form-item>
           <el-form-item :label="t('ds.form.password')">
-            <el-input v-model="form.password" clearable type="password" show-password />
+            <el-input
+              v-model="form.password"
+              :placeholder="form.id ? t('ds.form.keep_saved_value') : undefined"
+              clearable
+              type="password"
+              show-password
+            />
           </el-form-item>
           <el-form-item :label="t('ds.form.database')" prop="database">
             <el-input v-model="form.database" clearable />
@@ -93,7 +99,11 @@
             </el-radio-group>
           </el-form-item>
           <el-form-item :label="t('ds.form.extra_jdbc')">
-            <el-input v-model="form.extraJdbc" clearable />
+            <el-input
+              v-model="form.extraJdbc"
+              :placeholder="form.id ? t('ds.form.keep_saved_value') : undefined"
+              clearable
+            />
           </el-form-item>
           <el-form-item
             v-if="haveSchema.includes(form.type)"
@@ -171,7 +181,7 @@
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { datasourceApi } from '@/api/datasource'
-import { encrypted, decrypted } from './js/aes'
+import { encrypted } from './js/aes'
 import { ElMessage } from 'element-plus-secondary'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import FixedSizeList from 'element-plus-secondary/es/components/virtual-list/src/components/fixed-size-list.mjs'
@@ -241,9 +251,12 @@ const close = () => {
   saveLoading.value = false
 }
 
-const open = (item: any, editTable: boolean = false) => {
+const open = async (item: any, editTable: boolean = false) => {
+  if (item && !item.configuration) item = await datasourceApi.getDs(item.id)
   isEditTable.value = false
   if (item) {
+    form.value.password = ''
+    form.value.extraJdbc = ''
     dialogTitle.value = editTable ? t('ds.form.title.choose_tables') : t('ds.form.title.edit')
     isCreate.value = false
     form.value.id = item.id
@@ -252,13 +265,11 @@ const open = (item: any, editTable: boolean = false) => {
     form.value.type = item.type
     form.value.configuration = item.configuration
     if (item.configuration) {
-      const configuration = JSON.parse(decrypted(item.configuration))
+      const configuration = JSON.parse(item.configuration)
       form.value.host = configuration.host
       form.value.port = configuration.port
       form.value.username = configuration.username
-      form.value.password = configuration.password
       form.value.database = configuration.database
-      form.value.extraJdbc = configuration.extraJdbc
       form.value.dbSchema = configuration.dbSchema
       form.value.filename = configuration.filename
       form.value.sheets = configuration.sheets
@@ -281,9 +292,8 @@ const open = (item: any, editTable: boolean = false) => {
           tableList.value = form.value.sheets
         } else {
           tableListLoading.value = true
-          const requestObj = buildConf()
           datasourceApi
-            .getTablesByConf(requestObj)
+            .getTables(item.id)
             .then((table) => {
               tableList.value = table
               checkList.value = checkList.value.filter((ele: string) => {
@@ -373,9 +383,9 @@ const buildConf = () => {
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: form.value.password,
+      password: form.value.id && !form.value.password ? undefined : form.value.password,
       database: form.value.database,
-      extraJdbc: form.value.extraJdbc,
+      extraJdbc: form.value.id && !form.value.extraJdbc ? undefined : form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
       filename: form.value.filename,
       sheets: form.value.sheets,

@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { datasourceApi } from '@/api/datasource'
 import icon_upload_outlined from '@/assets/svg/icon_upload_outlined.svg'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
-import { encrypted, decrypted } from './js/aes'
+import { encrypted } from './js/aes'
 import { ElMessage } from 'element-plus-secondary'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import icon_form_outlined from '@/assets/svg/icon_form_outlined.svg'
@@ -153,6 +153,8 @@ const initForm = (item: any, editTable: boolean = false) => {
   keywords.value = ''
   dsFormRef.value!.clearValidate()
   if (item) {
+    form.value.password = ''
+    form.value.extraJdbc = ''
     dialogTitle.value = editTable ? t('ds.form.title.choose_tables') : t('ds.form.title.edit')
     isCreate.value = false
     form.value.id = item.id
@@ -161,13 +163,11 @@ const initForm = (item: any, editTable: boolean = false) => {
     form.value.type = item.type
     form.value.configuration = item.configuration
     if (item.configuration) {
-      const configuration = JSON.parse(decrypted(item.configuration))
+      const configuration = JSON.parse(item.configuration)
       form.value.host = configuration.host
       form.value.port = configuration.port
       form.value.username = configuration.username
-      form.value.password = configuration.password
       form.value.database = configuration.database
-      form.value.extraJdbc = configuration.extraJdbc
       form.value.dbSchema = configuration.dbSchema
       form.value.filename = configuration.filename
       form.value.sheets = configuration.sheets
@@ -207,9 +207,8 @@ const initForm = (item: any, editTable: boolean = false) => {
             })
           } else {
             tableListLoading.value = true
-            const requestObj = buildConf()
             datasourceApi
-              .getTablesByConf(requestObj)
+              .getTables(item.id)
               .then((table) => {
                 tableList.value = table
                 checkList.value = checkList.value.filter((ele: string) => {
@@ -338,9 +337,9 @@ const buildConf = () => {
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: form.value.password,
+      password: form.value.id && !form.value.password ? undefined : form.value.password,
       database: form.value.database,
-      extraJdbc: form.value.extraJdbc,
+      extraJdbc: form.value.id && !form.value.extraJdbc ? undefined : form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
       filename: form.value.filename,
       sheets: form.value.sheets,
@@ -714,7 +713,9 @@ defineExpose({
               v-model="form.password"
               clearable
               :placeholder="
-                $t('datasource.please_enter') + $t('common.empty') + t('ds.form.password')
+                form.id
+                  ? t('ds.form.keep_saved_value')
+                  : $t('datasource.please_enter') + $t('common.empty') + t('ds.form.password')
               "
               type="password"
               show-password
@@ -768,7 +769,9 @@ defineExpose({
               v-model="form.extraJdbc"
               clearable
               :placeholder="
-                $t('datasource.please_enter') + $t('common.empty') + t('ds.form.extra_jdbc')
+                form.id
+                  ? t('ds.form.keep_saved_value')
+                  : $t('datasource.please_enter') + $t('common.empty') + t('ds.form.extra_jdbc')
               "
             />
           </el-form-item>

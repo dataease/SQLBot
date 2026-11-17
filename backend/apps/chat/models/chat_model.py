@@ -48,6 +48,7 @@ class OperationEnum(Enum):
     EXECUTE_SQL = '12'
     GENERATE_PICTURE = '13'
     EXTRACT_KEYWORDS = '14'
+    COMPLETE_QUESTION = '15'
 
 
 class ChatFinishStep(Enum):
@@ -260,6 +261,9 @@ class AiModelQuestion(BaseModel):
     sample_data: str = ""
     sqlbot_name: str = "SQLBot"
 
+    def complete_question_sys_prompt(self) -> str:
+        return get_sql_template()["complete_question"]
+
     def extract_keywords_sys_prompt(self) -> str:
         return get_sql_template().get("extract_keywords").format(lang=self.lang,
                                                                      sqlbot_name=self.sqlbot_name)
@@ -346,8 +350,9 @@ class AiModelQuestion(BaseModel):
     def datasource_sys_question(self):
         return get_datasource_template()['system'].format(lang=self.lang, sqlbot_name=self.sqlbot_name)
 
-    def datasource_user_question(self, datasource_list: str = "[]"):
-        return get_datasource_template()['user'].format(lang=self.lang, question=self.question, data=datasource_list)
+    def datasource_user_question(self, datasource_list: str = "[]", *, question: str | None = None):
+        return get_datasource_template()['user'].format(
+            lang=self.lang, question=self.question if question is None else question, data=datasource_list)
 
     def guess_sys_question(self, articles_number: int = 4):
         return get_guess_question_template()['system'].format(lang=self.lang, articles_number=articles_number,

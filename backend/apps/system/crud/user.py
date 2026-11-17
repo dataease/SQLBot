@@ -1,12 +1,14 @@
 from typing import Optional
 
+from sqlalchemy import update
 from sqlmodel import Session, func, select, delete as sqlmodel_delete
 
 from apps.system.models.system_model import UserWsModel, WorkspaceModel
 from apps.system.schemas.auth import CacheName, CacheNamespace
 from apps.system.schemas.system_schema import EMAIL_REGEX, PWD_REGEX, BaseUserDTO, UserInfoDTO, UserWs
+from common.core.passwords import hash_password, needs_password_upgrade
 from common.core.deps import SessionDep
-from common.core.security import verify_md5pwd
+from common.core.security import verify_password
 from common.core.sqlbot_cache import cache, clear_cache
 from common.utils.locale import I18n, I18nHelper
 from common.utils.utils import SQLBotLogUtil
@@ -45,7 +47,7 @@ def authenticate(*, session: Session, account: str, password: str) -> BaseUserDT
     db_user = get_user_by_account(session=session, account=account)
     if not db_user:
         return None
-    if not verify_md5pwd(password, db_user.password):
+    if not verify_password(password, db_user.password):
         return None
     return db_user
 
@@ -105,3 +107,19 @@ def check_email_format(email: str) -> bool:
 
 def check_pwd_format(pwd: str) -> bool:
     return bool(PWD_REGEX.fullmatch(pwd))
+
+
+def upgrade_password(*, session: Session, user: BaseUserDTO, password: str) -> None:
+    """CAS protects a concurrent reset; the caller owns the transaction.
+
+    Invoke only after all login eligibility checks have passed.
+    """
+    if user.status != 1 or user.origin not in (None, 0) or not user.oid:
+        return
+    if not needs_password_upgrade(user.password):
+        return
+    replacement = hash_password(password)
+    session.execute(
+        update(UserModel).where(UserModel.id == user.id, UserModel.password == user.password)
+        .values(password=replacement).execution_options(synchronize_session=False)
+    )

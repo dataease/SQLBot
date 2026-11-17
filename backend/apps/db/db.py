@@ -1305,6 +1305,8 @@ class ConnectionPoolManager:
             if ds.id:
                 # 1. 如果连接池已存在，将其移动到字典末尾（标记为最近使用）
                 if ds.id in self._pools:
+                    if not equals_ignore_case(ds.type, "excel"):
+                        aes_decrypt(ds.configuration)
                     self._pools.move_to_end(ds.id)
                     print(f"[LRU] return: {ds.id}")
                     return self._pools[ds.id][0]
@@ -1362,6 +1364,8 @@ class DriverConnectionPoolManager:
             if ds.id:
                 # 1. 如果连接池已存在，将其移动到字典末尾（标记为最近使用）
                 if ds.id in self._pools:
+                    if not equals_ignore_case(ds.type, "excel"):
+                        aes_decrypt(ds.configuration)
                     self._pools.move_to_end(ds.id)
                     print(f"[LRU] return: {ds.id}")
                     return self._pools[ds.id]

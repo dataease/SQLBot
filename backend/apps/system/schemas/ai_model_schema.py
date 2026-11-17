@@ -1,6 +1,6 @@
 
 from typing import List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from common.core.schemas import BaseCreatorDTO
@@ -28,3 +28,7 @@ class AiModelCreator(AiModelItem):
     
 class AiModelEditor(AiModelCreator, BaseCreatorDTO):
     pass
+
+class ModelDiscoveryRequest(BaseModel):
+    api_domain: str = Field(max_length=2048)
+    api_key: SecretStr = Field(default=SecretStr(""))

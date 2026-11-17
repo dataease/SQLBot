@@ -2,6 +2,14 @@ import { request } from '@/utils/request'
 import type { ModelImpactResolution } from './workspace'
 
 export const modelApi = {
+  discover: (api_domain: string, api_key: string) =>
+    request.post<{ models: string[]; error?: string }>(
+      '/system/aimodel/models',
+      { api_domain, api_key },
+      {
+        requestOptions: { customError: true, silent: true },
+      }
+    ),
   queryAll: (keyword?: string) =>
     request.get('/system/aimodel', { params: keyword ? { keyword } : {} }),
   add: (data: any) => {

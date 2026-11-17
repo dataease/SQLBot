@@ -20,6 +20,7 @@ import { useUserStore } from '@/stores/user'
 import { userApi } from '@/api/auth'
 import { toLoginPage } from '@/utils/utils'
 import { useCache } from '@/utils/useCache'
+import { resolveHelpUrl } from '@/utils/helpUrl'
 
 const { wsCache } = useCache()
 const router = useRouter()
@@ -90,7 +91,7 @@ const changeLanguage = (lang: string) => {
 }
 
 const openHelp = () => {
-  window.open(appearanceStore.getHelp || 'https://dataease.cn/sqlbot/', '_blank')
+  window.open(resolveHelpUrl(appearanceStore.getHelp), '_blank')
 }
 
 const openPwd = () => {

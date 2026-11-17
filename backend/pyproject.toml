@@ -6,6 +6,7 @@ requires-python = "==3.11.*"
 dependencies = [
     "fastapi[standard]<0.116.0,>=0.115.12",
     "python-multipart<1.0.0,>=0.0.7",
+    "argon2-cffi>=23.1.0,<26",
     "passlib[bcrypt]<2.0.0,>=1.7.4",
     "tenacity<9.0.0,>=8.2.3",
     "pydantic>2.0",

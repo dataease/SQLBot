@@ -6,6 +6,7 @@ import time
 import traceback
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.ai_model.query_embedding import QueryEmbeddingUnavailable, embed_query
 from apps.datasource.embedding.metadata_chunks import table_scores
 from apps.datasource.embedding.utils import (
     batch_cosine_similarity,
@@ -242,7 +243,8 @@ def _score_table_vectors(tables: list[dict], query_embedding, session=None) -> i
 
 
 def calc_table_embedding(tables: list[dict], question: str, session=None, oid: int = None,  # noqa: ARG001 - retained for caller compatibility
-                         keywords: str = None, *, config: EmbeddingConfig = None):
+                         keywords: str = None, *, config: EmbeddingConfig = None,
+                         retrieval_question: str = None):
     """使用向量相似度和关键词匹配的融合评分计算表的相关性分数。
 
     当 keywords 不为空时（已由调用方提取并扩展）：
@@ -255,7 +257,8 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
 
     Args:
         tables: 表列表，每个 dict 包含 id, table_name, schema_table, embedding, table_comment, fields
-        question: Original user question for explicit matching and vector-only fallback.
+        question: Original user question for explicit table mentions.
+        retrieval_question: Completed intent for vector-only retrieval; defaults to question.
         session: 数据库会话（预留）
         oid: 组织 ID（预留）
         keywords: 已提取并扩展的关键词（由调用方传入）
@@ -264,7 +267,8 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         config = load_embedding_config(session)
     if not keywords or not (config.keyword_enabled if config else settings.TABLE_EMBEDDING_KEYWORD_ENABLED):
         # 回退到纯向量匹配
-        return _calc_vector_only(tables, question, config=config, session=session)
+        return _calc_vector_only(tables, question, config=config, session=session,
+                                 retrieval_question=retrieval_question)
 
     _list = []
     for table in tables:
@@ -287,7 +291,7 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         # 步骤 1：用关键词计算向量相似度（批量向量化）
         model = EmbeddingModelCache.get_model()
         t0 = time.time()
-        q_embedding = model.embed_query(keywords)
+        q_embedding = embed_query(model, keywords, stage="table")
         t1 = time.time()
         SQLBotLogUtil.info(f"[perf] embed_query 耗时 {t1 - t0:.3f}s")
 
@@ -345,6 +349,8 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         } for ele in _list]))
 
         return _list
+    except QueryEmbeddingUnavailable:
+        return _select_tables(tables, question, apply_limit=False)
     except Exception as exc:
         traceback.print_exc()
         # Skip this preselection layer if vectors are incomplete or scoring fails.
@@ -356,7 +362,8 @@ def calc_table_embedding(tables: list[dict], question: str, session=None, oid: i
         return _select_tables(tables, question, apply_limit=False)
 
 
-def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingConfig = None, session=None):
+def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingConfig = None, session=None,
+                      retrieval_question: str = None):
     """Rank by vector similarity while retaining explicitly mentioned tables."""
     _list = []
     for table in tables:
@@ -374,7 +381,7 @@ def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingCon
         try:
             model = EmbeddingModelCache.get_model()
             start_time = time.time()
-            q_embedding = model.embed_query(question)
+            q_embedding = embed_query(model, retrieval_question or question, stage="table")
 
             vector_count = _score_table_vectors(_list, q_embedding, session=session)
 
@@ -390,6 +397,8 @@ def _calc_vector_only(tables: list[dict], question: str, *, config: EmbeddingCon
                 "table_name": ele.get('table_name')
             } for ele in _list]))
             return _list
+        except QueryEmbeddingUnavailable:
+            return _select_tables(_list, question, apply_limit=False)
         except Exception as exc:
             traceback.print_exc()
             SQLBotLogUtil.info(

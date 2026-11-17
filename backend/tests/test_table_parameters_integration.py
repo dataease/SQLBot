@@ -1,6 +1,7 @@
 """Opt-in task contracts using isolated PG; only model/source providers substituted."""
 
 import json
+import secrets
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -22,7 +23,7 @@ from apps.datasource.crud.table import _resource_input, _table_input
 from apps.datasource.embedding.metadata_chunks import fingerprint, publish_metadata
 from apps.datasource.models.datasource import CoreDatasource, CoreField, CoreTable
 from apps.datasource.models.metadata_embedding import MetadataEmbedding
-from apps.datasource.utils.utils import aes_encrypt
+from apps.datasource.utils.utils import DatasourceKeys, aes_encrypt
 from apps.terminology.models.terminology_model import Terminology
 from common.core.config import settings
 
@@ -40,13 +41,15 @@ def table_environment(knowledge_environment, monkeypatch):  # noqa: F811
     monkeypatch.setattr("apps.chat.task.llm.check_connection", lambda **_kw: True)
     sessions = scoped_session(sessionmaker(bind=database, class_=Session))
     monkeypatch.setattr("apps.chat.task.llm.session_maker", sessions)
+    keys = DatasourceKeys("test", {"test": secrets.token_bytes(32)})
+    monkeypatch.setattr("apps.datasource.utils.utils.load_datasource_keys", lambda: keys)
     with Session(database) as session:
         ds = CoreDatasource(
             name="accessible",
             description="test",
             type="pg",
             type_name="PostgreSQL",
-            configuration=aes_encrypt('{"database":"synthetic"}').decode(),
+            configuration=aes_encrypt('{"database":"synthetic"}', keys).decode(),
             oid=1,
             embedding="[1,0]",
         )
@@ -102,6 +105,12 @@ class QuestionProvider:
 
     def stream(self, messages):
         context = "\n".join(message.content for message in messages)
+        # Completion is a separate model boundary; contexts here track the
+        # datasource/SQL calls this existing contract is intended to inspect.
+        if messages[0].content.startswith("Complete the current data question"):
+            current = json.loads(messages[-1].content)["current"]["question"]
+            yield AIMessageChunk(content=json.dumps({"question": current}))
+            return
         self.contexts.append(context)
         if "【Schema】" in context:
             table = (
@@ -498,14 +507,16 @@ def test_saved_selection_visible_to_independent_task_processes(table_environment
     with database.connect() as connection:
         schema = connection.execute(text("select current_schema()")).scalar_one()
     script = """
-import json, os
+import json
+import secrets, os
 from types import SimpleNamespace
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlmodel import Session, create_engine
 import test_table_parameters_integration as contract
 from apps.ai_model.embedding import EmbeddingModelCache
 import apps.chat.task.llm as tasks
-EmbeddingModelCache.get_model = staticmethod(lambda: SimpleNamespace(embed_query=lambda _: [1.0, 0.0]))
+from test_query_embedding import embedding_model
+EmbeddingModelCache.get_model = staticmethod(lambda: embedding_model(limit=512))
 db = create_engine(os.environ['SQLBOT_TEST_DATABASE_URL'], connect_args={'options': '-csearch_path=' + os.environ['SQLBOT_TEST_SCHEMA'] + ',public'})
 tasks.session_maker = scoped_session(sessionmaker(bind=db, class_=Session))
 tasks.get_version = lambda _: ''

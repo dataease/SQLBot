@@ -435,6 +435,7 @@
       "host": "主机名/IP地址",
       "port": "端口",
       "username": "用户名",
+      "keep_saved_value": "留空则沿用已保存的值",
       "password": "密码",
       "database": "数据库",
       "connect_mode": "连接方式",
@@ -534,6 +535,16 @@
     "get_schema": "获取Schema"
   },
   "model": {
+    "discovery_loading": "获取中...",
+    "discovery_retry": "重新获取",
+    "discovery_input_hint": "支持搜索或手动输入模型 ID",
+
+    "discovery_fetch": "获取模型列表",
+    "discovery_success": "已获取 {count} 个模型",
+    "discovery_empty": "未返回模型，可手动输入模型 ID。",
+    "discovery_failed": "获取失败，请检查地址或凭据。可手动输入模型 ID。",
+    "discovery_key_reset": "API 地址已变化，如需鉴权，请重新填写 API Key。",
+
     "int": "整数",
     "float": "小数",
     "string": "字符串",
@@ -871,6 +882,7 @@
       "GENERATE_DYNAMIC_SQL": "生成动态 SQL",
       "CHOOSE_TABLE": "匹配数据表 (Schema)",
       "FILTER_TERMS": "匹配术语",
+      "COMPLETE_QUESTION": "问题补全",
       "EXTRACT_KEYWORDS": "提取关键词",
       "FILTER_SQL_EXAMPLE": "匹配 SQL 示例",
       "FILTER_CUSTOM_PROMPT": "匹配自定义提示词",

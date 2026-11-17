@@ -435,6 +435,7 @@
       "host": "호스트명/IP 주소",
       "port": "포트",
       "username": "사용자명",
+      "keep_saved_value": "비워 두면 저장된 값을 유지합니다",
       "password": "비밀번호",
       "database": "데이터베이스",
       "connect_mode": "연결 방식",
@@ -534,6 +535,16 @@
     "get_schema": "스키마 가져오기"
   },
   "model": {
+    "discovery_loading": "가져오는 중...",
+    "discovery_retry": "다시 가져오기",
+    "discovery_input_hint": "검색하거나 모델 ID를 직접 입력하세요",
+
+    "discovery_fetch": "모델 목록 가져오기",
+    "discovery_success": "모델 {count}개를 가져왔습니다",
+    "discovery_empty": "반환된 모델이 없습니다. 모델 ID를 직접 입력할 수 있습니다.",
+    "discovery_failed": "가져오지 못했습니다. 주소 또는 인증 정보를 확인하거나 모델 ID를 직접 입력하세요.",
+    "discovery_key_reset": "API 주소가 변경되었습니다. 인증이 필요하면 API Key를 다시 입력하세요.",
+
     "int": "정수",
     "float": "소수",
     "string": "문자열",
@@ -871,6 +882,7 @@
       "GENERATE_DYNAMIC_SQL": "동적 SQL 생성",
       "CHOOSE_TABLE": "데이터 테이블 매칭 (스키마)",
       "FILTER_TERMS": "용어 매칭",
+      "COMPLETE_QUESTION": "질문 보완",
       "EXTRACT_KEYWORDS": "키워드 추출",
       "FILTER_SQL_EXAMPLE": "SQL 예시 매칭",
       "FILTER_CUSTOM_PROMPT": "사용자 정의 프롬프트 매칭",

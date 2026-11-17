@@ -38,10 +38,9 @@ table_environment = table_contracts.table_environment
 
 def serve_controlled_process(app_name, port):
     """Child entry point: substitute providers before Uvicorn imports main."""
-    from types import SimpleNamespace
-
     import uvicorn
     from langchain_core.messages import AIMessageChunk
+    from test_query_embedding import embedding_model
 
     from apps.ai_model.embedding import EmbeddingModelCache
     from apps.ai_model.model_factory import BaseLLM, LLMFactory
@@ -55,8 +54,11 @@ def serve_controlled_process(app_name, port):
             context = "\n".join(message.content for message in messages)
             with Path(os.environ["SQLBOT_TEST_CONTEXTS"]).open("a") as output:
                 output.write(json.dumps(context) + "\n")
+            if messages[0].content.startswith("Complete the current data question"):
+                transcript = json.loads(messages[-1].content)
+                answer = {"question": transcript["current"]["question"]}
             # Chart prompts include the SQL that has just passed validation.
-            if "SELECT id FROM vector_beta" in messages[-1].content:
+            elif "SELECT id FROM vector_beta" in messages[-1].content:
                 answer = {"type": "table", "columns": [{"name": "id", "value": "id"}]}
             else:
                 answer = {
@@ -67,9 +69,7 @@ def serve_controlled_process(app_name, port):
             yield AIMessageChunk(content=json.dumps(answer))
 
     LLMFactory.register_llm("openai", Provider)
-    EmbeddingModelCache.get_model = staticmethod(
-        lambda: SimpleNamespace(embed_query=lambda _text: [1.0, 0.0])
-    )
+    EmbeddingModelCache.get_model = staticmethod(lambda: embedding_model(limit=512))
     llm.get_version = lambda _ds: ""
     llm.check_connection = lambda **_kwargs: True
     llm.exec_sql = lambda **_kwargs: {"fields": ["id"], "data": [{"id": 7}]}
@@ -83,7 +83,9 @@ def serve_controlled_process(app_name, port):
 
 
 @contextmanager
-def server(app_name, env, directory):
+def server(
+    app_name, env, directory, *, provider_module="test_mcp_parameters_integration"
+):
     with socket.socket() as bound:
         bound.bind(("127.0.0.1", 0))
         port = bound.getsockname()[1]
@@ -93,7 +95,7 @@ def server(app_name, env, directory):
             [
                 sys.executable,
                 "-c",
-                "from test_mcp_parameters_integration import serve_controlled_process; "
+                f"from {provider_module} import serve_controlled_process; "
                 f"serve_controlled_process({app_name!r}, {port})",
             ],
             cwd=Path(__file__).parents[1],

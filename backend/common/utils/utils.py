@@ -254,11 +254,15 @@ def prepare_for_orjson(data):
 def prepare_model_arg(origin_arg: str):
     if not isinstance(origin_arg, str):
         return origin_arg
-    if not origin_arg.strip()[0] in {'{', '['}:
+    stripped_arg = origin_arg.strip()
+    # An empty or whitespace-only value has no first character to inspect; it is
+    # returned as-is instead of raising, so one blank parameter cannot drop every
+    # additional parameter loaded alongside it.
+    if not stripped_arg or stripped_arg[0] not in {'{', '['}:
         return origin_arg
     try:
         return json.loads(origin_arg)
-    except:
+    except Exception:
         return origin_arg
     
 def get_origin_from_referer(request: Request):

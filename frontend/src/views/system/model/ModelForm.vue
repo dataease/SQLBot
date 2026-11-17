@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import { ref, reactive, onMounted, nextTick, computed } from 'vue'
+import { ref, reactive, onMounted, nextTick, computed, watch, onBeforeUnmount } from 'vue'
+import icon_refresh from '@/assets/embedded/icon_refresh_outlined.svg'
 import arrow_down from '@/assets/svg/arrow-down.svg'
 import dashboard_info from '@/assets/svg/dashboard-info.svg'
 import icon_edit_outlined from '@/assets/svg/icon_edit_outlined.svg'
 import icon_delete from '@/assets/svg/icon_delete.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
+import { modelApi } from '@/api/system'
 import ParamsForm from './ParamsForm.vue'
 import { modelTypeOptions } from '@/entity/CommonEntity.ts'
 import { base_model_options, get_supplier } from '@/entity/supplier'
@@ -62,6 +64,82 @@ const modelList = computed(() => {
     return []
   }
   return base_model_options(modelForm.supplier, modelForm.model_type)
+})
+const isGeneric = computed(() => modelForm.supplier === 15)
+const discoveredModels = ref<string[]>([])
+const discovering = ref(false)
+const discoveryMessage = ref('')
+const discoveryErrorDetail = ref('')
+const discoveryState = ref<'idle' | 'success' | 'empty' | 'error'>('idle')
+let discoveryVersion = 0
+let initializing = false
+const invalidateDiscovery = () => {
+  discoveryVersion++
+  discovering.value = false
+  discoveredModels.value = []
+  discoveryMessage.value = ''
+  discoveryState.value = 'idle'
+  discoveryErrorDetail.value = ''
+}
+watch(() => [modelForm.api_domain, modelForm.api_key, modelForm.supplier], invalidateDiscovery, {
+  flush: 'sync',
+})
+watch(
+  () => modelForm.api_domain,
+  () => {
+    if (isGeneric.value && !initializing && modelForm.api_key) {
+      modelForm.api_key = ''
+      ElMessage.info(t('model.discovery_key_reset'))
+    }
+  },
+  { flush: 'sync' }
+)
+onBeforeUnmount(invalidateDiscovery)
+const fetchModels = async () => {
+  if (discovering.value || !modelForm.api_domain.trim()) return
+  const version = ++discoveryVersion
+  discovering.value = true
+  discoveryMessage.value = ''
+  try {
+    const result = await modelApi.discover(modelForm.api_domain, modelForm.api_key)
+    if (version !== discoveryVersion) return
+    if (result.error) {
+      discoveryState.value = 'error'
+      discoveryErrorDetail.value = result.error
+      discoveryMessage.value = t('model.discovery_failed')
+      return
+    }
+    const ids = result.models
+    discoveryState.value = ids.length ? 'success' : 'empty'
+    discoveredModels.value = [...new Set(ids)]
+    discoveryMessage.value = ids.length
+      ? t('model.discovery_success', { count: discoveredModels.value.length })
+      : t('model.discovery_empty')
+  } catch {
+    if (version === discoveryVersion) {
+      discoveryState.value = 'error'
+      discoveryMessage.value = t('model.discovery_failed')
+    }
+  } finally {
+    if (version === discoveryVersion) discovering.value = false
+  }
+}
+const selectableModels = computed(() => {
+  const models = discoveredModels.value.map((name) => ({ name }))
+  const names = new Set(models.map((item) => item.name))
+  for (const item of modelList.value || []) {
+    if (!names.has(item.name)) {
+      models.push(item)
+      names.add(item.name)
+    }
+  }
+  for (const name of [modelForm.base_model]) {
+    if (name && !names.has(name)) {
+      models.push({ name })
+      names.add(name)
+    }
+  }
+  return models
 })
 const handleParamsEdite = (ele?: any) => {
   isCreate.value = false
@@ -174,15 +252,21 @@ const beforeClose = () => {
   paramsFormDrawer.value = false
 }
 const supplierChang = (supplier: any) => {
+  initializing = true
+  invalidateDiscovery()
+  if (isGeneric.value || supplier.id === 15) modelForm.api_key = ''
   modelForm.supplier = supplier.id
   const config = supplier.model_config[modelForm.model_type || 0]
   modelForm.api_domain = config.api_domain
   modelForm.base_model = ''
   modelForm.protocol = supplier.type === 'vllm' ? 2 : 1
   advancedSetting.value = []
+  initializing = false
 }
 let curId = +new Date()
 const initForm = (item?: any) => {
+  initializing = true
+  invalidateDiscovery()
   modelForm.id = ''
   modelRef.value.clearValidate()
   tempConfigMap = new Map<string, Array<any>>()
@@ -201,6 +285,7 @@ const initForm = (item?: any) => {
     }
     tempConfigMap.set(`${modelForm.supplier}-${modelForm.base_model}`, [...advancedSetting.value])
   }
+  initializing = false
 }
 const formatAdvancedSetting = (list: Array<any>) => {
   const setting_list = [
@@ -215,7 +300,7 @@ const baseModelChange = (val: string) => {
     return
   }
   const current_model = modelList.value?.find((model: any) => model.name == val)
-  if (current_model) {
+  if (current_model && !isGeneric.value) {
     modelForm.api_domain = current_model.api_domain || getSupplierDomain() || ''
   }
   const current_config_list = tempConfigMap.get(`${modelForm.supplier}-${modelForm.base_model}`)
@@ -238,7 +323,7 @@ const getModelDefaultArgs = () => {
     return null
   }
   const model_config = currentSupplier.value?.model_config[modelForm.model_type || 0]
-  const common_args = model_config?.common_args || []
+  const common_args = [...(model_config?.common_args || [])]
   const current_model = modelList.value?.find((model: any) => model.name == modelForm.base_model)
 
   if (current_model?.args?.length) {
@@ -315,29 +400,7 @@ defineExpose({
               />
             </el-select>
           </el-form-item>
-          <el-form-item class="custom-require" prop="base_model">
-            <template #label
-              ><span class="custom-require_danger">{{ t('model.basic_model') }}</span>
-              <span class="enter">{{ t('model.enter_to_add') }}</span>
-            </template>
-            <el-select
-              v-model="modelForm['base_model']"
-              style="width: 100%"
-              filterable
-              allow-create
-              default-first-option
-              :reserve-keyword="false"
-              @change="baseModelChange"
-            >
-              <el-option
-                v-for="item in modelList"
-                :key="item.name"
-                :label="item.name"
-                :value="item.name"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item v-if="modelSelected" prop="api_domain" :label="t('model.api_domain_name')">
+          <el-form-item v-if="isGeneric" prop="api_domain" :label="t('model.api_domain_name')">
             <el-input
               v-model="modelForm.api_domain"
               clearable
@@ -346,7 +409,100 @@ defineExpose({
               "
             />
           </el-form-item>
-          <el-form-item v-if="modelSelected" prop="api_key" label="API Key">
+          <el-form-item v-if="isGeneric" prop="api_key" label="API Key">
+            <el-input
+              v-model="modelForm.api_key"
+              clearable
+              :placeholder="$t('datasource.please_enter') + $t('common.empty') + 'API Key'"
+              type="password"
+              show-password
+            />
+          </el-form-item>
+          <el-form-item
+            class="custom-require"
+            :class="isGeneric && 'generic-base-model'"
+            prop="base_model"
+          >
+            <template #label
+              ><span class="custom-require_danger">{{ t('model.basic_model') }}</span>
+              <span v-if="!isGeneric" class="enter">{{ t('model.enter_to_add') }}</span>
+              <el-button
+                v-if="isGeneric"
+                class="discovery-button"
+                :class="{ 'is-retry': discoveryState === 'error' }"
+                :link="discoveryState !== 'error' && !discovering"
+                :type="discovering ? 'default' : 'primary'"
+                :plain="discoveryState === 'error'"
+                :loading="discovering"
+                :disabled="discovering || !modelForm.api_domain.trim()"
+                @click="fetchModels"
+              >
+                <el-icon v-if="!discovering"><icon_refresh /></el-icon>
+                {{
+                  t(
+                    discovering
+                      ? 'model.discovery_loading'
+                      : discoveryState === 'error'
+                        ? 'model.discovery_retry'
+                        : 'model.discovery_fetch'
+                  )
+                }}
+              </el-button>
+            </template>
+            <div
+              v-if="isGeneric && discoveryState === 'error' && discoveryMessage"
+              class="discovery-status error"
+              :title="discoveryErrorDetail"
+              role="status"
+            >
+              {{ discoveryMessage }}
+            </div>
+            <el-select
+              v-model="modelForm['base_model']"
+              style="width: 100%"
+              :offset="isGeneric && discoveryState === 'success' ? 34 : 12"
+              :popper-class="isGeneric ? 'discovery-model-options' : ''"
+              filterable
+              allow-create
+              default-first-option
+              :reserve-keyword="false"
+              @change="baseModelChange"
+            >
+              <el-option
+                v-for="item in selectableModels"
+                :key="item.name"
+                :label="item.name"
+                :value="item.name"
+              />
+              <template v-if="isGeneric" #footer
+                ><span class="discovery-select-hint">{{
+                  t('model.discovery_input_hint')
+                }}</span></template
+              >
+            </el-select>
+            <div
+              v-if="isGeneric && discoveryState !== 'error' && discoveryMessage"
+              class="discovery-status"
+              :class="discoveryState"
+              role="status"
+            >
+              {{ discoveryMessage }}
+            </div>
+          </el-form-item>
+          <el-form-item
+            v-if="modelSelected && !isGeneric"
+            prop="api_domain"
+            :label="t('model.api_domain_name')"
+          >
+            <el-input
+              v-model="modelForm.api_domain"
+              clearable
+              :placeholder="
+                $t('datasource.please_enter') + $t('common.empty') + $t('model.api_domain_name')
+              "
+            />
+          </el-form-item>
+          <el-form-item v-if="modelSelected && !isGeneric" prop="api_key" label="API Key">
             <el-input
               v-model="modelForm.api_key"
               clearable
@@ -487,6 +643,40 @@ defineExpose({
         align-items: center;
       }
 
+      .generic-base-model {
+        :deep(.ed-form-item__label) {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .discovery-button {
+          font-size: 16px;
+          color: #0066ff;
+          margin-left: auto;
+          .ed-icon {
+            margin-right: 6px;
+          }
+        }
+        .discovery-status {
+          width: 100%;
+          font-size: 14px;
+          line-height: 22px;
+          margin-top: 4px;
+          &.success {
+            color: #008a00;
+          }
+          &.empty {
+            color: #6b7280;
+          }
+          &.error {
+            color: #f00;
+            margin-top: 0;
+            margin-bottom: 8px;
+          }
+        }
+      }
+
       .enter {
         font-weight: 400;
         font-size: 14px;
@@ -599,6 +789,30 @@ defineExpose({
     .form-content {
       padding-bottom: 24px;
     }
+  }
+}
+.discovery-select-hint {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 22px;
+}
+</style>
+<style lang="less">
+.discovery-model-options {
+  .ed-select-dropdown__wrap {
+    max-height: 120px;
+  }
+  .ed-select-dropdown__item {
+    height: 40px;
+    line-height: 40px;
+    font-size: 16px;
+  }
+  .ed-select-dropdown__item.is-selected {
+    background: #e3efff;
+    color: #0066ff;
+  }
+  .ed-select-dropdown__footer {
+    padding: 8px 20px;
   }
 }
 </style>

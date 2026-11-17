@@ -85,8 +85,8 @@ jobs:
             docker save $image_path  | gzip > images/$image_name.tar.gz
           done
           
-          DOCKER_VERSION="docker-27.2.0"
-          DOCKER_COMPOSE_VERSION="v2.29.2"
+          DOCKER_VERSION="docker-29.9.3"
+          DOCKER_COMPOSE_VERSION="v5.7.0"
 
           wget ${DOCKER_DOWNLOAD_SERVER}/download/${ARCH}/${DOCKER_VERSION}.tgz
           wget ${DOCKER_DOWNLOAD_SERVER}/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-${ARCH} && mv docker-compose-linux-${ARCH} docker-compose && chmod +x docker-compose

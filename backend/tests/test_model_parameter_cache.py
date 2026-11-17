@@ -21,7 +21,8 @@ const names = new Set([
   'modelForm', 'modelRef', 'advancedSetting', 'tempConfigMap', 'curId',
   'currentSupplier', 'modelList', 'initForm', 'handleParamsDel', 'supplierChang',
   'formatAdvancedSetting', 'baseModelChange', 'getSupplierDomain', 'getModelDefaultArgs',
-  'submitModel',
+  'submitModel', 'isGeneric', 'initializing', 'invalidateDiscovery',
+  'discoveryVersion', 'discovering', 'discoveredModels', 'discoveryMessage', 'discoveryState', 'discoveryErrorDetail',
 ]);
 const selected = ast.statements.filter(statement => ts.isVariableStatement(statement) &&
   statement.declarationList.declarations.some(declaration => names.has(declaration.name.getText(ast))));

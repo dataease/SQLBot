@@ -7,6 +7,7 @@ from sqlalchemy import and_, or_, select, func, delete, update, text, BigInteger
 from sqlalchemy.orm import aliased
 
 from apps.ai_model.embedding import EmbeddingModelCache
+from apps.ai_model.query_embedding import QueryEmbeddingUnavailable, embed_query
 from apps.datasource.embedding.utils import parse_valid_embedding
 from apps.datasource.models.datasource import CoreDatasource
 from apps.system.models.system_model import AssistantModel
@@ -852,7 +853,7 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
             try:
                 model = EmbeddingModelCache.get_model()
 
-                embedding = parse_valid_embedding(model.embed_query(word))
+                embedding = parse_valid_embedding(embed_query(model, word, stage="terminology"))
 
                 if advanced_application_id is not None:
                     results = session.execute(text(embedding_sql_with_advanced_application),
@@ -869,6 +870,9 @@ def select_terminology_by_word(session: SessionDep, word: str, oid: int, datasou
                 for row in results:
                     _list.append(Terminology(id=row.id, word=row.word, pid=row.pid))
 
+            except QueryEmbeddingUnavailable:
+                # The guard logs the reason; literal matches remain valid.
+                pass
             except Exception:
                 traceback.print_exc()
                 session.rollback()
@@ -970,10 +974,11 @@ def get_terminology_template(session: SessionDep, question: str, oid: Optional[i
         return '', []
 
 
-def expand_with_terminology(keywords: str, session: SessionDep, oid: int) -> str:
+def expand_with_terminology(keywords: str, session: SessionDep, oid: int,
+                            datasource: int = None, advanced_application_id: int = None) -> str:
     """使用术语同义词扩展关键词。
 
-    查询当前租户启用的术语表，将匹配的关键词扩展为同义词集合。
+    查询当前知识作用域内启用的术语，将匹配的关键词扩展为同义词集合。
     pid=None 表示父术语（主词），pid=<id> 表示子术语（同义词）。
 
     Args:
@@ -992,11 +997,22 @@ def expand_with_terminology(keywords: str, session: SessionDep, oid: int) -> str
         return keywords
 
     try:
-        # 查询当前租户启用的术语（限制 500 条避免内存问题）
-        terms = session.query(Terminology).filter(
+        # Match the same workspace/datasource/application boundary as injection.
+        query = session.query(Terminology).filter(
             Terminology.oid == oid,
-            Terminology.enabled == True
-        ).limit(500).all()
+            Terminology.enabled.is_(True)
+        )
+        if advanced_application_id is not None:
+            query = query.filter(Terminology.advanced_application == advanced_application_id)
+        elif datasource is not None:
+            query = query.filter(or_(
+                or_(Terminology.specific_ds.is_(False), Terminology.specific_ds.is_(None)),
+                and_(Terminology.specific_ds.is_(True),
+                     Terminology.datasource_ids.contains([datasource])),
+            ))
+        else:
+            query = query.filter(or_(Terminology.specific_ds.is_(False), Terminology.specific_ds.is_(None)))
+        terms = query.limit(500).all()
 
         if not terms:
             return keywords

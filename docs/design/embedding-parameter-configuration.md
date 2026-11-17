@@ -82,7 +82,7 @@
 | 术语召回 | [terminology.py](../../backend/apps/terminology/curd/terminology.py) 的 `select_terminology_by_word/get_terminology_template` | 工作空间、数据源、高级应用三条向量 SQL；与字面匹配合并，按关键词逐次召回 |
 | SQL 示例召回 | [data_training.py](../../backend/apps/data_training/curd/data_training.py) 的 `select_training_by_question/get_training_template` | 数据源和高级应用两条向量 SQL；与双向包含匹配合并 |
 | SQL 上下文注入 | [llm.py](../../backend/apps/chat/task/llm.py) 的 `filter_terminology_template/filter_training_template/init_messages` | 自动选数据源和已指定数据源两条问数路径都需传递同一配置快照；保持知识作用域隔离 |
-| 自动选择数据源 | 同文件 `select_datasource`；[ds_embedding.py](../../backend/apps/datasource/embedding/ds_embedding.py) 的 `get_ds_embedding` | 多数据源时先截断向量候选，再交 LLM 选择；表开关还影响选择结果持久化分支，不可遗漏 |
+| 自动选择数据源 | 同文件 `select_datasource`；[ds_embedding.py](../../backend/apps/datasource/embedding/ds_embedding.py) 的 `get_ds_embedding` | 多数据源时复用本轮补全问题预筛选并交 LLM 选择，向量输入按部署 tokenizer 检查，超限保留合法候选；选择 ID 校验后写入会话；表开关还影响选择结果持久化分支，不可遗漏 |
 | 表结构筛选 | `llm.py` 的 `choose_table_schema`；[datasource.py](../../backend/apps/datasource/crud/datasource.py) 的 `get_table_schema/get_table_obj_by_ds` | 使用已有权限及选中状态约束后的候选；开关关闭保留该候选集合；配置不能绕过权限过滤 |
 | 表混合匹配 | [table_embedding.py](../../backend/apps/datasource/embedding/table_embedding.py) 的 `calc_table_embedding/_calc_vector_only/_select_tables` | 关键词与向量按 alpha 融合，保留问题明确提到的表，再按数量补充；异常或不完整向量的降级不能任意丢表 |
 | 关系与样例数据 | `datasource.py` 的 `get_table_schema/get_tables_sample_data`；`llm.py` 的 `choose_table_schema` | 筛选后仅从原授权表和字段补充关系上下文，明确表与关系表可超出候选数；样例数据使用最终选表 |

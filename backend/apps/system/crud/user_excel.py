@@ -1,3 +1,4 @@
+from common.core.security import default_password_hash
 
 
 import asyncio
@@ -7,6 +8,7 @@ import tempfile
 import uuid
 import atexit
 import threading
+from starlette.concurrency import run_in_threadpool
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse, FileResponse
 import os
@@ -129,6 +131,8 @@ async def batchUpload(session: SessionDep, trans, file) -> UploadResultDTO:
         error_file_id = generate_error_file(error_list, head_list)
     result = UploadResultDTO(successCount=len(success_list), errorCount=len(error_list), dataKey=error_file_id)
     if success_list:
+        for row in success_list:
+            row["password"] = await run_in_threadpool(default_password_hash)
         user_po_list = [UserModel.model_validate(row) for row in success_list]
         session.add_all(user_po_list)
         session.commit()

@@ -435,6 +435,7 @@
       "host": "主機名/IP位址",
       "port": "連接埠",
       "username": "使用者名稱",
+      "keep_saved_value": "留空則沿用已儲存的值",
       "password": "密碼",
       "database": "資料庫",
       "connect_mode": "連線方式",
@@ -534,6 +535,16 @@
     "get_schema": "取得Schema"
   },
   "model": {
+    "discovery_loading": "取得中...",
+    "discovery_retry": "重新取得",
+    "discovery_input_hint": "支援搜尋或手動輸入模型 ID",
+
+    "discovery_fetch": "取得模型清單",
+    "discovery_success": "已取得 {count} 個模型",
+    "discovery_empty": "未傳回模型，可手動輸入模型 ID。",
+    "discovery_failed": "取得失敗，請檢查位址或憑證。可手動輸入模型 ID。",
+    "discovery_key_reset": "API 位址已變更，如需驗證，請重新填寫 API Key。",
+
     "int": "整數",
     "float": "小數",
     "string": "字串",
@@ -871,6 +882,7 @@
       "GENERATE_DYNAMIC_SQL": "產生動態 SQL",
       "CHOOSE_TABLE": "匹配資料表 (Schema)",
       "FILTER_TERMS": "匹配術語",
+      "COMPLETE_QUESTION": "問題補全",
       "EXTRACT_KEYWORDS": "提取關鍵詞",
       "FILTER_SQL_EXAMPLE": "匹配 SQL 範例",
       "FILTER_CUSTOM_PROMPT": "匹配自訂提示詞",

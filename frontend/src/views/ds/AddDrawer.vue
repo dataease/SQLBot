@@ -42,7 +42,8 @@ const refresh = () => {
   emits('search')
 }
 
-const handleEditDatasource = (res: any) => {
+const handleEditDatasource = async (item: any) => {
+  const res = await datasourceApi.getDs(item.id)
   activeStep.value = 1
   datasourceConfigVisible.value = true
   editDatasource.value = true

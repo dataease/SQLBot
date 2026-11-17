@@ -11,6 +11,7 @@ from test_embedding_parameters_integration import (
     question_task,
     recall,
 )
+from test_query_embedding import embedding_model
 
 from apps.data_training.curd.data_training import update_training
 from apps.data_training.models.data_training_model import DataTraining, DataTrainingInfo
@@ -806,8 +807,6 @@ def test_failed_generation_keeps_literal_and_available_vector_recall(
     monkeypatch,
     query_provider_fails,
 ):
-    from types import SimpleNamespace
-
     from apps.ai_model.embedding import EmbeddingModelCache
     from apps.data_training.curd.data_training import create_training
     from common.utils.embedding_lifecycle import EmbeddingGenerationError
@@ -817,14 +816,10 @@ def test_failed_generation_keeps_literal_and_available_vector_recall(
     def fail(_value):
         raise ConnectionError("controlled provider failure")
 
-    monkeypatch.setattr(
-        EmbeddingModelCache,
-        "get_model",
-        lambda: SimpleNamespace(
-            embed_documents=fail,
-            embed_query=fail if query_provider_fails else lambda _value: [1, 0],
-        ),
-    )
+    model = embedding_model(limit=512)
+    model.embed_documents = fail
+    model.embed_query = fail if query_provider_fails else lambda _value: [1, 0]
+    monkeypatch.setattr(EmbeddingModelCache, "get_model", lambda: model)
     with Session(database) as session:
         resource_id = create_training(
             session,
@@ -923,17 +918,22 @@ def test_off_then_on_during_old_generation_fills_latest_input(
 def test_unusable_query_vector_falls_back_to_literal_knowledge(
     lifecycle_environment, monkeypatch, vector
 ):
-    from types import SimpleNamespace
-
     from apps.ai_model.embedding import EmbeddingModelCache
 
     database, _client, chat_id, _queue = lifecycle_environment
-    monkeypatch.setattr(
-        EmbeddingModelCache,
-        "get_model",
-        lambda: SimpleNamespace(embed_query=lambda _question: vector),
-    )
+    calls = []
+    model = embedding_model(limit=512)
+
+    def unusable_query(question):
+        calls.append(question)
+        return vector
+
+    model.embed_query = unusable_query
+    monkeypatch.setattr(EmbeddingModelCache, "get_model", lambda: model)
     with Session(database) as session:
         result = recall(question_task(session, chat_id), session)
         assert "literal" in result[0] and "literal" in result[1]
         assert "alpha" not in "".join(result)
+        assert calls, (
+            "Invalid vectors must reach scoring rather than tokenizer fallback"
+        )

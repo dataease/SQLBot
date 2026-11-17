@@ -299,4 +299,4 @@ def get_out_ds_conf(ds: AssistantOutDsSchema, timeout: int = 30) -> str:
         "lowVersion": ds.lowVersion or False,
     }
     conf["extraJdbc"] = ''
-    return aes_encrypt(json.dumps(conf))
+    return aes_encrypt(json.dumps(conf)).decode("ascii")

@@ -7,11 +7,12 @@ from sqlmodel import func, select, update, delete
 
 from apps.ai_model.model_factory import LLMConfig, LLMFactory
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
+from apps.system.crud.model_discovery import discover_models, ModelDiscoveryError
 from apps.system.crud.aimodel_manage import get_ai_model_list_by_workspace
 from apps.system.crud.workspace_model import resolve_model_id, get_model_impacts, apply_model_impact_resolutions
 from apps.system.schemas.workspace_model import ModelMappingUpdate, ModelImpactResolution, ModelImpact
 from apps.system.models.system_model import AiModelDetail, AiModelWorkspaceMapping, AiModelBrief
-from apps.system.schemas.ai_model_schema import AiModelConfigItem, AiModelCreator, AiModelEditor, AiModelGridItem
+from apps.system.schemas.ai_model_schema import AiModelConfigItem, AiModelCreator, AiModelEditor, AiModelGridItem, ModelDiscoveryRequest
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import SessionDep, Trans, CurrentUser, CurrentAssistant
 from common.utils.crypto import sqlbot_decrypt
@@ -23,13 +24,22 @@ from common.audit.models.log_model import OperationType, OperationModules
 from common.audit.schemas.logger_decorator import LogConfig, system_log
 
 
+@router.post("/models", include_in_schema=False)
+@require_permissions(permission=SqlbotPermission(role=['admin']))
+async def list_provider_models(info: ModelDiscoveryRequest, trans: Trans):
+    try:
+        return {'models': await discover_models(info.api_domain, info.api_key.get_secret_value())}
+    except ModelDiscoveryError as error:
+        return {'models': [], 'error': trans(f'i18n_model_discovery.{error}')}
+
+
 @router.post("/status", include_in_schema=False)
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 async def check_llm(info: AiModelCreator, trans: Trans):
     async def generate():
         try:
             additional_params = {item.key: prepare_model_arg(item.val) for item in info.config_list if
-                                 item.key and item.val}
+                                 item.key and item.val is not None and item.val != ""}
             config = LLMConfig(
                 model_type="openai" if info.protocol == 1 else "vllm",
                 model_name=info.base_model,
