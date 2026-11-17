@@ -295,6 +295,7 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import LoginPreview from './LoginPreview.vue'
 import Person from './Person.vue'
 import { setCurrentColor } from '@/utils/utils'
+import { DEFAULT_HELP_URL, resolveHelpUrl } from '@/utils/helpUrl'
 
 // import TinymceEditor from '@/components/rich-text/TinymceEditor.vue'
 import { cloneDeep } from 'lodash-es'
@@ -371,7 +372,7 @@ const rules = reactive<FormRules>({
 })
 
 const defaultTopForm = {
-  help: 'https://dataease.cn/sqlbot/v1/',
+  help: DEFAULT_HELP_URL,
   showDoc: '0',
   showAbout: '0',
   pc_welcome: '',
@@ -506,7 +507,8 @@ const init = () => {
         } else if (Object.prototype.hasOwnProperty.call(loginForm, pkey)) {
           loginForm[pkey as keyof typeof loginForm] = pval
         } else if (Object.prototype.hasOwnProperty.call(topForm, pkey)) {
-          topForm[pkey as keyof typeof topForm] = pval
+          topForm[pkey as keyof typeof topForm] =
+            pkey === 'help' && pval ? resolveHelpUrl(pval) : pval
         } else if (pkey === 'mobileLogin') {
           mobileLogin.value = pval
         } else if (pkey === 'mobileLoginBg') {
