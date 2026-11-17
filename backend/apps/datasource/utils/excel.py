@@ -56,7 +56,6 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
         for column, field_type in field_mapping.items()
     }
     if is_csv_file(save_path):
-    if save_path.endswith('.csv'):
         # The CSV parser cannot read datetime64 dtypes directly.
         datetime_columns = [column for column, field_type in field_mapping.items() if field_type == 'datetime']
         for column in datetime_columns:
