@@ -4,7 +4,8 @@ import re
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy import and_, text
+from sqlalchemy import MetaData, Table, and_, text
+from sqlalchemy.schema import DropTable
 from sqlbot_xpack.permissions.models.ds_rules import DsRules
 from sqlmodel import select
 
@@ -188,8 +189,8 @@ async def delete_ds(session: SessionDep, id: int):
         engine = get_engine_conn()
         with engine.connect() as conn:
             for name in names:
-                identifier = engine.dialect.identifier_preparer.quote_identifier(name)
-                conn.execute(text(f"DROP TABLE IF EXISTS {identifier}"))
+                table = Table(name, MetaData(), quote=True)
+                conn.execute(DropTable(table, if_exists=True))
             conn.commit()
 
     session.delete(term)

@@ -39,5 +39,17 @@ def test_write_and_delete_validate_and_quote():
     source = SOURCE.read_text()
     assert 'validate_excel_sheet_names(incoming)' in source
     assert 'validate_excel_sheet_names(json.loads(aes_decrypt(term.configuration)))' in source
-    assert 'quote_identifier(name)' in source
+    assert 'Table(name, MetaData(), quote=True)' in source
+    assert 'conn.execute(DropTable(table, if_exists=True))' in source
     assert 'sheet["tableName"]' not in source
+
+
+@pytest.mark.parametrize('name', ['excel_销售_0123456789', 'x"; SELECT 1; --', 'public.users'])
+def test_drop_table_compiles_name_as_single_identifier(name):
+    from sqlalchemy import MetaData, Table
+    from sqlalchemy.dialects import postgresql
+    from sqlalchemy.schema import DropTable
+
+    ddl = DropTable(Table(name, MetaData(), quote=True), if_exists=True)
+    compiled = str(ddl.compile(dialect=postgresql.dialect())).strip()
+    assert compiled == 'DROP TABLE IF EXISTS "' + name.replace('"', '""') + '"'
