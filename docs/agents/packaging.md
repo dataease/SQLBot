@@ -12,6 +12,8 @@
 
 应用镜像保留默认中文向量模型的 PyTorch 权重和 tokenizer，复制模型时排除同一模型未使用的 ONNX 导出。修改模型打包内容时，应在断网容器中验证默认模型可以加载并生成向量。
 
+dmPython 版本以 `backend/pyproject.toml` 为准，Dockerfile 不重复覆盖其版本。升级时核对双架构 wheel 中的 DPI、SSL 和 crypto 库及应用镜像的加载路径。
+
 修改路径、端口、依赖或构建脚本时，必须核对最终运行目录仍是 `/opt/sqlbot` 布局，且数据、图片、日志和字体路径没有断开。
 
 ## 本地验证
