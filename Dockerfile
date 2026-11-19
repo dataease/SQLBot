@@ -43,7 +43,6 @@ for old, new in (
     ('psycopg[binary]<4.0.0,>=3.1.13', 'psycopg[c]<4.0.0,>=3.1.13'),
     ('psycopg2-binary (>=2.9.12,<3.0.0)', 'psycopg2 (>=2.9.12,<3.0.0)'),
     ('elasticsearch[requests] (>=7.10,<8.0)', 'elasticsearch[requests] (>=7.17.13,<8.0)'),
-    ('dmpython==2.5.22', 'dmpython==2.6.1'),
 ):
     assert contents.count(old) == 1, old
     contents = contents.replace(old, new)
