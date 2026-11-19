@@ -224,8 +224,8 @@ def test_migration_restart_rotation_and_compare_and_swap(pg, key_file, monkeypat
 def test_datasource_http_postgres(pg, monkeypatch, caplog):
     database, schema = pg
     with database.begin() as connection:
-        connection.execute(text(f"CREATE TABLE {schema}.synthetic_sample (id integer)"))
-        connection.execute(text(f"INSERT INTO {schema}.synthetic_sample VALUES (42)"))
+        connection.execute(text(f"CREATE TABLE {schema}.excel_sample_0123456789 (id integer)"))
+        connection.execute(text(f"INSERT INTO {schema}.excel_sample_0123456789 VALUES (42)"))
     monkeypatch.setattr(permission, "engine", database)
     monkeypatch.setattr(datasource, "run_save_ds_embeddings", lambda *_: None)
     monkeypatch.setattr(datasource, "run_save_table_embeddings", lambda *_: None)
@@ -281,9 +281,9 @@ def test_datasource_http_postgres(pg, monkeypatch, caplog):
     assert post("/check", json=request).json() is True
     tables = post("/getTablesByConf", json=request)
     assert tables.status_code == 200, tables.text
-    assert "synthetic_sample" in tables.text
+    assert "excel_sample_0123456789" in tables.text
     added = post(
-        "/add", json={**request, "tables": [{"table_name": "synthetic_sample"}]}
+        "/add", json={**request, "tables": [{"table_name": "excel_sample_0123456789"}]}
     )
     assert added.status_code == 200, added.text
     ds_id = added.json()["id"]
@@ -321,14 +321,14 @@ def test_datasource_http_postgres(pg, monkeypatch, caplog):
     assert saved != stored
     assert json.loads(aes_decrypt(saved))["password"] == "synthetic-only"
     assert client.get(f"/datasource/check/{ds_id}").json() is True
-    assert post(f"/getFields/{ds_id}/synthetic_sample").status_code == 200
+    assert post(f"/getFields/{ds_id}/excel_sample_0123456789").status_code == 200
     table = post(f"/tableList/{ds_id}").json()[0]
     preview = post(f"/previewData/{ds_id}", json={"table": table})
     assert preview.status_code == 200 and "42" in preview.text, preview.text
     with Session(database) as session:
         ds = session.get(CoreDatasource, ds_id)
         try:
-            assert exec_sql(ds, "select id from synthetic_sample")["data"] == [
+            assert exec_sql(ds, "select id from excel_sample_0123456789")["data"] == [
                 {"id": 42}
             ]
         finally:
@@ -343,7 +343,7 @@ def test_datasource_http_postgres(pg, monkeypatch, caplog):
 
     excel_config = {
         "filename": "synthetic.xlsx",
-        "sheets": [{"tableName": "synthetic_sample"}],
+        "sheets": [{"tableName": "excel_sample_0123456789"}],
     }
     excel = post(
         "/add",
@@ -358,7 +358,7 @@ def test_datasource_http_postgres(pg, monkeypatch, caplog):
     with Session(database) as session:
         excel_ds = session.get(CoreDatasource, excel.json()["id"])
         assert json.loads(aes_decrypt(excel_ds.configuration)) == excel_config
-    assert "synthetic_sample" in post(f"/getTables/{excel_ds.id}").text
+    assert "excel_sample_0123456789" in post(f"/getTables/{excel_ds.id}").text
     assistant = AssistantOutDsSchema(
         name="synthetic", type="pg", password="assistant-only"
     )
