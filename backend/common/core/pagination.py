@@ -7,6 +7,27 @@ from typing import Union, Any
 
 ModelT = TypeVar('ModelT', bound=SQLModel)
 
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 500
+
+
+def normalize_page_args(page: int, size: int) -> tuple[int, int]:
+    """Clamp pagination inputs that arrive without bounds.
+
+    Page and size come from path parameters that carry no validation, so
+    ``page=0`` used to build a negative OFFSET and ``size=0`` divided by zero
+    while computing ``total_pages``. Both turned a list request into a 500
+    instead of returning the first page, and an oversized ``size`` let one
+    request scan the whole table.
+    """
+    safe_page = page if isinstance(page, int) and page >= 1 else 1
+    if not isinstance(size, int) or size < 1:
+        safe_size = DEFAULT_PAGE_SIZE
+    else:
+        safe_size = min(size, MAX_PAGE_SIZE)
+    return safe_page, safe_size
+
+
 class Paginator:
     def __init__(self, session: Session):
         self.session = session
@@ -32,6 +53,7 @@ class Paginator:
         desc: bool = False,
         **filters
     ) -> tuple[Sequence[Any], int]:
+        page, size = normalize_page_args(page, size)
         offset = (page - 1) * size
         single_model: bool = False
         if isinstance(stmt, type) and issubclass(stmt, SQLModel):
@@ -83,21 +105,22 @@ class Paginator:
         pagination: PaginationParams,
         **filters
     ) -> PaginatedResponse[Any]:
+        page, size = normalize_page_args(pagination.page, pagination.size)
         items, total = await self.paginate(
             stmt=stmt,
-            page=pagination.page,
-            size=pagination.size,
+            page=page,
+            size=size,
             order_by=pagination.order_by,
             desc=pagination.desc,
             **filters
         )
         
-        total_pages = (total + pagination.size - 1) // pagination.size
+        total_pages = (total + size - 1) // size
         
         return PaginatedResponse[Any](
             items=items,
             total=total,
-            page=pagination.page,
-            size=pagination.size,
+            page=page,
+            size=size,
             total_pages=total_pages
         )
