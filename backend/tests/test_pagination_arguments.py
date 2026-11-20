@@ -106,7 +106,7 @@ def test_oversized_page_size_is_bounded():
 )
 def test_real_database_boundaries(page, size, expected_page, expected_size, count):
     engine = create_engine("sqlite://")
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(engine, tables=[PagedRow.__table__])
     statements = []
     with Session(engine) as session:
         session.add_all(PagedRow(id=i) for i in range(1, 544))
@@ -144,7 +144,7 @@ def test_real_database_boundaries(page, size, expected_page, expected_size, coun
 
 def test_direct_paginate_and_empty_database():
     engine = create_engine("sqlite://")
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(engine, tables=[PagedRow.__table__])
     with Session(engine) as session:
         paginator = Paginator(session)
         assert asyncio.run(paginator.paginate(PagedRow, page=10**30, size=0)) == ([], 0)
