@@ -953,7 +953,7 @@ const changeStatus = (id: any, val: any) => {
     height: 64px;
     width: calc(100% + 48px);
     left: -24px;
-    bottom: -16px;
+    bottom: 0;
     border-top: 1px solid #1f232926;
     display: flex;
     background-color: #fff;

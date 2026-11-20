@@ -1447,7 +1447,7 @@ const showTips = (successCount: any, errorCount: any, dataKey: any) => {
     width: calc(100% + 48px);
     left: -24px;
     background-color: #fff;
-    bottom: -16px;
+    bottom: 0;
     border-top: 1px solid #1f232926;
     display: flex;
     align-items: center;
