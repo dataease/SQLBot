@@ -131,3 +131,7 @@ PYTHONPATH=. "$SQLBOT_TEST_PYTHON" -m pytest -q "$SQLBOT_XPACK_REPO/tests/test_a
 默认使用合成 SQLite 用户及真实 FastAPI 路由、认证中间件、SQLModel 和事务，仅替换许可证有效性和第三方身份响应。OAuth2/CAS 适配器另有 HTTP 客户端边界回归。显式设置 `SQLBOT_BINDING_TEST_PG=1` 并安全提供 `SQLBOT_TEST_DATABASE_URL` 后，每个用例使用独立随机 PostgreSQL schema，补测迁移、重复历史映射预检、一级回滚和并发确认；不会访问业务 schema。默认 SQLite 不声称覆盖 PostgreSQL 行锁。
 
 前端运行 `npm --prefix tests/browser test -- --config=account-binding.config.mjs`，本机夹具监听 `127.0.0.1:4236`，加载真实绑定组件和 API 封装，隔离当前用户、HTTP 及平台扫码 SDK。覆盖新窗口认证、通知与自动关闭、opener 缺失后的轮询、显式确认、取消、错误密码及企微/钉钉/飞书扫码；版本能力回归覆盖开源版基本信息、商业版绑定管理、许可证失效后的历史绑定与解绑，以及其他用户关联不影响本人的能力判断。它不替代真实平台应用配置、回调白名单、扫码和授权验收。
+
+## 共享分页回归
+
+`backend/tests/test_pagination_arguments.py` 覆盖共享分页器的参数归一化、SQLite 小数据分页、实际 LIMIT/OFFSET 绑定及响应元数据。超出总页数（包括极大页码）只执行 count，不向数据库绑定超大 OFFSET。该测试不覆盖 PostgreSQL 驱动、完整认证/授权路由链或独立知识分页实现。工作空间授权弹窗的浏览器回归见 `tests/browser/README.md` 的分页容量章节。

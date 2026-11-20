@@ -18,7 +18,7 @@ def normalize_page_args(page: int, size: int) -> tuple[int, int]:
     ``page=0`` used to build a negative OFFSET and ``size=0`` divided by zero
     while computing ``total_pages``. Both turned a list request into a 500
     instead of returning the first page, and an oversized ``size`` let one
-    request scan the whole table.
+    request return an arbitrarily large result set.
     """
     safe_page = page if isinstance(page, int) and page >= 1 else 1
     if not isinstance(size, int) or size < 1:
@@ -88,6 +88,10 @@ class Paginator:
         total_result = self.session.exec(count_stmt)
         total: int = total_result.first()
         
+        # Skip out-of-range pages before binding an arbitrarily large OFFSET.
+        if offset >= total:
+            return [], total
+
         # 应用分页
         stmt = stmt.offset(offset).limit(size)
         
