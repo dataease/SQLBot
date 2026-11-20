@@ -14,7 +14,7 @@ import {
   type BindingStatus,
 } from '@/api/account-binding'
 import BindingQr from './BindingQr.vue'
-import avatarIcon from '@/assets/img/Default-avatar.svg?url'
+import AvatarIcon from '@/assets/img/Default-avatar.svg'
 import lockIcon from '@/assets/svg/icon-key_outlined.svg?url'
 import casIcon from '@/assets/svg/logo_cas.svg?url'
 import oidcIcon from '@/assets/svg/logo_oidc.svg?url'
@@ -369,7 +369,7 @@ onBeforeUnmount(() => {
     </div>
     <div class="account-content">
       <section class="account-summary">
-        <img :src="avatarIcon" alt="" />
+        <AvatarIcon class="user-avatar" aria-hidden="true" />
         <div>
           <h2>
             {{ user.getName }} <span class="account-tag">{{ accountType }}</span>
@@ -541,7 +541,7 @@ onBeforeUnmount(() => {
         <p>{{ t('binding.confirm_hint') }}</p>
         <div class="identity-summary">
           <div>
-            <img :src="avatarIcon" alt="" />
+            <AvatarIcon class="user-avatar" aria-hidden="true" />
             <div>
               <strong>{{ user.getName }}</strong
               ><small>SQLBot · {{ user.getAccount }}</small>
@@ -641,7 +641,7 @@ onBeforeUnmount(() => {
   gap: 16px;
   padding-bottom: 30px;
   border-bottom: 1px solid #eff0f1;
-  > img {
+  > .user-avatar {
     width: 56px;
     height: 56px;
     flex-shrink: 0;
@@ -870,7 +870,8 @@ onBeforeUnmount(() => {
     gap: 12px;
     min-width: 0;
   }
-  img {
+  img,
+  .user-avatar {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
@@ -910,7 +911,7 @@ onBeforeUnmount(() => {
   }
   .account-summary {
     gap: 10px;
-    > img {
+    > .user-avatar {
       width: 40px;
       height: 40px;
     }
