@@ -37,6 +37,25 @@ import { watchRouter } from './watch'
 
 export const routes = [
   {
+    path: '/account',
+    component: LayoutDsl,
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'bindings',
+        name: 'account-bindings',
+        component: () => import('@/views/account/AccountBinding.vue'),
+        meta: { titleKey: 'binding.title', hidden: true },
+      },
+    ],
+  },
+  {
+    path: '/account/binding-callback',
+    name: 'binding-callback',
+    component: () => import('@/views/account/BindingCallback.vue'),
+    meta: { titleKey: 'binding.title', hidden: true },
+  },
+  {
     path: '/login',
     name: 'login',
     component: login,

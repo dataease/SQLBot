@@ -16,6 +16,12 @@ const assistantWhiteList = ['/assistant', '/embeddedPage', '/embeddedCommon', '/
 const wsAdminRouterList = ['/ds/index', '/as/index']
 export const watchRouter = (router: Router) => {
   router.beforeEach(async (to: any, from: any, next: any) => {
+    // A binding callback must report an expired session instead of starting a login.
+    // The callback API itself remains authenticated and bound to the original token.
+    if (to.path === '/account/binding-callback') {
+      next()
+      return
+    }
     await loadXpackStatic()
     await appearanceStore.setAppearance()
     LicenseGenerator.generateRouters(router)
