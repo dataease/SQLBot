@@ -14,9 +14,18 @@ def build_tree_generic(nodes: List[T], root_pid: Any = None) -> List[T]:
     tree: List[T] = []
 
     for node in nodes:
-        if node.pid == root_pid:
+        pid = node.pid
+        if node.id is not None and pid == node.id:
+            # A self-parented row stays visible, but must never become its own
+            # child: serializing the result would recurse until it fails.
             tree.append(node)
-        elif node.pid in node_dict:
-            node_dict[node.pid].children.append(node)
+            continue
+        # Callers pass a sentinel such as "root", while freshly created rows keep
+        # an empty pid and older rows can store NULL. Both describe "no parent"
+        # and used to be dropped from the tree entirely.
+        if pid == root_pid or pid is None or pid == "":
+            tree.append(node)
+        elif pid in node_dict:
+            node_dict[pid].children.append(node)
 
     return tree
