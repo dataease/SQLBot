@@ -21,7 +21,7 @@ const names = new Set([
   'modelForm', 'modelRef', 'advancedSetting', 'tempConfigMap', 'curId',
   'currentSupplier', 'modelList', 'initForm', 'handleParamsDel', 'supplierChang',
   'formatAdvancedSetting', 'baseModelChange', 'getSupplierDomain', 'getModelDefaultArgs',
-  'submitModel', 'isGeneric', 'initializing', 'invalidateDiscovery',
+  'submitModel', 'canDiscoverModels', 'initializing', 'selectedModelDomain', 'invalidateDiscovery',
   'discoveryVersion', 'discovering', 'discoveredModels', 'discoveryMessage', 'discoveryState', 'discoveryErrorDetail',
 ]);
 const selected = ast.statements.filter(statement => ts.isVariableStatement(statement) &&

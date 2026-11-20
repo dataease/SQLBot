@@ -1,9 +1,11 @@
 import datetime
 import json
+import re
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy import and_, text
+from sqlalchemy import MetaData, Table, and_, text
+from sqlalchemy.schema import DropTable
 from sqlbot_xpack.permissions.models.ds_rules import DsRules
 from sqlmodel import select
 
@@ -44,6 +46,22 @@ def get_ds(session: SessionDep, id: int):
     return datasource
 
 
+def validate_excel_sheet_names(configuration: dict) -> list[str]:
+    """Reject SQL syntax and non-import table names, including stored legacy input."""
+    sheets = configuration.get("sheets", [])
+    if not isinstance(sheets, list):
+        raise DatasourceConfigurationError("Invalid Excel sheets")
+    names = []
+    for sheet in sheets:
+        name = sheet.get("tableName") if isinstance(sheet, dict) else None
+        if not isinstance(name, str) or re.fullmatch(
+            r"excel_[\u4e00-\u9fa5a-zA-Z0-9]*_[0-9a-f]{10}", name
+        ) is None:
+            raise DatasourceConfigurationError("Invalid Excel table name")
+        names.append(name)
+    return names
+
+
 def seal_browser_configuration(configuration: str, previous: str | None = None) -> str:
     incoming = parse_configuration(decode_legacy_configuration(configuration))
     if previous:
@@ -58,6 +76,8 @@ def seal_browser_configuration(configuration: str, previous: str | None = None) 
         if retained and any(candidate[field] != existing[field] for field in destination):
             raise DatasourceConfigurationError("Connection settings changed while retaining credentials")
         incoming = {**saved, **incoming}
+    if "sheets" in incoming:
+        validate_excel_sheet_names(incoming)
     return aes_encrypt(json.dumps(incoming)).decode("ascii")
 
 
@@ -165,11 +185,12 @@ async def delete_ds(session: SessionDep, id: int):
     term = session.exec(select(CoreDatasource).where(CoreDatasource.id == id)).first()
     if term.type == "excel":
         # drop all tables for current datasource
+        names = validate_excel_sheet_names(json.loads(aes_decrypt(term.configuration)))
         engine = get_engine_conn()
-        conf = DatasourceConf(**json.loads(aes_decrypt(term.configuration)))
         with engine.connect() as conn:
-            for sheet in conf.sheets:
-                conn.execute(text(f'DROP TABLE IF EXISTS "{sheet["tableName"]}"'))
+            for name in names:
+                table = Table(name, MetaData(), quote=True)
+                conn.execute(DropTable(table, if_exists=True))
             conn.commit()
 
     session.delete(term)

@@ -63,3 +63,49 @@ test('普通成员保持动态导航权限，扩展的直接标题保持可见',
   await page.evaluate(() => window.menuFixture.setLanguage('ko-KR'))
   await expect(page.getByRole('menuitem', { name: 'Extension title' })).toBeVisible()
 })
+
+test('账号绑定页面与认证回调不出现在侧边导航', async ({ page }) => {
+  await page.goto('/')
+  for (const account of [{ id: 41, language: 'zh-CN', weight: 1 }, { id: 1, language: 'zh-CN', weight: 1 }]) {
+    await page.evaluate(value => window.menuFixture.signIn(value), account)
+    await expect(page.getByRole('menubar').getByText('账号绑定', { exact: true })).toHaveCount(0)
+  }
+})
+
+for (const id of [1, 41]) test(`用户 ${id} 的个人信息入口位于帮助下面，且不进入侧边导航`, async ({ page }) => {
+  await page.goto('/?person=1')
+  await page.evaluate(id => window.menuFixture.signIn({ id, language: 'zh-CN', weight: 1 }), id)
+  await expect(page.getByRole('menubar').getByText('账号绑定', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  const labels = await page.locator('.system-person .popover-item .datasource-name').allTextContents()
+  const help = labels.indexOf('帮助')
+  expect(help).toBeGreaterThanOrEqual(0)
+  expect(labels[help + 1]).toBe('个人信息')
+  expect(labels[help + 2]).toBe('退出登录')
+  expect(labels.indexOf('关于')).toBeLessThan(help)
+  await page.locator('.system-person').getByText('个人信息', { exact: true }).click()
+  await expect(page).toHaveURL(/#\/account\/bindings$/)
+  await expect(page.getByRole('menubar').getByText('账号绑定', { exact: true })).toHaveCount(0)
+})
+
+test('当前用户邮箱由真实用户信息动作读取，切换账号和退出后不保留旧邮箱', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.menuFixture.signIn({ id: 41, language: 'zh-CN', weight: 1, email: 'first@example.invalid' }))
+  await expect.poll(() => page.evaluate(() => window.menuFixture.email())).toBe('first@example.invalid')
+  await page.evaluate(() => window.menuFixture.signIn({ id: 42, language: 'zh-CN', weight: 1 }))
+  await expect.poll(() => page.evaluate(() => window.menuFixture.email())).toBe('')
+  await page.evaluate(() => window.menuFixture.signIn({ id: 41, language: 'zh-CN', weight: 1, email: 'first@example.invalid' }))
+  await page.evaluate(() => window.menuFixture.signOut())
+  await expect.poll(() => page.evaluate(() => window.menuFixture.email())).toBe('')
+})
+
+
+test('第三方账号的个人信息入口仍位于帮助下面', async ({ page }) => {
+  await page.goto('/?person=1');
+  await page.evaluate(() => window.menuFixture.signIn({ id: 42, language: 'zh-CN', weight: 1, origin: 3 }));
+  await page.getByRole('button', { name: 'Test', exact: true }).click();
+  const labels = await page.locator('.system-person .popover-item .datasource-name').allTextContents();
+  expect(labels[labels.indexOf('帮助') + 1]).toBe('个人信息');
+  await page.locator('.system-person').getByText('个人信息', { exact: true }).click();
+  await expect(page).toHaveURL(/#\/account\/bindings$/);
+});
