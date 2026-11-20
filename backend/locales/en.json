@@ -225,5 +225,15 @@
     "failed": "Model listing failed. You can enter a model ID manually.",
     "invalid": "The model list is invalid or exceeds the size limit.",
     "timeout": "Fetching models timed out."
-}
+},
+  "i18n_binding": {
+    "forbidden": "Only local accounts can manage their own bindings. Assistant and API Key credentials are not allowed.",
+    "expired": "Request expired. Verify your local password again.",
+    "service": "Authentication service unavailable. Please retry.",
+    "conflict": "This identity belongs to another SQLBot user, or this account already has a different link.",
+    "password": "Incorrect local password.",
+    "unavailable": "Provider unavailable or license invalid.",
+    "rate_limit": "Too many attempts. Please try again later.",
+    "callback": "Authentication callback does not match this site. Contact your administrator."
+  }
 }

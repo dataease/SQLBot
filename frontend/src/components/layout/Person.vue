@@ -94,6 +94,11 @@ const openHelp = () => {
   window.open(resolveHelpUrl(appearanceStore.getHelp), '_blank')
 }
 
+const openPersonal = () => {
+  popoverRef.value.hide()
+  router.push('/account/bindings')
+}
+
 const openPwd = () => {
   dialogVisible.value = true
 }
@@ -197,6 +202,10 @@ const logout = async () => {
             <icon_maybe_outlined></icon_maybe_outlined>
           </el-icon>
           <div class="datasource-name">{{ $t('common.help') }}</div>
+        </div>
+        <div class="popover-item" @click="openPersonal">
+          <el-icon size="16"><icon_key_outlined /></el-icon>
+          <div class="datasource-name">{{ t('binding.personal') }}</div>
         </div>
         <div style="height: 4px; width: 100%"></div>
         <div v-if="!isClient" class="popover-item mr4" @click="logout">

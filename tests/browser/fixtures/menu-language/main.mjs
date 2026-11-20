@@ -1,4 +1,7 @@
 import { createApp, h, nextTick } from 'vue'
+import ElementPlus from 'element-plus-secondary'
+import 'element-plus-secondary/dist/index.css'
+import Person from '@/components/layout/Person.vue'
 import { i18n } from '@/i18n'
 import { store } from '@/stores'
 import { useUserStore } from '@/stores/user'
@@ -25,10 +28,12 @@ await signIn({ id: 41, language: 'en', weight: 1 })
 const app = createApp({ render: () => h('main', [
   h('p', { id: 'language' }, user.getLanguage),
   h('h1', i18n.global.t('menu.Data Q&A')),
-  router.currentRoute.value.path !== '/login' ? h(Menu) : null
+  router.currentRoute.value.path !== '/login' ? h(Menu) : null,
+  new URLSearchParams(location.search).has('person') ? h(Person, { collapse: false, inSysmenu: false }) : null
 ]) })
-app.use(store).use(i18n).use(router).mount('#app')
+app.use(store).use(i18n).use(router).use(ElementPlus).mount('#app')
 window.menuFixture = {
+  email: () => user.getEmail,
   signIn,
   async signOut() { await user.logout(); await router.push('/login'); await nextTick() },
   async setLanguage(language) { user.setLanguage(language); await nextTick() },

@@ -18,6 +18,7 @@ const server = await createServer({
       name: 'isolate-pages',
       enforce: 'pre',
       resolveId(id, importer) {
+        if (importer?.endsWith('/layout/Person.vue') && ['@/components/about/index.vue', './PwdForm.vue', './Apikey.vue'].includes(id)) return path.join(root, 'route-stub.mjs')
         if ((id.endsWith('.vue') && importer?.includes('/src/router/')) ||
             (id === './watch' && importer?.endsWith('/router/index.ts'))) {
           return path.join(root, 'route-stub.mjs')
@@ -28,7 +29,7 @@ const server = await createServer({
     svg()
   ],
   resolve: { alias: [
-    ...['@/api/login', '@/utils/useCache', '@/utils/utils'].map(find => ({ find, replacement: bridge })),
+    ...['@/api/login', '@/api/auth', '@/stores/appearance', '@/utils/useCache', '@/utils/utils'].map(find => ({ find, replacement: bridge })),
     { find: '@', replacement: path.join(frontend, 'src') },
     ...['vue', 'vue-router', 'vue-i18n', 'pinia', 'element-plus-secondary', 'mitt'].map(name => ({
       find: name, replacement: path.join(frontend, 'node_modules', name)

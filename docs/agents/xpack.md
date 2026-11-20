@@ -8,7 +8,7 @@
 
 - `sqlbot-xpack` 是 `backend/pyproject.toml` 的**必装依赖**（不是 optional extra），索引指向 TestPyPI，CE 镜像构建必然包含；构建环境需能访问 test.pypi.org。
 - 后端启动即无条件 import：`backend/main.py` 与多个业务模块（登录加解密、AES 落库、审计、行权限、参数管理、embedded 签名）顶层 import，没有降级路径——xpack 缺失则后端无法启动。8001 的 MCP 进程因 `uvicorn main:mcp_app` import 同一 `main` 模块，同样加载。
-- `sqlbot_xpack.init_fastapi_app(app)` 在 import main 时执行：license/config/sse/row-permission/embedded 路由无条件注册；appearance/custom_prompt/authentication/platform/audit 仅在许可证 valid 时注册，到期后由监控任务动态摘除。
+- `sqlbot_xpack.init_fastapi_app(app)` 在 import main 时执行：license/config/sse/row-permission/embedded 路由无条件注册；新版共享账号绑定模型可用时，`/system/account-bindings` 也无条件注册（能力查询、列表及解绑可在到期后使用，发起认证及确认绑定仍检查许可证）；appearance/custom_prompt/authentication/platform/audit 仅在许可证 valid 时注册，到期后由监控任务动态摘除。
 - 静态资源在启动时从 wheel 解包复制到 `../frontend/dist/xpack_static`（相对路径，要求后端进程 CWD 在 `backend/`），由主 app 挂载 serve——前端 dist 静态挂载的实际位置在 xpack `core.py`，不在 `main.py`。
 - 许可证只做功能门控，不做加载门控：无许可证时 xpack 仍完整加载，登录加密、SSE、行权限、审计等基础功能照常走 xpack 代码。
 - 前端首次路由必加载 `/xpack_static/license-generator.umd.js`（window 全局 `LicenseGenerator`，无类型声明）；登录/改密加密和动态路由注册硬依赖它，脚本加载失败无降级，只提示并中断导航。
@@ -43,3 +43,9 @@ uv run --no-sync pytest -q
 在 `backend/` 执行 `uv sync` 可恢复已发布包。变更和提交必须分开：SQLBot 变更留在本仓库，xpack 变更留在独立仓库。完整发布顺序以 `docs/agents/packaging.md` 为准。
 
 **源码联调的前提与影响面**：checkout 里的 `src/sqlbot_xpack/static` 被 gitignore、全新 checkout 不存在，而后端启动时会把包内 `static` 复制到前端 dist——目录缺失会让 `init_fastapi_app` 直接抛错、后端无法启动。因此首次联调前必须先在 xpack 仓库根目录执行一次 `./build_scripts/build-dev.sh`（构建并复制静态资源），之后每次改动 `xpack_static/` 也要重跑再重启。editable 安装作用于 backend 共享环境，8000 主服务和 8001 MCP 进程都会改用源码；改 Python 源码同样需要重启后端才生效。
+
+## 账号绑定共享契约
+
+`UserBindingRequest` 与 `UserPlatformModel` 的关联字段、唯一约束由主工程模型及 `076_user_account_bindings.py` 管理，商业认证适配和绑定 API 留在 xpack。新版 xpack 对缺少 `UserBindingRequest` 的旧主工程不注册绑定路由，维持可导入性；新版主工程启用绑定前需先完成两仓库联调并消费包含绑定实现的 wheel。仅本地 editable 验证不能替代发布和依赖引用更新。原有登录组件不参与绑定回调，认证成功后的用户解析按显式关联 UID 获取原账号。
+
+个人信息页通过已认证的 `GET /system/account-bindings/capabilities` 读取 `show_bindings`、`can_bind`，不以列表为空或许可证异常推断版本。有效许可证允许本地账号展示绑定管理并发起绑定；无有效许可证且本人无历史绑定时只显示基本信息，有历史绑定时仅展示已绑定项并允许验证本地密码后解绑。能力与列表仅查询当前本地用户，非本地账号不调用绑定 API。实际新增及确认接口仍独立校验许可证，前端能力信息不替代后端权限检查。
