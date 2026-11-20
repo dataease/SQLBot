@@ -3,7 +3,25 @@ import { request } from '@/utils/request'
 export const workspaceUserList = (params: any, pageNum: number, pageSize: number) =>
   request.get(`/system/workspace/uws/pager/${pageNum}/${pageSize}`, { params })
 
-export const workspaceOptionUserList = (params: any, pageNum: number, pageSize: number) =>
+export interface WorkspaceUserOption {
+  id: string | number
+  name: string
+  account: string
+}
+
+export interface WorkspaceUserOptionPage {
+  items: WorkspaceUserOption[]
+  page: number
+  size: number
+  total: number
+  total_pages: number
+}
+
+export const workspaceOptionUserList = (
+  params: { oid: string | number; keyword?: string },
+  pageNum: number,
+  pageSize: number
+): Promise<WorkspaceUserOptionPage> =>
   request.get(`/system/workspace/uws/option/pager/${pageNum}/${pageSize}`, { params })
 
 export const workspaceUwsCreate = (data: any) => request.post('/system/workspace/uws', data)
