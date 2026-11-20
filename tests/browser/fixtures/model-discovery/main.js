@@ -6,9 +6,12 @@ import ElementPlus from "element-plus-secondary";
 import "element-plus-secondary/dist/index.css";
 import Form from "@/views/system/model/ModelForm.vue";
 import zh from "@/i18n/zh-CN.json";
-import { get_supplier } from "@/entity/supplier";
+import { get_supplier, supplierList } from "@/entity/supplier";
 const form = ref();
 const visible = ref(true);
+window.testSuppliers = supplierList.map(({ id, name }) => ({ id, name }));
+window.selectTestSupplier = (id) => form.value.supplierChang(get_supplier(id));
+window.editTestSupplier = (item) => form.value.initForm(item);
 createApp({
   setup() {
     return () =>

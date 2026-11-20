@@ -199,3 +199,120 @@ test("original drawer preserves interaction while discovery matches prototype st
   await dialog.getByRole("button", { name: "取消", exact: true }).click();
   await expect(dialog).not.toBeVisible();
 });
+
+test("every active compatible supplier exposes discovery and keeps manual fallback", async ({
+  page,
+}) => {
+  const suppliers = await page.evaluate(() => window.testSuppliers);
+  let requested = 0;
+  await page.route("**/api/system/aimodel/models", async (route) => {
+    requested++;
+    expect(route.request().postDataJSON().api_key).toBe("synthetic-key");
+    await route.fulfill({ json: { models: ["discovered-model"] } });
+  });
+  for (const supplier of suppliers) {
+    await test.step(supplier.name, async () => {
+      await page.evaluate((id) => window.selectTestSupplier(id), supplier.id);
+      await expect(domain(page)).toBeVisible();
+      await expect(key(page)).toHaveValue("");
+      await key(page).fill("synthetic-key");
+      await fetchButton(page).click();
+      await expect(page.getByRole("status")).toHaveText("已获取 1 个模型");
+      await model(page).click();
+      await page
+        .getByRole("option", { name: "discovered-model", exact: true })
+        .click();
+      await page
+        .getByPlaceholder("请输入模型名称", { exact: true })
+        .fill(supplier.name);
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      await expect
+        .poll(() => page.evaluate(() => window.savedModel?.base_model))
+        .toBe("discovered-model");
+      await page.route("**/api/system/aimodel/models", (route) =>
+        route.fulfill({ json: { models: [], error: "unsupported" } }),
+      );
+      await fetchButton(page).click();
+      await expect(page.getByRole("status")).toContainText("获取失败");
+      await model(page).locator("input").fill("manual-model");
+      await page
+        .getByRole("option", { name: "manual-model", exact: true })
+        .click();
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      await expect
+        .poll(() => page.evaluate(() => window.savedModel?.base_model))
+        .toBe("manual-model");
+      await page.unroute("**/api/system/aimodel/models");
+      await page.route("**/api/system/aimodel/models", async (route) => {
+        requested++;
+        expect(route.request().postDataJSON().api_key).toBe("synthetic-key");
+        await route.fulfill({ json: { models: ["discovered-model"] } });
+      });
+    });
+  }
+  expect(requested).toBe(suppliers.length);
+});
+
+test("per-model defaults still change endpoints and custom addresses survive selection", async ({
+  page,
+}) => {
+  await page.evaluate(() => window.selectTestSupplier(5));
+  await key(page).fill("synthetic-key");
+  await model(page).click();
+  await page.getByRole("option", { name: "x1", exact: true }).click();
+  await expect(domain(page)).toHaveValue(
+    "https://spark-api-open.xf-yun.com/v2/",
+  );
+  await expect(key(page)).toHaveValue("");
+  await domain(page).fill("http://127.0.0.1:4232/custom/v1");
+  await key(page).fill("synthetic-key");
+  await model(page).click();
+  await page.getByRole("option", { name: "4.0Ultra", exact: true }).click();
+  await expect(domain(page)).toHaveValue("http://127.0.0.1:4232/custom/v1");
+  await expect(key(page)).toHaveValue("synthetic-key");
+  await page.evaluate(() => window.selectTestSupplier(3));
+  await expect(key(page)).toHaveValue("");
+});
+
+test("non-compatible historical protocol does not expose discovery", async ({
+  page,
+}) => {
+  await page.evaluate(() =>
+    window.editTestSupplier({
+      id: "1",
+      supplier: 15,
+      name: "Legacy",
+      model_type: 0,
+      base_model: "legacy",
+      api_domain: "http://127.0.0.1:4232/v1",
+      api_key: "",
+      protocol: 2,
+      config_list: [],
+    }),
+  );
+  await expect(fetchButton(page)).toHaveCount(0);
+});
+
+test("switching vendors ignores in-flight results and clears credentials", async ({
+  page,
+}) => {
+  await page.evaluate(() => window.selectTestSupplier(3));
+  await key(page).fill("synthetic-key");
+  let release;
+  await page.route("**/api/system/aimodel/models", async (route) => {
+    await new Promise((resolve) => (release = resolve));
+    await route.fulfill({ json: { models: ["old-vendor-result"] } });
+  });
+  await fetchButton(page).click();
+  await expect.poll(() => Boolean(release)).toBe(true);
+  await page.evaluate(() => window.selectTestSupplier(7));
+  await expect(key(page)).toHaveValue("");
+  const response = page.waitForResponse("**/api/system/aimodel/models");
+  release();
+  await response;
+  await expect(page.getByRole("status")).toHaveCount(0);
+  await model(page).click();
+  await expect(
+    page.getByRole("option", { name: "old-vendor-result", exact: true }),
+  ).toHaveCount(0);
+});
