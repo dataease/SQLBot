@@ -65,30 +65,17 @@ class DataFormat:
             if not isinstance(obj, dict):
                 return obj
 
-            processed_obj = {}
-            for key, value in obj.items():
-                if isinstance(value, (int, float)):
-                    # 只转换大数字
-                    if isinstance(value, int) and abs(value) >= int_threshold:
-                        processed_obj[key] = str(value)
-                    elif isinstance(value, float) and (abs(value) >= float_threshold or abs(value) < 1e-6):
-                        processed_obj[key] = format_float_without_scientific(value)
-                    else:
-                        processed_obj[key] = value
-                elif isinstance(value, dict):
-                    # 处理嵌套对象
-                    processed_obj[key] = process_object(value)
-                elif isinstance(value, list):
-                    # 处理对象中的数组
-                    processed_obj[key] = [process_item(item) for item in value]
-                else:
-                    processed_obj[key] = value
-            return processed_obj
+            return {key: process_item(value) for key, value in obj.items()}
 
         def process_item(item):
-            """处理数组中的项目"""
             if isinstance(item, dict):
                 return process_object(item)
+            if isinstance(item, list):
+                return [process_item(value) for value in item]
+            if isinstance(item, int) and not isinstance(item, bool) and abs(item) >= int_threshold:
+                return str(item)
+            if isinstance(item, float) and (abs(item) >= float_threshold or abs(item) < 1e-6):
+                return format_float_without_scientific(item)
             return item
 
         return [process_item(obj) for obj in obj_array]
