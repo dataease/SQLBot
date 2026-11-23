@@ -37,7 +37,7 @@ def process_stream():
     "parts",
     [
         ["<think>Plan ", "the query", "</think>Answer"],
-        ["<thi", "nk>Plan ", "the query</th", "ink>Answer"],
+        ["<th", "ink>Plan ", "the query</th", "ink>Answer"],
         ["<think>Plan the query</", "th", "i", "nk", ">Answer"],
         ["<think>Plan the query</think>Answer"],
     ],
