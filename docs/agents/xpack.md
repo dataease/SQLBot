@@ -49,3 +49,7 @@ uv run --no-sync pytest -q
 `UserBindingRequest` 与 `UserPlatformModel` 的关联字段、唯一约束由主工程模型及 `076_user_account_bindings.py` 管理，商业认证适配和绑定 API 留在 xpack。新版 xpack 对缺少 `UserBindingRequest` 的旧主工程不注册绑定路由，维持可导入性；新版主工程启用绑定前需先完成两仓库联调并消费包含绑定实现的 wheel。仅本地 editable 验证不能替代发布和依赖引用更新。原有登录组件不参与绑定回调，认证成功后的用户解析按显式关联 UID 获取原账号。
 
 个人信息页通过已认证的 `GET /system/account-bindings/capabilities` 读取 `show_bindings`、`can_bind`，不以列表为空或许可证异常推断版本。有效许可证允许本地账号展示绑定管理并发起绑定；无有效许可证且本人无历史绑定时只显示基本信息，有历史绑定时仅展示已绑定项并允许验证本地密码后解绑。能力与列表仅查询当前本地用户，非本地账号不调用绑定 API。实际新增及确认接口仍独立校验许可证，前端能力信息不替代后端权限检查。
+
+## Excel 导入错误报告
+
+术语配置、SQL 示例库和 xpack 自定义提示词共用下载接口。三个导入入口在生成错误报告后返回 `report_id`（UUID）和供前端展示、保存文件用的 `error_excel_filename`，没有错误报告时这两个字段均为 `null`。下载请求只传 `report_id`。报告由主仓库的 `backend/common/core/file.py` 写入 Excel 目录下的 `import-error-reports/`，按当前用户和工作空间读取，无需数据库记录。切换此契约时，前端、主仓库后端和包含该改动的 xpack wheel 需要配套部署。

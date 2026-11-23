@@ -5,8 +5,10 @@ startup, external database, provider or deployed service is used.
 """
 
 import io
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
 import pandas as pd
 import pytest
@@ -140,6 +142,7 @@ def test_valid_knowledge_workbook_reaches_batch_import(
     )
     assert response.status_code == 200, response.text
     assert response.json()["data"]["failed_count"] == 0
+    assert response.json()["data"]["report_id"] is None
     batch.assert_called_once()
     assert batch.call_args.args[:3] == (session, [], 1)
 
@@ -179,22 +182,40 @@ def test_insufficient_excel_columns_return_localized_400(
     session.commit.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    "filename,exists,status,message",
-    [
-        ("missing_error.xlsx", False, 404, "File Not Exists"),
-        ("bad.csv", True, 400, "Only support _error.xlsx"),
-    ],
-)
-def test_knowledge_error_download_returns_client_error(
-    api, tmp_path, filename, exists, status, message
-):
+@pytest.mark.parametrize("module,cols", [(terminology, 6), (data_training, 4)])
+@pytest.mark.parametrize("filename", ["report.xlsx", " lead.xlsx", "Q1:2026.xlsx"])
+def test_failed_import_report_download(api, monkeypatch, module, cols, filename):
+    client, session = api
+    session.execute.return_value.all.return_value = []
+    monkeypatch.setattr(module, "session_maker", lambda: session)
+    buffer = io.BytesIO()
+    pd.DataFrame(
+        [["", "fixture", "", "", "", ""][:cols]], columns=list("abcdef")[:cols]
+    ).to_excel(buffer, index=False)
+    upload = client.post(
+        module.router.prefix + "/uploadExcel",
+        files={"file": (filename, buffer.getvalue())},
+    )
+    assert upload.status_code == 200, upload.text
+    result = upload.json()["data"]
+    assert result["failed_count"] == 1
+    assert result["error_excel_filename"] == f"{Path(filename).stem}_error.xlsx"
+    response = client.post(
+        "/system/download-fail-info", json={"report_id": result["report_id"]}
+    )
+    assert response.status_code == 200, response.text
+    row = pd.read_excel(io.BytesIO(response.content)).iloc[0]
+    assert "fixture" in row.values
+    assert "cannot_be_empty" in row.iloc[-1]
+
+
+def test_missing_knowledge_report_returns_404(api):
     client, _session = api
-    if exists:
-        (tmp_path / filename).write_bytes(b"test file")
-    response = client.post("/system/download-fail-info", json={"file": filename})
-    assert response.status_code == status, response.text
-    assert response.json() == message
+    response = client.post(
+        "/system/download-fail-info", json={"report_id": str(uuid4())}
+    )
+    assert response.status_code == 404
+    assert response.json() == "File Not Exists"
 
 
 def test_user_error_download_requires_file_id():
@@ -228,16 +249,12 @@ def test_user_error_file_outside_temp_directory_returns_403(api, tmp_path, monke
     assert outside.read_bytes() == b"private data"
 
 
-@pytest.mark.parametrize("kind", ["knowledge", "user"])
-def test_valid_error_file_can_be_downloaded(api, tmp_path, kind):
+def test_valid_user_error_file_can_be_downloaded(api, tmp_path):
     client, _session = api
     content = workbook(["error"])
     target = tmp_path / "valid_error.xlsx"
     target.write_bytes(content)
-    if kind == "knowledge":
-        response = client.post("/system/download-fail-info", json={"file": target.name})
-    else:
-        user_excel._TEMP_FILE_MAP["valid"] = str(target)
-        response = client.get("/user/errorRecord/valid")
+    user_excel._TEMP_FILE_MAP["valid"] = str(target)
+    response = client.get("/user/errorRecord/valid")
     assert response.status_code == 200, response.text
     assert response.content == content
