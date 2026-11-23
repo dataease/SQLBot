@@ -203,3 +203,23 @@ npm --prefix tests/browser test -- --config=platform-login.config.mjs
 成功登录对照、同步失败后清理全屏遮罩、懒加载节点失败可重试及切换加载模式后的恢复。
 不访问业务数据库或企业微信；不替代真实扫码、配置或完整产品布局验收。
 `SQLBOT_BROWSER_SOURCE_ROOT` 可显式指向待对照版本的 `frontend/`，用于同配置基线验证。
+
+## 账号绑定密码限流回归
+
+`account-binding-quota.config.mjs` 显式启动跨仓库测试，不进入默认测试收集。
+先按 `docs/agents/xpack.md` 在隔离 Python 环境准备目标 xpack editable 安装及静态资源，
+提供 `SQLBOT_BINDING_TEST_PYTHON`（解释器绝对路径）、`SQLBOT_XPACK_TEST_ROOT`
+（xpack checkout 根目录）和 `PYTHONPATH`（待测主工程的 `backend/`），再执行：
+
+```sh
+npm --prefix tests/browser test -- --config=account-binding-quota.config.mjs
+```
+
+默认仅监听 `127.0.0.1:4267`、`127.0.0.1:4268`；冲突时设置
+`SQLBOT_BINDING_UI_PORT`、`SQLBOT_BINDING_BACKEND_PORT`，不会复用已有服务。
+加载真实绑定组件、回调页、API 封装，以及 xpack `tests/test_account_bindings.py`
+的真实 FastAPI 路由、认证中间件和临时 SQLite 用户。浏览器 Store、请求封装、
+许可证和飞书 SDK/身份响应为隔离边界，服务端使用合成登录 token。
+覆盖二十次刷新后绑定及正确密码解绑、数据库关联删除、仅两次密码请求，
+以及刷新/取消后十次真实密码验证仍耗尽额度并显示限流提示。
+不连接产品数据库，不访问真实飞书，不替代 PostgreSQL 行锁、完整部署和实际扫码验收。
