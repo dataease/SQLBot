@@ -1,4 +1,4 @@
-const { endsWith, filter, replace } = require('lodash')
+const { endsWith, replace } = require('lodash')
 
 /**
  * 为数值添加千分符，保持原有小数位数不变
@@ -108,19 +108,13 @@ function checkIsPercent(valueAxes, data) {
 
   // 检查是否有任何一个轴包含百分比数据
   for (const valueAxis of valueAxes) {
-    const notEmptyData = filter(
-      data,
-      (d) =>
-        d &&
-        d[valueAxis.value] !== null &&
-        d[valueAxis.value] !== undefined &&
-        d[valueAxis.value] !== '' &&
-        d[valueAxis.value] !== 0 &&
-        d[valueAxis.value] !== '0',
-    )
+    const firstNonZero = data.find((row) => {
+      const value = row?.[valueAxis.value]
+      return value != null && String(value).trim() !== '' && Number(value) !== 0
+    })
 
-    if (notEmptyData.length > 0) {
-      const v = notEmptyData[0][valueAxis.value] + ''
+    if (firstNonZero) {
+      const v = String(firstNonZero[valueAxis.value])
       if (endsWith(v.trim(), '%')) {
         result.isPercent = true
         break // 找到一个百分比轴就结束检查
