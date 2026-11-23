@@ -271,7 +271,7 @@ test("original drawer preserves interaction while discovery matches prototype st
   );
   await fetchButton(page).click();
   await expect(page.getByRole("status")).toHaveText(
-    "获取失败，请检查地址或凭据。可手动输入模型 ID。",
+    "获取失败，请稍后重试。可手动输入模型 ID。",
   );
   await expect(page.getByRole("status")).toHaveCSS("color", "rgb(255, 0, 0)");
   await expect(
@@ -444,4 +444,101 @@ test("timeout is explicit, safe, non-blocking and retryable", async ({
     "title",
     /synthetic-secret/,
   );
+});
+
+for (const [code, message] of [
+  ["unsupported", "此服务不支持获取模型列表，可手动输入模型 ID。"],
+  [
+    "credentials",
+    "鉴权失败，请检查 API Key 和服务访问权限。也可手动输入模型 ID。",
+  ],
+  ["address", "API 基地址无效，请检查地址。也可手动输入模型 ID。"],
+  ["invalid", "模型列表格式无效或超出大小限制，可手动输入模型 ID。"],
+]) {
+  test(`safe discovery reason ${code} preserves configuration and can recover`, async ({
+    page,
+  }) => {
+    await page
+      .getByRole("button", { name: "Edit legacy", exact: true })
+      .click();
+    await page.route("**/api/system/aimodel/models", (route) =>
+      route.fulfill({
+        json: {
+          models: [],
+          error_code: code,
+          error: "synthetic-secret-provider-body",
+        },
+      }),
+    );
+    await fetchButton(page).click();
+    await expect(page.getByRole("status")).toHaveText(message);
+    await expect(page.getByRole("status")).toHaveAttribute("title", message);
+    await expect(fetchButton(page)).toBeEnabled();
+    await expect(model(page)).toContainText("legacy-custom");
+    await expect(page.getByText("0.33", { exact: true })).toBeVisible();
+    expect(await page.locator("body").innerText()).not.toContain(
+      "synthetic-secret",
+    );
+    await page.route("**/api/system/aimodel/models", (route) =>
+      route.fulfill({ json: { models: ["recovered-model"] } }),
+    );
+    await fetchButton(page).click();
+    await expect(page.getByRole("status")).toHaveText("从服务获取 1 个模型");
+  });
+}
+
+test("unknown, legacy and network failures use safe fallback and stale errors are ignored", async ({
+  page,
+}) => {
+  for (const code of [
+    "failed",
+    "unknown-secret-code",
+    "constructor",
+    "__proto__",
+    undefined,
+  ]) {
+    await page.route("**/api/system/aimodel/models", (route) =>
+      route.fulfill({
+        json: {
+          models: [],
+          error_code: code,
+          error: "synthetic-secret-provider-body",
+        },
+      }),
+    );
+    await fetchButton(page).click();
+    await expect(page.getByRole("status")).toHaveText(
+      "获取失败，请稍后重试。可手动输入模型 ID。",
+    );
+    await expect(page.getByRole("status")).toHaveAttribute(
+      "title",
+      "获取失败，请稍后重试。可手动输入模型 ID。",
+    );
+  }
+  await page.route("**/api/system/aimodel/models", (route) =>
+    route.abort("failed"),
+  );
+  await fetchButton(page).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "获取失败，请稍后重试。可手动输入模型 ID。",
+  );
+  await expect(fetchButton(page)).toBeEnabled();
+  let release;
+  await page.route("**/api/system/aimodel/models", async (route) => {
+    await new Promise((resolve) => (release = resolve));
+    await route.fulfill({
+      json: {
+        models: [],
+        error_code: "credentials",
+        error: "synthetic-secret",
+      },
+    });
+  });
+  await fetchButton(page).click();
+  await expect.poll(() => Boolean(release)).toBe(true);
+  await domain(page).fill("http://127.0.0.1:4232/new/v1");
+  const response = page.waitForResponse("**/api/system/aimodel/models");
+  release();
+  await response;
+  await expect(page.getByRole("status")).toHaveCount(0);
 });

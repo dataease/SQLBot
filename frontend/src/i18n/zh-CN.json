@@ -546,7 +546,11 @@
     "discovery_source_missing": "当前配置 · 本次未返回",
     "discovery_source_current": "当前配置",
     "discovery_empty": "未返回模型，可手动输入模型 ID。",
-    "discovery_failed": "获取失败，请检查地址或凭据。可手动输入模型 ID。",
+    "discovery_failed": "获取失败，请稍后重试。可手动输入模型 ID。",
+    "discovery_address": "API 基地址无效，请检查地址。也可手动输入模型 ID。",
+    "discovery_credentials": "鉴权失败，请检查 API Key 和服务访问权限。也可手动输入模型 ID。",
+    "discovery_unsupported": "此服务不支持获取模型列表，可手动输入模型 ID。",
+    "discovery_invalid": "模型列表格式无效或超出大小限制，可手动输入模型 ID。",
     "discovery_timeout": "获取模型列表超时，请稍后重试。也可手动输入模型 ID。",
     "discovery_key_reset": "API 地址已变化，如需鉴权，请重新填写 API Key。",
 
