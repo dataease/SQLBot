@@ -177,7 +177,7 @@ let oid: any = null
 const open = async (id: any) => {
   loading.value = true
   search.value = ''
-  oid = id
+  oid = String(id)
   checkedWorkspace.value = []
   checkTableList.value = []
   checkAll.value = false
@@ -190,9 +190,13 @@ const open = async (id: any) => {
     loading.value = false
     return
   }
+  // json-bigint objects have no Object.prototype; keep checkbox values plain.
   workspace.value =
     workspaceListResult.status === 'fulfilled'
-      ? JSON.parse(JSON.stringify(workspaceListResult.value))
+      ? workspaceListResult.value.map((ws: any) => ({
+          id: String(ws.id),
+          name: ws.name,
+        }))
       : []
   checkedWorkspace.value =
     workspaceMappingResult.status === 'fulfilled'
