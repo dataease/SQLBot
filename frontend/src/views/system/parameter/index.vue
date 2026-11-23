@@ -463,8 +463,8 @@ onMounted(() => {
   .table-matching {
     margin-top: 16px;
     padding: 16px;
+    border: 1px solid var(--ed-border-color-lighter);
     border-radius: 8px;
-    background: var(--ed-fill-color-light);
   }
   .matching-mode,
   .matching-weight {
