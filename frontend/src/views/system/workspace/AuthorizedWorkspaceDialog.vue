@@ -219,7 +219,9 @@ let oid: any = null
 const open = async (id: any) => {
   loading.value = true
   search.value = ''
-  oid = id
+  // IDs beyond Number.MAX_SAFE_INTEGER come back from json-bigint as objects.
+  // Normalize them so axios params and the checkbox value stay primitive.
+  oid = String(id)
   checkedWorkspace.value = []
   checkTableList.value = []
   checkAll.value = false
@@ -236,7 +238,13 @@ const open = async (id: any) => {
       if (!result.items.length) break
       page += 1
     } while (page <= totalPages)
-    workspace.value = candidates.filter((user) => +user.id !== 1)
+    workspace.value = candidates
+      .filter((user) => String(user.id) !== '1')
+      .map((user) => ({
+        id: String(user.id),
+        name: user.name,
+        account: user.account,
+      }))
     centerDialogVisible.value = true
   } finally {
     loading.value = false
