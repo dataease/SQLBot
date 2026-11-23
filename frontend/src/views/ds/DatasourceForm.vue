@@ -109,6 +109,7 @@ const rules = reactive<FormRules>({
 })
 
 const dialogVisible = ref<boolean>(false)
+const clearPassword = ref(false)
 const form = ref<any>({
   name: '',
   description: '',
@@ -149,6 +150,7 @@ const token = wsCache.get('user.token')
 const headers = ref<any>({ 'X-SQLBOT-TOKEN': `Bearer ${token}` })
 
 const initForm = (item: any, editTable: boolean = false) => {
+  clearPassword.value = false
   isEditTable.value = false
   keywords.value = ''
   dsFormRef.value!.clearValidate()
@@ -168,6 +170,7 @@ const initForm = (item: any, editTable: boolean = false) => {
       form.value.port = configuration.port
       form.value.username = configuration.username
       form.value.database = configuration.database
+      form.value.extraJdbc = configuration.extraJdbc ?? ''
       form.value.dbSchema = configuration.dbSchema
       form.value.filename = configuration.filename
       form.value.sheets = configuration.sheets
@@ -337,9 +340,13 @@ const buildConf = () => {
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: form.value.id && !form.value.password ? undefined : form.value.password,
+      password: clearPassword.value
+        ? ''
+        : form.value.id && !form.value.password
+          ? undefined
+          : form.value.password,
       database: form.value.database,
-      extraJdbc: form.value.id && !form.value.extraJdbc ? undefined : form.value.extraJdbc,
+      extraJdbc: form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
       filename: form.value.filename,
       sheets: form.value.sheets,
@@ -711,6 +718,7 @@ defineExpose({
           <el-form-item :label="t('ds.form.password')">
             <el-input
               v-model="form.password"
+              :disabled="clearPassword"
               clearable
               :placeholder="
                 form.id
@@ -720,6 +728,9 @@ defineExpose({
               type="password"
               show-password
             />
+            <el-checkbox v-if="form.id" v-model="clearPassword">
+              {{ t('ds.form.clear_password') }}
+            </el-checkbox>
           </el-form-item>
           <el-form-item
             v-if="form.type !== 'dm' && form.type !== 'es'"
@@ -769,9 +780,7 @@ defineExpose({
               v-model="form.extraJdbc"
               clearable
               :placeholder="
-                form.id
-                  ? t('ds.form.keep_saved_value')
-                  : $t('datasource.please_enter') + $t('common.empty') + t('ds.form.extra_jdbc')
+                $t('datasource.please_enter') + $t('common.empty') + t('ds.form.extra_jdbc')
               "
             />
           </el-form-item>

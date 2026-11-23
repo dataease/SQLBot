@@ -372,3 +372,15 @@ def test_datasource_http_postgres(pg, monkeypatch, caplog):
         assert session.get(CoreDatasource, ds_id).configuration == saved
     assert "synthetic-only" not in caplog.text
     assert saved not in caplog.text
+
+
+def test_explicit_empty_password_replaces_saved_password(key_file):
+    from apps.datasource.crud.datasource import seal_browser_configuration
+
+    saved = aes_encrypt(json.dumps({"host": "localhost", "password": "abc"})).decode()
+    retained = seal_browser_configuration(legacy(json.dumps({"host": "localhost"})), saved)
+    assert json.loads(aes_decrypt(retained))["password"] == "abc"
+    cleared = seal_browser_configuration(
+        legacy(json.dumps({"host": "localhost", "password": ""})), saved
+    )
+    assert json.loads(aes_decrypt(cleared))["password"] == ""

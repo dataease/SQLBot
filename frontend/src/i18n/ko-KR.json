@@ -436,6 +436,7 @@
       "port": "포트",
       "username": "사용자명",
       "keep_saved_value": "비워 두면 저장된 값을 유지합니다",
+      "clear_password": "비밀번호 지우기 (빈 비밀번호 사용)",
       "password": "비밀번호",
       "database": "데이터베이스",
       "connect_mode": "연결 방식",

@@ -108,7 +108,7 @@ async def get_datasource(session: SessionDep, user: CurrentUser, trans: Trans, i
             raise HTTPException(503, trans('i18n_ds_storage_unavailable')) from None
         editable_fields = {
             "host", "port", "username", "database", "dbSchema", "filename", "sheets",
-            "mode", "timeout", "lowVersion", "ssl", "poolSize", "engine",
+            "mode", "timeout", "lowVersion", "ssl", "poolSize", "engine", "extraJdbc",
         }
         result["configuration"] = json.dumps({
             field: configuration[field] for field in editable_fields if field in configuration
@@ -680,7 +680,7 @@ async def import_to_db(session: SessionDep, trans: Trans, import_req: ImportRequ
 
         for sheet_info in import_req.sheets:
             sheet_name = sheet_info.sheetName
-            table_name = f"excel_{filter_string(sheet_name)}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
+            table_name = f"excel_{filter_string(sheet_name).encode('utf-8')[:46].decode('utf-8', errors='ignore')}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
             fields = sheet_info.fields
 
             field_mapping = {f.fieldName: f.fieldType for f in fields}

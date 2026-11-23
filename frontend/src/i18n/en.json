@@ -436,6 +436,7 @@
       "port": "Port",
       "username": "Username",
       "keep_saved_value": "Leave blank to keep the saved value",
+      "clear_password": "Clear password (use an empty password)",
       "password": "Password",
       "database": "Database",
       "connect_mode": "Connect Mode",

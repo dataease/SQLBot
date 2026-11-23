@@ -79,11 +79,15 @@
           <el-form-item :label="t('ds.form.password')">
             <el-input
               v-model="form.password"
+              :disabled="clearPassword"
               :placeholder="form.id ? t('ds.form.keep_saved_value') : undefined"
               clearable
               type="password"
               show-password
             />
+            <el-checkbox v-if="form.id" v-model="clearPassword">
+              {{ t('ds.form.clear_password') }}
+            </el-checkbox>
           </el-form-item>
           <el-form-item :label="t('ds.form.database')" prop="database">
             <el-input v-model="form.database" clearable />
@@ -101,8 +105,10 @@
           <el-form-item :label="t('ds.form.extra_jdbc')">
             <el-input
               v-model="form.extraJdbc"
-              :placeholder="form.id ? t('ds.form.keep_saved_value') : undefined"
               clearable
+              :placeholder="
+                $t('datasource.please_enter') + $t('common.empty') + t('ds.form.extra_jdbc')
+              "
             />
           </el-form-item>
           <el-form-item
@@ -221,6 +227,7 @@ const rules = reactive<FormRules>({
 })
 
 const dialogVisible = ref<boolean>(false)
+const clearPassword = ref(false)
 const form = ref<any>({
   name: '',
   description: '',
@@ -252,6 +259,7 @@ const close = () => {
 }
 
 const open = async (item: any, editTable: boolean = false) => {
+  clearPassword.value = false
   if (item && !item.configuration) item = await datasourceApi.getDs(item.id)
   isEditTable.value = false
   if (item) {
@@ -270,6 +278,7 @@ const open = async (item: any, editTable: boolean = false) => {
       form.value.port = configuration.port
       form.value.username = configuration.username
       form.value.database = configuration.database
+      form.value.extraJdbc = configuration.extraJdbc ?? ''
       form.value.dbSchema = configuration.dbSchema
       form.value.filename = configuration.filename
       form.value.sheets = configuration.sheets
@@ -383,9 +392,13 @@ const buildConf = () => {
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: form.value.id && !form.value.password ? undefined : form.value.password,
+      password: clearPassword.value
+        ? ''
+        : form.value.id && !form.value.password
+          ? undefined
+          : form.value.password,
       database: form.value.database,
-      extraJdbc: form.value.id && !form.value.extraJdbc ? undefined : form.value.extraJdbc,
+      extraJdbc: form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
       filename: form.value.filename,
       sheets: form.value.sheets,
