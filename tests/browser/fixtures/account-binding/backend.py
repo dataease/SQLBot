@@ -55,6 +55,11 @@ class Fixture:
             }
 
         module.b.authorization.side_effect = authorization
+        async def ldap_identity(_config, username, password):
+            if username != 'directory-user' or password != 'SyntheticDirectory42!':
+                raise ValueError('invalid directory credentials')
+            return {'account': 'directory-id', 'name': 'Directory User'}
+        self.patch.setattr(module.b, 'verify_ldap_identity', ldap_identity)
 
 
 fixture = Fixture()
@@ -103,7 +108,7 @@ class Handler(BaseHTTPRequestHandler):
                 key = data.get("detail", "")
                 data = {
                     "i18n_binding.rate_limit": "操作过于频繁，请稍后重试。",
-                    "i18n_binding.password": "本地密码不正确。",
+                    "i18n_binding.password": "密码不正确。",
                 }.get(key, key)
         payload = json.dumps(data, ensure_ascii=False).encode()
         self.send_response(status)

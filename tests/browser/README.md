@@ -238,3 +238,5 @@ SQLBOT_XPACK_TEST_ROOT=/absolute/path/to/sqlbot-xpack npm --prefix tests/browser
 轻微移动、窗口缩小（含聊天打开期间）、自定义图标、禁用拖拽以及触摸拖动/取消。
 触摸使用 Chrome CDP 注入，不代替真实移动设备验收。此夹具不验证完整认证和问数链。
 相同命令指向未修改 xpack checkout 可执行基线对照。
+
+账号绑定默认进入基本信息；绑定回归显式切换到绑定标签。LDAP 用例以合成目录凭据覆盖身份验证、确认前无关联及显式确认，不连接真实 LDAP。跨仓库 LDAP 路由、身份冲突、失效、凭据不持久化和历史绑定审计的展示/筛选由 xpack 的 `tests/test_account_bindings.py` 验证。国际飞书仅管理历史关联，不开放新增绑定。

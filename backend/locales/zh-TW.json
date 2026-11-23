@@ -207,7 +207,9 @@
     "reset_pwd": "重置密碼",
     "update_pwd": "更新密碼",
     "update_status": "更新狀態",
-    "update_table_relation": "變更表關係"
+    "update_table_relation": "變更表關係",
+    "bind_account": "綁定帳號",
+    "unbind_account": "解除帳號綁定"
   },
   "i18n_table_not_exist": "當前表不存在",
   "i18n_variable": {
@@ -232,7 +234,7 @@
     "expired": "認證請求已失效，請重新驗證本機密碼。",
     "service": "認證服務暫時無法使用，請重試。",
     "conflict": "此身分已關聯其他 SQLBot 使用者，或目前帳號已綁定其他身分。",
-    "password": "本機密碼不正確。",
+    "password": "密碼不正確。",
     "unavailable": "認證平台未啟用或授權無效。",
     "rate_limit": "操作過於頻繁，請稍後重試。",
     "callback": "認證回呼地址與目前網站不符，請聯絡管理員。"

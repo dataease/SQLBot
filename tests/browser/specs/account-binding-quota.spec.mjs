@@ -14,6 +14,7 @@ async function setup(page, request) {
     return route.fulfill({ contentType: 'text/html', body: `<script>location.href='/?state=${encodeURIComponent(state)}&code=synthetic-code'</script>` });
   });
   await page.goto('/');
+  await page.getByRole('tab', {name:'账号绑定',exact:true}).click();
   await expect(row(page).getByRole('button', { name: '绑定', exact: true })).toBeVisible();
 }
 
@@ -69,4 +70,26 @@ test('refresh and cancel preserve the ten-password-attempt limit and show its er
   }
   await expect(page.getByRole('dialog')).toContainText('操作过于频繁，请稍后重试。');
   expect(await (await request.get(`${api}/__test/evidence`)).json()).toEqual({ password_attempts: 10, links: 0 });
+});
+
+test('LDAP real binding routes require explicit confirmation and permit unbinding', async ({page,request}) => {
+  await setup(page,request);
+  const ldap = page.locator('.binding-row').filter({has:page.getByRole('heading',{name:'LDAP',exact:true})});
+  await expect(page.getByRole('heading',{name:'国际飞书',exact:true})).toHaveCount(0);
+  await ldap.getByRole('button',{name:'绑定',exact:true}).click();
+  await page.getByLabel('登录密码').fill(password);
+  await page.getByRole('button',{name:'下一步',exact:true}).click();
+  await page.getByLabel('LDAP 账号').fill('directory-user');
+  await page.getByLabel('LDAP 密码').fill('SyntheticDirectory42!');
+  await page.getByRole('button',{name:'验证 LDAP 账号',exact:true}).click();
+  await expect(page.getByRole('dialog')).toContainText('directory-id');
+  expect((await (await request.get(`${api}/__test/evidence`)).json()).links).toBe(0);
+  await page.getByRole('button',{name:'确认绑定',exact:true}).click();
+  await expect(ldap).toContainText('已绑定');
+  expect((await (await request.get(`${api}/__test/evidence`)).json()).links).toBe(1);
+  await ldap.getByRole('button',{name:'解除绑定',exact:true}).click();
+  await page.getByLabel('登录密码').fill(password);
+  await page.getByRole('button',{name:'确认解除',exact:true}).click();
+  await expect(ldap.getByRole('button',{name:'绑定',exact:true})).toBeVisible();
+  expect((await (await request.get(`${api}/__test/evidence`)).json()).links).toBe(0);
 });

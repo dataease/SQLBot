@@ -207,7 +207,9 @@
     "reset_pwd": "비밀번호 재설정",
     "update_pwd": "비밀번호 업데이트",
     "update_status": "상태 업데이트",
-    "update_table_relation": "테이블 관계 변경"
+    "update_table_relation": "테이블 관계 변경",
+    "bind_account": "계정 연결",
+    "unbind_account": "계정 연결 해제"
   },
   "i18n_table_not_exist": "현재 테이블이 존재하지 않습니다",
   "i18n_variable": {
@@ -232,7 +234,7 @@
     "expired": "요청이 만료되었습니다. 로컬 비밀번호를 다시 확인하세요.",
     "service": "인증 서비스를 사용할 수 없습니다. 다시 시도하세요.",
     "conflict": "이 외부 계정이 다른 SQLBot 사용자에게 연결되어 있거나 현재 계정에 다른 연결이 있습니다.",
-    "password": "로컬 비밀번호가 올바르지 않습니다.",
+    "password": "비밀번호가 올바르지 않습니다.",
     "unavailable": "제공자를 사용할 수 없거나 라이선스가 유효하지 않습니다.",
     "rate_limit": "시도 횟수가 너무 많습니다. 나중에 다시 시도하세요.",
     "callback": "인증 콜백 주소가 현재 사이트와 일치하지 않습니다. 관리자에게 문의하세요."

@@ -207,7 +207,9 @@
     "reset_pwd": "Reset Password",
     "update_pwd": "Update Password",
     "update_status": "Update Status",
-    "update_table_relation": "Change Table Relation"
+    "update_table_relation": "Change Table Relation",
+    "bind_account": "Link account",
+    "unbind_account": "Unlink account"
   },
   "i18n_table_not_exist": "Table not exist",
   "i18n_variable": {
@@ -232,7 +234,7 @@
     "expired": "Request expired. Verify your local password again.",
     "service": "Authentication service unavailable. Please retry.",
     "conflict": "This identity belongs to another SQLBot user, or this account already has a different link.",
-    "password": "Incorrect local password.",
+    "password": "Incorrect password.",
     "unavailable": "Provider unavailable or license invalid.",
     "rate_limit": "Too many attempts. Please try again later.",
     "callback": "Authentication callback does not match this site. Contact your administrator."
