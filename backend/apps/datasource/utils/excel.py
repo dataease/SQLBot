@@ -1,4 +1,4 @@
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 import pandas as pd
 
@@ -60,7 +60,17 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
         datetime_columns = [column for column, field_type in field_mapping.items() if field_type == 'datetime']
         for column in datetime_columns:
             dtype_dict[column] = 'string'
-        df = pd.read_csv(save_path, engine='c', dtype=dtype_dict)
+        text_columns = [column for column, field_type in field_mapping.items() if field_type == 'string']
+        for column in text_columns:
+            del dtype_dict[column]
+        # CSV converters bypass pandas' default NA tokens for those columns.
+        df = pd.read_csv(
+            save_path,
+            engine='c',
+            dtype=dtype_dict,
+            converters=dict.fromkeys(text_columns, lambda value: value if value != '' else pd.NA),
+        )
+        df = df.astype({column: 'string' for column in text_columns if column in df.columns})
         for column in datetime_columns:
             if column in df.columns:
                 df[column] = df[column].astype(USER_TYPE_TO_PANDAS['datetime'])
