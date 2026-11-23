@@ -114,7 +114,7 @@ for (const [name, url, script] of [
   await begin(page,name);
   await page.getByRole('button',{name:'Synthetic scan'}).click();
   await expect(page.getByRole('dialog')).toContainText('provider-account');
-  expect(page.url()).toBe('http://127.0.0.1:4236/');
+  await expect(page).toHaveURL('/');
   expect(state.confirms).toBe(0);
   await page.getByRole('button',{name:'确认绑定',exact:true}).click();
   expect(state.confirms).toBe(1);
@@ -131,7 +131,7 @@ test('Feishu QR callback remains in a separate frame and refresh invalidates the
   expect(state.requests[old].status).toBe('cancelled');
   await page.frameLocator('.binding-qr iframe').getByRole('button',{name:'Synthetic scan'}).click();
   await expect(page.getByRole('dialog')).toContainText('provider-account');
-  expect(page.url()).toBe('http://127.0.0.1:4236/');
+  await expect(page).toHaveURL('/');
   expect(state.confirms).toBe(0);
 });
 
@@ -280,4 +280,197 @@ test('许可证失效后仅管理历史绑定，解绑最后一项后回到基�
   await expect(page.getByRole('tab', { name: '基本信息', exact: true })).toHaveAttribute('aria-selected', 'true');
   expect(state.starts).toBe(0);
   expect(state.bound).toBe(false);
+});
+
+// Operation errors must end with their dialog, while independent load errors remain actionable.
+const conflictText = '该平台身份已关联其他 SQLBot 用户，或当前账号已绑定其他身份。';
+async function conflict(page, state) {
+  await page.route('**/LarkSSOSDKWebQRCode-1.0.3.js', route => route.fulfill({
+    contentType: 'application/javascript',
+    body: 'window.QRLogin=()=>({matchOrigin:()=>false,matchData:()=>false})',
+  }));
+  await begin(page, '飞书');
+  state.requests[Object.keys(state.requests).at(-1)].status = 'conflict';
+  await expect(page.getByRole('dialog')).toContainText(conflictText);
+}
+for (const close of ['cancel', 'cross', 'escape']) test(`operation error lifecycle: Feishu conflict cleared on ${close} and tab switch`, async ({ page }) => {
+  const state = await setup(page);
+  await conflict(page, state);
+  const id = Object.keys(state.requests)[0];
+  if (close === 'cancel') await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
+  if (close === 'cross') await page.getByRole('dialog').getByRole('button', { name: 'Close this dialog' }).click();
+  if (close === 'escape') await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.locator('.account-content')).not.toContainText(conflictText);
+  await expect.poll(() => state.requests[id].status).toBe('cancelled');
+  await page.getByRole('tab', { name: '基本信息', exact: true }).click();
+  await expect(page.locator('.account-content')).not.toContainText(conflictText);
+  await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+  await conflict(page, state);
+  await page.getByRole('button', { name: '重试', exact: true }).click();
+  await expect(page.getByRole('dialog').getByLabel('登录密码')).toBeVisible();
+  await expect(page.getByRole('dialog')).not.toContainText(conflictText);
+  await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
+  await page.getByRole('button', { name: '下一步', exact: true }).click();
+  state.requests[Object.keys(state.requests).at(-1)].status = 'verified';
+  await page.getByRole('button', { name: '确认绑定', exact: true }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.locator('.account-content')).not.toContainText(conflictText);
+  await expect(page.locator('.ed-message')).toContainText('绑定成功');
+  expect(state.confirms).toBe(1);
+});
+
+test('operation error lifecycle: list error survives dialog close but is scoped to bindings', async ({ page }) => {
+  const state = await setup(page);
+  await page.route('**/api/system/account-bindings', route => route.fulfill({ status: 503, json: '绑定列表暂不可用' }));
+  await begin(page);
+  state.requests[Object.keys(state.requests)[0]].status = 'verified';
+  await page.getByRole('button', { name: '确认绑定', exact: true }).click();
+  await expect(page.locator('.account-content')).toContainText('绑定列表暂不可用');
+  await row(page, '飞书').getByRole('button', { name: '绑定', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.locator('.account-content')).toContainText('绑定列表暂不可用');
+  await expect(page.locator('.ed-message')).toContainText('绑定成功');
+  await page.getByRole('tab', { name: '基本信息', exact: true }).click();
+  await expect(page.locator('.account-content')).not.toContainText('绑定列表暂不可用');
+  await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+  await expect(page.locator('.account-content')).toContainText('绑定列表暂不可用');
+});
+
+for (const operation of ['confirm', 'unbind']) test(`operation error lifecycle: late ${operation} failure cannot affect a new dialog or basic info`, async ({ page }) => {
+  const state = await setup(page, '/', { bound: operation === 'unbind' });
+  let release, started;
+  const held = new Promise(resolve => { release = resolve; });
+  const received = new Promise(resolve => { started = resolve; });
+  await page.route(`**/api/system/account-bindings/**/${operation}`, async route => {
+    started();
+    await held;
+    await route.fulfill({ status: 400, json: '旧操作的失败提示' });
+  });
+  if (operation === 'confirm') {
+    await begin(page);
+    state.requests[Object.keys(state.requests)[0]].status = 'verified';
+    await page.getByRole('button', { name: '确认绑定', exact: true }).click();
+  } else {
+    await row(page, 'OAuth2').getByRole('button', { name: '解除绑定', exact: true }).click();
+    await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
+    await page.getByRole('button', { name: '确认解除', exact: true }).click();
+  }
+  await received;
+  // The modal blocks pointer navigation. Exercise the real tab handler for a programmatic switch.
+  await page.getByRole('tab', { name: '基本信息', exact: true }).evaluate(el => el.click());
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+  await row(page, '飞书').getByRole('button', { name: '绑定', exact: true }).click();
+  const response = page.waitForResponse(response => response.url().endsWith(`/${operation}`));
+  release();
+  await response;
+  await expect(page.getByRole('dialog').getByLabel('登录密码')).toBeVisible();
+  await expect(page.getByRole('dialog')).not.toContainText('旧操作的失败提示');
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
+  await page.getByRole('tab', { name: '基本信息', exact: true }).click();
+  await expect(page.locator('.account-content')).not.toContainText('旧操作的失败提示');
+});
+
+for (const endpoint of ['capabilities', '']) test(`operation error lifecycle: initial ${endpoint || 'list'} failure stays visible as a load error`, async ({ page }) => {
+  await setup(page);
+  await page.route(`**/api/system/account-bindings${endpoint ? '/' + endpoint : ''}`, route => route.fulfill({ status: 503, json: '绑定服务暂不可用' }));
+  await page.reload();
+  await expect(page.locator('.account-content')).toContainText('绑定服务暂不可用');
+  if (!endpoint) {
+    await page.getByRole('tab', { name: '基本信息', exact: true }).click();
+    await expect(page.locator('.account-content')).not.toContainText('绑定服务暂不可用');
+    await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+    await expect(page.locator('.account-content')).toContainText('绑定服务暂不可用');
+  }
+});
+
+test('operation error lifecycle: late password request does not unlock the next operation', async ({ page }) => {
+  await setup(page);
+  let releaseFirst, releaseSecond, receivedFirst, receivedSecond;
+  const first = new Promise(resolve => { releaseFirst = resolve; });
+  const second = new Promise(resolve => { releaseSecond = resolve; });
+  const startedFirst = new Promise(resolve => { receivedFirst = resolve; });
+  const startedSecond = new Promise(resolve => { receivedSecond = resolve; });
+  let starts = 0;
+  await page.route('**/api/system/account-bindings/requests', async route => {
+    const current = ++starts;
+    if (current === 1) { receivedFirst(); await first; }
+    else { receivedSecond(); await second; }
+    await route.fulfill({ status: 400, json: current === 1 ? '旧请求失败' : '当前请求失败' });
+  });
+  await begin(page, '飞书');
+  await startedFirst;
+  await page.getByRole('tab', { name: '基本信息', exact: true }).evaluate(el => el.click());
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+  await begin(page, '飞书');
+  await startedSecond;
+  const oldResponse = page.waitForResponse(response => response.url().endsWith('/requests'));
+  releaseFirst();
+  await oldResponse;
+  await expect(page.getByRole('dialog')).not.toContainText('旧请求失败');
+  await expect(page.getByRole('dialog').getByRole('button', { name: '取消', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '下一步', exact: true })).toHaveClass(/is-loading/);
+  releaseSecond();
+  await expect(page.getByRole('dialog')).toContainText('当前请求失败');
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.locator('.account-content')).not.toContainText('当前请求失败');
+});
+
+for (const leave of ['tab', 'unmount']) test(`operation error lifecycle: late confirmation success after ${leave} does not close another dialog or show a notification`, async ({ page }) => {
+  const state = await setup(page);
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  let release, started;
+  const held = new Promise(resolve => { release = resolve; });
+  const received = new Promise(resolve => { started = resolve; });
+  await page.route('**/api/system/account-bindings/requests/*/confirm', async route => {
+    started();
+    await held;
+    await route.fulfill({ json: { status: 'confirmed' } });
+  });
+  await begin(page);
+  state.requests[Object.keys(state.requests)[0]].status = 'verified';
+  await page.getByRole('button', { name: '确认绑定', exact: true }).click();
+  await received;
+  if (leave === 'unmount') await page.evaluate(() => window.bindingFixture.unmount());
+  else {
+    await page.getByRole('tab', { name: '基本信息', exact: true }).evaluate(el => el.click());
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+    await row(page, '飞书').getByRole('button', { name: '绑定', exact: true }).click();
+  }
+  const response = page.waitForResponse(response => response.url().endsWith('/confirm'));
+  release();
+  await (await response).finished();
+  // Give the component's promise handler a turn before checking absent side effects.
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 0)));
+  await expect(page.locator('.ed-message')).toHaveCount(0);
+  expect(pageErrors).toEqual([]);
+  if (leave === 'tab') await expect(page.getByRole('dialog').getByLabel('登录密码')).toBeVisible();
+  else {
+    await expect(page.locator('#app')).toBeEmpty();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
+});
+
+test('operation error lifecycle: retry is immediate even while server cancellation is pending', async ({ page }) => {
+  const state = await setup(page);
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  await page.route('**/api/system/account-bindings/requests/*', async route => {
+    if (route.request().method() !== 'DELETE') return route.fallback();
+    await held;
+    return route.fulfill({ json: null });
+  });
+  await conflict(page, state);
+  await page.getByRole('button', { name: '重试', exact: true }).click();
+  await expect(page.getByRole('dialog').getByLabel('登录密码')).toBeVisible();
+  await expect(page.getByRole('dialog')).not.toContainText(conflictText);
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
+  await page.getByRole('tab', { name: '基本信息', exact: true }).click();
+  release();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.locator('.account-content')).not.toContainText(conflictText);
 });

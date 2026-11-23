@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const root = fileURLToPath(new URL(".", import.meta.url));
-const frontend = path.resolve(root, "../../../../frontend");
+const frontend = path.resolve(process.env.SQLBOT_BROWSER_SOURCE_ROOT || path.resolve(root, "../../../../frontend"));
 const require = createRequire(path.join(frontend, "package.json"));
 const { createServer } = await import(require.resolve("vite"));
 const { default: vue } = await import(require.resolve("@vitejs/plugin-vue"));
@@ -33,7 +33,7 @@ const server = await createServer({
   define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify("/api/v1") },
   server: {
     host: "127.0.0.1",
-    port: 4236,
+    port: Number(process.env.SQLBOT_BINDING_BROWSER_PORT || 4236),
     strictPort: true,
     fs: { allow: [root, frontend] },
   },
