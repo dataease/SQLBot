@@ -452,17 +452,17 @@ onBeforeUnmount(() => {
             </p>
             <p v-if="item.stale" class="muted">{{ t('binding.stale') }}</p>
           </div>
-          <span class="binding-status" :class="{ bound: item.bound }"
-            ><span v-if="item.bound" aria-hidden="true">✓</span
+          <span v-if="!item.bound && !item.enabled" class="binding-status">{{
+            t('binding.disabled')
+          }}</span>
+          <el-button
+            :type="!item.bound && item.enabled && canBind ? 'primary' : 'default'"
+            :disabled="!item.bound && (!item.enabled || !canBind)"
+            @click="choose(item)"
             >{{
-              t(
-                item.bound ? 'binding.bound' : item.enabled ? 'binding.unbound' : 'binding.disabled'
-              )
-            }}</span
+              t(item.bound ? 'binding.unbind' : item.enabled ? 'binding.unbound' : 'binding.bind')
+            }}</el-button
           >
-          <el-button :disabled="!item.bound && (!item.enabled || !canBind)" @click="choose(item)">{{
-            t(item.bound ? 'binding.unbind' : 'binding.bind')
-          }}</el-button>
         </div>
         <p class="binding-footnote"><img :src="lockIcon" alt="" />{{ t('binding.preserve') }}</p>
       </template>
@@ -639,7 +639,6 @@ onBeforeUnmount(() => {
 .account-header {
   height: 74px;
   padding: 26px 32px 20px;
-  border-bottom: 1px solid #eff0f1;
   h1 {
     font-size: 20px;
     font-weight: 500;
@@ -676,7 +675,6 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 16px;
   padding-bottom: 30px;
-  border-bottom: 1px solid #eff0f1;
   > .user-avatar {
     width: 56px;
     height: 56px;
@@ -790,9 +788,6 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  &.bound {
-    color: #159b78;
-  }
 }
 .binding-footnote {
   font-size: 12px;
