@@ -58,7 +58,7 @@ async function setup(page, path = '/', options = {}) {
 }
 const row = (page, name) => page.locator('.binding-row').filter({ has: page.getByRole('heading', { name, exact: true }) });
 async function begin(page, name='OAuth2') {
-  await row(page,name).getByRole('button', { name: '绑定', exact:true }).click();
+  await row(page,name).getByRole('button', { name: '未绑定', exact:true }).click();
   await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
   await page.getByRole('button', { name:'下一步',exact:true }).click();
 }
@@ -74,7 +74,8 @@ test('new window authenticates, notifies and closes; only explicit confirmation 
   await expect(page.getByRole('dialog')).toContainText('provider-account');
   expect(state.confirms).toBe(0);
   await page.getByRole('button', {name:'确认绑定',exact:true}).click();
-  await expect(row(page,'OAuth2')).toContainText('已绑定');
+  await expect(row(page,'OAuth2').getByRole('button',{name:'解除绑定',exact:true})).toBeVisible();
+  await expect(row(page,'OAuth2')).not.toContainText('已绑定');
   expect(state.confirms).toBe(1);
   await row(page,'OAuth2').getByRole('button', {name:'解除绑定',exact:true}).click();
   await page.getByRole('dialog').getByLabel('登录密码').fill('wrong');
@@ -82,12 +83,12 @@ test('new window authenticates, notifies and closes; only explicit confirmation 
   await expect(page.getByRole('dialog')).toContainText('本地密码不正确');
   await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
   await page.getByRole('button', {name:'确认解除',exact:true}).click();
-  await expect(row(page,'OAuth2')).toContainText('未绑定');
+  await expect(row(page,'OAuth2').getByRole('button',{name:'未绑定',exact:true})).toBeVisible();
 });
 
 test('wrong local password, popup blocked, forged message and cancellation', async ({page}) => {
   const state = await setup(page);
-  await row(page,'OAuth2').getByRole('button', {name:'绑定',exact:true}).click();
+  await row(page,'OAuth2').getByRole('button', {name:'未绑定',exact:true}).click();
   await page.getByRole('dialog').getByLabel('登录密码').fill('wrong');
   await page.getByRole('button', {name:'下一步',exact:true}).click();
   await expect(page.getByRole('dialog')).toContainText('本地密码不正确');
@@ -154,6 +155,19 @@ test('personal tabs show the selected content and disabled providers cannot be b
   await expect(page.getByRole('heading',{name:'第三方账号',exact:true})).toBeVisible();
 });
 
+test('个人信息样式移除页头与账号摘要分割线，未绑定使用主按钮且不重复显示状态', async ({ page }) => {
+  await setup(page);
+  await expect(page.locator('.account-header')).toHaveCSS('border-bottom-width', '0px');
+  await expect(page.locator('.account-summary')).toHaveCSS('border-bottom-width', '0px');
+  const unbound = row(page, 'OAuth2');
+  await expect(unbound.getByRole('button', { name: '未绑定', exact: true })).toHaveClass(/ed-button--primary/);
+  await expect(unbound.locator('.binding-status')).toHaveCount(0);
+  const disabled = row(page, 'OIDC');
+  await expect(disabled.getByRole('button', { name: '绑定', exact: true })).toBeDisabled();
+  await expect(disabled.getByRole('button', { name: '绑定', exact: true })).not.toHaveClass(/ed-button--primary/);
+  await expect(disabled).toContainText('未启用');
+});
+
 test('基本信息完整显示姓名、账号、邮箱和真实账号类型', async ({ page }) => {
   await setup(page);
   await page.getByRole('tab', { name: '基本信息', exact: true }).click();
@@ -169,8 +183,8 @@ test('基本信息完整显示姓名、账号、邮箱和真实账号类型', as
 
 test('内置管理员可以看到已启用钉钉和飞书的绑定入口', async ({ page }) => {
   await setup(page, '/?role=admin');
-  await expect(row(page, '钉钉').getByRole('button', { name: '绑定', exact: true })).toBeEnabled();
-  await expect(row(page, '飞书').getByRole('button', { name: '绑定', exact: true })).toBeEnabled();
+  await expect(row(page, '钉钉').getByRole('button', { name: '未绑定', exact: true })).toBeEnabled();
+  await expect(row(page, '飞书').getByRole('button', { name: '未绑定', exact: true })).toBeEnabled();
   await begin(page, '钉钉');
   await expect(page.getByRole('dialog')).toContainText('绑定');
 });
@@ -269,9 +283,10 @@ test('开源版只显示基本信息，不读取商业平台列表', async ({ pa
 
 test('许可证失效后仅管理历史绑定，解绑最后一项后回到基本信息', async ({ page }) => {
   const state = await setup(page, '/', { licensed: false, bound: true });
-  await expect(row(page, 'OAuth2')).toContainText('已绑定');
+  await expect(row(page, 'OAuth2').getByRole('button', { name: '解除绑定', exact: true })).toBeVisible();
+  await expect(row(page, 'OAuth2')).not.toContainText('已绑定');
   await expect(page.locator('.binding-row')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: '绑定', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '未绑定', exact: true })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: '账号绑定', exact: true })).toBeVisible();
   await row(page, 'OAuth2').getByRole('button', { name: '解除绑定', exact: true }).click();
   await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
@@ -327,7 +342,7 @@ test('operation error lifecycle: list error survives dialog close but is scoped 
   state.requests[Object.keys(state.requests)[0]].status = 'verified';
   await page.getByRole('button', { name: '确认绑定', exact: true }).click();
   await expect(page.locator('.account-content')).toContainText('绑定列表暂不可用');
-  await row(page, '飞书').getByRole('button', { name: '绑定', exact: true }).click();
+  await row(page, '飞书').getByRole('button', { name: '未绑定', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.locator('.account-content')).toContainText('绑定列表暂不可用');
   await expect(page.locator('.ed-message')).toContainText('绑定成功');
@@ -361,7 +376,7 @@ for (const operation of ['confirm', 'unbind']) test(`operation error lifecycle: 
   await page.getByRole('tab', { name: '基本信息', exact: true }).evaluate(el => el.click());
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
-  await row(page, '飞书').getByRole('button', { name: '绑定', exact: true }).click();
+  await row(page, '飞书').getByRole('button', { name: '未绑定', exact: true }).click();
   const response = page.waitForResponse(response => response.url().endsWith(`/${operation}`));
   release();
   await response;
@@ -439,7 +454,7 @@ for (const leave of ['tab', 'unmount']) test(`operation error lifecycle: late co
     await page.getByRole('tab', { name: '基本信息', exact: true }).evaluate(el => el.click());
     await expect(page.getByRole('dialog')).not.toBeVisible();
     await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
-    await row(page, '飞书').getByRole('button', { name: '绑定', exact: true }).click();
+    await row(page, '飞书').getByRole('button', { name: '未绑定', exact: true }).click();
   }
   const response = page.waitForResponse(response => response.url().endsWith('/confirm'));
   release();
