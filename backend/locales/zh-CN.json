@@ -1,4 +1,5 @@
 {
+  "i18n_platform_token_cache_error": "平台认证暂时不可用，请重试或联系管理员。",
   "ws_model_settings": "工作空间模型设置",
   "system_model_workspace_impact": "模型变更影响",
   "i18n_default_workspace": "默认工作空间",

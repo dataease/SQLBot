@@ -1007,6 +1007,8 @@
     "be_turned_on": "测试连接有效后，可开启"
   },
   "login": {
+    "platform_login_failed": "登录失败，请重试或联系管理员。",
+    "retry_login": "重新登录",
     "default_login": "默认",
     "ldap_login": "LDAP 登录",
     "account_login": "账号登录",

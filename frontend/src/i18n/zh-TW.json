@@ -1007,6 +1007,8 @@
     "be_turned_on": "測試連線有效後，可開啟"
   },
   "login": {
+    "platform_login_failed": "登入失敗，請重試或聯絡管理員。",
+    "retry_login": "重新登入",
     "default_login": "預設",
     "ldap_login": "LDAP 登入",
     "account_login": "帳號登入",

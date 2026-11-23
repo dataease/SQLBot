@@ -191,12 +191,19 @@ watch(isLazy, async () => {
   defaultCheckedKeys.value = []
   wecomDeptCache.value.clear()
   loading.value = true
-  const systemWorkspaceList = await modelApi.platform(oid, isLazy.value ? 1 : 0)
-  organizationUserList.value = isLazy.value
-    ? stripDeptChildren(systemWorkspaceList.tree || [])
-    : systemWorkspaceList.tree || []
-  rawTree = cloneDeep(systemWorkspaceList.tree)
-  loading.value = false
+  try {
+    const systemWorkspaceList = await modelApi.platform(oid, isLazy.value ? 1 : 0)
+    organizationUserList.value = isLazy.value
+      ? stripDeptChildren(systemWorkspaceList.tree || [])
+      : systemWorkspaceList.tree || []
+    rawTree = cloneDeep(systemWorkspaceList.tree)
+  } catch {
+    organizationUserList.value = []
+    rawTree = []
+    // The shared request interceptor already shows the server error.
+  } finally {
+    loading.value = false
+  }
 })
 
 const filterNode: FilterNodeMethodFunction = (value: string, data: any) => {
@@ -270,29 +277,23 @@ const stripDeptChildren = (nodes: any[]) => {
   })
 }
 
-const loadNode = (node: any, resolve: any) => {
-  if (node.level === 0) {
-    modelApi.platform(oid, 1).then((res: any) => {
+const loadNode = async (node: any, resolve: (data: any[]) => void, reject: () => void) => {
+  try {
+    if (node.level === 0) {
+      const res = await modelApi.platform(oid, 1)
       resolve(stripDeptChildren(res.tree || []))
-    })
-    return
-  }
-  if (oid === 6) {
-    const deptChildren = wecomDeptCache.value.get(node.data.id) || []
-    modelApi.platform(oid, 1, node.data.id).then((res: any) => {
-      resolve(stripDeptChildren([...(res.tree || []), ...deptChildren]))
-      nextTick(() => {
-        organizationUserRef.value?.setChecked(node.data.id, false, true)
-      })
-    })
-    return
-  }
-  modelApi.platform(oid, 1, node.data.id).then((res: any) => {
-    resolve(stripDeptChildren(res.tree || []))
+      return
+    }
+    const res = await modelApi.platform(oid, 1, node.data.id)
+    const deptChildren = oid === 6 ? wecomDeptCache.value.get(node.data.id) || [] : []
+    resolve(stripDeptChildren([...(res.tree || []), ...deptChildren]))
     nextTick(() => {
       organizationUserRef.value?.setChecked(node.data.id, false, true)
     })
-  })
+  } catch {
+    // Clear the node spinner and leave it unloaded so expansion can retry.
+    reject()
+  }
 }
 
 const open = async (id: any, title: any) => {
@@ -307,19 +308,25 @@ const open = async (id: any, title: any) => {
   checkAll.value = false
   isIndeterminate.value = false
   const loadingInstance = ElLoading.service({ fullscreen: true })
-  const systemWorkspaceList = await modelApi.platform(id, isLazy.value ? 1 : 0)
-  if (isLazy.value && id === 6) {
-    buildWecomDeptCache(systemWorkspaceList.tree)
-    organizationUserList.value = stripDeptChildren(systemWorkspaceList.tree || [])
-  } else {
-    organizationUserList.value = isLazy.value
-      ? stripDeptChildren(systemWorkspaceList.tree || [])
-      : systemWorkspaceList.tree || []
+  try {
+    const systemWorkspaceList = await modelApi.platform(id, isLazy.value ? 1 : 0)
+    if (isLazy.value && id === 6) {
+      buildWecomDeptCache(systemWorkspaceList.tree)
+      organizationUserList.value = stripDeptChildren(systemWorkspaceList.tree || [])
+    } else {
+      organizationUserList.value = isLazy.value
+        ? stripDeptChildren(systemWorkspaceList.tree || [])
+        : systemWorkspaceList.tree || []
+    }
+    rawTree = cloneDeep(systemWorkspaceList.tree)
+    centerDialogVisible.value = true
+  } catch {
+    // The shared request interceptor already shows the server error.
+    return
+  } finally {
+    loadingInstance?.close()
+    loading.value = false
   }
-  rawTree = cloneDeep(systemWorkspaceList.tree)
-  loadingInstance?.close()
-  loading.value = false
-  centerDialogVisible.value = true
 }
 const emits = defineEmits(['refresh'])
 const handleConfirm = () => {

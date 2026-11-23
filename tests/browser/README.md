@@ -189,3 +189,16 @@ npm --prefix tests/browser test -- --config=pagination.config.mjs
 ```
 
 夹具仅监听 `127.0.0.1:4247`，加载真实工作空间授权弹窗、产品样式和 API 封装，使用合成 HTTP 响应隔离后端。覆盖 543 名候选用户按每页 500 条加载、搜索并保存末页成员、空列表，以及后续页失败时不展示不完整候选列表。它不替代真实登录、权限链或数据库验收。
+
+## 平台登录与用户同步失败恢复
+
+```sh
+npm --prefix tests/browser test -- --config=platform-login.config.mjs
+```
+
+夹具仅监听 `127.0.0.1:4251`，加载真实 `Handler.vue`、`SyncUserDing.vue`、平台 API
+和 HTTP 请求封装，替换用户 Store、导航、许可证状态及不相关的登录子组件。
+通过受控 HTTP 响应覆盖回调失败结束加载、安全提示、重新登录不重放旧授权码、
+成功登录对照、同步失败后清理全屏遮罩、懒加载节点失败可重试及切换加载模式后的恢复。
+不访问业务数据库或企业微信；不替代真实扫码、配置或完整产品布局验收。
+`SQLBOT_BROWSER_SOURCE_ROOT` 可显式指向待对照版本的 `frontend/`，用于同配置基线验证。

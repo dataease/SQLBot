@@ -1,4 +1,5 @@
 {
+  "i18n_platform_token_cache_error": "Platform authentication is temporarily unavailable. Please retry or contact the administrator.",
   "ws_model_settings": "Workspace model settings",
   "system_model_workspace_impact": "Model change impact",
   "i18n_default_workspace": "Default Workspace",

@@ -1,4 +1,8 @@
 <template>
+  <div v-if="platformLoginMsg" role="alert">
+    <p>{{ platformLoginMsg }}</p>
+    <el-button @click="retryPlatformLogin">{{ t('login.retry_login') }}</el-button>
+  </div>
   <div v-if="loginCategory.qrcode" :class="{ 'de-qr-hidden': !qrStatus }">
     <QrTab
       v-if="qrStatus"
@@ -96,6 +100,10 @@ interface RedirectDialogResult {
 }
 
 const platformLoginMsg = ref('')
+const retryPlatformLogin = () => {
+  // Start fresh: an authorization code must never be replayed on retry.
+  window.location.href = getSQLBotAddr() + window.location.hash
+}
 const { wsCache } = useCache()
 const userStore = useUserStore()
 const qrStatus = ref(false)
@@ -314,7 +322,7 @@ const third_party_authentication = (state?: string) => {
     urlParams['redirect_uri'] = encodeURIComponent(getSQLBotAddr())
   }
   request
-    .post(ssoUrl, urlParams)
+    .post(ssoUrl, urlParams, { requestOptions: { silent: true } })
     .then((res: any) => {
       const token = res.access_token
       const platform_info = res.platform_info
@@ -339,14 +347,11 @@ const third_party_authentication = (state?: string) => {
       const queryRedirectPath = getCurLocation()
       router.push({ path: queryRedirectPath })
     })
-    .catch((e: any) => {
+    .catch(() => {
       userStore.setToken('')
-      setTimeout(() => {
-        platformLoginMsg.value = e?.message || e
-        setTimeout(() => {
-          window.location.href = getSQLBotAddr() + window.location.hash
-        }, 2000)
-      }, 1500)
+      // Do not render raw server/database errors, which may contain credentials.
+      platformLoginMsg.value = t('login.platform_login_failed')
+      updateLoading(false, 0)
     })
   return findKey
 }
