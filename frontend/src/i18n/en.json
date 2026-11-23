@@ -1135,6 +1135,9 @@
     "manage_existing": "Enterprise authentication is currently unavailable. You can view and remove existing bindings only.",
     "ldap_account": "LDAP account",
     "ldap_password": "LDAP password",
-    "verify_ldap": "Verify LDAP account"
+    "verify_ldap": "Verify LDAP account",
+    "platform_unavailable_hint": "This platform is disabled or its configuration is invalid. Ask an administrator to check Platform Integration in System Settings.",
+    "auth_unavailable_hint": "This authentication source is disabled or its configuration is invalid. Ask an administrator to check Login Authentication in System Settings.",
+    "new_binding_unavailable": "New bindings are unavailable. You can only manage existing bindings."
   }
 }

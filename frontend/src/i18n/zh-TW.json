@@ -1135,6 +1135,9 @@
     "manage_existing": "商業認證目前無法使用，僅可檢視及解除現有綁定。",
     "ldap_account": "LDAP 帳號",
     "ldap_password": "LDAP 密碼",
-    "verify_ldap": "驗證 LDAP 帳號"
+    "verify_ldap": "驗證 LDAP 帳號",
+    "platform_unavailable_hint": "此平台未啟用或設定無效，請聯絡管理員檢查系統設定中的平台對接設定。",
+    "auth_unavailable_hint": "此認證來源未啟用或設定無效，請聯絡管理員檢查系統設定中的登入認證設定。",
+    "new_binding_unavailable": "目前無法新增綁定，僅可管理既有綁定。"
   }
 }

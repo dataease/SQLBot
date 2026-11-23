@@ -81,6 +81,15 @@ const localAccount = computed(() => !user.getOrigin)
 const available = computed(() => localAccount.value && !!capabilities.value?.show_bindings)
 const canBind = computed(() => available.value && !!capabilities.value?.can_bind)
 const activeTab = computed(() => (available.value ? tab.value : 'basic'))
+const disabledBindingHint = (item: Binding) => {
+  if (item.bound) return ''
+  if (!canBind.value) return t('binding.new_binding_unavailable')
+  if (!item.enabled)
+    return t(
+      item.origin > 5 ? 'binding.platform_unavailable_hint' : 'binding.auth_unavailable_hint'
+    )
+  return ''
+}
 const errorText = (e: unknown) =>
   isAxiosError(e) && typeof e.response?.data === 'string' ? e.response.data : t('binding.service')
 const stop = () => {
@@ -501,14 +510,33 @@ onBeforeUnmount(() => {
           <span v-if="!item.bound && !item.enabled" class="binding-status">{{
             t('binding.disabled')
           }}</span>
-          <el-button
-            :type="!item.bound && item.enabled && canBind ? 'primary' : 'default'"
-            :disabled="!item.bound && (!item.enabled || !canBind)"
-            @click="choose(item)"
-            >{{
-              t(item.bound ? 'binding.unbind' : item.enabled ? 'binding.unbound' : 'binding.bind')
-            }}</el-button
+          <el-tooltip
+            :content="disabledBindingHint(item)"
+            :disabled="!disabledBindingHint(item)"
+            :trigger="['hover', 'focus']"
+            placement="top"
           >
+            <span
+              class="binding-action"
+              :tabindex="disabledBindingHint(item) ? 0 : undefined"
+              :aria-label="disabledBindingHint(item) || undefined"
+            >
+              <el-button
+                :type="!item.bound && item.enabled && canBind ? 'primary' : 'default'"
+                :disabled="!item.bound && (!item.enabled || !canBind)"
+                @click="choose(item)"
+                >{{
+                  t(
+                    item.bound
+                      ? 'binding.unbind'
+                      : item.enabled
+                        ? 'binding.unbound'
+                        : 'binding.bind'
+                  )
+                }}</el-button
+              >
+            </span>
+          </el-tooltip>
         </div>
         <p class="binding-footnote"><img :src="lockIcon" alt="" />{{ t('binding.preserve') }}</p>
       </template>
@@ -841,6 +869,9 @@ onBeforeUnmount(() => {
     height: 34px;
     padding: 0 16px;
   }
+}
+.binding-action {
+  display: inline-flex;
 }
 .binding-info {
   flex: 1;
