@@ -547,6 +547,7 @@
     "discovery_source_current": "当前配置",
     "discovery_empty": "未返回模型，可手动输入模型 ID。",
     "discovery_failed": "获取失败，请检查地址或凭据。可手动输入模型 ID。",
+    "discovery_timeout": "获取模型列表超时，请稍后重试。也可手动输入模型 ID。",
     "discovery_key_reset": "API 地址已变化，如需鉴权，请重新填写 API Key。",
 
     "int": "整数",
