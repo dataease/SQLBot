@@ -87,6 +87,17 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
     return df
 
 
+def _preview_records(df: pd.DataFrame, max_rows: int) -> list[dict]:
+    # JSON cannot represent infinities as numbers. Keep their sign visible in
+    # the preview while continuing to represent empty cells as null.
+    return df.head(max_rows).replace({
+        pd.NA: None,
+        float('nan'): None,
+        float('inf'): 'Infinity',
+        float('-inf'): '-Infinity',
+    }).to_dict(orient='records')
+
+
 def parse_excel_preview(save_path: str, max_rows: int = 10):
     sheets_data = []
     if is_csv_file(save_path):
@@ -97,12 +108,10 @@ def parse_excel_preview(save_path: str, max_rows: int = 10):
                 "fieldName": col,
                 "fieldType": infer_field_type(df[col].dtype)
             })
-        preview_df = df.head(max_rows).replace({pd.NA: None, float('nan'): None})
-        preview_data = preview_df.to_dict(orient='records')
         sheets_data.append({
             "sheetName": "Sheet1",
             "fields": fields,
-            "data": preview_data,
+            "data": _preview_records(df, max_rows),
             "rows": len(df)
         })
     else:
@@ -115,12 +124,10 @@ def parse_excel_preview(save_path: str, max_rows: int = 10):
                     "fieldName": col,
                     "fieldType": infer_field_type(df[col].dtype)
                 })
-            preview_df = df.head(max_rows).replace({pd.NA: None, float('nan'): None})
-            preview_data = preview_df.to_dict(orient='records')
             sheets_data.append({
                 "sheetName": sheet_name,
                 "fields": fields,
-                "data": preview_data,
+                "data": _preview_records(df, max_rows),
                 "rows": len(df)
             })
     return sheets_data
