@@ -1,7 +1,7 @@
 import json
 from typing import List, Union
 
-from fastapi import APIRouter, Path, Query, Body
+from fastapi import APIRouter, Path, Query, Body, Request
 from fastapi.responses import StreamingResponse
 from sqlmodel import func, select, update, delete
 
@@ -204,6 +204,7 @@ async def update_model(
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @system_log(LogConfig(operation_type=OperationType.DELETE, module=OperationModules.AI_MODEL, resource_id_expr="id"))
 async def delete_model(
+        request: Request,
         session: SessionDep,
         trans: Trans,
         current_user: CurrentUser,
@@ -215,7 +216,7 @@ async def delete_model(
         raise ValueError(trans('i18n_llm.model_unavailable'))
     if item.default_model:
         raise Exception(trans('i18n_llm.delete_default_error', key=item.name))
-    apply_model_impact_resolutions(session, id, None, resolutions, trans, actor=current_user)
+    apply_model_impact_resolutions(session, id, None, resolutions, trans, actor=current_user, request=request)
     session.exec(delete(AiModelWorkspaceMapping).where(AiModelWorkspaceMapping.ai_model_id == id))
     session.delete(item)
     session.commit()
@@ -258,6 +259,7 @@ async def get_model_ws_mapping_by_id(
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.AI_MODEL, resource_id_expr="id", extract_params=False))
 async def update_model_ws_mapping_by_id(
+        request: Request,
         session: SessionDep,
         trans: Trans,
         current_user: CurrentUser,
@@ -277,7 +279,7 @@ async def update_model_ws_mapping_by_id(
 
     existing_ids = session.exec(select(AiModelWorkspaceMapping.workspace_id).where(AiModelWorkspaceMapping.ai_model_id == id)).all()
     removed_ids = list(set(existing_ids) - set(ws_ids))
-    apply_model_impact_resolutions(session, id, removed_ids, resolutions, trans, actor=current_user)
+    apply_model_impact_resolutions(session, id, removed_ids, resolutions, trans, actor=current_user, request=request)
     # 根据 ai_model_id 更新关联的 workspace_id 列表
     # 1. 批量删除旧映射
     session.execute(
@@ -350,6 +352,7 @@ async def add_model_ws_mapping_by_id(
 @require_permissions(permission=SqlbotPermission(role=['admin']))
 @system_log(LogConfig(operation_type=OperationType.UPDATE, module=OperationModules.AI_MODEL, resource_id_expr="id", extract_params=False))
 async def delete_model_ws_mapping_by_id(
+        request: Request,
         session: SessionDep,
         trans: Trans,
         current_user: CurrentUser,
@@ -366,7 +369,7 @@ async def delete_model_ws_mapping_by_id(
     if not db_model:
         raise ValueError(f"AiModelDetail with id {id} not found")
 
-    apply_model_impact_resolutions(session, id, ws_ids, resolutions, trans, actor=current_user)
+    apply_model_impact_resolutions(session, id, ws_ids, resolutions, trans, actor=current_user, request=request)
     # 只删除指定的映射
     if ws_ids:
         session.execute(

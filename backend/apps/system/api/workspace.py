@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, HTTPException, Path, Query, Request
 from sqlmodel import exists, or_, select, delete as sqlmodel_delete, update as sqlmodel_update   
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.crud.user import clean_user_cache
@@ -230,11 +230,11 @@ async def model_settings(session: SessionDep, trans: Trans, id: int):
 
 @router.put("/{id}/model", summary=f"{PLACEHOLDER_PREFIX}ws_model_settings")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
-async def update_model_settings(session: SessionDep, current_user: CurrentUser, trans: Trans, id: int, editor: WorkspaceModelSettings):
+async def update_model_settings(request: Request, session: SessionDep, current_user: CurrentUser, trans: Trans, id: int, editor: WorkspaceModelSettings):
     workspace = session.exec(select(WorkspaceModel).where(WorkspaceModel.id == id).with_for_update()).first()
     if workspace is None:
         raise HTTPException(status_code=404, detail=trans('i18n_llm.workspace_unavailable'))
-    return save_workspace_model_settings(session, workspace, editor, trans, actor=current_user)
+    return save_workspace_model_settings(session, workspace, editor, trans, actor=current_user, request=request)
 
 
 @router.get("/{id}", response_model=WorkspaceModel, summary=f"{PLACEHOLDER_PREFIX}ws_query_api", description=f"{PLACEHOLDER_PREFIX}ws_query_api")

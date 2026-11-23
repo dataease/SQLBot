@@ -164,6 +164,9 @@
     "record_not_exist": "{msg} 기록이 존재하지 않습니다. 먼저 저장해 주세요!"
   },
   "i18n_audit": {
+    "workspace_model_default": "시스템 기본 모델",
+    "workspace_model_disabled": "모델 호출 비활성화",
+    "workspace_model_specified": "지정 모델 [{model}]",
     "success": "성공",
     "failed": "실패",
     "system_log": "작업 로그",

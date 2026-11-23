@@ -164,6 +164,9 @@
     "record_not_exist": "{msg} 記錄不存在，請先儲存！"
   },
   "i18n_audit": {
+    "workspace_model_default": "跟隨系統預設模型",
+    "workspace_model_disabled": "禁止模型呼叫",
+    "workspace_model_specified": "指定模型 [{model}]",
     "success": "成功",
     "failed": "失敗",
     "system_log": "操作日誌",

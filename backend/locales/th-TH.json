@@ -164,6 +164,9 @@
     "record_not_exist": "ไม่พบระเบียน {msg} โปรดบันทึกก่อน!"
   },
   "i18n_audit": {
+    "workspace_model_default": "โมเดลเริ่มต้นของระบบ",
+    "workspace_model_disabled": "ปิดใช้งานการเรียกโมเดล",
+    "workspace_model_specified": "โมเดลที่ระบุ [{model}]",
     "success": "สำเร็จ",
     "failed": "ล้มเหลว",
     "system_log": "บันทึกการดำเนินการ",

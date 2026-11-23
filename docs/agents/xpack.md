@@ -55,3 +55,9 @@ uv run --no-sync pytest -q
 术语配置、SQL 示例库和 xpack 自定义提示词共用下载接口。三个导入入口在生成错误报告后返回 `report_id`（UUID）和供前端展示、保存文件用的 `error_excel_filename`，没有错误报告时这两个字段均为 `null`。下载请求只传 `report_id`。报告由主仓库的 `backend/common/core/file.py` 写入 Excel 目录下的 `import-error-reports/`，按当前用户和工作空间读取，无需数据库记录。切换此契约时，前端、主仓库后端和包含该改动的 xpack wheel 需要配套部署。
 
 账号绑定新增 LDAP 凭据验证步骤（origin 3），复用认证源映射和显式确认协议。国际飞书（origin 9）仅允许历史关联管理；新增及确认均拒绝。审计将历史 `account_binding` 的 add/delete 记录映射为绑定/解绑类型，主工程新增操作枚举和五种语言文案需与 xpack 配套部署。
+
+## 工作空间模型审计
+
+主工程 `apps/system/crud/workspace_model.py` 将模型设置变更与审计记录写入同一事务，使用请求中的客户端信息。新记录的 `operation_detail` 以 `workspace_model_settings:` 开头，后接 JSON 字典，保存两端指定模型 ID 到显示名称的快照，不包含模型凭据；`remark` JSON 沿用 `before` / `after` 的 `enable_custom_model` 和 `custom_model` 字段。
+
+xpack 审计查询层按查看者语言展示系统默认、禁止调用、指定模型及变更前后值。指定模型优先使用保存的名称快照；历史记录缺少名称时显示 ID，不能用当前名称伪装历史快照。写入契约、读端格式化及主工程五种语言文案应配套验证；仅升级主工程不能宣称操作日志详情已完整修复。

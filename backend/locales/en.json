@@ -164,6 +164,9 @@
     "record_not_exist": "{msg} record does not exist. Please save it first!"
   },
   "i18n_audit": {
+    "workspace_model_default": "System default model",
+    "workspace_model_disabled": "Model calls disabled",
+    "workspace_model_specified": "Specified model [{model}]",
     "success": "Success",
     "failed": "Failed",
     "system_log": "Operation Log",
