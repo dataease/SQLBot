@@ -2098,8 +2098,9 @@ def process_stream(res: Iterator[BaseMessageChunk],
     if token_usage is None:
         token_usage = {}
     in_thinking_block = False  # 标记是否在思考过程块中
-    current_thinking = ''  # 当前收集的思考过程内容
+    uses_reasoning_metadata = False
     pending_start_tag = ''  # 用于缓存可能被截断的开始标签部分
+    pending_end_tag = ''
 
     for chunk in res:
         SQLBotLogUtil.info(chunk)
@@ -2113,12 +2114,11 @@ def process_stream(res: Iterator[BaseMessageChunk],
             if reasoning_content is None:
                 reasoning_content = ''
 
-            # 累积additional_kwargs中的思考内容到current_thinking
-            current_thinking += reasoning_content
+            uses_reasoning_metadata = uses_reasoning_metadata or bool(reasoning_content.strip())
             reasoning_content_chunk = reasoning_content
 
-        # 只有当current_thinking不是空字符串时才跳过标签解析
-        if not in_thinking_block and current_thinking.strip() != '':
+        # Dedicated reasoning metadata already separates reasoning from the answer.
+        if not in_thinking_block and uses_reasoning_metadata:
             output_content = content  # 正常输出content
             yield {
                 'content': output_content,
@@ -2161,20 +2161,21 @@ def process_stream(res: Iterator[BaseMessageChunk],
 
         # 处理思考块内容
         if enable_tag_parsing and in_thinking_block and end_tag:
+            content = pending_end_tag + content
+            pending_end_tag = ''
             if end_tag in content:
-                # 找到结束标签
-                end_idx = content.index(end_tag)
-                current_thinking += content[:end_idx]  # 收集思考内容
-                reasoning_content_chunk += current_thinking  # 添加到当前块的思考内容
-                content = content[end_idx + len(end_tag):]  # 移除结束标签后的内容
-                current_thinking = ''  # 重置当前思考内容
+                reasoning, _, answer = content.partition(end_tag)
+                reasoning_content_chunk += reasoning
                 in_thinking_block = False
-                output_content += content  # 输出结束标签之后的内容
+                output_content += answer
             else:
-                # 在遇到结束标签前，持续收集思考内容
-                current_thinking += content
+                # Keep just the possible tag prefix for the next chunk.
+                for length in range(min(len(end_tag) - 1, len(content)), 0, -1):
+                    if content.endswith(end_tag[:length]):
+                        pending_end_tag = content[-length:]
+                        content = content[:-length]
+                        break
                 reasoning_content_chunk += content
-                content = ''
 
         else:
             # 不在思考块中或标签解析未启用，正常输出
@@ -2185,6 +2186,9 @@ def process_stream(res: Iterator[BaseMessageChunk],
             'reasoning_content': reasoning_content_chunk
         }
         get_token_usage(chunk, token_usage)
+
+    if pending_start_tag or pending_end_tag:
+        yield {'content': pending_start_tag, 'reasoning_content': pending_end_tag}
 
 
 def get_lang_name(lang: str):
