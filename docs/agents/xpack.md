@@ -53,3 +53,5 @@ uv run --no-sync pytest -q
 ## Excel 导入错误报告
 
 术语配置、SQL 示例库和 xpack 自定义提示词共用下载接口。三个导入入口在生成错误报告后返回 `report_id`（UUID）和供前端展示、保存文件用的 `error_excel_filename`，没有错误报告时这两个字段均为 `null`。下载请求只传 `report_id`。报告由主仓库的 `backend/common/core/file.py` 写入 Excel 目录下的 `import-error-reports/`，按当前用户和工作空间读取，无需数据库记录。切换此契约时，前端、主仓库后端和包含该改动的 xpack wheel 需要配套部署。
+
+账号绑定新增 LDAP 凭据验证步骤（origin 3），复用认证源映射和显式确认协议。国际飞书（origin 9）仅允许历史关联管理；新增及确认均拒绝。审计将历史 `account_binding` 的 add/delete 记录映射为绑定/解绑类型，主工程新增操作枚举和五种语言文案需与 xpack 配套部署。

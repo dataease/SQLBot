@@ -1127,6 +1127,9 @@
     "qr_verifying": "授权成功，正在验证账号…",
     "qr_error": "二维码加载失败，请刷新重试。",
     "timeout": "本次身份验证已超时，请重新验证本地密码。",
-    "manage_existing": "商业认证当前不可用，仅可查看和解除已有绑定。"
+    "manage_existing": "商业认证当前不可用，仅可查看和解除已有绑定。",
+    "ldap_account": "LDAP 账号",
+    "ldap_password": "LDAP 密码",
+    "verify_ldap": "验证 LDAP 账号"
   }
 }

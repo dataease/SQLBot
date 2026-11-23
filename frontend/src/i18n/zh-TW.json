@@ -1127,6 +1127,9 @@
     "qr_verifying": "授權成功，正在驗證帳號…",
     "qr_error": "二維碼載入失敗，請重新整理後重試。",
     "timeout": "本次身分驗證已逾時，請重新驗證本機密碼。",
-    "manage_existing": "商業認證目前無法使用，僅可檢視及解除現有綁定。"
+    "manage_existing": "商業認證目前無法使用，僅可檢視及解除現有綁定。",
+    "ldap_account": "LDAP 帳號",
+    "ldap_password": "LDAP 密碼",
+    "verify_ldap": "驗證 LDAP 帳號"
   }
 }

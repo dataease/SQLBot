@@ -1127,6 +1127,9 @@
     "qr_verifying": "승인되었습니다. 계정을 확인하는 중…",
     "qr_error": "QR 코드를 불러오지 못했습니다. 새로고침해 주세요.",
     "timeout": "인증 시간이 초과되었습니다. 로컬 비밀번호를 다시 확인해 주세요.",
-    "manage_existing": "현재 기업 인증을 사용할 수 없습니다. 기존 연결을 조회하거나 해제할 수만 있습니다."
+    "manage_existing": "현재 기업 인증을 사용할 수 없습니다. 기존 연결을 조회하거나 해제할 수만 있습니다.",
+    "ldap_account": "LDAP 계정",
+    "ldap_password": "LDAP 비밀번호",
+    "verify_ldap": "LDAP 계정 확인"
   }
 }

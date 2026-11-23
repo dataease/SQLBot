@@ -1127,6 +1127,9 @@
     "qr_verifying": "Authorization received. Verifying account…",
     "qr_error": "Unable to load the QR code. Refresh to try again.",
     "timeout": "This verification has timed out. Verify your local password again.",
-    "manage_existing": "Enterprise authentication is currently unavailable. You can view and remove existing bindings only."
+    "manage_existing": "Enterprise authentication is currently unavailable. You can view and remove existing bindings only.",
+    "ldap_account": "LDAP account",
+    "ldap_password": "LDAP password",
+    "verify_ldap": "Verify LDAP account"
   }
 }

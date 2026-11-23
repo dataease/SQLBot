@@ -32,6 +32,8 @@ export const bindingApi = {
   start: (origin: number, pwd: string, callback_url: string) =>
     request.post<BindingAttempt>(`${base}/requests`, { origin, pwd, callback_url }, options),
   status: (state: string) => request.get<BindingStatus>(`${base}/requests/${state}`, options),
+  ldap: (state: string, username: string, password: string) =>
+    request.post<BindingStatus>(`${base}/callback`, { state, username, password }, options),
   callback: (params: { state: string; code: string; ticket: string; error: string }) =>
     request.post<BindingStatus>(`${base}/callback`, params, options),
   confirm: (state: string) => request.post(`${base}/requests/${state}/confirm`, {}, options),

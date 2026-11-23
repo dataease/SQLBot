@@ -12,11 +12,11 @@ async function setup(page, path = '/', options = {}) {
     if (path === '/capabilities') return ok({ show_bindings: state.licensed || state.bound, can_bind: state.licensed });
     if (!path) {
       state.listCalls++;
-      return ok([8,6,7,4,1,2].filter(origin => state.licensed || (origin === 4 && state.bound)).map(origin => ({ origin, enabled: state.licensed && origin !== 2, bound: origin === 4 && state.bound, account: state.bound ? 'provider-account' : '', display_name: 'Provider User' })));
+      return ok([8,6,7,4,1,2,3,9].filter(origin => state.licensed || (origin === (state.boundOrigin || 4) && state.bound)).map(origin => ({ origin, enabled: state.licensed && origin !== 2, bound: origin === (state.boundOrigin || 4) && state.bound, account: state.bound ? 'provider-account' : '', display_name: 'Provider User' })));
     }
     if (path === '/requests') {
       state.starts++;
-      if (body.pwd !== 'Synthetic42!') return bad('本地密码不正确。');
+      if (body.pwd !== 'Synthetic42!') return bad('密码不正确。');
       const id = 'sqlbot_bind_' + String(++state.next).padStart(43, 'x');
       state.requests[id] = { status: 'pending', origin: body.origin };
       return ok({ origin: body.origin, state: id, expires_at: Math.floor(Date.now()/1000) + 300,
@@ -37,10 +37,10 @@ async function setup(page, path = '/', options = {}) {
     if (path.endsWith('/confirm')) {
       const id = path.split('/')[2];
       if (state.requests[id].status !== 'verified') return bad('尚未认证');
-      state.confirms++; state.bound = true; state.requests[id].status = 'confirmed'; return ok({ status: 'confirmed' });
+      state.confirms++; state.bound = true; state.boundOrigin = state.requests[id].origin; state.requests[id].status = 'confirmed'; return ok({ status: 'confirmed' });
     }
     if (path.endsWith('/unbind')) {
-      if (body.pwd !== 'Synthetic42!') return bad('本地密码不正确。');
+      if (body.pwd !== 'Synthetic42!') return bad('密码不正确。');
       state.bound = false; return ok(null);
     }
     const id = path.split('/')[2];
@@ -54,6 +54,10 @@ async function setup(page, path = '/', options = {}) {
     await route.fulfill({ contentType: 'text/html', body: `<button onclick="location.href='/?state=${state}&code=synthetic-code'">Complete provider authentication</button>` });
   });
   await page.goto(path);
+  if (!options.basic && !new URLSearchParams(path.split('?')[1] || '').has('origin')) {
+    const bindingTab = page.getByRole('tab', {name:'账号绑定',exact:true});
+    if ((options.licensed ?? true) || options.bound) await bindingTab.click();
+  }
   return state;
 }
 const row = (page, name) => page.locator('.binding-row').filter({ has: page.getByRole('heading', { name, exact: true }) });
@@ -80,7 +84,7 @@ test('new window authenticates, notifies and closes; only explicit confirmation 
   await row(page,'OAuth2').getByRole('button', {name:'解除绑定',exact:true}).click();
   await page.getByRole('dialog').getByLabel('登录密码').fill('wrong');
   await page.getByRole('button', {name:'确认解除',exact:true}).click();
-  await expect(page.getByRole('dialog')).toContainText('本地密码不正确');
+  await expect(page.getByRole('dialog')).toContainText('密码不正确');
   await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
   await page.getByRole('button', {name:'确认解除',exact:true}).click();
   await expect(row(page,'OAuth2').getByRole('button',{name:'未绑定',exact:true})).toBeVisible();
@@ -91,7 +95,7 @@ test('wrong local password, popup blocked, forged message and cancellation', asy
   await row(page,'OAuth2').getByRole('button', {name:'未绑定',exact:true}).click();
   await page.getByRole('dialog').getByLabel('登录密码').fill('wrong');
   await page.getByRole('button', {name:'下一步',exact:true}).click();
-  await expect(page.getByRole('dialog')).toContainText('本地密码不正确');
+  await expect(page.getByRole('dialog')).toContainText('密码不正确');
   expect(state.callbacks).toBe(0);
   await page.getByRole('dialog').getByLabel('登录密码').fill('Synthetic42!');
   await page.getByRole('button', {name:'下一步',exact:true}).click();
@@ -391,6 +395,7 @@ for (const endpoint of ['capabilities', '']) test(`operation error lifecycle: in
   await setup(page);
   await page.route(`**/api/system/account-bindings${endpoint ? '/' + endpoint : ''}`, route => route.fulfill({ status: 503, json: '绑定服务暂不可用' }));
   await page.reload();
+  if (!endpoint) await page.getByRole('tab', {name:'账号绑定',exact:true}).click();
   await expect(page.locator('.account-content')).toContainText('绑定服务暂不可用');
   if (!endpoint) {
     await page.getByRole('tab', { name: '基本信息', exact: true }).click();
@@ -488,4 +493,29 @@ test('operation error lifecycle: retry is immediate even while server cancellati
   release();
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(page.locator('.account-content')).not.toContainText(conflictText);
+});
+
+
+test('personal settings defaults to basic information', async ({ page }) => {
+  await setup(page, '/', { basic: true });
+  await expect(page.getByRole('tab', {name:'基本信息',exact:true})).toHaveAttribute('aria-selected','true');
+});
+
+test('LDAP credentials are verified before explicit confirmation', async ({ page }) => {
+  const state = await setup(page);
+  await begin(page, 'LDAP');
+  await expect(page.getByLabel('LDAP 账号')).toBeVisible();
+  await page.getByLabel('LDAP 账号').fill('directory-user');
+  await page.getByLabel('LDAP 密码').fill('SyntheticDirectory42!');
+  await page.getByRole('button', {name:'验证 LDAP 账号',exact:true}).click();
+  await expect(page.getByRole('button', {name:'确认绑定',exact:true})).toBeVisible();
+  expect(state.confirms).toBe(0);
+  await page.getByRole('button', {name:'确认绑定',exact:true}).click();
+  await expect(row(page,'LDAP')).toContainText('已绑定');
+});
+
+
+test('legacy API unbound Larksuite entry is hidden', async ({ page }) => {
+  await setup(page);
+  await expect(page.getByRole('heading', {name:'国际飞书',exact:true})).toHaveCount(0);
 });

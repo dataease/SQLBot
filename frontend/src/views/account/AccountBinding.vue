@@ -16,6 +16,7 @@ import {
 import BindingQr from './BindingQr.vue'
 import AvatarIcon from '@/assets/img/Default-avatar.svg'
 import lockIcon from '@/assets/svg/icon-key_outlined.svg?url'
+import ldapIcon from '@/assets/svg/logo_ldap.svg?url'
 import casIcon from '@/assets/svg/logo_cas.svg?url'
 import oidcIcon from '@/assets/svg/logo_oidc.svg?url'
 import oauthIcon from '@/assets/svg/logo_oauth.svg?url'
@@ -26,12 +27,14 @@ const { t } = useI18n()
 const user = useUserStore()
 const items = ref<Binding[]>([])
 const capabilities = ref<BindingCapabilities>()
-const tab = ref('bindings')
+const tab = ref('basic')
 const workspaceName = ref('')
 const selected = ref<Binding>()
 const dialog = ref(false)
 const step = ref<'password' | 'auth' | 'confirm' | 'unbind' | 'failed'>('password')
 const pwd = ref('')
+const ldapUsername = ref('')
+const ldapPassword = ref('')
 const operationError = ref('')
 const loadError = ref('')
 const busy = ref(false)
@@ -48,6 +51,7 @@ let popup: Window | null = null
 const icons: Record<number, string> = {
   1: casIcon,
   2: oidcIcon,
+  3: ldapIcon,
   4: oauthIcon,
   6: wecomIcon,
   7: dingIcon,
@@ -58,6 +62,7 @@ const name = (origin: number) =>
   ({
     1: 'CAS',
     2: 'OIDC',
+    3: 'LDAP',
     4: 'OAuth2',
     6: t('user.wecom'),
     7: t('user.dingtalk'),
@@ -104,7 +109,8 @@ const load = async () => {
       return
     }
     const bindings = await bindingApi.list()
-    if (version === profileEpoch && localAccount.value) items.value = bindings
+    if (version === profileEpoch && localAccount.value)
+      items.value = bindings.filter((binding) => binding.origin !== 9 || binding.bound)
   } catch (e) {
     if (version === profileEpoch && localAccount.value) loadError.value = errorText(e)
   }
@@ -125,6 +131,8 @@ const cancel = async () => {
   operationError.value = ''
   busy.value = false
   pwd.value = ''
+  ldapUsername.value = ''
+  ldapPassword.value = ''
   selected.value = undefined
   identity.value = undefined
   timedOut.value = false
@@ -140,13 +148,16 @@ const cancel = async () => {
   }
 }
 const choose = (item: Binding) => {
-  if (!available.value || (!item.bound && !canBind.value)) return
+  if (!available.value || (!item.bound && (!canBind.value || !item.enabled || item.origin === 9)))
+    return
   epoch++
   timedOut.value = false
   selected.value = item
   attempt.value = undefined
   identity.value = undefined
   pwd.value = ''
+  ldapUsername.value = ''
+  ldapPassword.value = ''
   operationError.value = ''
   step.value = item.bound ? 'unbind' : 'password'
   dialog.value = true
@@ -217,7 +228,7 @@ const waitFor = (a: BindingAttempt) => {
   timedOut.value = false
   if (hasExpired()) return
   clock = setInterval(hasExpired, 1000)
-  void poll(epoch)
+  if (a.origin !== 3) void poll(epoch)
 }
 const verify = async () => {
   if (!pwd.value || busy.value || !selected.value) return
@@ -236,6 +247,41 @@ const verify = async () => {
     if (version === epoch) operationError.value = errorText(e)
   } finally {
     if (version === epoch) busy.value = false
+  }
+}
+const verifyLdap = async () => {
+  const a = attempt.value
+  if (!a || busy.value || !ldapUsername.value || !ldapPassword.value || hasExpired()) return
+  const version = ++epoch
+  stop()
+  busy.value = true
+  operationError.value = ''
+  try {
+    const result = await bindingApi.ldap(a.state, ldapUsername.value, ldapPassword.value)
+    if (version !== epoch) return
+    if (hasExpired()) return
+    if (result.status !== 'verified') {
+      step.value = 'failed'
+      operationError.value = t(
+        result.status === 'conflict' ? 'binding.conflict' : 'binding.service'
+      )
+      return
+    }
+    const verifiedIdentity = await bindingApi.status(a.state)
+    if (version === epoch && !hasExpired()) {
+      identity.value = verifiedIdentity
+      step.value = 'confirm'
+    }
+  } catch (e) {
+    if (version === epoch) {
+      step.value = 'failed'
+      operationError.value = errorText(e)
+    }
+  } finally {
+    if (version === epoch) {
+      ldapPassword.value = ''
+      busy.value = false
+    }
   }
 }
 const openAuth = (url?: string) => {
@@ -337,7 +383,7 @@ const onMessage = (event: MessageEvent) => {
   const qrFrame = document.querySelector<HTMLIFrameElement>('.binding-completion')
   if (!event.source || (event.source !== popup && event.source !== qrFrame?.contentWindow)) return
   clearTimeout(timer)
-  void poll(epoch)
+  if (attempt.value?.origin !== 3) void poll(epoch)
 }
 watch(
   activeTab,
@@ -561,6 +607,24 @@ onBeforeUnmount(() => {
             >
           </div>
         </div>
+        <el-form
+          v-else-if="selected?.origin === 3"
+          label-position="top"
+          @submit.prevent="verifyLdap"
+        >
+          <el-form-item :label="t('binding.ldap_account')"
+            ><el-input v-model="ldapUsername" autocomplete="off" :disabled="busy"
+          /></el-form-item>
+          <el-form-item :label="t('binding.ldap_password')"
+            ><el-input
+              v-model="ldapPassword"
+              type="password"
+              show-password
+              autocomplete="off"
+              :disabled="busy"
+              @keyup.enter="verifyLdap"
+          /></el-form-item>
+        </el-form>
         <div v-else class="auth-waiting">
           <img :src="icons[selected!.origin]" alt="" />
           <p>{{ t('binding.waiting') }}</p>
@@ -604,6 +668,14 @@ onBeforeUnmount(() => {
           :disabled="!pwd"
           @click="verify"
           >{{ t('binding.next') }}</el-button
+        >
+        <el-button
+          v-if="step === 'auth' && selected?.origin === 3"
+          type="primary"
+          :loading="busy"
+          :disabled="!ldapUsername || !ldapPassword"
+          @click="verifyLdap"
+          >{{ t('binding.verify_ldap') }}</el-button
         >
         <el-button v-if="step === 'confirm'" type="primary" :loading="busy" @click="confirm">{{
           t('binding.confirm')
