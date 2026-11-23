@@ -511,7 +511,7 @@ test('LDAP credentials are verified before explicit confirmation', async ({ page
   await expect(page.getByRole('button', {name:'确认绑定',exact:true})).toBeVisible();
   expect(state.confirms).toBe(0);
   await page.getByRole('button', {name:'确认绑定',exact:true}).click();
-  await expect(row(page,'LDAP')).toContainText('已绑定');
+  await expect(row(page,'LDAP').getByRole('button',{name:'解除绑定',exact:true})).toBeVisible();
 });
 
 
