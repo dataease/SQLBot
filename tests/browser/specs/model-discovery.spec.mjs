@@ -589,3 +589,36 @@ test("unknown, legacy and network failures use safe fallback and stale errors ar
   await response;
   await expect(page.getByRole("status")).toHaveCount(0);
 });
+
+test("discovery feedback keeps the layout stable and the dropdown anchored", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 1024 });
+  const select = model(page);
+  const before = await select.boundingBox();
+  await page.route("**/api/system/aimodel/models", (route) =>
+    route.fulfill({ json: { models: ["demo-chat", "demo-reasoner"] } }),
+  );
+  await domain(page).fill("http://127.0.0.1:4232/v1");
+  await fetchButton(page).click();
+  await expect(page.getByRole("status")).toHaveText("从服务获取 2 个模型");
+  const afterFetch = await select.boundingBox();
+  expect(Math.abs(afterFetch.y - before.y)).toBeLessThan(1);
+  await select.click();
+  const popper = page.locator(".ed-select__popper.discovery-model-options");
+  await expect(popper).toBeVisible();
+  const popperBox = await popper.boundingBox();
+  expect(popperBox.y - (afterFetch.y + afterFetch.height)).toBeLessThan(24);
+  await page.keyboard.press("Escape");
+  await page.route("**/api/system/aimodel/models", (route) =>
+    route.fulfill({
+      json: { models: [], error_code: "credentials", error: "synthetic-secret" },
+    }),
+  );
+  await fetchButton(page).click();
+  await expect(page.getByRole("status")).toContainText("鉴权失败");
+  const afterFailure = await select.boundingBox();
+  expect(Math.abs(afterFailure.y - before.y)).toBeLessThan(1);
+  const statusBox = await page.getByRole("status").boundingBox();
+  expect(statusBox.y).toBeGreaterThan(afterFailure.y + afterFailure.height);
+});

@@ -495,18 +495,9 @@ defineExpose({
                 }}
               </el-button>
             </template>
-            <div
-              v-if="canDiscoverModels && discoveryState === 'error' && discoveryMessage"
-              class="discovery-status error"
-              :title="discoveryErrorDetail"
-              role="status"
-            >
-              {{ discoveryMessage }}
-            </div>
             <el-select
               v-model="modelForm['base_model']"
               style="width: 100%"
-              :offset="canDiscoverModels && discoveryState === 'success' ? 34 : 12"
               :popper-class="canDiscoverModels ? 'discovery-model-options' : ''"
               filterable
               allow-create
@@ -535,13 +526,16 @@ defineExpose({
                 }}</span></template
               >
             </el-select>
-            <div
-              v-if="canDiscoverModels && discoveryState !== 'error' && discoveryMessage"
-              class="discovery-status"
-              :class="discoveryState"
-              role="status"
-            >
-              {{ discoveryMessage }}
+            <div v-if="canDiscoverModels" class="discovery-status-slot">
+              <div
+                v-if="discoveryMessage"
+                class="discovery-status"
+                :class="discoveryState"
+                :title="discoveryState === 'error' ? discoveryErrorDetail : undefined"
+                role="status"
+              >
+                {{ discoveryMessage }}
+              </div>
             </div>
           </el-form-item>
           <el-form-item
@@ -718,11 +712,17 @@ defineExpose({
             fill: currentColor;
           }
         }
-        .discovery-status {
+        .discovery-status-slot {
           width: 100%;
+          height: 26px;
+        }
+        .discovery-status {
           font-size: 14px;
           line-height: 22px;
           margin-top: 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
           &.success {
             color: #008a00;
           }
@@ -731,8 +731,6 @@ defineExpose({
           }
           &.error {
             color: #f00;
-            margin-top: 0;
-            margin-bottom: 8px;
           }
         }
       }
