@@ -1135,6 +1135,9 @@
     "manage_existing": "商业认证当前不可用，仅可查看和解除已有绑定。",
     "ldap_account": "LDAP 账号",
     "ldap_password": "LDAP 密码",
-    "verify_ldap": "验证 LDAP 账号"
+    "verify_ldap": "验证 LDAP 账号",
+    "platform_unavailable_hint": "该平台未启用或配置无效，请联系管理员检查系统设置中的平台对接配置。",
+    "auth_unavailable_hint": "该认证源未启用或配置无效，请联系管理员检查系统设置中的登录认证配置。",
+    "new_binding_unavailable": "当前无法新增绑定，仅可管理已有绑定。"
   }
 }

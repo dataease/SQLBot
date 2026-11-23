@@ -240,3 +240,5 @@ SQLBOT_XPACK_TEST_ROOT=/absolute/path/to/sqlbot-xpack npm --prefix tests/browser
 相同命令指向未修改 xpack checkout 可执行基线对照。
 
 账号绑定默认进入基本信息；绑定回归显式切换到绑定标签。LDAP 用例以合成目录凭据覆盖身份验证、确认前无关联及显式确认，不连接真实 LDAP。跨仓库 LDAP 路由、身份冲突、失效、凭据不持久化和历史绑定审计的展示/筛选由 xpack 的 `tests/test_account_bindings.py` 验证。国际飞书仅管理历史关联，不开放新增绑定。
+
+账号绑定禁用操作通过按钮外层提供悬停与键盘聚焦提示，回归覆盖认证源/平台配置不可用、无法新增绑定的原因优先级，以及已有绑定仍可解绑。

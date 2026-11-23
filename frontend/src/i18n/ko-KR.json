@@ -1135,6 +1135,9 @@
     "manage_existing": "현재 기업 인증을 사용할 수 없습니다. 기존 연결을 조회하거나 해제할 수만 있습니다.",
     "ldap_account": "LDAP 계정",
     "ldap_password": "LDAP 비밀번호",
-    "verify_ldap": "LDAP 계정 확인"
+    "verify_ldap": "LDAP 계정 확인",
+    "platform_unavailable_hint": "플랫폼이 비활성화되어 있거나 설정이 올바르지 않습니다. 관리자에게 시스템 설정의 플랫폼 연동 설정 확인을 요청하세요.",
+    "auth_unavailable_hint": "인증 소스가 비활성화되어 있거나 설정이 올바르지 않습니다. 관리자에게 시스템 설정의 로그인 인증 설정 확인을 요청하세요.",
+    "new_binding_unavailable": "새 계정을 연결할 수 없습니다. 기존 연결만 관리할 수 있습니다."
   }
 }

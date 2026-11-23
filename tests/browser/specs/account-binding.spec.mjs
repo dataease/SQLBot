@@ -9,10 +9,10 @@ async function setup(page, path = '/', options = {}) {
     const body = req.postDataJSON();
     const ok = json => route.fulfill({ json });
     const bad = message => route.fulfill({ status: 400, json: message });
-    if (path === '/capabilities') return ok({ show_bindings: state.licensed || state.bound, can_bind: state.licensed });
+    if (path === '/capabilities') return ok({ show_bindings: state.licensed || state.bound, can_bind: options.canBind ?? state.licensed });
     if (!path) {
       state.listCalls++;
-      return ok([8,6,7,4,1,2,3,9].filter(origin => state.licensed || (origin === (state.boundOrigin || 4) && state.bound)).map(origin => ({ origin, enabled: state.licensed && origin !== 2, bound: origin === (state.boundOrigin || 4) && state.bound, account: state.bound ? 'provider-account' : '', display_name: 'Provider User' })));
+      return ok([8,6,7,4,1,2,3,9].filter(origin => state.licensed || (origin === (state.boundOrigin || 4) && state.bound)).map(origin => ({ origin, enabled: state.licensed && origin !== 2 && !options.disabledOrigins?.includes(origin), bound: origin === (state.boundOrigin || 4) && state.bound, account: state.bound ? 'provider-account' : '', display_name: 'Provider User' })));
     }
     if (path === '/requests') {
       state.starts++;
@@ -518,4 +518,38 @@ test('LDAP credentials are verified before explicit confirmation', async ({ page
 test('legacy API unbound Larksuite entry is hidden', async ({ page }) => {
   await setup(page);
   await expect(page.getByRole('heading', {name:'国际飞书',exact:true})).toHaveCount(0);
+});
+
+for (const [provider, origin, expected] of [
+  ['OIDC', 2, '该认证源未启用或配置无效，请联系管理员检查系统设置中的登录认证配置。'],
+  ['飞书', 8, '该平台未启用或配置无效，请联系管理员检查系统设置中的平台对接配置。'],
+]) test(`disabled ${provider} binding explains its configuration on hover and keyboard focus`, async ({page}) => {
+  const state = await setup(page, '/', { disabledOrigins: [origin] });
+  const target = row(page, provider);
+  await expect(target.getByRole('button', {name:'绑定',exact:true})).toBeDisabled();
+  await target.locator('.binding-action').hover();
+  await expect(page.getByRole('tooltip')).toHaveText(expected);
+  await page.mouse.move(0,0);
+  await target.locator('.binding-action').focus();
+  await expect(page.getByRole('tooltip')).toHaveText(expected);
+  expect(state.starts).toBe(0);
+});
+
+test('binding capability hint takes precedence and existing unbind stays available', async ({page}) => {
+  const state = await setup(page, '/', { bound:true, canBind:false });
+  await row(page,'飞书').locator('.binding-action').hover();
+  await expect(page.getByRole('tooltip')).toHaveText('当前无法新增绑定，仅可管理已有绑定。');
+  await page.mouse.move(0,0);
+  await row(page,'OAuth2').getByRole('button',{name:'解除绑定',exact:true}).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect(state.starts).toBe(0);
+});
+
+test('enabled binding action does not show an unavailable hint', async ({page}) => {
+  await setup(page);
+  const action=row(page,'飞书').locator('.binding-action');
+  await expect(action).not.toHaveAttribute('tabindex','0');
+  await expect(row(page,'飞书').getByRole('button',{name:'未绑定',exact:true})).toBeEnabled();
+  await action.hover();
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
 });
