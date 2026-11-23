@@ -406,3 +406,42 @@ test("switching vendors ignores in-flight results and clears credentials", async
     page.getByRole("option", { name: "old-vendor-result", exact: true }),
   ).toHaveCount(0);
 });
+
+test("timeout is explicit, safe, non-blocking and retryable", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Edit legacy", exact: true }).click();
+  let release;
+  await page.route("**/api/system/aimodel/models", async (route) => {
+    await new Promise((resolve) => (release = resolve));
+    await route.fulfill({
+      json: {
+        models: [],
+        error_code: "timeout",
+        error: "synthetic-secret-provider-body",
+      },
+    });
+  });
+  await fetchButton(page).click();
+  await expect(fetchButton(page)).toBeDisabled();
+  await expect.poll(() => Boolean(release)).toBe(true);
+  release();
+  await expect(page.getByRole("status")).toHaveText(
+    "获取模型列表超时，请稍后重试。也可手动输入模型 ID。",
+  );
+  await expect(fetchButton(page)).toBeEnabled();
+  await expect(model(page)).toContainText("legacy-custom");
+  await expect(page.getByText("0.33", { exact: true })).toBeVisible();
+  expect(await page.getByRole("status").getAttribute("title")).not.toContain(
+    "synthetic-secret",
+  );
+  await page.route("**/api/system/aimodel/models", (route) =>
+    route.fulfill({ json: { models: ["recovered-model"] } }),
+  );
+  await fetchButton(page).click();
+  await expect(page.getByRole("status")).toHaveText("从服务获取 1 个模型");
+  await expect(page.getByRole("status")).not.toHaveAttribute(
+    "title",
+    /synthetic-secret/,
+  );
+});

@@ -107,13 +107,16 @@ const fetchModels = async () => {
   const version = ++discoveryVersion
   discovering.value = true
   discoveryMessage.value = ''
+  discoveryErrorDetail.value = ''
   try {
     const result = await modelApi.discover(modelForm.api_domain, modelForm.api_key)
     if (version !== discoveryVersion) return
     if (result.error) {
       discoveryState.value = 'error'
-      discoveryErrorDetail.value = result.error
-      discoveryMessage.value = t('model.discovery_failed')
+      discoveryMessage.value = t(
+        result.error_code === 'timeout' ? 'model.discovery_timeout' : 'model.discovery_failed'
+      )
+      discoveryErrorDetail.value = discoveryMessage.value
       return
     }
     const ids = result.models

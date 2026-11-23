@@ -178,8 +178,25 @@ def test_real_route_permission_and_safe_error():
     )
     with patch.object(RequestContext, "get_request", return_value=request):
         result = asyncio.run(handler(info, lambda key: key))
-    assert result == {"models": [], "error": "i18n_model_discovery.address"}
+    assert result == {
+        "models": [],
+        "error_code": "address",
+        "error": "i18n_model_discovery.address",
+    }
     assert "synthetic-secret" not in json.dumps(result)
+
+    async def timeout_discovery(*_args):
+        raise discovery.ModelDiscoveryError("timeout")
+
+    namespace["discover_models"] = timeout_discovery
+    with patch.object(RequestContext, "get_request", return_value=request):
+        result = asyncio.run(handler(info, lambda key: key))
+    assert result == {
+        "models": [],
+        "error_code": "timeout",
+        "error": "i18n_model_discovery.timeout",
+    }
+
 
 
 def test_loopback_http_service():

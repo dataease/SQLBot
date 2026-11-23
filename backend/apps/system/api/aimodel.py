@@ -30,7 +30,7 @@ async def list_provider_models(info: ModelDiscoveryRequest, trans: Trans):
     try:
         return {'models': await discover_models(info.api_domain, info.api_key.get_secret_value())}
     except ModelDiscoveryError as error:
-        return {'models': [], 'error': trans(f'i18n_model_discovery.{error}')}
+        return {'models': [], 'error_code': str(error), 'error': trans(f'i18n_model_discovery.{error}')}
 
 
 @router.post("/status", include_in_schema=False)

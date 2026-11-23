@@ -547,6 +547,7 @@
     "discovery_source_current": "현재 설정",
     "discovery_empty": "반환된 모델이 없습니다. 모델 ID를 직접 입력할 수 있습니다.",
     "discovery_failed": "가져오지 못했습니다. 주소 또는 인증 정보를 확인하거나 모델 ID를 직접 입력하세요.",
+    "discovery_timeout": "모델 목록을 가져오는 시간이 초과되었습니다. 나중에 다시 시도하거나 모델 ID를 직접 입력하세요.",
     "discovery_key_reset": "API 주소가 변경되었습니다. 인증이 필요하면 API Key를 다시 입력하세요.",
 
     "int": "정수",
