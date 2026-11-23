@@ -223,3 +223,18 @@ npm --prefix tests/browser test -- --config=account-binding-quota.config.mjs
 覆盖二十次刷新后绑定及正确密码解绑、数据库关联删除、仅两次密码请求，
 以及刷新/取消后十次真实密码验证仍耗尽额度并显示限流提示。
 不连接产品数据库，不访问真实飞书，不替代 PostgreSQL 行锁、完整部署和实际扫码验收。
+
+## 小助手浮窗拖拽
+
+```sh
+SQLBOT_XPACK_TEST_ROOT=/absolute/path/to/sqlbot-xpack npm --prefix tests/browser test -- --config=assistant-drag.config.mjs
+```
+
+先按 `docs/agents/xpack.md` 确认关联范围。显式提供待测 xpack checkout，夹具复用其
+`xpack_static/node_modules` 的 esbuild，直接打包真实 UI 源码，不复制产品实现。
+宿主页默认仅监听 `127.0.0.1:4288`，可用 `SQLBOT_DRAG_BROWSER_PORT` 更换端口；
+不复用已有服务。浏览器加载合成配置，iframe 内容用空白页隔离，不请求业务数据库、
+许可证或模型。覆盖四种初始定位、旧位置及透明区域的宿主点击、重复拖动、点击与
+轻微移动、窗口缩小（含聊天打开期间）、自定义图标、禁用拖拽以及触摸拖动/取消。
+触摸使用 Chrome CDP 注入，不代替真实移动设备验收。此夹具不验证完整认证和问数链。
+相同命令指向未修改 xpack checkout 可执行基线对照。
