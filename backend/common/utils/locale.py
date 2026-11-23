@@ -5,6 +5,9 @@ from typing import Dict, Any
 from fastapi import Request
 
 
+_LANGUAGE_DEFAULTS = {"zh": "zh-cn", "ko": "ko-kr", "th": "th-th"}
+
+
 class I18n:
     def __init__(self, locale_dir: str = "locales"):
         self.locale_dir = Path(locale_dir)
@@ -21,14 +24,35 @@ class I18n:
                 self.translations[lang_file.stem.lower()] = json.load(f)
 
     def get_language(self, request: Request = None, lang: str = None) -> str:
-        primary_lang: str | None = None
         if lang is not None:
-            primary_lang = lang.lower()
-        elif request is not None:
-            accept_language = request.headers.get('accept-language', 'en')
-            primary_lang = accept_language.split(',')[0].lower()
+            normalized = lang.lower()
+            return normalized if normalized in self.translations else "zh-cn"
+        if request is None:
+            return "zh-cn"
 
-        return primary_lang if primary_lang in self.translations else 'zh-cn'
+        preferences: list[tuple[float, str]] = []
+        for entry in request.headers.get("accept-language", "en").split(","):
+            tag, separator, weight = entry.strip().lower().partition(";")
+            quality = 1.0
+            if separator:
+                key, _, value = weight.strip().partition("=")
+                if key.strip() != "q":
+                    continue
+                try:
+                    quality = float(value)
+                except ValueError:
+                    continue
+            if tag.strip() and 0 < quality <= 1:
+                preferences.append((quality, tag.strip()))
+
+        for _, tag in sorted(preferences, key=lambda preference: preference[0], reverse=True):
+            if tag in self.translations:
+                return tag
+            primary = tag.split("-", 1)[0]
+            fallback = _LANGUAGE_DEFAULTS.get(primary, primary)
+            if fallback in self.translations:
+                return fallback
+        return "zh-cn"
 
     def __call__(self, request: Request = None, lang: str = None) -> 'I18nHelper':
         return I18nHelper(self, request, lang)
