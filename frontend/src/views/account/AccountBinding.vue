@@ -32,7 +32,8 @@ const selected = ref<Binding>()
 const dialog = ref(false)
 const step = ref<'password' | 'auth' | 'confirm' | 'unbind' | 'failed'>('password')
 const pwd = ref('')
-const error = ref('')
+const operationError = ref('')
+const loadError = ref('')
 const busy = ref(false)
 const attempt = ref<BindingAttempt>()
 const identity = ref<BindingStatus>()
@@ -92,6 +93,7 @@ const loadWorkspace = async () => {
 }
 const load = async () => {
   const version = ++profileEpoch
+  loadError.value = ''
   if (!localAccount.value) return
   try {
     const result = await bindingApi.capabilities()
@@ -104,7 +106,7 @@ const load = async () => {
     const bindings = await bindingApi.list()
     if (version === profileEpoch && localAccount.value) items.value = bindings
   } catch (e) {
-    if (version === profileEpoch && localAccount.value) error.value = errorText(e)
+    if (version === profileEpoch && localAccount.value) loadError.value = errorText(e)
   }
 }
 const closePopup = () => {
@@ -120,7 +122,13 @@ const cancel = async () => {
   stop()
   closePopup()
   dialog.value = false
+  operationError.value = ''
+  busy.value = false
   pwd.value = ''
+  selected.value = undefined
+  identity.value = undefined
+  timedOut.value = false
+  qrCompletionUrl.value = ''
   const state = attempt.value?.state
   attempt.value = undefined
   if (state) {
@@ -133,12 +141,13 @@ const cancel = async () => {
 }
 const choose = (item: Binding) => {
   if (!available.value || (!item.bound && !canBind.value)) return
+  epoch++
   timedOut.value = false
   selected.value = item
   attempt.value = undefined
   identity.value = undefined
   pwd.value = ''
-  error.value = ''
+  operationError.value = ''
   step.value = item.bound ? 'unbind' : 'password'
   dialog.value = true
 }
@@ -148,8 +157,9 @@ const expire = () => {
   stop()
   closePopup()
   step.value = 'failed'
+  busy.value = false
   timedOut.value = true
-  error.value = t('binding.timeout')
+  operationError.value = t('binding.timeout')
   if (state)
     void bindingApi.cancel(state).catch(() => {
       /* Server expiry also rejects old callbacks. */
@@ -182,14 +192,16 @@ const poll = async (version: number) => {
       stop()
       closePopup()
       step.value = 'failed'
-      error.value = t(result.status === 'conflict' ? 'binding.conflict' : 'binding.service')
+      operationError.value = t(
+        result.status === 'conflict' ? 'binding.conflict' : 'binding.service'
+      )
       return
     }
   } catch (e) {
     if (version !== epoch || step.value !== 'auth') return
     stop()
     step.value = 'failed'
-    error.value = errorText(e)
+    operationError.value = errorText(e)
     return
   }
   timer = setTimeout(() => {
@@ -211,7 +223,7 @@ const verify = async () => {
   if (!pwd.value || busy.value || !selected.value) return
   const version = ++epoch
   busy.value = true
-  error.value = ''
+  operationError.value = ''
   try {
     const a = await bindingApi.start(selected.value.origin, pwd.value, getSQLBotAddr())
     if (version !== epoch) {
@@ -221,9 +233,9 @@ const verify = async () => {
     pwd.value = ''
     waitFor(a)
   } catch (e) {
-    if (version === epoch) error.value = errorText(e)
+    if (version === epoch) operationError.value = errorText(e)
   } finally {
-    busy.value = false
+    if (version === epoch) busy.value = false
   }
 }
 const openAuth = (url?: string) => {
@@ -233,13 +245,13 @@ const openAuth = (url?: string) => {
     'sqlbot-account-binding',
     'popup,width=640,height=760'
   )
-  if (!popup) error.value = t('binding.popup_blocked')
+  if (!popup) operationError.value = t('binding.popup_blocked')
 }
 const refresh = async () => {
   const a = attempt.value
   if (!a || busy.value || qrState.value === 'verifying' || hasExpired()) return
   busy.value = true
-  error.value = ''
+  operationError.value = ''
   stop()
   const version = ++epoch
   try {
@@ -248,11 +260,11 @@ const refresh = async () => {
     else await bindingApi.cancel(next.state)
   } catch (e) {
     if (version === epoch) {
-      error.value = errorText(e)
+      operationError.value = errorText(e)
       step.value = 'failed'
     }
   } finally {
-    busy.value = false
+    if (version === epoch) busy.value = false
   }
 }
 const qrCode = async (code: string) => {
@@ -269,44 +281,50 @@ const qrCode = async (code: string) => {
   } catch (e) {
     if (version === epoch) {
       stop()
-      error.value = errorText(e)
+      operationError.value = errorText(e)
       step.value = 'failed'
     }
   }
 }
 const confirm = async () => {
   if (!attempt.value || busy.value) return
+  const version = ++epoch
   busy.value = true
-  error.value = ''
+  operationError.value = ''
   try {
     await bindingApi.confirm(attempt.value.state)
+    if (version !== epoch) return
     ElMessage.success(t('binding.bound_success'))
-    await cancel()
+    // End the UI operation immediately; server cancellation must not delay the refresh.
+    void cancel()
     await load()
   } catch (e) {
-    error.value = errorText(e)
+    if (version === epoch) operationError.value = errorText(e)
   } finally {
-    busy.value = false
+    if (version === epoch) busy.value = false
   }
 }
 const unbind = async () => {
   if (!selected.value || !pwd.value || busy.value) return
+  const version = ++epoch
   busy.value = true
-  error.value = ''
+  operationError.value = ''
   try {
     await bindingApi.unbind(selected.value.origin, pwd.value)
+    if (version !== epoch) return
     ElMessage.success(t('binding.unbound_success'))
-    await cancel()
+    // End the UI operation immediately; server cancellation must not delay the refresh.
+    void cancel()
     await load()
   } catch (e) {
-    error.value = errorText(e)
+    if (version === epoch) operationError.value = errorText(e)
   } finally {
-    busy.value = false
+    if (version === epoch) busy.value = false
   }
 }
-const retry = async () => {
+const retry = () => {
   const item = selected.value
-  await cancel()
+  void cancel()
   if (item) choose({ ...item, bound: false })
 }
 const onMessage = (event: MessageEvent) => {
@@ -321,7 +339,15 @@ const onMessage = (event: MessageEvent) => {
   clearTimeout(timer)
   void poll(epoch)
 }
+watch(
+  activeTab,
+  (value, previous) => {
+    if (previous === 'bindings' && value !== 'bindings') void cancel()
+  },
+  { flush: 'sync' }
+)
 watch(localAccount, (allowed) => {
+  loadError.value = ''
   profileEpoch++
   capabilities.value = undefined
   tab.value = 'basic'
@@ -329,7 +355,7 @@ watch(localAccount, (allowed) => {
   else {
     void cancel()
     items.value = []
-    error.value = ''
+    operationError.value = ''
   }
 })
 onMounted(() => {
@@ -383,7 +409,12 @@ onBeforeUnmount(() => {
           </p>
         </div>
       </section>
-      <el-alert v-if="error && !dialog" :title="error" type="error" :closable="false" />
+      <el-alert
+        v-if="loadError && !dialog && (activeTab === 'bindings' || !capabilities)"
+        :title="loadError"
+        type="error"
+        :closable="false"
+      />
       <section
         v-if="activeTab === 'basic'"
         class="basic-details"
@@ -558,7 +589,12 @@ onBeforeUnmount(() => {
         </div>
         <p class="binding-footnote">{{ t('binding.preserve') }}</p>
       </div>
-      <el-alert v-if="error && !(timedOut && isQr)" :title="error" type="error" :closable="false" />
+      <el-alert
+        v-if="operationError && !(timedOut && isQr)"
+        :title="operationError"
+        type="error"
+        :closable="false"
+      />
       <template #footer>
         <el-button :disabled="busy" @click="cancel">{{ t('common.cancel') }}</el-button>
         <el-button

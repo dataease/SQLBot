@@ -10,6 +10,9 @@ import zh from '@/i18n/zh-CN.json';
 document.documentElement.style.setProperty('--ed-color-primary', '#1cba90');
 document.documentElement.style.setProperty('--ed-color-primary-light-5', '#77d6bc');
 document.documentElement.style.setProperty('--ed-color-primary-light-3', '#3ec5a1');
-createApp(new URLSearchParams(location.search).has('state') ? Callback : Account)
+const app = createApp(new URLSearchParams(location.search).has('state') ? Callback : Account);
+app
   .use(createI18n({ legacy: false, locale: 'zh-CN', messages: { 'zh-CN': zh } }))
   .use(ElementPlus).mount('#app');
+
+window.bindingFixture.unmount = () => app.unmount();
