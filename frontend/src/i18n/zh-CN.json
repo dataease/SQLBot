@@ -436,7 +436,7 @@
       "port": "端口",
       "username": "用户名",
       "keep_saved_value": "留空则沿用已保存的值",
-      "clear_password": "清空密码（使用空密码）",
+      "changed_connection_password": "连接配置已变更，请重新输入密码；留空将使用空密码",
       "password": "密码",
       "database": "数据库",
       "connect_mode": "连接方式",

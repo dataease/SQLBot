@@ -79,15 +79,11 @@
           <el-form-item :label="t('ds.form.password')">
             <el-input
               v-model="form.password"
-              :disabled="clearPassword"
-              :placeholder="form.id ? t('ds.form.keep_saved_value') : undefined"
+              :placeholder="form.id ? passwordPlaceholder : undefined"
               clearable
               type="password"
               show-password
             />
-            <el-checkbox v-if="form.id" v-model="clearPassword">
-              {{ t('ds.form.clear_password') }}
-            </el-checkbox>
           </el-form-item>
           <el-form-item :label="t('ds.form.database')" prop="database">
             <el-input v-model="form.database" clearable />
@@ -184,7 +180,7 @@
   </el-dialog>
 </template>
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { datasourceApi } from '@/api/datasource'
 import { encrypted } from './js/aes'
@@ -227,7 +223,24 @@ const rules = reactive<FormRules>({
 })
 
 const dialogVisible = ref<boolean>(false)
-const clearPassword = ref(false)
+const savedConnection = ref('')
+const connectionFields = [
+  'host',
+  'port',
+  'username',
+  'database',
+  'dbSchema',
+  'mode',
+  'engine',
+  'ssl',
+  'extraJdbc',
+] as const
+const connectionSnapshot = () => JSON.stringify(connectionFields.map((field) => form.value[field]))
+const passwordPlaceholder = computed(() =>
+  savedConnection.value !== connectionSnapshot()
+    ? t('ds.form.changed_connection_password')
+    : t('ds.form.keep_saved_value')
+)
 const form = ref<any>({
   name: '',
   description: '',
@@ -259,7 +272,6 @@ const close = () => {
 }
 
 const open = async (item: any, editTable: boolean = false) => {
-  clearPassword.value = false
   if (item && !item.configuration) item = await datasourceApi.getDs(item.id)
   isEditTable.value = false
   if (item) {
@@ -285,6 +297,8 @@ const open = async (item: any, editTable: boolean = false) => {
       form.value.mode = configuration.mode
       form.value.timeout = configuration.timeout ? configuration.timeout : 30
     }
+
+    savedConnection.value = connectionSnapshot()
 
     if (editTable) {
       dialogTitle.value = t('ds.form.choose_tables')
@@ -392,11 +406,7 @@ const buildConf = () => {
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: clearPassword.value
-        ? ''
-        : form.value.id && !form.value.password
-          ? undefined
-          : form.value.password,
+      password: form.value.id && !form.value.password ? undefined : form.value.password,
       database: form.value.database,
       extraJdbc: form.value.extraJdbc,
       dbSchema: form.value.dbSchema,

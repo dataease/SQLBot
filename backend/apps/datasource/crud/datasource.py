@@ -73,8 +73,11 @@ def seal_browser_configuration(configuration: str, previous: str | None = None) 
         defaults = DatasourceConf().model_dump()
         existing = {**defaults, **saved}
         candidate = {**existing, **incoming}
-        if retained and any(candidate[field] != existing[field] for field in destination):
-            raise DatasourceConfigurationError("Connection settings changed while retaining credentials")
+        if any(candidate[field] != existing[field] for field in destination):
+            # A changed destination must never receive credentials from the old one.
+            incoming.setdefault("password", "")
+            if "extraJdbc" in retained:
+                incoming["extraJdbc"] = ""
         incoming = {**saved, **incoming}
     if "sheets" in incoming:
         validate_excel_sheet_names(incoming)

@@ -109,7 +109,24 @@ const rules = reactive<FormRules>({
 })
 
 const dialogVisible = ref<boolean>(false)
-const clearPassword = ref(false)
+const savedConnection = ref('')
+const connectionFields = [
+  'host',
+  'port',
+  'username',
+  'database',
+  'dbSchema',
+  'mode',
+  'engine',
+  'ssl',
+  'extraJdbc',
+] as const
+const connectionSnapshot = () => JSON.stringify(connectionFields.map((field) => form.value[field]))
+const passwordPlaceholder = computed(() =>
+  savedConnection.value !== connectionSnapshot()
+    ? t('ds.form.changed_connection_password')
+    : t('ds.form.keep_saved_value')
+)
 const form = ref<any>({
   name: '',
   description: '',
@@ -150,7 +167,6 @@ const token = wsCache.get('user.token')
 const headers = ref<any>({ 'X-SQLBOT-TOKEN': `Bearer ${token}` })
 
 const initForm = (item: any, editTable: boolean = false) => {
-  clearPassword.value = false
   isEditTable.value = false
   keywords.value = ''
   dsFormRef.value!.clearValidate()
@@ -188,6 +204,8 @@ const initForm = (item: any, editTable: boolean = false) => {
           : 5
       form.value.engine = configuration.engine ? configuration.engine : 'hive'
     }
+
+    savedConnection.value = connectionSnapshot()
 
     if (editTable) {
       dialogTitle.value = t('ds.form.choose_tables')
@@ -340,11 +358,7 @@ const buildConf = () => {
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: clearPassword.value
-        ? ''
-        : form.value.id && !form.value.password
-          ? undefined
-          : form.value.password,
+      password: form.value.id && !form.value.password ? undefined : form.value.password,
       database: form.value.database,
       extraJdbc: form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
@@ -718,19 +732,15 @@ defineExpose({
           <el-form-item :label="t('ds.form.password')">
             <el-input
               v-model="form.password"
-              :disabled="clearPassword"
               clearable
               :placeholder="
                 form.id
-                  ? t('ds.form.keep_saved_value')
+                  ? passwordPlaceholder
                   : $t('datasource.please_enter') + $t('common.empty') + t('ds.form.password')
               "
               type="password"
               show-password
             />
-            <el-checkbox v-if="form.id" v-model="clearPassword">
-              {{ t('ds.form.clear_password') }}
-            </el-checkbox>
           </el-form-item>
           <el-form-item
             v-if="form.type !== 'dm' && form.type !== 'es'"
