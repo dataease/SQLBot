@@ -77,7 +77,9 @@
     "timezone_mismatch": "簽名中的時區資訊與簽名時間不一致，已阻止嵌入。"
   },
   "i18n_chat": {
-    "record_id_in_mcp": "響應ID: "
+    "record_id_in_mcp": "響應ID: ",
+    "chart_data_failed": "圖表資料載入失敗，請稍後重試或聯絡管理員。",
+    "datasource_not_found": "找不到資料來源"
   },
   "i18n_terminology": {
     "terminology_not_exists": "該術語不存在",
