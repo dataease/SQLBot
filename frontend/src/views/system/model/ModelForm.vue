@@ -132,17 +132,33 @@ const fetchModels = async () => {
   }
 }
 const selectableModels = computed(() => {
-  const models = discoveredModels.value.map((name) => ({ name }))
-  const names = new Set(models.map((item) => item.name))
-  for (const item of modelList.value || []) {
+  // Successful discovery is authoritative; built-ins remain a fallback for manual setup.
+  const candidates =
+    discoveryState.value === 'success'
+      ? discoveredModels.value.map((name) => ({ name }))
+      : modelList.value || []
+  const models: { name: string; source: string }[] = []
+  const names = new Set<string>()
+  for (const item of candidates) {
     if (!names.has(item.name)) {
-      models.push(item)
+      models.push({
+        name: item.name,
+        source:
+          discoveryState.value === 'success'
+            ? 'discovery_source_service'
+            : 'discovery_source_builtin',
+      })
       names.add(item.name)
     }
   }
   for (const name of [modelForm.base_model]) {
     if (name && !names.has(name)) {
-      models.push({ name })
+      models.push({
+        name,
+        source: ['success', 'empty'].includes(discoveryState.value)
+          ? 'discovery_source_missing'
+          : 'discovery_source_current',
+      })
       names.add(name)
     }
   }
@@ -498,7 +514,16 @@ defineExpose({
                 :key="item.name"
                 :label="item.name"
                 :value="item.name"
-              />
+                :aria-label="item.name"
+                :aria-description="canDiscoverModels ? t(`model.${item.source}`) : undefined"
+              >
+                <div class="model-option-row">
+                  <span class="model-option-name">{{ item.name }}</span>
+                  <span v-if="canDiscoverModels" class="model-option-source">{{
+                    t(`model.${item.source}`)
+                  }}</span>
+                </div>
+              </el-option>
               <template v-if="canDiscoverModels" #footer
                 ><span class="discovery-select-hint">{{
                   t('model.discovery_input_hint')
@@ -815,6 +840,24 @@ defineExpose({
       padding-bottom: 24px;
     }
   }
+}
+.model-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+.model-option-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.model-option-source {
+  flex-shrink: 0;
+  margin-left: 16px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ed-text-color-secondary);
 }
 .discovery-select-hint {
   color: #6b7280;
