@@ -30,10 +30,20 @@ test("fetch without key, deduplicate, search, preserve address, and save manual 
   await expect(
     page.getByRole("option", { name: "demo-chat", exact: true }),
   ).toHaveCount(1);
-  await page.getByRole("option", { name: "gpt-4.1", exact: true }).click();
+  await expect(
+    page.getByRole("option").locator(".model-option-name"),
+  ).toHaveText(["demo-chat", "demo-code"]);
+  await page.getByRole("option", { name: "demo-chat", exact: true }).click();
   await expect(domain(page)).toHaveValue("http://127.0.0.1:4232/v1");
   await model(page).locator("input").fill("manual-model");
   await page.getByRole("option", { name: "manual-model", exact: true }).click();
+  await model(page).click();
+  await expect(
+    page
+      .getByRole("option", { name: "manual-model", exact: true })
+      .locator(".model-option-source"),
+  ).toHaveText("当前配置 · 本次未返回");
+  await page.keyboard.press("Escape");
   await page
     .getByPlaceholder("请输入模型名称", { exact: true })
     .fill("Synthetic");
@@ -42,6 +52,86 @@ test("fetch without key, deduplicate, search, preserve address, and save manual 
     .poll(() => page.evaluate(() => window.savedModel?.base_model))
     .toBe("manual-model");
 });
+
+test("successful discovery replaces built-ins, preserves selection, and falls back after empty or failure", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Edit legacy", exact: true }).click();
+  let result = { models: ["other-chat", "other-reasoner", "other-chat"] };
+  await page.route("**/api/system/aimodel/models", (route) =>
+    route.fulfill({ json: result }),
+  );
+  await fetchButton(page).click();
+  await expect(page.getByRole("status")).toHaveText("从服务获取 2 个模型");
+  await model(page).click();
+  await expect(
+    page.getByRole("option").locator(".model-option-name"),
+  ).toHaveText(["other-chat", "other-reasoner", "legacy-custom"]);
+  await expect(
+    page
+      .getByRole("option", { name: "other-chat", exact: true })
+      .locator(".model-option-source"),
+  ).toHaveText("服务返回");
+  await expect(
+    page
+      .getByRole("option", { name: "legacy-custom", exact: true })
+      .locator(".model-option-source"),
+  ).toHaveText("当前配置 · 本次未返回");
+  const remoteOption = page.getByRole("option", {
+    name: "other-chat",
+    exact: true,
+  });
+  const nameBox = await remoteOption
+    .locator(".model-option-name")
+    .boundingBox();
+  const sourceBox = await remoteOption
+    .locator(".model-option-source")
+    .boundingBox();
+  expect(sourceBox.x).toBeGreaterThan(nameBox.x + nameBox.width);
+  await page.keyboard.press("Escape");
+  await expect(model(page)).toContainText("legacy-custom");
+  await expect(page.getByText("0.33", { exact: true })).toBeVisible();
+  for (const fallback of [
+    { models: [] },
+    { models: [], error: "此服务不支持获取模型列表。" },
+  ]) {
+    result = fallback;
+    await fetchButton(page).click();
+    await expect(page.getByRole("status")).toContainText(
+      fallback.error ? "获取失败" : "未返回模型",
+    );
+    await model(page).click();
+    await expect(
+      page.getByRole("option", { name: "gpt-4.1", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("option", { name: "legacy-custom", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("option", { name: "other-chat", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page
+        .getByRole("option", { name: "gpt-4.1", exact: true })
+        .locator(".model-option-source"),
+    ).toHaveText("内置参考");
+    await page.keyboard.press("Escape");
+    await expect(page.getByText("0.33", { exact: true })).toBeVisible();
+  }
+  result = { models: ["legacy-custom", "recovered-model"] };
+  await fetchButton(page).click();
+  await expect(page.getByRole("status")).toHaveText("从服务获取 2 个模型");
+  await model(page).click();
+  await expect(
+    page.getByRole("option").locator(".model-option-name"),
+  ).toHaveText(["legacy-custom", "recovered-model"]);
+  await expect(
+    page
+      .getByRole("option", { name: "legacy-custom", exact: true })
+      .locator(".model-option-source"),
+  ).toHaveText("服务返回");
+});
+
 test("loading, stale responses and credential binding", async ({ page }) => {
   let release;
   await page.route("**/api/system/aimodel/models", async (route) => {
@@ -163,7 +253,7 @@ test("original drawer preserves interaction while discovery matches prototype st
     path: testInfo.outputPath("prototype-loading.png"),
   });
   release();
-  await expect(page.getByRole("status")).toHaveText("已获取 3 个模型");
+  await expect(page.getByRole("status")).toHaveText("从服务获取 3 个模型");
   await expect(page.getByRole("status")).toHaveCSS("color", "rgb(0, 138, 0)");
   await model(page).click();
   await expect(
@@ -217,7 +307,7 @@ test("every active compatible supplier exposes discovery and keeps manual fallba
       await expect(key(page)).toHaveValue("");
       await key(page).fill("synthetic-key");
       await fetchButton(page).click();
-      await expect(page.getByRole("status")).toHaveText("已获取 1 个模型");
+      await expect(page.getByRole("status")).toHaveText("从服务获取 1 个模型");
       await model(page).click();
       await page
         .getByRole("option", { name: "discovered-model", exact: true })
