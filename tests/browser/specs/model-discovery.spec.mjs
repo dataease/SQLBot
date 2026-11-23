@@ -132,6 +132,53 @@ test("successful discovery replaces built-ins, preserves selection, and falls ba
   ).toHaveText("服务返回");
 });
 
+test("discovery button is a right-aligned text button whose icon follows the text color", async ({
+  page,
+}) => {
+  const button = fetchButton(page);
+  await expect(button).toHaveClass(/is-text/);
+  await expect(button).not.toHaveClass(/ed-button--primary/);
+  const style = await button.evaluate((el) => {
+    const s = getComputedStyle(el);
+    const icon = el.querySelector("svg path");
+    const label = el.closest(".ed-form-item__label");
+    return {
+      fontSize: s.fontSize,
+      height: s.height,
+      borderWidth: s.borderWidth,
+      position: s.position,
+      color: s.color,
+      iconFill: icon ? getComputedStyle(icon).fill : null,
+      rightDelta: label
+        ? Math.round(label.getBoundingClientRect().right - el.getBoundingClientRect().right)
+        : null,
+    };
+  });
+  expect(style.fontSize).toBe("14px");
+  expect(style.height).toBe("26px");
+  expect(style.borderWidth).toBe("0px");
+  expect(style.position).toBe("absolute");
+  expect(style.iconFill).toBe(style.color);
+  expect(Math.abs(style.rightDelta)).toBeLessThanOrEqual(1);
+
+  await page.route("**/api/system/aimodel/models", (route) =>
+    route.fulfill({ json: { models: [], error: "鉴权失败，请检查 API Key。" } }),
+  );
+  await domain(page).fill("http://127.0.0.1:4232/v1");
+  await button.click();
+  await expect(page.getByRole("status")).toContainText("获取失败");
+  await expect(button).toHaveClass(/is-text/);
+  await expect(button).not.toHaveClass(/ed-button--primary/);
+  const errorStyle = await button.evaluate((el) => {
+    const icon = el.querySelector("svg path");
+    return {
+      color: getComputedStyle(el).color,
+      iconFill: icon ? getComputedStyle(icon).fill : null,
+    };
+  });
+  expect(errorStyle.iconFill).toBe(errorStyle.color);
+});
+
 test("loading, stale responses and credential binding", async ({ page }) => {
   let release;
   await page.route("**/api/system/aimodel/models", async (route) => {

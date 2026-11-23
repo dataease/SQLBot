@@ -478,10 +478,7 @@ defineExpose({
               <el-button
                 v-if="canDiscoverModels"
                 class="discovery-button"
-                :class="{ 'is-retry': discoveryState === 'error' }"
-                :link="discoveryState !== 'error' && !discovering"
-                :type="discovering ? 'default' : 'primary'"
-                :plain="discoveryState === 'error'"
+                text
                 :loading="discovering"
                 :disabled="discovering || !modelForm.api_domain.trim()"
                 @click="fetchModels"
@@ -703,17 +700,22 @@ defineExpose({
 
       .discovery-base-model {
         :deep(.ed-form-item__label) {
+          position: relative;
           width: 100%;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
         }
         .discovery-button {
-          font-size: 16px;
-          color: #0066ff;
-          margin-left: auto;
+          position: absolute;
+          top: 50%;
+          right: 0;
+          transform: translateY(-50%);
           .ed-icon {
             margin-right: 6px;
+          }
+          :deep(svg path) {
+            fill: currentColor;
           }
         }
         .discovery-status {
