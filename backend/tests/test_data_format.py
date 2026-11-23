@@ -92,3 +92,14 @@ def test_excel_integer_threshold_remains_supported(convert_numbers):
             "amount": "123000000000000000000",
         }
     ]
+
+
+def test_preserves_precision_in_arrays_inside_result_cells(convert_numbers):
+    rows = [{"sample": [9007199254740993, [1.23e-10], {"n": [10**20]},
+                        "001", True, None, 3.5]}]
+
+    assert convert_numbers(rows) == [
+        {"sample": ["9007199254740993", ["0.000000000123"], {"n": ["100000000000000000000"]},
+                    "001", True, None, 3.5]},
+    ]
+    assert rows[0]["sample"][0] == 9007199254740993
