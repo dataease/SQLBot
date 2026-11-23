@@ -33,7 +33,8 @@ const server = await createServer({
   define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify("/api/v1") },
   server: {
     host: "127.0.0.1",
-    port: Number(process.env.SQLBOT_BINDING_BROWSER_PORT || 4236),
+    port: Number(process.env.SQLBOT_BINDING_UI_PORT || process.env.SQLBOT_BINDING_BROWSER_PORT || 4236),
+    proxy: process.env.SQLBOT_BINDING_API_URL ? { "/api": process.env.SQLBOT_BINDING_API_URL } : undefined,
     strictPort: true,
     fs: { allow: [root, frontend] },
   },
