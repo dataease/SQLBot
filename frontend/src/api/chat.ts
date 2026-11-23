@@ -31,7 +31,19 @@ export interface ChatMessage {
   index: number
 }
 
+export interface QueryClarification {
+  question: string
+  options: string[]
+}
+
+export interface ClarificationChoice {
+  record_id: string
+  option_index: number
+}
+
 export class ChatRecord {
+  clarification_choice?: ClarificationChoice
+  clarification?: QueryClarification | 'sales_metric'
   id?: number
   chat_id?: number
   create_time?: Date | string
@@ -267,7 +279,7 @@ const toChatRecord = (data?: any): ChatRecord | undefined => {
   if (!data) {
     return undefined
   }
-  return new ChatRecord(
+  const record = new ChatRecord(
     data.id,
     data.chat_id,
     data.create_time,
@@ -295,6 +307,8 @@ const toChatRecord = (data?: any): ChatRecord | undefined => {
     data.duration,
     data.total_tokens
   )
+  record.clarification = data.clarification
+  return record
 }
 const toChatRecordList = (list: any = []): ChatRecord[] => {
   const records: Array<ChatRecord> = []

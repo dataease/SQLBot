@@ -3,11 +3,13 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import orjson
 import pytest
 import sqlbot_xpack  # noqa: F401  # Initialize the published wheel before app imports.
 from pydantic import ValidationError
 
-from apps.chat.models.chat_model import ChatFinishStep
+from apps.chat.curd.chat import format_record
+from apps.chat.models.chat_model import ChatFinishStep, ChatRecordResult
 from apps.chat.task import llm
 from common.core.config import Settings
 
@@ -42,7 +44,7 @@ def task(monkeypatch):
     monkeypatch.setattr(llm, "get_chat_chart_data", Mock(return_value=[]))
     service = Mock(spec=llm.LLMService)
     service.ds = SimpleNamespace(id=1, type="pg")
-    service.chat_question = SimpleNamespace(question="sales")
+    service.chat_question = SimpleNamespace(question="sales", selected_clarification=None)
     service.record = SimpleNamespace(id=1)
     service.get_record.return_value = service.record
     service.current_user = SimpleNamespace(id=2, isAdmin=False, weight=0)
@@ -67,6 +69,68 @@ def run(task, sql, reported_tables=None):
     )
     assert len(results) == 1
     return results[0]
+
+
+@pytest.mark.parametrize(
+    "request_text,question,options",
+    [
+        ("Which product sells best?", "Which metric should determine rank?", ["Units sold", "Paid amount"]),
+        ("Count October support tickets", "Which ticket date defines October?", ["Created date", "Closed date"]),
+        ("Count workers by department", "Which workers should be included?", ["Employees", "Contractors", "Everyone"]),
+        ("Group shipments by region", "Which region should be used?", ["Origin region", "Destination region"]),
+    ],
+)
+def test_clarification_pauses_before_sql_validation_and_execution(task, monkeypatch, request_text, question, options):
+    task.record.question = request_text
+    clarification = {"question": question, "options": options}
+    task.record.regenerate_record_id = None
+    task.generate_sql.return_value = [
+        {"content": orjson.dumps({"success": False, "clarification": clarification}).decode()}
+    ]
+    save_answer = Mock(return_value=task.record)
+    monkeypatch.setattr(llm, "save_sql_answer", save_answer)
+
+    events = list(llm.LLMService.run_task(task))
+
+    assert orjson.loads(events[-1].removeprefix("data:")) == {
+        "type": "clarification", "content": clarification
+    }
+    stored = ChatRecordResult(sql_answer=save_answer.call_args.kwargs["answer"])
+    assert format_record(stored)["clarification"] == clarification
+    task.check_sql.assert_not_called()
+    task.execute_sql.assert_not_called()
+    task.finish.assert_called_once()
+
+
+@pytest.mark.parametrize("verdict,executed", [('{"matches":true}', True), ('{"matches":false}', False), ('unknown', False)])
+def test_selected_clarification_validates_final_sql_before_execution(task, verdict, executed):
+    date_field = "closed_at" if executed else "created_at"
+    generated_sql = f"SELECT COUNT(*) FROM sales WHERE {date_field} IS NOT NULL"
+    final_sql = generated_sql + " AND tenant_id = 1"
+    task.record.question = "Count records by closed date"
+    task.record.regenerate_record_id = None
+    task.chat_question.question = task.record.question
+    task.chat_question.db_schema = "sales(created_at, closed_at, tenant_id)"
+    task.chat_question.selected_clarification = "By closed date"
+    task.check_sql.return_value = generated_sql, ["sales"]
+    task.check_save_sql.return_value = final_sql
+    task.llm = SimpleNamespace(invoke=Mock(return_value=SimpleNamespace(content=verdict)))
+    task.trans = lambda key: key
+    task.verify_sql_clarification.side_effect = (
+        lambda sql, selection: llm.LLMService.verify_sql_clarification(task, sql, selection)
+    )
+
+    events = list(llm.LLMService.run_task(task, finish_step=ChatFinishStep.QUERY_DATA))
+
+    task.verify_sql_clarification.assert_called_once_with(final_sql, "By closed date")
+    payload = orjson.loads(task.llm.invoke.call_args.args[0][1].content)
+    assert payload["sql"] == final_sql
+    assert payload["selection"] == "By closed date"
+    if executed:
+        task.execute_sql.assert_called_once_with(sql=final_sql)
+    else:
+        task.execute_sql.assert_not_called()
+        assert orjson.loads(events[-1].removeprefix("data:"))["type"] == "error"
 
 
 @pytest.mark.parametrize(

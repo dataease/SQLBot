@@ -846,6 +846,10 @@
     "auto_select_ds": "自動選擇資料來源"
   },
   "chat": {
+    "sales_metric_prompt": "你想按哪個指標排名？",
+    "sales_metric_units": "按銷售件數",
+    "sales_metric_amount": "按實付金額",
+    "clarification_followup": "{question}\n澄清問題：{prompt}\n我的選擇：{option}",
     "type": "圖表類型",
     "chart_type": {
       "table": "明細表",

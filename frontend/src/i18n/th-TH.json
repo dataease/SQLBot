@@ -846,6 +846,10 @@
     "auto_select_ds": "เลือกแหล่งข้อมูลอัตโนมัติ"
   },
   "chat": {
+    "sales_metric_prompt": "ต้องการจัดอันดับตามตัวชี้วัดใด",
+    "sales_metric_units": "ตามจำนวนชิ้นที่ขาย",
+    "sales_metric_amount": "ตามยอดชำระจริง",
+    "clarification_followup": "{question}\nคำถามเพื่อความชัดเจน: {prompt}\nตัวเลือกของฉัน: {option}",
     "type": "ชนิดแผนภูมิ",
     "chart_type": {
       "table": "ตารางรายละเอียด",

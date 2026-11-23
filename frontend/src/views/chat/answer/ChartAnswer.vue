@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import BaseAnswer from './BaseAnswer.vue'
 import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord, questionApi } from '@/api/chat.ts'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ChartBlock from '@/views/chat/chat-block/ChartBlock.vue'
 import JSONBig from 'json-bigint'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -30,6 +33,8 @@ const emits = defineEmits([
   'error',
   'stop',
   'scrollBottom',
+  'clarification',
+  'clarify-question',
   'update:loading',
   'update:chatList',
   'update:currentChat',
@@ -83,6 +88,33 @@ const _loading = computed({
 })
 
 const stopFlag = ref(false)
+const clarificationSelected = ref(false)
+watch(() => props.loading, (loading) => {
+  if (!loading) clarificationSelected.value = false
+})
+
+const clarification = computed(() => {
+  const value = props.message?.record?.clarification
+  if (value === 'sales_metric') {
+    return {
+      question: t('chat.sales_metric_prompt'),
+      options: [t('chat.sales_metric_units'), t('chat.sales_metric_amount')],
+    }
+  }
+  return value
+})
+
+function chooseClarification(option: string, optionIndex: number) {
+  const record = props.message?.record
+  const question = record?.question
+  const prompt = clarification.value?.question
+  if (!question || !prompt || props.loading || clarificationSelected.value) return
+  clarificationSelected.value = true
+  const choice = record?.id && record.clarification !== 'sales_metric'
+    ? { record_id: String(record.id), option_index: optionIndex }
+    : undefined
+  emits('clarify-question', t('chat.clarification_followup', { question, prompt, option }), choice)
+}
 
 const sendMessage = async () => {
   stopFlag.value = false
@@ -112,6 +144,7 @@ const sendMessage = async () => {
     const controller: AbortController = new AbortController()
     const param = {
       question: currentRecord.question,
+      clarification_choice: currentRecord.clarification_choice,
       chat_id: _currentChatId.value,
     }
     const response = await questionApi.add(param, controller)
@@ -219,6 +252,10 @@ const sendMessage = async () => {
               case 'finish':
                 emits('finish', currentRecord.id)
                 break
+              case 'clarification':
+                currentRecord.clarification = data.content
+                emits('clarification', currentRecord.id)
+                break
             }
             await nextTick()
           }
@@ -283,7 +320,22 @@ defineExpose({ sendMessage, index: () => index.value, stop })
 
 <template>
   <BaseAnswer v-if="message" :message="message" :reasoning-name="reasoningName" :loading="_loading">
+    <div v-if="clarification">
+      <p>{{ clarification.question }}</p>
+      <div class="clarification-options">
+        <el-button
+          v-for="(option, optionIndex) in clarification.options"
+          class="clarification-option"
+          :key="option"
+          :disabled="loading || clarificationSelected"
+          @click="chooseClarification(option, optionIndex)"
+        >
+          {{ option }}
+        </el-button>
+      </div>
+    </div>
     <ChartBlock
+      v-else
       v-model:show-label="showLabel"
       v-model:thousands-separator-list="enableThousandsSeparatorList"
       style="margin-top: 6px"
@@ -301,4 +353,22 @@ defineExpose({ sendMessage, index: () => index.value, stop })
   </BaseAnswer>
 </template>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.clarification-options {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.clarification-options .clarification-option + .clarification-option {
+  margin: 8px 0 0;
+}
+
+.clarification-options .clarification-option {
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+</style>

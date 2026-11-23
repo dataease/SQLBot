@@ -77,6 +77,8 @@
     "timezone_mismatch": "The timezone information in the signature does not match the signing time. Embedding has been blocked."
   },
   "i18n_chat": {
+    "clarification_invalid": "The clarification is unavailable. Please specify the query criteria in your question.",
+    "clarification_mismatch": "The query could not be verified against your choice. Try again or state the criteria explicitly.",
     "record_id_in_mcp": "Answer ID: ",
     "chart_data_failed": "Unable to load chart data. Please try again later or contact your administrator.",
     "datasource_not_found": "Datasource not found"

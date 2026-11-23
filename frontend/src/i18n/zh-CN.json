@@ -846,6 +846,10 @@
     "auto_select_ds": "自动选择数据源"
   },
   "chat": {
+    "sales_metric_prompt": "你想按哪个指标排名？",
+    "sales_metric_units": "按销售件数",
+    "sales_metric_amount": "按实付金额",
+    "clarification_followup": "{question}\n澄清问题：{prompt}\n我的选择：{option}",
     "type": "图表类型",
     "chart_type": {
       "table": "明细表",

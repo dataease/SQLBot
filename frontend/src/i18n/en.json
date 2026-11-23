@@ -846,6 +846,10 @@
     "auto_select_ds": "Automatically select data source"
   },
   "chat": {
+    "sales_metric_prompt": "Which metric should determine the ranking?",
+    "sales_metric_units": "By units sold",
+    "sales_metric_amount": "By amount paid",
+    "clarification_followup": "{question}\nClarification: {prompt}\nMy choice: {option}",
     "type": "Chart Type",
     "chart_type": {
       "table": "Detail Table",

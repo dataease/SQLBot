@@ -232,6 +232,8 @@
                     :reasoning-name="['sql_answer', 'chart_answer']"
                     @scroll-bottom="scrollToBottom"
                     @finish="onChartAnswerFinish"
+                    @clarification="onChartAnswerError"
+                    @clarify-question="submitClarification"
                     @error="onChartAnswerError"
                     @stop="onChatStop"
                   >
@@ -450,7 +452,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
-import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord } from '@/api/chat'
+import { Chat, chatApi, ChatInfo, type ChatMessage, ChatRecord, type ClarificationChoice } from '@/api/chat'
 import ChatRow from './ChatRow.vue'
 import ChartAnswer from './answer/ChartAnswer.vue'
 import AnalysisAnswer from './answer/AnalysisAnswer.vue'
@@ -770,6 +772,11 @@ function getRecommendQuestions(id?: number) {
   })
 }
 
+function submitClarification(question: string, choice?: ClarificationChoice) {
+  inputMessage.value = question
+  sendMessage(undefined, undefined, choice)
+}
+
 function quickAsk(question: string) {
   inputMessage.value = question
   nextTick(() => {
@@ -816,7 +823,8 @@ const assistantPrepareSend = async () => {
 }
 const sendMessage = async (
   regenerate_record_id: number | undefined = undefined,
-  $event: any = {}
+  $event: any = {},
+  clarificationChoice?: ClarificationChoice
 ) => {
   if ($event?.isComposing) {
     return
@@ -837,6 +845,7 @@ const sendMessage = async (
   currentRecord.chat_id = currentChatId.value
   currentRecord.question = inputMessage.value
   currentRecord.regenerate_record_id = regenerate_record_id
+  currentRecord.clarification_choice = clarificationChoice
   currentRecord.sql_answer = ''
   currentRecord.sql = ''
   currentRecord.chart_answer = ''

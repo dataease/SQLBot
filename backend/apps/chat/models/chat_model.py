@@ -1,10 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Any, Union
+from typing import List, Optional, Any, Union, Literal
 
 from fastapi import Body
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from pydantic import BaseModel
+from pydantic import BaseModel, Field as PydanticField, StrictStr, field_validator
 from sqlalchemy import Column, Integer, Text, BigInteger, DateTime, Identity, Boolean
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.dialects.postgresql import JSONB
@@ -135,7 +135,30 @@ class ChatRecord(SQLModel, table=True):
     expanded_keywords: str = Field(sa_column=Column(Text, nullable=True))
 
 
+class QueryClarification(BaseModel):
+    question: StrictStr = PydanticField(min_length=1, max_length=300)
+    options: list[StrictStr] = PydanticField(min_length=2, max_length=5)
+
+    @field_validator('question')
+    @classmethod
+    def strip_question(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError('Clarification question cannot be blank')
+        return value.strip()
+
+    @field_validator('options')
+    @classmethod
+    def validate_options(cls, values: list[str]) -> list[str]:
+        options = [value.strip() for value in values]
+        if any(not option or len(option) > 200 for option in options):
+            raise ValueError('Clarification options must contain 1 to 200 characters')
+        if len({option.casefold() for option in options}) != len(options):
+            raise ValueError('Clarification options must be distinct')
+        return options
+
+
 class ChatRecordResult(BaseModel):
+    clarification: Optional[Union[QueryClarification, Literal['sales_metric']]] = None
     id: Optional[int] = None
     chat_id: Optional[int] = None
     ai_modal_id: Optional[int] = None
@@ -376,8 +399,14 @@ class AiModelQuestion(BaseModel):
         return get_dynamic_template()['user'].format(sql=self.sql, sub_query=self.sub_query)
 
 
+class ClarificationChoice(BaseModel):
+    record_id: int
+    option_index: int = PydanticField(ge=0, lt=5)
+
+
 class ChatQuestion(AiModelQuestion):
     chat_id: int
+    selected_clarification: Optional[str] = None
     datasource_id: Optional[int] = None
     custom_model: Optional[str | int] = None
 
@@ -411,6 +440,10 @@ class ChatStart(BaseModel):
 class ChatQuestionBase(BaseModel):
     question: str = Body(description='用户提问')
     chat_id: int = Body(description='会话ID')
+
+
+class WebChatQuestion(ChatQuestionBase):
+    clarification_choice: Optional[ClarificationChoice] = None
 
 
 class McpQuestion(ChatQuestionBase):

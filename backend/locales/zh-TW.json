@@ -77,6 +77,8 @@
     "timezone_mismatch": "簽名中的時區資訊與簽名時間不一致，已阻止嵌入。"
   },
   "i18n_chat": {
+    "clarification_invalid": "無法使用這次澄清。請在提問時直接指定查詢口徑。",
+    "clarification_mismatch": "無法確認查詢符合你選擇的口徑。請重試，或在提問時直接指定口徑。",
     "record_id_in_mcp": "響應ID: ",
     "chart_data_failed": "圖表資料載入失敗，請稍後重試或聯絡管理員。",
     "datasource_not_found": "找不到資料來源"

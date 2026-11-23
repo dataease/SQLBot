@@ -846,6 +846,10 @@
     "auto_select_ds": "자동 데이터 소스 선택"
   },
   "chat": {
+    "sales_metric_prompt": "어떤 기준으로 순위를 매길까요?",
+    "sales_metric_units": "판매 수량 기준",
+    "sales_metric_amount": "실제 결제 금액 기준",
+    "clarification_followup": "{question}\n확인 질문: {prompt}\n내 선택: {option}",
     "type": "차트 유형",
     "chart_type": {
       "table": "상세 테이블",

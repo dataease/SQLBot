@@ -511,6 +511,9 @@ def format_record(record: ChatRecordResult):
             record.sql_answer.strip()[-1] == '}':
         _obj = orjson.loads(record.sql_answer)
         _dict['sql_answer'] = _obj.get('reasoning_content')
+        clarification = _obj.get('clarification')
+        if isinstance(clarification, dict) or clarification == 'sales_metric':
+            _dict['clarification'] = clarification
     if record.sql_reasoning_content and record.sql_reasoning_content.strip() != '':
         _dict['sql_answer'] = record.sql_reasoning_content
     if record.chart_answer and record.chart_answer.strip() != '' and record.chart_answer.strip()[0] == '{' and \
