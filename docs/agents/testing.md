@@ -135,3 +135,20 @@ PYTHONPATH=. "$SQLBOT_TEST_PYTHON" -m pytest -q "$SQLBOT_XPACK_REPO/tests/test_a
 ## 共享分页回归
 
 `backend/tests/test_pagination_arguments.py` 覆盖共享分页器的参数归一化、SQLite 小数据分页、实际 LIMIT/OFFSET 绑定及响应元数据。超出总页数（包括极大页码）只执行 count，不向数据库绑定超大 OFFSET。该测试不覆盖 PostgreSQL 驱动、完整认证/授权路由链或独立知识分页实现。工作空间授权弹窗的浏览器回归见 `tests/browser/README.md` 的分页容量章节。
+
+## 平台 token 存储回归
+
+`backend/tests/integration/test_platform_token_migration.py` 默认跳过，只有显式设置
+`SQLBOT_PLATFORM_TOKEN_TEST_PG=1` 和 `SQLBOT_TEST_DATABASE_URL` 才连接 PostgreSQL；
+每个用例创建随机隔离 schema，结束后清理，不修改业务 schema。
+覆盖原 `060` 字段长度限制、`077` 升级保留数据、长 token 写入、拒绝有损降级及短值回滚。
+显式提供已关联的 `XPACK_TEST_ROOT` 后，另验证该 checkout 的企业微信缓存函数及
+真实 SQLModel / PostgreSQL，合成平台响应覆盖缓存复用、过期、配置变更及旧缓存更新。
+
+```sh
+cd backend
+SQLBOT_PLATFORM_TOKEN_TEST_PG=1 uv run --no-sync pytest -q tests/integration/test_platform_token_migration.py
+```
+
+数据库 URL 与可选源码路径须提前通过受控环境提供，不写入命令记录或提交。
+前端失败恢复回归见 `tests/browser/README.md` 的平台登录章节。

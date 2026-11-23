@@ -1007,6 +1007,8 @@
     "be_turned_on": "테스트 연결이 유효한 것으로 확인되면 활성화할 수 있습니다"
   },
   "login": {
+    "platform_login_failed": "로그인하지 못했습니다. 다시 시도하거나 관리자에게 문의하세요.",
+    "retry_login": "다시 로그인",
     "default_login": "기본값",
     "ldap_login": "LDAP 로그인",
     "account_login": "계정 로그인",

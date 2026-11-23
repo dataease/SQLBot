@@ -1007,6 +1007,8 @@
     "be_turned_on": "Once the test connection is confirmed to be effective, it can be enabled"
   },
   "login": {
+    "platform_login_failed": "Login failed. Please try again or contact the administrator.",
+    "retry_login": "Log in again",
     "default_login": "Default",
     "ldap_login": "LDAP Login",
     "account_login": "Account Login",
