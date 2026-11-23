@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import io
 import os
 import uuid
@@ -16,6 +15,7 @@ from apps.data_training.models.data_training_model import DataTrainingInfo
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.config import settings
+from common.core.file import save_error_report
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.data_format import DataFormat
 from common.utils.excel import get_excel_column_count
@@ -167,19 +167,16 @@ session_maker = scoped_session(sessionmaker(bind=engine, class_=Session))
 @system_log(LogConfig(operation_type=OperationType.IMPORT, module=OperationModules.DATA_TRAINING))
 @require_permissions(permission=SqlbotPermission(role=['ws_admin']))
 async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile = File(...)):
-    ALLOWED_EXTENSIONS = {"xlsx", "xls"}
-    if not file.filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
+    name_root, name_ext = os.path.splitext(os.path.basename(file.filename or ""))
+    if name_ext.lower() not in {".xlsx", ".xls"}:
         raise HTTPException(400, "Only support .xlsx/.xls")
 
     os.makedirs(path, exist_ok=True)
-    safe_name = os.path.basename(file.filename)
-    name_root, name_ext = os.path.splitext(safe_name)
-    base_filename = f"{name_root}_{hashlib.sha256(uuid.uuid4().bytes).hexdigest()[:10]}"
-    filename = f"{base_filename}{name_ext}"
+    filename = f"{uuid.uuid4().hex}{name_ext}"
     save_path = os.path.realpath(os.path.join(path, filename))
     if os.path.commonpath([save_path, os.path.realpath(path)]) != os.path.realpath(path):
         raise HTTPException(400, "Invalid filename")
-    with open(save_path, "wb") as f:
+    with open(save_path, "xb") as f:
         f.write(await file.read())
 
     oid = current_user.oid
@@ -230,7 +227,7 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
 
         failed_records = res['failed_records']
 
-        error_excel_filename = None
+        report_id = None
 
         if len(failed_records) > 0:
             data_list = []
@@ -255,19 +252,15 @@ async def upload_excel(trans: Trans, current_user: CurrentUser, file: UploadFile
             md_data, _fields_list = DataFormat.convert_object_array_for_pandas(fields, data_list)
 
             df = pd.DataFrame(md_data, columns=_fields_list)
-            error_excel_filename = f"{base_filename}_error.xlsx"
-            save_error_path = os.path.realpath(os.path.join(path, error_excel_filename))
-            if os.path.commonpath([save_error_path, os.path.realpath(path)]) != os.path.realpath(path):
-                raise Exception("Invalid filename")
-            # 保存 DataFrame 到 Excel
-            df.to_excel(save_error_path, index=False)
+            report_id = save_error_report(path, df, current_user.id, oid)
 
         return {
             'success_count': res['success_count'],
             'failed_count': len(failed_records),
             'duplicate_count': res['duplicate_count'],
             'original_count': res['original_count'],
-            'error_excel_filename': error_excel_filename,
+            'error_excel_filename': f'{name_root}_error.xlsx' if report_id else None,
+            'report_id': report_id,
         }
 
     return await asyncio.to_thread(inner)
