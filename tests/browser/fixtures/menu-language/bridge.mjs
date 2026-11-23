@@ -18,3 +18,8 @@ export const AuthApi = {
   logout: async () => null,
   info: async () => ({ account: 'synthetic', name: 'Test', oid: 1, origin: 0, exp: 0, time: 0, ...account })
 }
+
+// The user popover keeps its real implementation; only unrelated dialogs and APIs are boundaries.
+export const useAppearanceStoreWithOut = () => ({ getShowAbout: true, getShowDoc: true, getHelp: '' })
+export const userApi = { language: async () => null }
+export const toLoginPage = () => '/login'

@@ -96,18 +96,20 @@ const beforeUpload = (rawFile: any) => {
   return true
 }
 
-const errorFileName = ref<string>('')
+const errorReport = ref<{ id: string; filename: string }>()
 
 function downloadErrorFile() {
+  const report = errorReport.value
+  if (!report) return
   settingsApi
-    .downloadError(errorFileName.value)
+    .downloadError(report.id)
     .then((res) => {
       const blob = new Blob([res], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
-      link.download = errorFileName.value
+      link.download = report.filename
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -148,13 +150,19 @@ const onSuccess = (response: any) => {
   hasError.value = false
   infoMessage.value = ''
   emits('upload-finished')
-  if (response?.data?.failed_count > 0 && response?.data?.error_excel_filename) {
+  errorReport.value = undefined
+  if (response?.data?.failed_count > 0) {
     infoMessage.value = t('training.upload_failed', {
       success: response.data.success_count,
       fail: response.data.failed_count,
       fail_info: '',
     })
-    errorFileName.value = response.data.error_excel_filename
+    if (response.data.report_id && response.data.error_excel_filename) {
+      errorReport.value = {
+        id: response.data.report_id,
+        filename: response.data.error_excel_filename,
+      }
+    }
     hasError.value = true
   } else {
     infoMessage.value = t('training.upload_success')
@@ -173,7 +181,7 @@ const onError = (err: Error) => {
   if (startsWith(msg, '"') && endsWith(msg, '"')) {
     msg = msg.slice(1, msg.length - 1)
   }
-  errorFileName.value = ''
+  errorReport.value = undefined
   infoMessage.value = msg
   hasError.value = true
   close()
@@ -197,7 +205,7 @@ function backToUpload() {
 
 function open() {
   dialogShow.value = true
-  errorFileName.value = ''
+  errorReport.value = undefined
   fileList.value = []
   hasError.value = false
   infoMessage.value = ''
@@ -312,13 +320,13 @@ const submitUpload = () => {
     <div class="down-template-content">
       {{ infoMessage }}
       <el-button
-        v-if="hasError && errorFileName.length > 0"
+        v-if="hasError && errorReport"
         type="primary"
         link
         class="down-button"
         @click="downloadErrorFile"
       >
-        {{ errorFileName }}
+        {{ errorReport.filename }}
       </el-button>
     </div>
 

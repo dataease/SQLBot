@@ -82,9 +82,10 @@ async def chat_record_data(session: SessionDep, current_user: CurrentUser, chat_
 
 
 @router.get("/record/{chat_record_id}/data_live", summary=f"{PLACEHOLDER_PREFIX}get_chart_data_live")
-async def chat_record_data_live(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
+async def chat_record_data_live(session: SessionDep, current_user: CurrentUser, chat_record_id: int, trans: Trans):
     def inner():
-        data = get_chart_data_with_user_live(chat_record_id=chat_record_id, session=session, current_user=current_user)
+        data = get_chart_data_with_user_live(chat_record_id=chat_record_id, session=session, current_user=current_user,
+                                             trans=trans)
         return format_json_data(data)
 
     return await asyncio.to_thread(inner)

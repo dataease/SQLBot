@@ -156,18 +156,89 @@ npm --prefix tests/browser test -- --config=cas.config.mjs
 这不验证真实持久化、客户 CAS 服务或最终用户登录；后端地址、编码和票据回归在
 独立 xpack 仓库的 `tests/test_cas_urls.py`。
 
-## 通用 OpenAI 模型列表回归
+## OpenAI 兼容供应商模型列表回归
 
 ```sh
 npm --prefix tests/browser test -- --config=model-discovery.config.mjs
 ```
 
 独立 Vite 夹具仅监听 `127.0.0.1:4231`，加载真实 `ModelForm.vue`、供应商配置和
-模型 API 封装，替换 HTTP 边界，以合成配置验证列表去重、手动输入和提交、加载期间
+模型 API 封装，替换 HTTP 边界，以合成配置验证成功获取时仅展示远端候选并保留当前选择、下拉项右侧来源标注与服务获取数量、超时及其他已知错误码的明确安全提示、未知或旧响应兜底及重试恢复、空列表或失败时回退内置候选、列表去重、手动输入和提交、加载期间
 禁止重复请求、地址变化清空 Key、过期响应忽略及失败/空列表保留历史模型与高级参数。
 另以真实 `Model.vue` 验证保留原抽屉尺寸、取消/保存按钮、高级设置默认展开，
-并检查新增模型列表功能的原型状态；夹具使用内存模型详情，不访问业务数据库或真实供应商，
-不替代完整登录、模型持久化和真实供应商连接验证。
+并检查新增模型列表功能的原型状态；提示信息出现前后基础模型字段位置不变，且下拉面板紧贴输入框；夹具使用内存模型详情，不访问业务数据库或真实供应商，
+覆盖供应商注册表中所有当前开放供应商的获取和手动回退，以及供应商切换时清空凭据、
+忽略旧响应，保留模型专用默认端点并保护自定义地址。供应商列表接口全部使用合成响应，
+不代表各供应商实际提供列表接口；不替代完整登录、模型持久化和真实供应商连接验证。
 后端 `tests/test_model_discovery.py` 覆盖真实 HTTP 客户端及本机隔离服务、错误分类、
 协议/路径约束、响应上限，并提取实际 handler 配合真实权限装饰器验证身份拒绝路径；
 不代表完整应用中间件和路由注册集成验证。
+
+## 账号绑定与认证窗口回归
+
+```sh
+npm --prefix tests/browser test -- --config=account-binding.config.mjs
+```
+
+夹具默认仅监听 `127.0.0.1:4236`；并行工作时可设置 `SQLBOT_BINDING_BROWSER_PORT` 使用独立端口。
+`SQLBOT_BROWSER_SOURCE_ROOT` 可指向待对照版本的 `frontend/`，以相同用例验证基线。使用当前 checkout 的真实绑定页面、回调页、扫码组件和 API 封装，替换当前用户、HTTP 边界和外部扫码 SDK；不连接业务数据库或第三方认证平台。覆盖新窗口回调及关闭、轮询兜底、手动确认、解绑、密码错误、取消、窗口拦截和扫码刷新；二维码加载失败可刷新、验证中禁止重复刷新、按后端期限超时、停止轮询及忽略迟到响应。前端不自行推定平台二维码有效期。覆盖本地管理员绑定入口及非本地账号仅显示基本信息、不请求绑定接口；开源版不展示绑定标签或请求平台列表、许可证失效后仅可管理历史关联，解绑最后一项后回到基本信息。操作错误回归覆盖飞书身份冲突后的取消、关闭、Esc、Tab 切换、重复失败与重试成功；列表加载错误独立保留，旧操作的迟到响应不得污染新弹窗或解除其忙碌状态。真实平台的回调地址、嵌入策略和授权权限需单独联调；飞书扫码授权不能在内嵌页完成时提供新窗口继续授权入口。
+
+## 分页容量与成员候选列表回归
+
+```sh
+npm --prefix tests/browser test -- --config=pagination.config.mjs
+```
+
+夹具仅监听 `127.0.0.1:4247`，加载真实工作空间授权弹窗、产品样式和 API 封装，使用合成 HTTP 响应隔离后端。覆盖 543 名候选用户按每页 500 条加载、搜索并保存末页成员、空列表，以及后续页失败时不展示不完整候选列表。它不替代真实登录、权限链或数据库验收。
+
+## 平台登录与用户同步失败恢复
+
+```sh
+npm --prefix tests/browser test -- --config=platform-login.config.mjs
+```
+
+夹具仅监听 `127.0.0.1:4251`，加载真实 `Handler.vue`、`SyncUserDing.vue`、平台 API
+和 HTTP 请求封装，替换用户 Store、导航、许可证状态及不相关的登录子组件。
+通过受控 HTTP 响应覆盖回调失败结束加载、安全提示、重新登录不重放旧授权码、
+成功登录对照、同步失败后清理全屏遮罩、懒加载节点失败可重试及切换加载模式后的恢复。
+不访问业务数据库或企业微信；不替代真实扫码、配置或完整产品布局验收。
+`SQLBOT_BROWSER_SOURCE_ROOT` 可显式指向待对照版本的 `frontend/`，用于同配置基线验证。
+
+## 账号绑定密码限流回归
+
+`account-binding-quota.config.mjs` 显式启动跨仓库测试，不进入默认测试收集。
+先按 `docs/agents/xpack.md` 在隔离 Python 环境准备目标 xpack editable 安装及静态资源，
+提供 `SQLBOT_BINDING_TEST_PYTHON`（解释器绝对路径）、`SQLBOT_XPACK_TEST_ROOT`
+（xpack checkout 根目录）和 `PYTHONPATH`（待测主工程的 `backend/`），再执行：
+
+```sh
+npm --prefix tests/browser test -- --config=account-binding-quota.config.mjs
+```
+
+默认仅监听 `127.0.0.1:4267`、`127.0.0.1:4268`；冲突时设置
+`SQLBOT_BINDING_UI_PORT`、`SQLBOT_BINDING_BACKEND_PORT`，不会复用已有服务。
+加载真实绑定组件、回调页、API 封装，以及 xpack `tests/test_account_bindings.py`
+的真实 FastAPI 路由、认证中间件和临时 SQLite 用户。浏览器 Store、请求封装、
+许可证和飞书 SDK/身份响应为隔离边界，服务端使用合成登录 token。
+覆盖二十次刷新后绑定及正确密码解绑、数据库关联删除、仅两次密码请求，
+以及刷新/取消后十次真实密码验证仍耗尽额度并显示限流提示。
+不连接产品数据库，不访问真实飞书，不替代 PostgreSQL 行锁、完整部署和实际扫码验收。
+
+## 小助手浮窗拖拽
+
+```sh
+SQLBOT_XPACK_TEST_ROOT=/absolute/path/to/sqlbot-xpack npm --prefix tests/browser test -- --config=assistant-drag.config.mjs
+```
+
+先按 `docs/agents/xpack.md` 确认关联范围。显式提供待测 xpack checkout，夹具复用其
+`xpack_static/node_modules` 的 esbuild，直接打包真实 UI 源码，不复制产品实现。
+宿主页默认仅监听 `127.0.0.1:4288`，可用 `SQLBOT_DRAG_BROWSER_PORT` 更换端口；
+不复用已有服务。浏览器加载合成配置，iframe 内容用空白页隔离，不请求业务数据库、
+许可证或模型。覆盖四种初始定位、旧位置及透明区域的宿主点击、重复拖动、点击与
+轻微移动、窗口缩小（含聊天打开期间）、自定义图标、禁用拖拽以及触摸拖动/取消。
+触摸使用 Chrome CDP 注入，不代替真实移动设备验收。此夹具不验证完整认证和问数链。
+相同命令指向未修改 xpack checkout 可执行基线对照。
+
+账号绑定默认进入基本信息；绑定回归显式切换到绑定标签。LDAP 用例以合成目录凭据覆盖身份验证、确认前无关联及显式确认，不连接真实 LDAP。跨仓库 LDAP 路由、身份冲突、失效、凭据不持久化和历史绑定审计的展示/筛选由 xpack 的 `tests/test_account_bindings.py` 验证。国际飞书仅管理历史关联，不开放新增绑定。
+
+账号绑定禁用操作通过按钮外层提供悬停与键盘聚焦提示，回归覆盖认证源/平台配置不可用、无法新增绑定的原因优先级，以及已有绑定仍可解绑。

@@ -159,7 +159,12 @@ const open = async (user: any) => {
   checkTableList.value = []
   isIndeterminate.value = false
   const systemWorkspaceList = await workspaceUserList({}, 1, 1000)
-  workspace.value = JSON.parse(JSON.stringify(systemWorkspaceList.items as any))
+  // json-bigint objects have no Object.prototype; keep checkbox values plain.
+  workspace.value = systemWorkspaceList.items.map((user: any) => ({
+    id: user.id,
+    name: user.name,
+    account: user.account,
+  }))
   if (user?.length) {
     checkedWorkspace.value = workspace.value.filter((ele: any) => user.includes(ele.id))
     checkTableList.value = [...checkedWorkspace.value]

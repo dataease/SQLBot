@@ -261,20 +261,20 @@ def get_chart_data_with_user(session: SessionDep, current_user: CurrentUser, cha
     return {}
 
 
-def get_chart_data_with_user_live(session: SessionDep, current_user: CurrentUser, chat_record_id: int):
+def get_chart_data_with_user_live(session: SessionDep, current_user: CurrentUser, chat_record_id: int, trans: Trans):
     stmt = select(ChatRecord.datasource, ChatRecord.sql).where(
         and_(ChatRecord.id == chat_record_id, ChatRecord.create_by == current_user.id))
     row = session.execute(stmt).first()
-    return get_chart_data_ds(session, row.datasource, row.sql)
+    return get_chart_data_ds(session, row.datasource, row.sql, trans)
 
 
-def get_chart_data_ds(session: SessionDep, ds_id, sql):
+def get_chart_data_ds(session: SessionDep, ds_id, sql, trans: Trans):
     json_result: Dict[str, Any] = {'status': 'success', 'data': [], 'message': ''}
     try:
         datasource = get_ds(session, ds_id)
         if datasource is None:
             json_result['status'] = 'failed'
-            json_result['message'] = 'Datasource not found'
+            json_result['message'] = trans('i18n_chat.datasource_not_found')
             return json_result
         else:
             result = exec_sql(ds=datasource, sql=sql, origin_column=False)
@@ -283,10 +283,9 @@ def get_chart_data_ds(session: SessionDep, ds_id, sql):
             json_result['data'] = _data
             return json_result
     except Exception as e:
-        SQLBotLogUtil.error(f"Function failed: {e}")
+        SQLBotLogUtil.error("Chart data query failed (error_type=%s)", type(e).__name__, exc_info=False)
         json_result['status'] = 'failed'
-        json_result['message'] = f"{e}"
-        pass
+        json_result['message'] = trans('i18n_chat.chart_data_failed')
     return json_result
 
 

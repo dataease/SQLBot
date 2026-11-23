@@ -5,7 +5,7 @@ from sqlalchemy import select, and_, text
 
 from apps.chat.curd.chat import get_chart_data_ds
 from apps.dashboard.models.dashboard_model import CoreDashboard, CreateDashboard, QueryDashboard, DashboardBaseResponse
-from common.core.deps import SessionDep, CurrentUser
+from common.core.deps import SessionDep, CurrentUser, Trans
 import uuid
 import time
 
@@ -34,7 +34,7 @@ def list_resource(session: SessionDep, dashboard: QueryDashboard, current_user: 
     return tree
 
 
-def load_resource(session: SessionDep, dashboard: QueryDashboard, current_user: CurrentUser):
+def load_resource(session: SessionDep, dashboard: QueryDashboard, current_user: CurrentUser, trans: Trans):
     sql = text("""
                SELECT cd.*,
                       creator.name AS create_name,
@@ -56,7 +56,7 @@ def load_resource(session: SessionDep, dashboard: QueryDashboard, current_user: 
     canvas_view_obj = orjson.loads(result_dict['canvas_view_info'])
     for item in canvas_view_obj.values():
         if all(key in item for key in ['datasource', 'sql']) and item['datasource'] is not None and item['sql'] is not None:
-            data_result = get_chart_data_ds(session, item['datasource'], item['sql'])
+            data_result = get_chart_data_ds(session, item['datasource'], item['sql'], trans)
             item['data']['data'] = data_result['data']
             item['status'] = data_result['status']
             item['message'] = data_result['message']

@@ -9,7 +9,7 @@ from apps.swagger.i18n import PLACEHOLDER_PREFIX
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.audit.models.log_model import OperationType, OperationModules
 from common.audit.schemas.logger_decorator import LogConfig, system_log
-from common.core.deps import SessionDep, CurrentUser
+from common.core.deps import SessionDep, CurrentUser, Trans
 
 router = APIRouter(tags=["Dashboard"], prefix="/dashboard")
 
@@ -21,8 +21,8 @@ async def list_resource_api(session: SessionDep, dashboard: QueryDashboard, curr
 
 @router.post("/load_resource", summary=f"{PLACEHOLDER_PREFIX}load_resource_api")
 @require_permissions(permission=SqlbotPermission(type='dashboard', keyExpression="dashboard.id"))
-async def load_resource_api(session: SessionDep, current_user: CurrentUser, dashboard: QueryDashboard):
-    return load_resource(session=session, dashboard=dashboard, current_user=current_user)
+async def load_resource_api(session: SessionDep, current_user: CurrentUser, dashboard: QueryDashboard, trans: Trans):
+    return load_resource(session=session, dashboard=dashboard, current_user=current_user, trans=trans)
 
 
 @router.post("/create_resource", response_model=BaseDashboard, summary=f"{PLACEHOLDER_PREFIX}create_resource_api")

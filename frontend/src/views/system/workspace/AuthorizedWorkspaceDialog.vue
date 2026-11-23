@@ -156,6 +156,7 @@ import { workspaceOptionUserList, workspaceUwsCreate } from '@/api/workspace'
 import avatar_personal from '@/assets/svg/avatar_personal.svg'
 import Close from '@/assets/svg/icon_close_outlined_w.svg'
 import Search from '@/assets/svg/icon_search-outline_outlined.svg'
+import type { WorkspaceUserOption } from '@/api/workspace'
 import type { CheckboxValueType } from 'element-plus-secondary'
 const checkAll = ref(false)
 const isIndeterminate = ref(false)
@@ -218,17 +219,36 @@ let oid: any = null
 const open = async (id: any) => {
   loading.value = true
   search.value = ''
-  oid = id
+  // IDs beyond Number.MAX_SAFE_INTEGER come back from json-bigint as objects.
+  // Normalize them so axios params and the checkbox value stay primitive.
+  oid = String(id)
   checkedWorkspace.value = []
   checkTableList.value = []
   checkAll.value = false
   isIndeterminate.value = false
-  const systemWorkspaceList = await workspaceOptionUserList({ oid }, 1, 1000000)
-  workspace.value = JSON.parse(
-    JSON.stringify(systemWorkspaceList.items.filter((ele: any) => +ele.id !== 1) as any)
-  )
-  loading.value = false
-  centerDialogVisible.value = true
+  workspace.value = []
+  try {
+    const candidates: WorkspaceUserOption[] = []
+    let page = 1
+    let totalPages = 1
+    do {
+      const result = await workspaceOptionUserList({ oid }, page, 500)
+      candidates.push(...result.items)
+      totalPages = result.total_pages
+      if (!result.items.length) break
+      page += 1
+    } while (page <= totalPages)
+    workspace.value = candidates
+      .filter((user) => String(user.id) !== '1')
+      .map((user) => ({
+        id: String(user.id),
+        name: user.name,
+        account: user.account,
+      }))
+    centerDialogVisible.value = true
+  } finally {
+    loading.value = false
+  }
 }
 const emits = defineEmits(['refresh'])
 const handleConfirm = () => {

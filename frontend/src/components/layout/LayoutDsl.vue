@@ -255,6 +255,16 @@ onBeforeMount(() => {
     padding: 16px;
     position: relative;
     min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    :deep(.el-menu-demo) {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
 
     .default-sqlbot {
       display: flex;
@@ -271,6 +281,7 @@ onBeforeMount(() => {
     .sys-management {
       display: flex;
       align-items: center;
+      flex: none;
       font-weight: 500;
       font-size: 16px;
       cursor: pointer;
@@ -281,13 +292,13 @@ onBeforeMount(() => {
     }
 
     .bottom {
-      position: absolute;
-      bottom: 20px;
-      left: 16px;
+      position: static;
+      flex: none;
+      margin-top: 16px;
       font-weight: 400;
       font-size: 14px;
       line-height: 22px;
-      width: calc(100% - 32px);
+      width: 100%;
       .back-to_workspace {
         display: flex;
         align-items: center;
@@ -346,8 +357,7 @@ onBeforeMount(() => {
       }
 
       .bottom {
-        left: 12px;
-        width: calc(100% - 24px);
+        width: 100%;
         .ed-icon {
           margin-right: 0;
         }

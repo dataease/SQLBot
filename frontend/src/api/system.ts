@@ -3,7 +3,7 @@ import type { ModelImpactResolution } from './workspace'
 
 export const modelApi = {
   discover: (api_domain: string, api_key: string) =>
-    request.post<{ models: string[]; error?: string }>(
+    request.post<{ models: string[]; error?: string; error_code?: string }>(
       '/system/aimodel/models',
       { api_domain, api_key },
       {

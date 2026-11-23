@@ -65,7 +65,13 @@ const modelList = computed(() => {
   }
   return base_model_options(modelForm.supplier, modelForm.model_type)
 })
-const isGeneric = computed(() => modelForm.supplier === 15)
+// OpenAI-compatible chat does not guarantee a models endpoint; failures remain non-blocking.
+const canDiscoverModels = computed(
+  () =>
+    !!currentSupplier.value &&
+    modelForm.protocol === 1 &&
+    !['azure', 'vllm'].includes(currentSupplier.value.type || '')
+)
 const discoveredModels = ref<string[]>([])
 const discovering = ref(false)
 const discoveryMessage = ref('')
@@ -73,6 +79,7 @@ const discoveryErrorDetail = ref('')
 const discoveryState = ref<'idle' | 'success' | 'empty' | 'error'>('idle')
 let discoveryVersion = 0
 let initializing = false
+let selectedModelDomain = ''
 const invalidateDiscovery = () => {
   discoveryVersion++
   discovering.value = false
@@ -87,7 +94,7 @@ watch(() => [modelForm.api_domain, modelForm.api_key, modelForm.supplier], inval
 watch(
   () => modelForm.api_domain,
   () => {
-    if (isGeneric.value && !initializing && modelForm.api_key) {
+    if (canDiscoverModels.value && !initializing && modelForm.api_key) {
       modelForm.api_key = ''
       ElMessage.info(t('model.discovery_key_reset'))
     }
@@ -96,17 +103,25 @@ watch(
 )
 onBeforeUnmount(invalidateDiscovery)
 const fetchModels = async () => {
-  if (discovering.value || !modelForm.api_domain.trim()) return
+  if (!canDiscoverModels.value || discovering.value || !modelForm.api_domain.trim()) return
   const version = ++discoveryVersion
   discovering.value = true
   discoveryMessage.value = ''
+  discoveryErrorDetail.value = ''
   try {
     const result = await modelApi.discover(modelForm.api_domain, modelForm.api_key)
     if (version !== discoveryVersion) return
-    if (result.error) {
+    if (result.error || result.error_code) {
       discoveryState.value = 'error'
-      discoveryErrorDetail.value = result.error
-      discoveryMessage.value = t('model.discovery_failed')
+      const messages = new Map([
+        ['timeout', 'model.discovery_timeout'],
+        ['address', 'model.discovery_address'],
+        ['credentials', 'model.discovery_credentials'],
+        ['unsupported', 'model.discovery_unsupported'],
+        ['invalid', 'model.discovery_invalid'],
+      ])
+      discoveryMessage.value = t(messages.get(result.error_code || '') || 'model.discovery_failed')
+      discoveryErrorDetail.value = discoveryMessage.value
       return
     }
     const ids = result.models
@@ -125,17 +140,33 @@ const fetchModels = async () => {
   }
 }
 const selectableModels = computed(() => {
-  const models = discoveredModels.value.map((name) => ({ name }))
-  const names = new Set(models.map((item) => item.name))
-  for (const item of modelList.value || []) {
+  // Successful discovery is authoritative; built-ins remain a fallback for manual setup.
+  const candidates =
+    discoveryState.value === 'success'
+      ? discoveredModels.value.map((name) => ({ name }))
+      : modelList.value || []
+  const models: { name: string; source: string }[] = []
+  const names = new Set<string>()
+  for (const item of candidates) {
     if (!names.has(item.name)) {
-      models.push(item)
+      models.push({
+        name: item.name,
+        source:
+          discoveryState.value === 'success'
+            ? 'discovery_source_service'
+            : 'discovery_source_builtin',
+      })
       names.add(item.name)
     }
   }
   for (const name of [modelForm.base_model]) {
     if (name && !names.has(name)) {
-      models.push({ name })
+      models.push({
+        name,
+        source: ['success', 'empty'].includes(discoveryState.value)
+          ? 'discovery_source_missing'
+          : 'discovery_source_current',
+      })
       names.add(name)
     }
   }
@@ -254,10 +285,11 @@ const beforeClose = () => {
 const supplierChang = (supplier: any) => {
   initializing = true
   invalidateDiscovery()
-  if (isGeneric.value || supplier.id === 15) modelForm.api_key = ''
+  modelForm.api_key = ''
   modelForm.supplier = supplier.id
   const config = supplier.model_config[modelForm.model_type || 0]
   modelForm.api_domain = config.api_domain
+  selectedModelDomain = config.api_domain
   modelForm.base_model = ''
   modelForm.protocol = supplier.type === 'vllm' ? 2 : 1
   advancedSetting.value = []
@@ -272,6 +304,10 @@ const initForm = (item?: any) => {
   tempConfigMap = new Map<string, Array<any>>()
   if (item) {
     Object.assign(modelForm, { ...item })
+    selectedModelDomain =
+      modelList.value?.find((model) => model.name === item.base_model)?.api_domain ||
+      getSupplierDomain() ||
+      ''
     if (item?.config_list?.length) {
       advancedSetting.value = item.config_list
       advancedSetting.value.forEach((ele: any) => {
@@ -300,9 +336,17 @@ const baseModelChange = (val: string) => {
     return
   }
   const current_model = modelList.value?.find((model: any) => model.name == val)
-  if (current_model && !isGeneric.value) {
-    modelForm.api_domain = current_model.api_domain || getSupplierDomain() || ''
+  const nextDomain = current_model?.api_domain || getSupplierDomain() || ''
+  // Follow built-in per-model endpoints only while the address still uses the previous default.
+  // Preserve custom addresses and invalidate credentials/results if the endpoint changes.
+  if (
+    current_model &&
+    (!canDiscoverModels.value ||
+      modelForm.api_domain === (selectedModelDomain || getSupplierDomain()))
+  ) {
+    modelForm.api_domain = nextDomain
   }
+  selectedModelDomain = nextDomain
   const current_config_list = tempConfigMap.get(`${modelForm.supplier}-${modelForm.base_model}`)
   if (current_config_list) {
     formatAdvancedSetting(current_config_list)
@@ -368,6 +412,7 @@ defineExpose({
         <el-form
           ref="modelRef"
           :rules="rules"
+          :validate-on-rule-change="false"
           label-position="top"
           :model="modelForm"
           style="width: 100%"
@@ -400,7 +445,11 @@ defineExpose({
               />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="isGeneric" prop="api_domain" :label="t('model.api_domain_name')">
+          <el-form-item
+            v-if="canDiscoverModels"
+            prop="api_domain"
+            :label="t('model.api_domain_name')"
+          >
             <el-input
               v-model="modelForm.api_domain"
               clearable
@@ -409,7 +458,7 @@ defineExpose({
               "
             />
           </el-form-item>
-          <el-form-item v-if="isGeneric" prop="api_key" label="API Key">
+          <el-form-item v-if="canDiscoverModels" prop="api_key" label="API Key">
             <el-input
               v-model="modelForm.api_key"
               clearable
@@ -420,19 +469,16 @@ defineExpose({
           </el-form-item>
           <el-form-item
             class="custom-require"
-            :class="isGeneric && 'generic-base-model'"
+            :class="canDiscoverModels && 'discovery-base-model'"
             prop="base_model"
           >
             <template #label
               ><span class="custom-require_danger">{{ t('model.basic_model') }}</span>
-              <span v-if="!isGeneric" class="enter">{{ t('model.enter_to_add') }}</span>
+              <span v-if="!canDiscoverModels" class="enter">{{ t('model.enter_to_add') }}</span>
               <el-button
-                v-if="isGeneric"
+                v-if="canDiscoverModels"
                 class="discovery-button"
-                :class="{ 'is-retry': discoveryState === 'error' }"
-                :link="discoveryState !== 'error' && !discovering"
-                :type="discovering ? 'default' : 'primary'"
-                :plain="discoveryState === 'error'"
+                text
                 :loading="discovering"
                 :disabled="discovering || !modelForm.api_domain.trim()"
                 @click="fetchModels"
@@ -449,19 +495,10 @@ defineExpose({
                 }}
               </el-button>
             </template>
-            <div
-              v-if="isGeneric && discoveryState === 'error' && discoveryMessage"
-              class="discovery-status error"
-              :title="discoveryErrorDetail"
-              role="status"
-            >
-              {{ discoveryMessage }}
-            </div>
             <el-select
               v-model="modelForm['base_model']"
               style="width: 100%"
-              :offset="isGeneric && discoveryState === 'success' ? 34 : 12"
-              :popper-class="isGeneric ? 'discovery-model-options' : ''"
+              :popper-class="canDiscoverModels ? 'discovery-model-options' : ''"
               filterable
               allow-create
               default-first-option
@@ -473,24 +510,36 @@ defineExpose({
                 :key="item.name"
                 :label="item.name"
                 :value="item.name"
-              />
-              <template v-if="isGeneric" #footer
+                :aria-label="item.name"
+                :aria-description="canDiscoverModels ? t(`model.${item.source}`) : undefined"
+              >
+                <div class="model-option-row">
+                  <span class="model-option-name">{{ item.name }}</span>
+                  <span v-if="canDiscoverModels" class="model-option-source">{{
+                    t(`model.${item.source}`)
+                  }}</span>
+                </div>
+              </el-option>
+              <template v-if="canDiscoverModels" #footer
                 ><span class="discovery-select-hint">{{
                   t('model.discovery_input_hint')
                 }}</span></template
               >
             </el-select>
-            <div
-              v-if="isGeneric && discoveryState !== 'error' && discoveryMessage"
-              class="discovery-status"
-              :class="discoveryState"
-              role="status"
-            >
-              {{ discoveryMessage }}
+            <div v-if="canDiscoverModels" class="discovery-status-slot">
+              <div
+                v-if="discoveryMessage"
+                class="discovery-status"
+                :class="discoveryState"
+                :title="discoveryState === 'error' ? discoveryErrorDetail : undefined"
+                role="status"
+              >
+                {{ discoveryMessage }}
+              </div>
             </div>
           </el-form-item>
           <el-form-item
-            v-if="modelSelected && !isGeneric"
+            v-if="modelSelected && !canDiscoverModels"
             prop="api_domain"
             :label="t('model.api_domain_name')"
           >
@@ -502,7 +551,7 @@ defineExpose({
               "
             />
           </el-form-item>
-          <el-form-item v-if="modelSelected && !isGeneric" prop="api_key" label="API Key">
+          <el-form-item v-if="modelSelected && !canDiscoverModels" prop="api_key" label="API Key">
             <el-input
               v-model="modelForm.api_key"
               clearable
@@ -643,26 +692,37 @@ defineExpose({
         align-items: center;
       }
 
-      .generic-base-model {
+      .discovery-base-model {
         :deep(.ed-form-item__label) {
+          position: relative;
           width: 100%;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
         }
         .discovery-button {
-          font-size: 16px;
-          color: #0066ff;
-          margin-left: auto;
+          position: absolute;
+          top: 50%;
+          right: 0;
+          transform: translateY(-50%);
           .ed-icon {
             margin-right: 6px;
           }
+          :deep(svg path) {
+            fill: currentColor;
+          }
+        }
+        .discovery-status-slot {
+          width: 100%;
+          height: 26px;
         }
         .discovery-status {
-          width: 100%;
           font-size: 14px;
           line-height: 22px;
           margin-top: 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
           &.success {
             color: #008a00;
           }
@@ -671,8 +731,6 @@ defineExpose({
           }
           &.error {
             color: #f00;
-            margin-top: 0;
-            margin-bottom: 8px;
           }
         }
       }
@@ -790,6 +848,24 @@ defineExpose({
       padding-bottom: 24px;
     }
   }
+}
+.model-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+.model-option-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.model-option-source {
+  flex-shrink: 0;
+  margin-left: 16px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ed-text-color-secondary);
 }
 .discovery-select-hint {
   color: #6b7280;

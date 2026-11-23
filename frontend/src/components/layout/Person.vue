@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
+import { User } from '@element-plus/icons-vue'
 import Default_avatar_custom from '@/assets/img/Default-avatar.svg'
 import icon_admin_outlined from '@/assets/svg/icon_admin_outlined.svg'
 import icon_info_outlined_1 from '@/assets/svg/icon_info_outlined_1.svg'
@@ -92,6 +93,11 @@ const changeLanguage = (lang: string) => {
 
 const openHelp = () => {
   window.open(resolveHelpUrl(appearanceStore.getHelp), '_blank')
+}
+
+const openPersonal = () => {
+  popoverRef.value.hide()
+  router.push('/account/bindings')
 }
 
 const openPwd = () => {
@@ -197,6 +203,10 @@ const logout = async () => {
             <icon_maybe_outlined></icon_maybe_outlined>
           </el-icon>
           <div class="datasource-name">{{ $t('common.help') }}</div>
+        </div>
+        <div class="popover-item" @click="openPersonal">
+          <el-icon size="16"><User /></el-icon>
+          <div class="datasource-name">{{ t('binding.personal') }}</div>
         </div>
         <div style="height: 4px; width: 100%"></div>
         <div v-if="!isClient" class="popover-item mr4" @click="logout">

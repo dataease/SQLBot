@@ -169,13 +169,17 @@ let oid: any = null
 const open = async (id: any) => {
   loading.value = true
   search.value = ''
-  oid = id
+  oid = String(id)
   checkedWorkspace.value = []
   checkTableList.value = []
   checkAll.value = false
   isIndeterminate.value = false
   const workspaceListResult = await workspaceList()
-  workspace.value = JSON.parse(JSON.stringify(workspaceListResult))
+  // json-bigint objects have no Object.prototype; keep checkbox values plain.
+  workspace.value = workspaceListResult.map((ws: any) => ({
+    id: String(ws.id),
+    name: ws.name,
+  }))
   loading.value = false
   centerDialogVisible.value = true
 }

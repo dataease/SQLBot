@@ -47,6 +47,8 @@ class OperationType(str, Enum):
     EXPORT = "export"
     IMPORT = "import"
     ADD = "add"
+    BIND_ACCOUNT = "bind_account"
+    UNBIND_ACCOUNT = "unbind_account"
     CREATE_OR_UPDATE = "create_or_update"
     ANALYSIS = "analysis"
     PREDICTION = "prediction"

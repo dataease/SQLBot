@@ -1,4 +1,5 @@
 {
+  "i18n_platform_token_cache_error": "平台驗證暫時無法使用，請重試或聯絡管理員。",
   "ws_model_settings": "工作空間模型設定",
   "system_model_workspace_impact": "模型變更影響",
   "i18n_default_workspace": "默認工作空間",
@@ -76,7 +77,9 @@
     "timezone_mismatch": "簽名中的時區資訊與簽名時間不一致，已阻止嵌入。"
   },
   "i18n_chat": {
-    "record_id_in_mcp": "響應ID: "
+    "record_id_in_mcp": "響應ID: ",
+    "chart_data_failed": "圖表資料載入失敗，請稍後重試或聯絡管理員。",
+    "datasource_not_found": "找不到資料來源"
   },
   "i18n_terminology": {
     "terminology_not_exists": "該術語不存在",
@@ -161,6 +164,9 @@
     "record_not_exist": "{msg} 記錄不存在，請先儲存！"
   },
   "i18n_audit": {
+    "workspace_model_default": "跟隨系統預設模型",
+    "workspace_model_disabled": "禁止模型呼叫",
+    "workspace_model_specified": "指定模型 [{model}]",
     "success": "成功",
     "failed": "失敗",
     "system_log": "操作日誌",
@@ -206,7 +212,9 @@
     "reset_pwd": "重置密碼",
     "update_pwd": "更新密碼",
     "update_status": "更新狀態",
-    "update_table_relation": "變更表關係"
+    "update_table_relation": "變更表關係",
+    "bind_account": "綁定帳號",
+    "unbind_account": "解除帳號綁定"
   },
   "i18n_table_not_exist": "當前表不存在",
   "i18n_variable": {
@@ -225,5 +233,15 @@
     "failed": "取得模型清單失敗，可手動輸入模型 ID。",
     "invalid": "模型清單格式無效或超出大小限制。",
     "timeout": "取得模型清單逾時。"
-}
+},
+  "i18n_binding": {
+    "forbidden": "僅本機帳號可管理自己的綁定，助手與 API Key 憑據無法操作。",
+    "expired": "認證請求已失效，請重新驗證本機密碼。",
+    "service": "認證服務暫時無法使用，請重試。",
+    "conflict": "此身分已關聯其他 SQLBot 使用者，或目前帳號已綁定其他身分。",
+    "password": "密碼不正確。",
+    "unavailable": "認證平台未啟用或授權無效。",
+    "rate_limit": "操作過於頻繁，請稍後重試。",
+    "callback": "認證回呼地址與目前網站不符，請聯絡管理員。"
+  }
 }

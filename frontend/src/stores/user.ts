@@ -13,6 +13,7 @@ interface UserState {
   uid: string
   account: string
   name: string
+  email: string
   oid: string
   language: string
   exp: number
@@ -30,6 +31,7 @@ export const UserStore = defineStore('user', {
       uid: '',
       account: '',
       name: '',
+      email: '',
       oid: '',
       language: 'zh-CN',
       exp: 0,
@@ -51,6 +53,9 @@ export const UserStore = defineStore('user', {
     },
     getName(): string {
       return this.name
+    },
+    getEmail(): string {
+      return this.email
     },
     getOid(): string {
       return this.oid
@@ -125,6 +130,7 @@ export const UserStore = defineStore('user', {
         'uid',
         'account',
         'name',
+        'email',
         'oid',
         'language',
         'exp',
@@ -138,10 +144,12 @@ export const UserStore = defineStore('user', {
         const value = res_data[dkey]
         if (key === 'exp' || key === 'time' || key === 'weight' || key === 'origin') {
           this[key] = Number(value)
+        } else if (key === 'email') {
+          this.email = typeof value === 'string' ? value : ''
         } else {
           this[key] = String(value)
         }
-        wsCache.set('user.' + key, value)
+        wsCache.set('user.' + key, key === 'email' ? this.email : value)
       })
 
       this.setLanguage(this.language)
@@ -212,6 +220,7 @@ export const UserStore = defineStore('user', {
         'uid',
         'account',
         'name',
+        'email',
         'oid',
         'language',
         'exp',

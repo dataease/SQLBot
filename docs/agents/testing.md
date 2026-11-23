@@ -119,3 +119,36 @@ SQLBOT_PASSWORD_TEST_PG=1 uv run --no-sync pytest -q tests/test_local_password_h
 ## 数据源配置加密回归
 
 `backend/tests/test_datasource_configuration_crypto.py` 默认执行合成配置的离线加密回归。显式设置 `SQLBOT_DATASOURCE_TEST_DATABASE_URL` 后，在指定隔离 PostgreSQL 数据库内创建并清理随机 schema，执行配置迁移和真实 FastAPI 数据源路由测试。HTTP 测试注入合成身份，保留工作空间权限检查，隔离审计写入与 embedding 调度。预览使用真实连接，查询通过正常执行函数验证。
+
+## 账号绑定回归
+
+绑定后端跨仓库回归位于 xpack 的 `tests/test_account_bindings.py`。在已按 xpack 联调步骤准备的隔离环境中，从主工程 `backend/` 执行（解释器必须确实导入待测的主工程和 xpack checkout）：
+
+```sh
+PYTHONPATH=. "$SQLBOT_TEST_PYTHON" -m pytest -q "$SQLBOT_XPACK_REPO/tests/test_account_bindings.py"
+```
+
+默认使用合成 SQLite 用户及真实 FastAPI 路由、认证中间件、SQLModel 和事务，仅替换许可证有效性和第三方身份响应。OAuth2/CAS 适配器另有 HTTP 客户端边界回归。显式设置 `SQLBOT_BINDING_TEST_PG=1` 并安全提供 `SQLBOT_TEST_DATABASE_URL` 后，每个用例使用独立随机 PostgreSQL schema，补测迁移、重复历史映射预检、一级回滚和并发确认；不会访问业务 schema。默认 SQLite 不声称覆盖 PostgreSQL 行锁。
+
+前端运行 `npm --prefix tests/browser test -- --config=account-binding.config.mjs`，本机夹具监听 `127.0.0.1:4236`，加载真实绑定组件和 API 封装，隔离当前用户、HTTP 及平台扫码 SDK。覆盖新窗口认证、通知与自动关闭、opener 缺失后的轮询、显式确认、取消、错误密码及企微/钉钉/飞书扫码；版本能力回归覆盖开源版基本信息、商业版绑定管理、许可证失效后的历史绑定与解绑，以及其他用户关联不影响本人的能力判断。它不替代真实平台应用配置、回调白名单、扫码和授权验收。
+
+## 共享分页回归
+
+`backend/tests/test_pagination_arguments.py` 覆盖共享分页器的参数归一化、SQLite 小数据分页、实际 LIMIT/OFFSET 绑定及响应元数据。超出总页数（包括极大页码）只执行 count，不向数据库绑定超大 OFFSET。该测试不覆盖 PostgreSQL 驱动、完整认证/授权路由链或独立知识分页实现。工作空间授权弹窗的浏览器回归见 `tests/browser/README.md` 的分页容量章节。
+
+## 平台 token 存储回归
+
+`backend/tests/integration/test_platform_token_migration.py` 默认跳过，只有显式设置
+`SQLBOT_PLATFORM_TOKEN_TEST_PG=1` 和 `SQLBOT_TEST_DATABASE_URL` 才连接 PostgreSQL；
+每个用例创建随机隔离 schema，结束后清理，不修改业务 schema。
+覆盖原 `060` 字段长度限制、`077` 升级保留数据、长 token 写入、拒绝有损降级及短值回滚。
+显式提供已关联的 `XPACK_TEST_ROOT` 后，另验证该 checkout 的企业微信缓存函数及
+真实 SQLModel / PostgreSQL，合成平台响应覆盖缓存复用、过期、配置变更及旧缓存更新。
+
+```sh
+cd backend
+SQLBOT_PLATFORM_TOKEN_TEST_PG=1 uv run --no-sync pytest -q tests/integration/test_platform_token_migration.py
+```
+
+数据库 URL 与可选源码路径须提前通过受控环境提供，不写入命令记录或提交。
+前端失败恢复回归见 `tests/browser/README.md` 的平台登录章节。

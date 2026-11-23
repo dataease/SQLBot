@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlalchemy import Column, BigInteger
+from sqlalchemy import Column, BigInteger, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import SQLModel, Field
 
@@ -38,3 +38,26 @@ class UserPlatformBase(SQLModel):
 
 class UserPlatformModel(SnowflakeBase, UserPlatformBase, table=True):
     __tablename__ = "sys_user_platform"
+    __table_args__ = (
+        UniqueConstraint("origin", "platform_uid", name="uq_user_platform_identity"),
+        UniqueConstraint("uid", "origin", name="uq_user_platform_owner"),
+    )
+    config_fingerprint: str = Field(default="", max_length=64)
+    display_name: str = Field(default="", max_length=255)
+
+
+class UserBindingRequest(SQLModel, table=True):
+    """Shared account-linking contract; never stores passwords or provider tokens."""
+
+    __tablename__ = "sys_user_binding_request"
+    state: str = Field(primary_key=True, max_length=96)
+    uid: int = Field(sa_type=BigInteger(), index=True)
+    origin: int
+    created_at: int = Field(sa_type=BigInteger(), index=True)
+    expires_at: int = Field(sa_type=BigInteger(), index=True)
+    status: str = Field(max_length=24)
+    credential_fingerprint: str = Field(max_length=64)
+    config_fingerprint: str = Field(max_length=64)
+    callback_url: str = Field(max_length=2048)
+    platform_uid: str = Field(default="", max_length=255)
+    display_name: str = Field(default="", max_length=255)

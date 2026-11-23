@@ -8,10 +8,10 @@ export const settingsApi = {
   delete: (id: number) => request.delete(`/settings/terminology/${id}`),
   query: (id: number) => request.get(`/settings/terminology/${id}`),
 
-  downloadError: (path: any) =>
+  downloadError: (reportId: string) =>
     request.post(
       `/system/download-fail-info`,
-      { file: path },
+      { report_id: reportId },
       {
         responseType: 'blob',
         requestOptions: { customError: true },

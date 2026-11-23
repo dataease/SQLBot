@@ -21,10 +21,13 @@ from apps.system.schemas.workspace_model import (
     WorkspaceModelSettingsOut,
 )
 from common.audit.models.log_model import SystemLog, SystemLogsResource
+from common.audit.schemas.logger_decorator import SystemLogger
 from common.error import SingleMessageError
 from common.utils.locale import I18nHelper
 
 if TYPE_CHECKING:
+    from fastapi import Request
+
     from apps.system.schemas.system_schema import AssistantHeader, UserInfoDTO
 
 ModelSettingsSnapshot = dict[str, bool | str | None]
@@ -36,20 +39,38 @@ def record_model_settings_change(
     before: ModelSettingsSnapshot,
     after: ModelSettingsSnapshot,
     actor: UserInfoDTO | None,
-    trans: I18nHelper,
+    request: Request | None = None,
 ) -> None:
     # Commit the audit entry with the configuration/mapping transaction.
     if actor is not None:
+        client_info = SystemLogger.get_client_info(request)
+        model_ids = {
+            int(snapshot["custom_model"])
+            for snapshot in (before, after)
+            if snapshot["enable_custom_model"] and snapshot["custom_model"]
+        }
+        models = session.exec(
+            select(AiModelDetail.id, AiModelDetail.name).where(
+                AiModelDetail.id.in_(model_ids)
+            )
+        ).all()
         log = SystemLog(
             operation_type="update",
             operation_status="success",
             module="workspace",
-            operation_detail=trans("ws_model_settings"),
+            operation_detail="workspace_model_settings:"
+            + json.dumps(
+                {str(model_id): name for model_id, name in models}, ensure_ascii=False
+            ),
             resource_id=str(workspace.id),
             resource_name=workspace.name,
             oid=workspace.id,
             user_id=actor.id,
             user_name=actor.name,
+            ip_address=client_info["ip_address"],
+            user_agent=client_info["user_agent"],
+            request_method=request.method if request else None,
+            request_path=request.scope.get("path") if request else None,
             remark=json.dumps({"before": before, "after": after}),
         )
         session.add(log)
@@ -141,6 +162,7 @@ def save_workspace_model_settings(
     settings: WorkspaceModelSettings,
     trans: I18nHelper,
     actor: UserInfoDTO | None = None,
+    request: Request | None = None,
 ) -> dict[str, ModelSettingsSnapshot]:
     if settings.enable_custom_model and settings.custom_model:
         require_authorized_model(session, workspace.id, settings.custom_model, trans)
@@ -159,7 +181,7 @@ def save_workspace_model_settings(
         ).model_dump(),
     }
     record_model_settings_change(
-        session, workspace, changes["before"], changes["after"], actor, trans
+        session, workspace, changes["before"], changes["after"], actor, request
     )
     session.commit()
     return changes
@@ -216,6 +238,7 @@ def apply_model_impact_resolutions(
     resolutions: list[ModelImpactResolution],
     trans: I18nHelper,
     actor: UserInfoDTO | None = None,
+    request: Request | None = None,
 ) -> None:
     # Recompute at mutation time; an earlier preview is never authorization.
     impacts = get_model_impacts(session, model_id, ws_ids, lock=True)
@@ -245,4 +268,4 @@ def apply_model_impact_resolutions(
         after = WorkspaceModelSettings.model_validate(
             workspace, from_attributes=True
         ).model_dump()
-        record_model_settings_change(session, workspace, before, after, actor, trans)
+        record_model_settings_change(session, workspace, before, after, actor, request)
