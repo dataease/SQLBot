@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { isAxiosError } from 'axios'
 import { ElMessage } from 'element-plus-secondary'
 import { useUserStore } from '@/stores/user'
-import { userApi } from '@/api/auth'
 import { getSQLBotAddr } from '@/utils/utils'
 import {
   bindingApi,
@@ -28,7 +27,6 @@ const user = useUserStore()
 const items = ref<Binding[]>([])
 const capabilities = ref<BindingCapabilities>()
 const tab = ref('basic')
-const workspaceName = ref('')
 const selected = ref<Binding>()
 const dialog = ref(false)
 const step = ref<'password' | 'auth' | 'confirm' | 'unbind' | 'failed'>('password')
@@ -95,15 +93,6 @@ const errorText = (e: unknown) =>
 const stop = () => {
   clearTimeout(timer)
   clearInterval(clock)
-}
-const loadWorkspace = async () => {
-  try {
-    const options: { id: string | number; name: string }[] = await userApi.ws_options()
-    workspaceName.value =
-      options.find((option) => String(option.id) === String(user.getOid))?.name || ''
-  } catch {
-    // The profile remains readable when workspace metadata is temporarily unavailable.
-  }
 }
 const load = async () => {
   const version = ++profileEpoch
@@ -414,7 +403,6 @@ watch(localAccount, (allowed) => {
   }
 })
 onMounted(() => {
-  void loadWorkspace()
   if (localAccount.value) void load()
   window.addEventListener('message', onMessage)
 })
@@ -455,13 +443,7 @@ onBeforeUnmount(() => {
           <h2>
             {{ user.getName }} <span class="account-tag">{{ accountType }}</span>
           </h2>
-          <p>
-            {{ user.getAccount
-            }}<template v-if="workspaceName"
-              ><span class="workspace-separator" aria-hidden="true">{{ ' · ' }}</span
-              >{{ workspaceName }}</template
-            >
-          </p>
+          <p>{{ user.getAccount }}</p>
         </div>
       </section>
       <el-alert
@@ -792,9 +774,6 @@ onBeforeUnmount(() => {
     margin-top: 6px;
   }
 }
-.workspace-separator {
-  margin: 0 9px;
-}
 .basic-details {
   padding-top: 28px;
   h2 {
@@ -1054,9 +1033,6 @@ onBeforeUnmount(() => {
     }
     p {
       font-size: 11px;
-    }
-    .workspace-separator {
-      margin: 0 4px;
     }
     .account-tag {
       margin-left: 3px;

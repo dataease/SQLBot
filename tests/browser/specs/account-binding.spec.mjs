@@ -553,3 +553,19 @@ test('enabled binding action does not show an unavailable hint', async ({page}) 
   await action.hover();
   await expect(page.getByRole('tooltip')).toHaveCount(0);
 });
+
+// The summary is shared by both personal-information tabs.
+test('personal information omits workspace in both tabs', async ({ page }) => {
+  let workspaceRequests = 0;
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/api/user/ws') workspaceRequests++;
+  });
+  await setup(page, '/', { basic: true });
+  const summary = page.locator('.account-summary');
+  await expect(summary).toBeVisible();
+  await expect(summary.locator('p')).toHaveText('lin.xiao');
+  await expect(page.getByRole('tab', { name: '基本信息', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('tab', { name: '账号绑定', exact: true }).click();
+  await expect(summary.locator('p')).toHaveText('lin.xiao');
+  expect(workspaceRequests).toBe(0);
+});
