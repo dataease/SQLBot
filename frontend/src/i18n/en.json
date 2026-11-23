@@ -546,7 +546,11 @@
     "discovery_source_missing": "Current configuration · Not returned",
     "discovery_source_current": "Current configuration",
     "discovery_empty": "No models returned. You can enter a model ID manually.",
-    "discovery_failed": "Failed to fetch models. Check the address or credentials; you can enter a model ID manually.",
+    "discovery_failed": "Failed to fetch models. Please retry later or enter a model ID manually.",
+    "discovery_address": "Invalid API base URL. Check the address or enter a model ID manually.",
+    "discovery_credentials": "Authentication failed. Check the API key and service access permissions, or enter a model ID manually.",
+    "discovery_unsupported": "This service does not support fetching a model list. Enter a model ID manually.",
+    "discovery_invalid": "The model list format is invalid or exceeds size limits. Enter a model ID manually.",
     "discovery_timeout": "Fetching the model list timed out. Please retry later or enter a model ID manually.",
     "discovery_key_reset": "The API address changed. Re-enter the API Key if authentication is required.",
 

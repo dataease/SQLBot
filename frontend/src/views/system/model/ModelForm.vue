@@ -111,11 +111,16 @@ const fetchModels = async () => {
   try {
     const result = await modelApi.discover(modelForm.api_domain, modelForm.api_key)
     if (version !== discoveryVersion) return
-    if (result.error) {
+    if (result.error || result.error_code) {
       discoveryState.value = 'error'
-      discoveryMessage.value = t(
-        result.error_code === 'timeout' ? 'model.discovery_timeout' : 'model.discovery_failed'
-      )
+      const messages = new Map([
+        ['timeout', 'model.discovery_timeout'],
+        ['address', 'model.discovery_address'],
+        ['credentials', 'model.discovery_credentials'],
+        ['unsupported', 'model.discovery_unsupported'],
+        ['invalid', 'model.discovery_invalid'],
+      ])
+      discoveryMessage.value = t(messages.get(result.error_code || '') || 'model.discovery_failed')
       discoveryErrorDetail.value = discoveryMessage.value
       return
     }
