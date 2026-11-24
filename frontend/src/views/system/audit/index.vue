@@ -289,11 +289,12 @@ const initOptions = () => {
               {{ scope.row.operation_type_name }}
             </template>
           </el-table-column>
-          <el-table-column :label="$t('audit.operation_details')" min-width="200"
-            ><template #default="scope">
-              {{ scope.row.operation_detail_info }}
-            </template>
-          </el-table-column>
+          <el-table-column
+            prop="operation_detail_info"
+            :label="$t('audit.operation_details')"
+            min-width="200"
+            :show-overflow-tooltip="{ popperClass: 'audit-detail-tooltip' }"
+          />
           <el-table-column :label="$t('audit.operation_user_name')" min-width="120"
             ><template #default="scope">
               {{ scope.row.user_name }}
@@ -399,6 +400,11 @@ const initOptions = () => {
 
   :deep(.ed-table__cell) {
     cursor: pointer;
+  }
+
+  :deep(.audit-detail-tooltip) {
+    max-width: min(560px, calc(100vw - 32px));
+    overflow-wrap: anywhere;
   }
 
   .tool-left {
