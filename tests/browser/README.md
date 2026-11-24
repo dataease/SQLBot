@@ -115,6 +115,10 @@ npm --prefix tests/browser test -- --config=password.config.mjs
 
 后端对应离线测试为 `backend/tests/test_initial_password_policy.py`，提取实际函数并替换配置、用户和 Session 边界，验证开启/关闭策略、普通用户/管理员、旧密码与格式校验、拒绝时不写入。真实环境验收仍需在隔离账号上完成“开启策略 → 改密拒绝 → 合法改密 → 重新登录”。
 
+## 嵌入助手流式请求语言
+
+`npm --prefix tests/browser test -- --config=request-locale.config.mjs` 使用本机 Chrome 和已安装的前端依赖，在 `127.0.0.1:4243` 启动 Vite。测试加载真实嵌入页面并从问数 API 发起流式请求，检查未选择语言时浏览器发送的请求头、宿主 URL 语言及运行中 `setLang` 切换。许可证脚本和后端响应由测试替代。
+
 ## 菜单语言与切换账号回归
 
 ```sh
