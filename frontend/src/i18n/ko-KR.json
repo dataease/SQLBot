@@ -62,7 +62,8 @@
     "number_of_members": "회원 수",
     "delete_selected_workspaces": "선택한 {msg}개의 작업 공간을 삭제하시겠습니까?",
     "delete_workspace": "작업 공간을 삭제하시겠습니까: {msg}?",
-    "no_workspace": "작업 공간 없음"
+    "no_workspace": "작업 공간 없음",
+    "no_space_found": "일치하는 공간을 찾을 수 없습니다"
   },
   "sync": {
     "records": "{total}개 중 {num}개의 레코드 표시",
@@ -675,6 +676,7 @@
     "workspace_de_workspace": "작업 공간을 삭제하시겠습니까: {msg}?",
     "member_feng_yibudao": "멤버를 제거하시겠습니까: {msg}?",
     "select_member": "멤버 선택",
+    "no_member_found": "일치하는 멤버를 찾을 수 없습니다",
     "selected_2_people": "선택됨: {msg}명",
     "selected_number": "선택됨: {msg}개",
     "clear": "지우기",
@@ -699,6 +701,7 @@
     "add_rule_group": "규칙 그룹 추가",
     "permission_rule": "권한 규칙",
     "restricted_user": "제한된 사용자",
+    "no_user_found": "일치하는 사용자를 찾을 수 없습니다",
     "set_rule": "규칙 설정",
     "set_user": "사용자 설정",
     "2": "{msg}개",

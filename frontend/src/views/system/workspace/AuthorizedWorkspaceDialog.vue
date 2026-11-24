@@ -38,6 +38,7 @@
             {{ $t('datasource.select_all') }}
           </el-checkbox>
           <el-checkbox-group
+            v-show="workspaceWithKeywords.length"
             v-model="checkedWorkspace"
             class="checkbox-group-block"
             @change="handleCheckedWorkspaceChange"
@@ -81,6 +82,9 @@
               </template>
             </FixedSizeList>
           </el-checkbox-group>
+          <div v-if="!workspaceWithKeywords.length" class="empty-members">
+            {{ $t('workspace.no_member_found') }}
+          </div>
         </div>
       </div>
       <div class="p-16 w-full">
@@ -399,6 +403,15 @@ defineExpose({
   .max-height_workspace {
     max-height: calc(100% - 24px);
     overflow-y: auto;
+  }
+
+  .empty-members {
+    height: 330px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8f959e;
+    font-size: 14px;
   }
 
   .align-center {

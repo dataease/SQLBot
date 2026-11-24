@@ -62,7 +62,8 @@
     "number_of_members": "จำนวนสมาชิก",
     "delete_selected_workspaces": "ยืนยันการนำพื้นที่ทำงานที่เลือก {msg} แห่งออกหรือไม่?",
     "delete_workspace": "ยืนยันการนำพื้นที่ทำงาน: {msg} ออกหรือไม่?",
-    "no_workspace": "ยังไม่มีพื้นที่ทำงาน"
+    "no_workspace": "ยังไม่มีพื้นที่ทำงาน",
+    "no_space_found": "ไม่พบพื้นที่ทำงานที่ตรงกัน"
   },
   "sync": {
     "records": "แสดง {num} รายการ จากทั้งหมด {total} รายการ",
@@ -675,6 +676,7 @@
     "workspace_de_workspace": "ยืนยันการลบพื้นที่ทำงาน: {msg} หรือไม่?",
     "member_feng_yibudao": "ยืนยันการนำสมาชิก: {msg} ออกหรือไม่?",
     "select_member": "เลือกสมาชิก",
+    "no_member_found": "ไม่พบสมาชิกที่ตรงกัน",
     "selected_2_people": "เลือกแล้ว: {msg} คน",
     "selected_number": "เลือกแล้ว: {msg} รายการ",
     "clear": "ล้าง",
@@ -699,6 +701,7 @@
     "add_rule_group": "เพิ่มกลุ่มกฎ",
     "permission_rule": "กฎสิทธิ์",
     "restricted_user": "ผู้ใช้ที่ถูกจำกัด",
+    "no_user_found": "ไม่พบผู้ใช้ที่ตรงกัน",
     "set_rule": "กำหนดกฎ",
     "set_user": "กำหนดผู้ใช้",
     "2": "{msg} รายการ",
