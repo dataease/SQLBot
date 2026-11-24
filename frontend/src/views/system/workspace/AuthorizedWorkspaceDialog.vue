@@ -107,7 +107,7 @@
             layout="vertical"
           >
             <template #default="{ index, style }">
-              <div :key="checkTableList[index].name" :style="style" class="hover-bg_select">
+              <div :key="checkTableList[index].id" :style="style" class="hover-bg_select">
                 <div
                   :title="`${checkTableList[index].name}(${checkTableList[index].account})`"
                   class="flex align-center ellipsis"
@@ -185,22 +185,27 @@ const workspaceWithKeywords = computed(() => {
     )
   })
 })
+const visibleUserIds = computed(
+  () => new Set(workspaceWithKeywords.value.map((ele: any) => String(ele.id)))
+)
+const syncCheckState = (checked: any[] = checkedWorkspace.value) => {
+  const checkedCount = checked.length
+  const visibleCount = workspaceWithKeywords.value.length
+  checkAll.value = visibleCount > 0 && checkedCount === visibleCount
+  isIndeterminate.value = checkedCount > 0 && checkedCount < visibleCount
+}
 watch(search, () => {
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
   checkedWorkspace.value = checkTableList.value.filter((ele: any) =>
-    tableNameArr.includes(ele.name)
+    visibleUserIds.value.has(String(ele.id))
   )
-  const checkedCount = checkedWorkspace.value.length
-  checkAll.value = checkedCount === workspaceWithKeywords.value.length
-  isIndeterminate.value = checkedCount > 0 && checkedCount < workspaceWithKeywords.value.length
+  syncCheckState()
 })
 const handleCheckAllChange = (val: CheckboxValueType) => {
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
   checkedWorkspace.value = val
     ? [
         ...new Set([
           ...workspaceWithKeywords.value,
-          ...checkedWorkspace.value.filter((ele: any) => !tableNameArr.includes(ele.name)),
+          ...checkedWorkspace.value.filter((ele: any) => !visibleUserIds.value.has(String(ele.id))),
         ]),
       ]
     : []
@@ -209,22 +214,19 @@ const handleCheckAllChange = (val: CheckboxValueType) => {
     ? [
         ...new Set([
           ...workspaceWithKeywords.value,
-          ...checkTableList.value.filter((ele: any) => !tableNameArr.includes(ele.name)),
+          ...checkTableList.value.filter((ele: any) => !visibleUserIds.value.has(String(ele.id))),
         ]),
       ]
-    : checkTableList.value.filter((ele: any) => !tableNameArr.includes(ele.name))
+    : checkTableList.value.filter((ele: any) => !visibleUserIds.value.has(String(ele.id)))
 }
 const handleCheckedWorkspaceChange = (value: CheckboxValueType[]) => {
-  const checkedCount = value.length
-  checkAll.value = checkedCount === workspaceWithKeywords.value.length
-  isIndeterminate.value = checkedCount > 0 && checkedCount < workspaceWithKeywords.value.length
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
   checkTableList.value = [
     ...new Set([
-      ...checkTableList.value.filter((ele: any) => !tableNameArr.includes(ele.name)),
+      ...checkTableList.value.filter((ele: any) => !visibleUserIds.value.has(String(ele.id))),
       ...value,
     ]),
   ]
+  syncCheckState(value)
 }
 let oid: any = null
 
