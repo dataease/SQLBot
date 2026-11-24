@@ -37,7 +37,7 @@ npm run build
 - 不要在视图组件中直接使用 axios；统一通过 `@/utils/request.ts` 的 `request` 实例。
 - 新接口放入对应 `src/api/<domain>.ts`，导出类似 `xxxApi` 的对象，并复用既有命名风格。
 - 普通请求使用 `request.get/post/put/delete/patch`；SSE 使用 `request.fetchStream` 并传入 `AbortController`。
-- 不要手工添加认证 token、助手 token、证书、语言或 xpack 静态资源头。普通请求的头由 request interceptor 统一处理；SSE 走 `request.fetchStream`（原生 fetch，不经过 axios interceptor），头部在 `fetchStream` 内单独拼装（当前不含 `Accept-Language`），新增请求头时两条路径都要核对。
+- 不要手工添加认证 token、助手 token、证书、语言或 xpack 静态资源头。普通请求的头由 request interceptor 统一处理；SSE 走 `request.fetchStream`（原生 fetch，不经过 axios interceptor），头部在 `fetchStream` 内单独拼装；已选择账号或宿主语言时显式发送 `Accept-Language`，否则保留浏览器的语言偏好列表。新增请求头时两条路径都要核对。
 - 下载类 blob 请求沿用：
 
 ```ts

@@ -13,8 +13,7 @@ import { getLocale } from './utils'
 import { useAssistantStore } from '@/stores/assistant'
 import { useRouter } from 'vue-router'
 import JSONBig from 'json-bigint'
-// import { i18n } from '@/i18n'
-// const t = i18n.global.t
+import { i18n } from '@/i18n'
 const assistantStore = useAssistantStore()
 const { wsCache } = useCache()
 const router = useRouter()
@@ -308,6 +307,11 @@ class HttpService {
     const token = wsCache.get('user.token')
     const heads: any = {
       'Content-Type': 'application/json',
+    }
+    // An account or embed host can select a language different from the browser.
+    // Without a selection, let fetch send the browser's full preference list.
+    if (wsCache.get('user.language')) {
+      heads['Accept-Language'] = i18n.global.locale.value
     }
     if (token) {
       heads['X-SQLBOT-TOKEN'] = `Bearer ${token}`
