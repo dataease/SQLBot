@@ -622,3 +622,20 @@ test("discovery feedback keeps the layout stable and the dropdown anchored", asy
   const statusBox = await page.getByRole("status").boundingBox();
   expect(statusBox.y).toBeGreaterThan(afterFailure.y + afterFailure.height);
 });
+
+test("option source label keeps clear of the selection check", async ({ page }) => {
+  await page.getByRole("button", { name: "Edit legacy", exact: true }).click();
+  await model(page).click();
+  const popper = page.locator(".ed-select__popper.discovery-model-options");
+  await expect(popper).toBeVisible();
+  const selected = popper.locator(".ed-select-dropdown__item.is-selected");
+  await expect(selected).toHaveCount(1);
+  const itemBox = await selected.boundingBox();
+  const sourceBox = await selected
+    .locator(".model-option-source")
+    .boundingBox();
+  // 勾选图标绝对定位在 right: 12px、宽 16px，即占据右侧 12-28px。
+  expect(
+    itemBox.x + itemBox.width - (sourceBox.x + sourceBox.width),
+  ).toBeGreaterThanOrEqual(36);
+});

@@ -882,6 +882,8 @@ defineExpose({
     height: 40px;
     line-height: 40px;
     font-size: 16px;
+    // 勾选图标固定在 right: 12px、宽 16px，默认 26px 内边距会让右侧标识贴住图标
+    padding-right: 44px;
   }
   .ed-select-dropdown__item.is-selected {
     background: #e3efff;
