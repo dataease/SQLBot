@@ -23,6 +23,7 @@ class OperationModules(str, Enum):
     APPLICATION = "application"  # 嵌入式管理 应用
     THEME = "theme"  # 外观配置
     PARAMS_SETTING = "params_setting"  # 参数配置
+    SYSTEM_VARIABLE = "system_variable"  # 系统变量
     API_KEY = "api_key"  # api key
     LOG_SETTING = "log_setting"  # api key
     SETTING = "setting"  # 设置

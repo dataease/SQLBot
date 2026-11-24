@@ -202,6 +202,7 @@
     "create_or_update": "변경",
     "api_key": "API 키",
     "params_setting": "매개변수 설정",
+    "system_variable": "시스템 변수",
     "rules": "권한 규칙",
     "log_setting": "로그인 인증",
     "setting": "설정",

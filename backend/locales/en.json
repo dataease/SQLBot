@@ -202,6 +202,7 @@
     "create_or_update": "Change",
     "api_key": "API Key",
     "params_setting": "Parameter Configuration",
+    "system_variable": "System Variable",
     "rules": "Permission Rules",
     "log_setting": "Login Authentication",
     "setting": "Settings",

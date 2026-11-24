@@ -1,14 +1,13 @@
 # Author: Junjun
 # Date: 2026/1/26
-from typing import List
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from apps.swagger.i18n import PLACEHOLDER_PREFIX
-from apps.system.crud.system_variable import save, delete, list_all, list_page
+from apps.system.crud.system_variable import delete, list_all, list_page, save
 from apps.system.models.system_variable_model import SystemVariable
-from common.core.config import settings
-from common.core.deps import SessionDep, CurrentUser, Trans
 from apps.system.schemas.permission import SqlbotPermission, require_permissions
+from common.core.config import settings
+from common.core.deps import CurrentUser, SessionDep, Trans
 
 router = APIRouter(tags=["System_variable"], prefix="/sys_variable")
 path = settings.EXCEL_PATH
@@ -16,14 +15,16 @@ path = settings.EXCEL_PATH
 
 @router.post("/save", response_model=None, summary=f"{PLACEHOLDER_PREFIX}variable_save")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
-async def save_variable(session: SessionDep, user: CurrentUser, trans: Trans, variable: SystemVariable):
-    return save(session, user, trans, variable)
+async def save_variable(
+    request: Request, session: SessionDep, user: CurrentUser, trans: Trans, variable: SystemVariable
+):
+    return save(session, user, trans, variable, request)
 
 
-@router.post("/delete",response_model=None, summary=f"{PLACEHOLDER_PREFIX}variable_delete")
+@router.post("/delete", response_model=None, summary=f"{PLACEHOLDER_PREFIX}variable_delete")
 @require_permissions(permission=SqlbotPermission(role=['admin']))
-async def delete_variable(session: SessionDep, ids: List[int]):
-    return delete(session, ids)
+async def delete_variable(request: Request, session: SessionDep, user: CurrentUser, ids: list[int]):
+    return delete(session, ids, user, request)
 
 
 @router.post("/listAll",response_model=None, summary=f"{PLACEHOLDER_PREFIX}variable_list")

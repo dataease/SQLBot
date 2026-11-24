@@ -1,38 +1,94 @@
 # Author: Junjun
 # Date: 2026/1/26
 import datetime
-from typing import List
+from collections.abc import Sequence
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from sqlalchemy import and_
+from sqlalchemy import delete as sql_delete
 from sqlmodel import select
 
 from apps.system.models.system_variable_model import SystemVariable
-from common.core.deps import SessionDep, CurrentUser, Trans
+from common.audit.models.log_model import (
+    OperationModules,
+    OperationStatus,
+    OperationType,
+    SystemLog,
+    SystemLogsResource,
+)
+from common.audit.schemas.logger_decorator import SystemLogger
+from common.core.deps import CurrentUser, SessionDep, Trans
 from common.core.pagination import Paginator
 from common.core.schemas import PaginationParams
 
 
-def save(session: SessionDep, user: CurrentUser, trans: Trans, variable: SystemVariable):
+def _audit_variable_change(
+    session: SessionDep,
+    user: CurrentUser,
+    request: Request,
+    operation: OperationType,
+    resources: Sequence[tuple[int, str]],
+) -> None:
+    client_info = SystemLogger.get_client_info(request)
+    resource_ids = [resource_id for resource_id, _ in resources]
+    log = SystemLog(
+        operation_type=operation,
+        operation_status=OperationStatus.SUCCESS,
+        module=OperationModules.SYSTEM_VARIABLE,
+        user_id=user.id,
+        user_name=user.name,
+        oid=user.oid,
+        ip_address=(client_info["ip_address"] or "")[:255] or None,
+        user_agent=(client_info["user_agent"] or "")[:255] or None,
+        request_method=request.method,
+        request_path=request.scope["path"][:255],
+        resource_id=str(resource_ids[0] if len(resource_ids) == 1 else resource_ids),
+    )
+    session.add(log)
+    session.flush()
+    session.add_all(
+        SystemLogsResource(
+            log_id=log.id,
+            resource_id=str(resource_id),
+            resource_name=name,
+            module=log.module,
+        )
+        for resource_id, name in resources
+    )
+
+
+def save(session: SessionDep, user: CurrentUser, trans: Trans, variable: SystemVariable, request: Request):
     checkName(session, trans, variable)
     variable.type = 'custom'
     if variable.id is None:
         variable.create_time = datetime.datetime.now()
         variable.create_by = user.id
-        session.add(variable)
-        session.commit()
+        record = variable
+        operation = OperationType.CREATE
     else:
         record = session.query(SystemVariable).filter(SystemVariable.id == variable.id).first()
         update_data = variable.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(record, field, value)
-        session.add(record)
-        session.commit()
+        operation = OperationType.UPDATE
+    session.add(record)
+    session.flush()
+    _audit_variable_change(session, user, request, operation, [(record.id, record.name)])
+    session.commit()
     return True
 
 
-def delete(session: SessionDep, ids: List[int]):
-    session.query(SystemVariable).filter(SystemVariable.id.in_(ids)).delete()
+def delete(session: SessionDep, ids: list[int], user: CurrentUser, request: Request):
+    if not ids:
+        return
+    deleted = session.execute(
+        sql_delete(SystemVariable)
+        .where(SystemVariable.id.in_(ids))
+        .returning(SystemVariable.id, SystemVariable.name)
+    ).tuples().all()
+    if deleted:
+        _audit_variable_change(session, user, request, OperationType.DELETE, deleted)
+        session.commit()
 
 
 def list_all(session: SessionDep, trans: Trans, variable: SystemVariable):
@@ -93,7 +149,7 @@ def checkName(session: SessionDep, trans: Trans, variable: SystemVariable):
             raise HTTPException(status_code=500, detail=trans('i18n_variable.name_exist'))
 
 
-def checkValue(session: SessionDep, trans: Trans, values: List):
+def checkValue(session: SessionDep, trans: Trans, values: list):
     # values: [{"variableId":1,"variableValues":["a","b"]}]
 
     pass

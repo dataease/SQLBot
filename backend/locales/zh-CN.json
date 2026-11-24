@@ -202,6 +202,7 @@
     "create_or_update": "变更",
     "api_key": "API Key",
     "params_setting": "参数配置",
+    "system_variable": "系统变量",
     "rules": "权限规则",
     "log_setting": "登录认证",
     "setting": "设置",

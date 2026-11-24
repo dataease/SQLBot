@@ -202,6 +202,7 @@
     "create_or_update": "เปลี่ยนแปลง",
     "api_key": "API Key",
     "params_setting": "การกำหนดค่าพารามิเตอร์",
+    "system_variable": "ตัวแปรระบบ",
     "rules": "กฎสิทธิ์",
     "log_setting": "การยืนยันตัวตนเข้าสู่ระบบ",
     "setting": "ตั้งค่า",
