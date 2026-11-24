@@ -83,6 +83,14 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 npm --prefix tests/browser test -- --p
 真实后端路由、权限、SQLite 持久化及本地模型请求由 `backend/tests/test_workspace_model_policy.py` 覆盖。
 两者不代表完整登录、真实 SQL 执行或部署验收。
 
+## 工作空间成员界面回归
+
+同名用户按账号搜索、勾选和全选的回归使用真实添加成员对话框，并以受控成员接口隔离后端：
+
+```sh
+npm --prefix tests/browser test -- --config=workspace-member.config.mjs
+```
+
 ## 登录状态和输出
 
 确需复用登录状态时，使用测试账号手动登录并保存到被忽略的 `.auth/`：
