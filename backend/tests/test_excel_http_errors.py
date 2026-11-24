@@ -160,6 +160,8 @@ def test_valid_knowledge_workbook_reaches_batch_import(
     [
         ("zh-CN", "EXCEL列数量不匹配"),
         ("en", "Number of columns in Excel does not match"),
+        ("en-US,en;q=0.9", "Number of columns in Excel does not match"),
+        ("zh, zh-CN;q=0, zh-TW;q=0.8", "EXCEL列數量不匹配"),
     ],
 )
 def test_insufficient_excel_columns_return_localized_400(
