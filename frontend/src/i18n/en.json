@@ -62,7 +62,8 @@
     "number_of_members": "Number of Members",
     "delete_selected_workspaces": "Are you sure you want to delete the selected {msg} workspaces?",
     "delete_workspace": "Are you sure you want to delete the workspace: {msg}?",
-    "no_workspace": "No Workspaces"
+    "no_workspace": "No Workspaces",
+    "no_space_found": "No matching spaces found"
   },
   "sync": {
     "records": "Displaying {num} records out of {total}",
@@ -675,6 +676,7 @@
     "workspace_de_workspace": "Do you want to delete the workspace: {msg}?",
     "member_feng_yibudao": "Do you want to remove the member: {msg}?",
     "select_member": "Select member",
+    "no_member_found": "No matching members found",
     "selected_2_people": "Selected: {msg} people",
     "selected_number": "Selected: {msg} items",
     "clear": "Clear",
@@ -699,6 +701,7 @@
     "add_rule_group": "Add rule group",
     "permission_rule": "Permission rules",
     "restricted_user": "Restricted user",
+    "no_user_found": "No matching users found",
     "set_rule": "Set rule",
     "set_user": "Set user",
     "2": "{msg}",

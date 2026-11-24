@@ -62,7 +62,8 @@
     "number_of_members": "成员数量",
     "delete_selected_workspaces": "是否移除选中的 {msg} 个工作空间？",
     "delete_workspace": "是否移除工作空间：{msg}？",
-    "no_workspace": "暂无工作空间"
+    "no_workspace": "暂无工作空间",
+    "no_space_found": "未找到相关空间"
   },
   "sync": {
     "records": "显示 {num} 条数据，共 {total} 条",
@@ -675,6 +676,7 @@
     "workspace_de_workspace": "是否删除工作空间：{msg}？",
     "member_feng_yibudao": "是否移除成员：{msg}？",
     "select_member": "选择成员",
+    "no_member_found": "未找到相关成员",
     "selected_2_people": "已选：{msg} 人",
     "selected_number": "已选：{msg} 个",
     "clear": "清空",
@@ -699,6 +701,7 @@
     "add_rule_group": "添加规则组",
     "permission_rule": "权限规则",
     "restricted_user": "受限用户",
+    "no_user_found": "未找到相关用户",
     "set_rule": "设置规则",
     "set_user": "设置用户",
     "2": "{msg} 个",
