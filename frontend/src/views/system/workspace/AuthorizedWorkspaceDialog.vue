@@ -169,9 +169,17 @@ const centerDialogVisible = ref(false)
 const checkTableList = ref([] as any[])
 
 const workspaceWithKeywords = computed(() => {
-  return workspace.value.filter((ele: any) =>
-    (ele.name.toLowerCase() as string).includes(search.value.toLowerCase())
-  )
+  const keyword = search.value.trim().toLowerCase()
+  if (!keyword) {
+    return workspace.value
+  }
+  return workspace.value.filter((ele: any) => {
+    return [ele.name, ele.account].some((field) =>
+      String(field ?? '')
+        .toLowerCase()
+        .includes(keyword)
+    )
+  })
 })
 watch(search, () => {
   const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
