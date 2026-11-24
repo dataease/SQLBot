@@ -91,6 +91,12 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 npm --prefix tests/browser test -- --p
 npm --prefix tests/browser test -- --config=workspace-member.config.mjs
 ```
 
+模型授权新增/修改空间时，搜索隐藏已选项后的清空行为由独立夹具覆盖：
+
+```sh
+npm --prefix tests/browser test -- --config=workspace-space.config.mjs
+```
+
 ## 登录状态和输出
 
 确需复用登录状态时，使用测试账号手动登录并保存到被忽略的 `.auth/`：

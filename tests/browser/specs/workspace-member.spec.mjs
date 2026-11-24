@@ -33,7 +33,8 @@ const selectedPanel = dialog => dialog.locator('.select-right_member')
 const selectAllLabel = dialog =>
   dialog.locator('label.ed-checkbox').filter({ hasText: '全选' }).first()
 
-test('same-name members stay distinct when searched by account', async ({ page }) => {  const { saves } = await mock(page)
+test('same-name members stay distinct when searched by account', async ({ page }) => {
+  const { saves } = await mock(page)
   const dialog = await openDialog(page)
   const search = dialog.getByRole('textbox')
 
@@ -54,6 +55,49 @@ test('same-name members stay distinct when searched by account', async ({ page }
   await expect.poll(() => saves.length).toBe(1)
   expect(saves[0].oid).toBe('99')
   expect(saves[0].uid_list.sort()).toEqual(['101', '102'])
+})
+
+test('add stays enabled when the selected member is filtered out', async ({ page }) => {
+  const { saves } = await mock(page)
+  const dialog = await openDialog(page)
+  const search = dialog.getByRole('textbox')
+
+  await search.fill('zhangsan_a')
+  await dialog.locator('.checkbox-group-block label').filter({ hasText: 'zhangsan_a' }).click()
+  await expect(selectedPanel(dialog)).toContainText('zhangsan_a')
+
+  await search.fill('zhangsan_b')
+  await expect(selectedPanel(dialog)).toContainText('zhangsan_a')
+  const addButton = dialog.getByRole('button', { name: '添加', exact: true })
+  await expect(addButton).toBeEnabled()
+
+  await addButton.click()
+  await expect.poll(() => saves.length).toBe(1)
+  expect(saves[0].oid).toBe('99')
+  expect(saves[0].uid_list).toEqual(['101'])
+})
+
+test('clear removes selections hidden by the current filter', async ({ page }) => {
+  const { saves } = await mock(page)
+  const dialog = await openDialog(page)
+  const search = dialog.getByRole('textbox')
+
+  await search.fill('zhangsan_a')
+  await dialog.locator('.checkbox-group-block label').filter({ hasText: 'zhangsan_a' }).click()
+  await search.fill('zhangsan_b')
+  await dialog.locator('.checkbox-group-block label').filter({ hasText: 'zhangsan_b' }).click()
+  await expect(selectedPanel(dialog)).toContainText('zhangsan_a')
+  await expect(selectedPanel(dialog)).toContainText('zhangsan_b')
+
+  await dialog.getByRole('button', { name: '清空', exact: true }).click()
+  await expect(selectedPanel(dialog)).not.toContainText('zhangsan_a')
+  await expect(selectedPanel(dialog)).not.toContainText('zhangsan_b')
+
+  await search.fill('')
+  await expect(selectedPanel(dialog)).not.toContainText('zhangsan_a')
+  await expect(selectedPanel(dialog)).not.toContainText('zhangsan_b')
+  await expect(dialog.getByRole('button', { name: '添加', exact: true })).toBeDisabled()
+  expect(saves).toHaveLength(0)
 })
 
 test('select all on a same-name filtered list keeps hidden selections', async ({ page }) => {

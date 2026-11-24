@@ -145,7 +145,7 @@
       <el-button secondary @click="centerDialogVisible = false">
         {{ $t('common.cancel') }}</el-button
       >
-      <el-button v-if="!checkedWorkspace.length" disabled type="info">{{
+      <el-button v-if="!checkTableList.length" disabled type="info">{{
         $t('model.add')
       }}</el-button>
       <el-button v-else type="primary" @click="handleConfirm"> {{ $t('model.add') }} </el-button>
@@ -284,7 +284,8 @@ const clearWorkspace = (val: any) => {
 
 const clearWorkspaceAll = () => {
   checkedWorkspace.value = []
-  handleCheckedWorkspaceChange([])
+  checkTableList.value = []
+  syncCheckState([])
 }
 
 defineExpose({
