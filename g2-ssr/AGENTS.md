@@ -13,9 +13,10 @@
 
 ## 验证
 
-没有测试框架，至少执行语法检查：
+在仓库根目录运行改动文件的语法检查。调整数值或百分比格式时，用 Node 内置测试验证图表数据、标签和提示框：
 
 ```bash
 node --check g2-ssr/app.js
 node --check g2-ssr/charts/<changed-file.js>
+node --test g2-ssr/test/chart-percent.test.cjs
 ```

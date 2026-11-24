@@ -1,21 +1,21 @@
-const { checkIsPercent, formatNumber, getAxesWithFilter } = require('./utils')
+const { getAxesWithFilter, prepareChartData } = require('./utils')
 
 function getPieOptions(baseOptions, axis, data) {
 
-  const { y, series } = getAxesWithFilter(axis)
+  const axes = getAxesWithFilter(axis)
 
-  if (series.length === 0 || y.length === 0) {
+  if (axes.series.length === 0 || axes.y.length === 0) {
     return
   }
 
-  const _data = checkIsPercent(y, data)
+  const { y, series, data: chartData, formatValue } = prepareChartData(axes, data)
 
   return {
     ...baseOptions,
     type: 'interval',
     coordinate: { type: 'theta', outerRadius: 0.8 },
     transform: [{ type: 'stackY' }],
-    data: _data.data,
+    data: chartData,
     encode: {
       y: y[0].value,
       color: series[0].value,
@@ -35,7 +35,7 @@ function getPieOptions(baseOptions, axis, data) {
       {
         position: 'spider',
         text: (data) =>
-          `${data[series[0].value]}: ${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+          `${data[series[0].value]}: ${formatValue(data)}`,
       },
     ],
     tooltip: {
@@ -44,7 +44,7 @@ function getPieOptions(baseOptions, axis, data) {
         (data) => {
           return {
             name: y[0].name,
-            value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+            value: formatValue(data),
           }
         },
       ],

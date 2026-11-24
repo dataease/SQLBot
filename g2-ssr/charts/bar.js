@@ -1,4 +1,4 @@
-const { checkIsPercent, formatNumber, getAxesWithFilter, processMultiQuotaData } = require('./utils')
+const { formatNumber, getAxesWithFilter, prepareChartData } = require('./utils')
 
 function getBarOptions(baseOptions, axis, data) {
 
@@ -8,31 +8,13 @@ function getBarOptions(baseOptions, axis, data) {
     return
   }
 
-  let config = {
-    data: data,
-    y: axes.y,
-    series: axes.series,
-  }
-  if (axes.multiQuota.length > 0) {
-    config = processMultiQuotaData(
-      axes.x,
-      config.y,
-      axes.multiQuota,
-      axes.multiQuotaName,
-      config.data,
-    )
-  }
-
   const x = axes.x
-  const y = config.y
-  const series = config.series
-
-  const _data = checkIsPercent(y, config.data)
+  const { y, series, data: chartData, formatValue } = prepareChartData(axes, data)
 
   const options = {
     ...baseOptions,
     type: 'interval',
-    data: _data.data,
+    data: chartData,
     coordinate: { transform: [{ type: 'transpose' }] },
     encode: {
       x: x[0].value,
@@ -101,10 +83,10 @@ function getBarOptions(baseOptions, axis, data) {
       if (series.length > 0) {
         return {
           name: data[series[0].value],
-          value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}`,
+          value: formatValue(data),
         }
       } else {
-        return { name: y[0].name, value: `${formatNumber(data[y[0].value])}${_data.isPercent ? '%' : ''}` }
+        return { name: y[0].name, value: formatValue(data) }
       }
     },
     labels: [
@@ -114,7 +96,7 @@ function getBarOptions(baseOptions, axis, data) {
           if (value === undefined || value === null) {
             return ''
           }
-          return `${formatNumber(value)}${_data.isPercent ? '%' : ''}`
+          return formatValue(data)
         },
         position: (data) => {
           if (data[y[0].value] < 0) {

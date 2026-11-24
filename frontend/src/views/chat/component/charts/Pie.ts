@@ -2,9 +2,9 @@ import { BaseG2Chart } from '@/views/chat/component/BaseG2Chart.ts'
 import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
 import {
-  checkIsPercent,
   formatNumber,
   getAxesWithFilter,
+  prepareChartData,
 } from '@/views/chat/component/charts/utils.ts'
 
 export class Pie extends BaseG2Chart {
@@ -14,23 +14,23 @@ export class Pie extends BaseG2Chart {
 
   init(axis: Array<ChartAxis>, data: Array<ChartData>, formatNumberFields: Array<string>) {
     super.init(axis, data, formatNumberFields)
-    const { y, series } = getAxesWithFilter(this.axis)
+    const axes = getAxesWithFilter(this.axis)
 
-    if (series.length == 0 || y.length == 0) {
+    if (axes.series.length == 0 || axes.y.length == 0) {
       console.debug({ instance: this })
       return
     }
 
-    const _data = checkIsPercent(y, data)
+    const { y, series, data: chartData, formatValue } = prepareChartData(axes, data)
 
-    console.debug({ 'render-info': { y: y, series: series, data: _data }, instance: this })
+    console.debug({ 'render-info': { y: y, series: series, data: chartData }, instance: this })
 
     const options: G2Spec = {
       ...this.chart.options(),
       type: 'interval',
       coordinate: { type: 'theta', outerRadius: 0.8 },
       transform: [{ type: 'stackY' }],
-      data: _data.data,
+      data: chartData,
       encode: {
         y: y[0].value,
         color: series[0].value,
@@ -52,8 +52,7 @@ export class Pie extends BaseG2Chart {
             {
               position: 'spider',
               text: (data: any) => {
-                const v = y[0].formatNumber ? formatNumber(data[y[0].value]) : data[y[0].value]
-                return `${data[series[0].value]}: ${v}${_data.isPercent ? '%' : ''}`
+                return `${data[series[0].value]}: ${formatValue(data)}`
               },
             },
           ]
@@ -67,10 +66,9 @@ export class Pie extends BaseG2Chart {
         },
         items: [
           (data: any) => {
-            const v = y[0].formatNumber ? formatNumber(data[y[0].value]) : data[y[0].value]
             return {
               name: y[0].name,
-              value: `${v}${_data.isPercent ? '%' : ''}`,
+              value: formatValue(data),
             }
           },
         ],
