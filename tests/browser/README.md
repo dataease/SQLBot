@@ -50,6 +50,8 @@ npm --prefix tests/browser run cli -- -s=tooling close
 
 ## 使用 Test 回归
 
+多指标柱状图的百分比格式回归使用本地前端依赖打包 SQLBot 柱状图组件，在 Chrome 中悬停检查销售额和利润率的单位。运行 `npm --prefix tests/browser test -- --config=chart-percent.config.mjs`。
+
 ```sh
 # 工具自检 + 可选应用冒烟；未设置应用 URL 时明确跳过应用用例。
 npm --prefix tests/browser test

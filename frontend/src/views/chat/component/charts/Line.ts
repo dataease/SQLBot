@@ -2,10 +2,9 @@ import { BaseG2Chart } from '@/views/chat/component/BaseG2Chart.ts'
 import type { ChartAxis, ChartData } from '@/views/chat/component/BaseChart.ts'
 import type { G2Spec } from '@antv/g2'
 import {
-  checkIsPercent,
   formatNumber,
   getAxesWithFilter,
-  processMultiQuotaData,
+  prepareChartData,
 } from '@/views/chat/component/charts/utils.ts'
 import { some } from 'lodash-es'
 
@@ -24,33 +23,18 @@ export class Line extends BaseG2Chart {
       return
     }
 
-    let config = {
-      data: data,
-      y: axes.y,
-      series: axes.series,
-    }
-    if (axes.multiQuota.length > 0) {
-      config = processMultiQuotaData(
-        axes.x,
-        config.y,
-        axes.multiQuota,
-        axes.multiQuotaName,
-        config.data
-      )
-    }
-
     const x = axes.x
-    const y = config.y
-    const series = config.series
+    const { y, series, data: chartData, formatValue } = prepareChartData(axes, data)
 
-    const _data = checkIsPercent(y, config.data)
-
-    console.debug({ 'render-info': { x: x, y: y, series: series, data: _data }, instance: this })
+    console.debug({
+      'render-info': { x: x, y: y, series: series, data: chartData },
+      instance: this,
+    })
 
     const options: G2Spec = {
       ...this.chart.options(),
       type: 'view',
-      data: _data.data,
+      data: chartData,
       encode: {
         x: x[0].value,
         y: y[0].value,
@@ -97,15 +81,10 @@ export class Line extends BaseG2Chart {
                 {
                   text: (data: any) => {
                     const value = data[y[0].value]
-                    let isFormat = y[0].formatNumber
-                    if (axes.multiQuota.length > 0) {
-                      isFormat = data['sqlbot_axis_format']
-                    }
                     if (value === undefined || value === null) {
                       return ''
                     }
-                    const v = isFormat ? formatNumber(value) : value
-                    return `${v}${_data.isPercent ? '%' : ''}`
+                    return formatValue(data)
                   },
                   style: {
                     dx: -10,
@@ -120,23 +99,18 @@ export class Line extends BaseG2Chart {
               ]
             : [],
           tooltip: (data: any) => {
-            let isFormat = y[0].formatNumber
-            if (axes.multiQuota.length > 0) {
-              isFormat = data['sqlbot_axis_format']
-            }
-            const v = isFormat ? formatNumber(data[y[0].value]) : data[y[0].value]
             if (series.length > 0) {
               const s = series[0].formatNumber
                 ? formatNumber(data[series[0].value])
                 : data[series[0].value]
               return {
                 name: s,
-                value: `${v}${_data.isPercent ? '%' : ''}`,
+                value: formatValue(data),
               }
             } else {
               return {
                 name: y[0].name,
-                value: `${v}${_data.isPercent ? '%' : ''}`,
+                value: formatValue(data),
               }
             }
           },

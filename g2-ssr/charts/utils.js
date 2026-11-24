@@ -1,5 +1,3 @@
-const { endsWith, replace } = require('lodash')
-
 /**
  * 为数值添加千分符，保持原有小数位数不变
  * 纯字符串处理，避免精度丢失
@@ -38,7 +36,7 @@ function getAxesWithFilter(axes) {
     x: [],
     y: [],
     series: [],
-    multiQuota: [],
+    multiQuota: false,
     multiQuotaName: undefined,
   }
 
@@ -55,8 +53,8 @@ function getAxesWithFilter(axes) {
     groups.y = groups.y.slice(0, 1)
   } else {
     const multiQuotaY = groups.y.filter((item) => item['multi-quota'] === true)
-    groups.multiQuota = multiQuotaY.map((item) => item.value)
     if (multiQuotaY.length > 0) {
+      groups.multiQuota = true
       groups.y = multiQuotaY
     }
   }
@@ -64,82 +62,68 @@ function getAxesWithFilter(axes) {
   return groups
 }
 
-function processMultiQuotaData(
-  x,
-  y,
-  multiQuota,
-  multiQuotaName = 'sqlbot_auto_series',
-  data,
-) {
-  const _list = []
-  const _map = {}
-  y.forEach((axis) => {
-    _map[axis.value] = axis.name
+// Keep the original metric on folded rows, even when two metrics share a display name.
+const metricIndex = Symbol('metricIndex')
+
+function isPercentField(field, rows) {
+  const firstNonZero = rows.find((row) => {
+    const value = row?.[field]
+    return value != null && String(value).trim() !== '' && Number(value) !== 0
   })
-  for (const datum of data) {
-    multiQuota.forEach((quota) => {
-      const _data = {}
-      for (const xAxis of x) {
-        _data[xAxis.value] = datum[xAxis.value]
-      }
-      _data['sqlbot_auto_quota'] = datum[quota]
-      _data['sqlbot_auto_series'] = _map[quota]
-      _list.push(_data)
-    })
+  return String(firstNonZero?.[field]).trim().endsWith('%')
+}
+
+function plotValue(value, percent) {
+  if (!percent || typeof value !== 'string' || !value.trim().endsWith('%')) return value
+  const number = Number(value.trim().slice(0, -1))
+  return Number.isNaN(number) ? 0 : number
+}
+
+function prepareChartData(axes, rows) {
+  const metrics = (axes.multiQuota ? axes.y : axes.y.slice(0, 1)).map((axis) => ({
+    axis,
+    percent: isPercentField(axis.value, rows),
+  }))
+  const valueField = axes.multiQuota ? 'sqlbot_auto_quota' : axes.y[0].value
+
+  function formatValue(row) {
+    const { percent } = metrics[row[metricIndex] ?? 0]
+    const value = row[valueField]
+    return `${formatNumber(value)}${percent ? '%' : ''}`
   }
 
+  if (!axes.multiQuota) {
+    return {
+      y: axes.y,
+      series: axes.series,
+      data: rows.map((row) => ({
+        ...row,
+        [valueField]: plotValue(row?.[valueField], metrics[0].percent),
+      })),
+      formatValue,
+    }
+  }
+
+  const data = rows.flatMap((row) => {
+    const dimensions = {}
+    for (const axis of axes.x) dimensions[axis.value] = row[axis.value]
+    return metrics.map(({ axis, percent }, index) => ({
+      ...dimensions,
+      [valueField]: plotValue(row[axis.value], percent),
+      sqlbot_auto_series: axis.name,
+      [metricIndex]: index,
+    }))
+  })
   return {
-    data: _list,
-    y: [{ name: 'sqlbot_auto_quota', value: 'sqlbot_auto_quota', type: 'y' }],
-    series: [{ name: multiQuotaName, value: 'sqlbot_auto_series', type: 'series' }],
+    y: [{ name: valueField, value: valueField, type: 'y' }],
+    series: [{
+      name: axes.multiQuotaName ?? 'sqlbot_auto_series',
+      value: 'sqlbot_auto_series',
+      type: 'series',
+    }],
+    data,
+    formatValue,
   }
 }
 
-function checkIsPercent(valueAxes, data) {
-  const result = {
-    isPercent: false,
-    data: [],
-  }
-
-  // 深拷贝原始数据
-  for (let i = 0; i < data.length; i++) {
-    result.data.push({ ...data[i] })
-  }
-
-  // 检查是否有任何一个轴包含百分比数据
-  for (const valueAxis of valueAxes) {
-    const firstNonZero = data.find((row) => {
-      const value = row?.[valueAxis.value]
-      return value != null && String(value).trim() !== '' && Number(value) !== 0
-    })
-
-    if (firstNonZero) {
-      const v = String(firstNonZero[valueAxis.value])
-      if (endsWith(v.trim(), '%')) {
-        result.isPercent = true
-        break // 找到一个百分比轴就结束检查
-      }
-    }
-  }
-
-  // 如果发现任何百分比轴，处理所有轴的所有百分比数据
-  if (result.isPercent) {
-    for (let i = 0; i < data.length; i++) {
-      for (const valueAxis of valueAxes) {
-        const value = data[i][valueAxis.value]
-        if (value !== null && value !== undefined && value !== '') {
-          const strValue = String(value).trim()
-          if (endsWith(strValue, '%')) {
-            const formatValue = replace(strValue, '%', '')
-            const numValue = Number(formatValue)
-            result.data[i][valueAxis.value] = isNaN(numValue) ? 0 : numValue
-          }
-        }
-      }
-    }
-  }
-
-  return result
-}
-
-module.exports = { checkIsPercent, formatNumber, getAxesWithFilter, processMultiQuotaData }
+module.exports = { formatNumber, getAxesWithFilter, prepareChartData }
