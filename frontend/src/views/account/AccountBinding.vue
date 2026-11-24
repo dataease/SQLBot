@@ -583,7 +583,11 @@ onBeforeUnmount(() => {
           <div class="provider-heading">
             <img :src="icons[selected!.origin]" alt="" />{{ name(selected!.origin) }}
           </div>
-          <div class="qr-stage" :aria-busy="qrState === 'loading' || qrState === 'verifying'">
+          <div
+            class="qr-stage"
+            :class="{ 'qr-stage-wecom': selected?.origin === 6 }"
+            :aria-busy="qrState === 'loading' || qrState === 'verifying'"
+          >
             <BindingQr
               v-if="!timedOut"
               :key="attempt.state"
@@ -923,6 +927,11 @@ onBeforeUnmount(() => {
   border: 1px solid #e4e7ed;
   border-radius: 8px;
   overflow: hidden;
+}
+.qr-stage-wecom {
+  // 234px content area + 1px border, matching the cropped WeCom panel
+  width: 236px;
+  height: 236px;
 }
 .qr-overlay {
   position: absolute;

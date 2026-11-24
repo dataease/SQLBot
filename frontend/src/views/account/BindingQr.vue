@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { loadScript } from '@/utils/RemoteJs'
 import type { BindingAttempt } from '@/api/account-binding'
@@ -8,6 +8,11 @@ const emit = defineEmits<{ ready: []; scanned: [url: string]; code: [code: strin
 const { t } = useI18n()
 const container = ref<HTMLElement>()
 const completionUrl = ref('')
+const isWecomClient = ref(false)
+const qrClass = computed(() => {
+  if (props.attempt.origin !== 6) return ''
+  return isWecomClient.value ? 'binding-qr-wecom-client' : 'binding-qr-wecom'
+})
 let disposed = false
 let cleanup: (() => void) | undefined
 // SDK interfaces are confined to this provider adapter; never exposed to account state.
@@ -43,6 +48,9 @@ onMounted(async () => {
           state: a.state,
           redirect_type: 'callback',
           panel_size: 'small',
+        },
+        onCheckWeComLogin: ({ isWeComLogin }: { isWeComLogin: boolean }) => {
+          if (!disposed) isWecomClient.value = isWeComLogin
         },
         onLoginSuccess: ({ code }: { code: string }) => {
           if (!disposed) emit('code', code)
@@ -119,7 +127,7 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
-  <div ref="container" class="binding-qr"><div :id="id" /></div>
+  <div ref="container" class="binding-qr" :class="qrClass"><div :id="id" /></div>
   <iframe
     v-if="completionUrl"
     :src="completionUrl"
@@ -133,6 +141,27 @@ onBeforeUnmount(() => {
   min-height: 280px;
   margin: auto;
   overflow: hidden;
+}
+/* WeCom SDK renders a 320x380 panel with its own title and tip; crop both so only the QR shows. */
+.binding-qr-wecom,
+.binding-qr-wecom-client {
+  width: 234px;
+  height: 234px;
+  min-height: 234px;
+  > div {
+    width: 234px;
+    height: 234px;
+    transform-origin: top left;
+  }
+}
+.binding-qr-wecom > div {
+  transform: scale(0.92);
+  margin-top: -75px;
+  margin-left: -30px;
+}
+.binding-qr-wecom-client > div {
+  transform: scale(0.75);
+  margin-top: -35px;
 }
 .binding-completion {
   width: 1px;
