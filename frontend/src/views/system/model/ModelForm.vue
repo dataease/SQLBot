@@ -483,7 +483,7 @@ defineExpose({
                 :disabled="discovering || !modelForm.api_domain.trim()"
                 @click="fetchModels"
               >
-                <el-icon v-if="!discovering"><icon_refresh /></el-icon>
+                <el-icon v-if="!discovering" size="16"><icon_refresh /></el-icon>
                 {{
                   t(
                     discovering
