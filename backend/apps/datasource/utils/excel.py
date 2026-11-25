@@ -55,12 +55,12 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
         column: 'object' if field_type == 'int' else USER_TYPE_TO_PANDAS.get(field_type, 'string')
         for column, field_type in field_mapping.items()
     }
+    text_columns = [column for column, field_type in field_mapping.items() if field_type == 'string']
     if is_csv_file(save_path):
         # The CSV parser cannot read datetime64 dtypes directly.
         datetime_columns = [column for column, field_type in field_mapping.items() if field_type == 'datetime']
         for column in datetime_columns:
             dtype_dict[column] = 'string'
-        text_columns = [column for column, field_type in field_mapping.items() if field_type == 'string']
         for column in text_columns:
             del dtype_dict[column]
         # CSV converters bypass pandas' default NA tokens for those columns.
@@ -75,7 +75,19 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
             if column in df.columns:
                 df[column] = df[column].astype(USER_TYPE_TO_PANDAS['datetime'])
     else:
-        df = pd.read_excel(save_path, sheet_name=sheet_name, engine='calamine', dtype=dtype_dict)
+        with pd.ExcelFile(save_path, engine='calamine') as workbook:
+            df = workbook.parse(sheet_name, dtype=dtype_dict)
+            selected_text = [column for column in text_columns if column in df.columns]
+            if selected_text:
+                # Excel's parser applies the default NA tokens even with a
+                # converter. Reparse only text columns with blanks as NA.
+                df[selected_text] = workbook.parse(
+                    sheet_name,
+                    usecols=lambda column: column in selected_text,
+                    dtype='string',
+                    keep_default_na=False,
+                    na_values=[''],
+                )[selected_text]
     for column, field_type in field_mapping.items():
         if field_type == 'int' and column in df.columns:
             try:

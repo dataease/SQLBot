@@ -91,3 +91,44 @@ def test_excel_reader_preserves_named_sheet(tmp_path):
     assert sheet["sheetName"] == "Sales"
     frame = read_import_dataframe(str(path), "Sales", {"units": "int"})
     assert frame["units"].tolist() == [3]
+
+
+def test_excel_import_keeps_literal_values_in_explicit_text_columns(tmp_path):
+    path = tmp_path / "regions.xlsx"
+    pd.DataFrame(
+        {
+            "region": ["NA", "EU", None, "APAC"],
+            "code": ["NULL", "001", "NaN", None],
+            "units": ["NA", 2.5, None, 9],
+            "price": ["NA", 1.25, None, 3.5],
+            "created": ["NA", "2026-11-16", None, "2026-11-17"],
+            "inferred": ["NA", 1, None, 2],
+        }
+    ).to_excel(path, sheet_name="Sales", engine="openpyxl", index=False)
+
+    frame = read_import_dataframe(
+        str(path),
+        "Sales",
+        {
+            "region": "string",
+            "code": "string",
+            "units": "int",
+            "price": "float",
+            "created": "datetime",
+        },
+    )
+
+    pd.testing.assert_series_equal(
+        frame["region"],
+        pd.Series(["NA", "EU", pd.NA, "APAC"], dtype="string", name="region"),
+    )
+    pd.testing.assert_series_equal(
+        frame["code"],
+        pd.Series(["NULL", "001", "NaN", pd.NA], dtype="string", name="code"),
+    )
+    assert frame["units"].tolist() == [pd.NA, 3, pd.NA, 9]
+    assert frame["price"].isna().tolist() == [True, False, True, False]
+    assert frame.loc[1, "price"] == 1.25
+    assert frame["created"].isna().tolist() == [True, False, True, False]
+    assert frame.loc[1, "created"] == pd.Timestamp("2026-11-16")
+    assert frame["inferred"].isna().tolist() == [True, False, True, False]
