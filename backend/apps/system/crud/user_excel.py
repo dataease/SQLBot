@@ -120,7 +120,8 @@ async def batchUpload(session: SessionDep, trans, file) -> UploadResultDTO:
         raise HTTPException(400, "Excel header validation failed")
     success_list = []
     error_list = []
-    for row in df.itertuples():
+    # Read cells by position: pandas renames headers such as "User Status" in named tuples.
+    for row in df.itertuples(index=False, name=None):
         row_validator = validate_row(trans=trans, head_i18n_list=i18n_head_list, row=row)
         if row_validator.success:
             success_list.append(row_validator.dict_data)
@@ -163,12 +164,13 @@ def validate_head(trans, head_i18n_list: list[str], head_list: list):
 def validate_row(trans, head_i18n_list: list[str], row):
     validator = RowValidator(success=True, row=[], error_info={})
     for i in range(len(head_i18n_list)):
-        col_name = trans(head_i18n_list[i])
-        row_value = getattr(row, col_name)
+        row_value = row[i]
         validator.row.append(row_value)
         _attr_name = f"{head_i18n_list[i].split('.')[-1]}"
         _method_name = f"validate_{_attr_name}"
-        cellValidator = dynamic_call(_method_name, row_value)
+        # These cells hold the localized option labels offered by the template.
+        kwargs = {"trans": trans} if _attr_name in ("status", "origin") else {}
+        cellValidator = dynamic_call(_method_name, row_value, **kwargs)
         if not cellValidator.success:
             validator.success = False
             validator.error_info[i] = cellValidator.message
@@ -286,12 +288,12 @@ def validate_workspace(value: str) -> CellValidator:
     return CellValidator(True, value, None)
 def validate_role(value: str) -> CellValidator:
     return CellValidator(True, value, None)
-def validate_status(value: str) -> CellValidator:
-    if value == '已启用': return CellValidator(True, 1, None)
-    if value == '已禁用': return CellValidator(True, 0, None)
+def validate_status(value: str, trans) -> CellValidator:
+    if value in ('已启用', trans('i18n_user.status_enabled')): return CellValidator(True, 1, None)
+    if value in ('已禁用', trans('i18n_user.status_disabled')): return CellValidator(True, 0, None)
     return CellValidator(False, None, "状态只能是已启用或已禁用")
-def validate_origin(value: str) -> CellValidator:
-    if value == '本地创建': return CellValidator(True, 0, None)
+def validate_origin(value: str, trans) -> CellValidator:
+    if value in ('本地创建', trans('i18n_user.local_creation')): return CellValidator(True, 0, None)
     return CellValidator(False, None, "不支持当前来源")
 def validate_platform_id(value: str) -> CellValidator:
     return CellValidator(True, value, None)
