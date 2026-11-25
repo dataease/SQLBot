@@ -198,8 +198,9 @@ const clearWorkspace = (val: any) => {
 }
 
 const clearWorkspaceAll = () => {
+  checkTableList.value = []
   checkedWorkspace.value = []
-  handleCheckedWorkspaceChange([])
+  syncCheckedState()
 }
 
 defineExpose({
