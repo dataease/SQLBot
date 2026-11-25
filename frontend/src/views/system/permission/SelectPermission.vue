@@ -110,7 +110,17 @@ const centerDialogVisible = ref(false)
 const checkTableList = ref([] as any[])
 
 const workspaceWithKeywords = computed(() => {
-  return workspace.value.filter((ele: any) => (ele.name as string).includes(search.value))
+  const keyword = search.value.trim().toLowerCase()
+  if (!keyword) {
+    return workspace.value
+  }
+  return workspace.value.filter((ele: any) =>
+    [ele.name, ele.account].some((field) =>
+      String(field ?? '')
+        .toLowerCase()
+        .includes(keyword)
+    )
+  )
 })
 
 watch(search, () => {
@@ -155,6 +165,29 @@ const handleCheckedWorkspaceChange = (value: CheckboxValueType[]) => {
   ]
 }
 
+const USER_PAGE_SIZE = 500
+
+const loadWorkspaceUsers = async () => {
+  const users: any[] = []
+  let page = 1
+  let totalPages = 1
+  do {
+    const res: any = await workspaceUserList({}, page, USER_PAGE_SIZE)
+    // json-bigint objects have no Object.prototype; keep checkbox values plain.
+    users.push(
+      ...res.items.map((user: any) => ({
+        id: user.id,
+        name: user.name,
+        account: user.account,
+      }))
+    )
+    totalPages = res.total_pages
+    if (!res.items.length) break
+    page += 1
+  } while (page <= totalPages)
+  return users
+}
+
 const open = async (user: any) => {
   loading.value = true
   search.value = ''
@@ -162,13 +195,7 @@ const open = async (user: any) => {
   checkAll.value = false
   checkTableList.value = []
   isIndeterminate.value = false
-  const systemWorkspaceList = await workspaceUserList({}, 1, 1000)
-  // json-bigint objects have no Object.prototype; keep checkbox values plain.
-  workspace.value = systemWorkspaceList.items.map((user: any) => ({
-    id: user.id,
-    name: user.name,
-    account: user.account,
-  }))
+  workspace.value = await loadWorkspaceUsers()
   if (user?.length) {
     checkedWorkspace.value = workspace.value.filter((ele: any) => user.includes(ele.id))
     checkTableList.value = [...checkedWorkspace.value]
