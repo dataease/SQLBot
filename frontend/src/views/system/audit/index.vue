@@ -240,10 +240,20 @@ const initWorkspace = () => {
   })
 }
 
-const initUsers = () => {
-  userApi.pager(1, 10000).then((res: any) => {
-    filterOption.value[1].option = [{ id: 1, name: 'Administrator' }, ...res.items]
-  })
+const USER_PAGE_SIZE = 500
+
+const initUsers = async () => {
+  const users: any[] = []
+  let page = 1
+  let totalPages = 1
+  do {
+    const res: any = await userApi.pager(page, USER_PAGE_SIZE)
+    users.push(...res.items)
+    totalPages = res.total_pages
+    if (!res.items.length) break
+    page += 1
+  } while (page <= totalPages)
+  filterOption.value[1].option = [{ id: 1, name: 'Administrator' }, ...users]
 }
 
 const initOptions = () => {
