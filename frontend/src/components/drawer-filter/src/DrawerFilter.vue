@@ -10,6 +10,7 @@ const props = defineProps({
     propTypes.shape({
       id: propTypes.string,
       name: propTypes.string,
+      label: propTypes.string,
     })
   ),
   index: propTypes.number,
@@ -69,8 +70,8 @@ useEmitt({
       >
         <el-option
           v-for="item in optionListNotSelect"
-          :key="item.name"
-          :label="item.name"
+          :key="item.id ?? item.name"
+          :label="item.label ?? item.name"
           :value="item"
         />
       </el-select>

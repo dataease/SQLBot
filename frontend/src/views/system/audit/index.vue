@@ -253,7 +253,14 @@ const initUsers = async () => {
     if (!res.items.length) break
     page += 1
   } while (page <= totalPages)
-  filterOption.value[1].option = [{ id: 1, name: 'Administrator' }, ...users]
+  filterOption.value[1].option = [
+    { id: 1, name: 'Administrator' },
+    ...users.map((user: any) => ({
+      ...user,
+      label:
+        user.account && user.account !== user.name ? `${user.name} (${user.account})` : user.name,
+    })),
+  ]
 }
 
 const initOptions = () => {
