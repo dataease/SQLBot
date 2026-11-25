@@ -477,7 +477,7 @@ defineExpose({
               <span v-if="!canDiscoverModels" class="enter">{{ t('model.enter_to_add') }}</span>
               <el-button
                 v-if="canDiscoverModels"
-                class="discovery-button"
+                class="discovery-button model-action"
                 text
                 :loading="discovering"
                 :disabled="discovering || !modelForm.api_domain.trim()"
@@ -574,7 +574,7 @@ defineExpose({
         </div>
         <div v-if="modelSelected && configExpand" class="model-params">
           {{ t('model.model_parameters') }}
-          <span class="btn" @click="handleParamsCreate">
+          <span class="model-action" @click="handleParamsCreate">
             <el-icon size="16">
               <icon_add_outlined></icon_add_outlined>
             </el-icon>
@@ -706,7 +706,7 @@ defineExpose({
           right: 0;
           transform: translateY(-50%);
           .ed-icon {
-            margin-right: 6px;
+            margin-right: 4px;
           }
           :deep(svg path) {
             fill: currentColor;
@@ -768,6 +768,27 @@ defineExpose({
         }
       }
 
+      .model-action {
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 22px;
+
+        &:not(.is-disabled) {
+          color: #1f2329;
+
+          &:hover {
+            background-color: #1f23291a;
+          }
+        }
+      }
+
       .model-params {
         display: flex;
         align-items: center;
@@ -776,20 +797,6 @@ defineExpose({
         font-size: 14px;
         line-height: 22px;
         margin: 16px 0 8px 0;
-
-        .btn {
-          height: 26px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 4px;
-          border-radius: 6px;
-          cursor: pointer;
-
-          &:hover {
-            background-color: #1f23291a;
-          }
-        }
 
         .ed-icon {
           margin-right: 4px;
