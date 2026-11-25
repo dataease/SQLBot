@@ -69,7 +69,7 @@
         </div>
         <div
           v-for="ele in checkTableList"
-          :key="ele.name"
+          :key="ele.id"
           style="margin: 0 16px; position: relative"
           class="flex-between align-center hover-bg_select"
         >
@@ -123,46 +123,32 @@ const workspaceWithKeywords = computed(() => {
   )
 })
 
+const visibleIds = computed(() => new Set(workspaceWithKeywords.value.map((ele: any) => ele.id)))
+const isVisibleUser = (ele: any) => visibleIds.value.has(ele.id)
+
+const syncCheckedState = () => {
+  const total = workspaceWithKeywords.value.length
+  const checked = checkedWorkspace.value.length
+  checkAll.value = total > 0 && checked === total
+  isIndeterminate.value = checked > 0 && checked < total
+}
+
 watch(search, () => {
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
-  checkedWorkspace.value = checkTableList.value.filter((ele: any) =>
-    tableNameArr.includes(ele.name)
-  )
-  const checkedCount = checkedWorkspace.value.length
-  checkAll.value = checkedCount === workspaceWithKeywords.value.length
-  isIndeterminate.value = checkedCount > 0 && checkedCount < workspaceWithKeywords.value.length
+  checkedWorkspace.value = checkTableList.value.filter(isVisibleUser)
+  syncCheckedState()
 })
 const handleCheckAllChange = (val: CheckboxValueType) => {
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
-  checkedWorkspace.value = val
-    ? [
-        ...new Set([
-          ...workspaceWithKeywords.value,
-          ...checkedWorkspace.value.filter((ele: any) => !tableNameArr.includes(ele.name)),
-        ]),
-      ]
-    : []
-  isIndeterminate.value = false
-  checkTableList.value = val
-    ? [
-        ...new Set([
-          ...workspaceWithKeywords.value,
-          ...checkTableList.value.filter((ele: any) => !tableNameArr.includes(ele.name)),
-        ]),
-      ]
-    : checkTableList.value.filter((ele: any) => !tableNameArr.includes(ele.name))
+  const rest = checkTableList.value.filter((ele: any) => !isVisibleUser(ele))
+  checkTableList.value = val ? [...rest, ...workspaceWithKeywords.value] : rest
+  checkedWorkspace.value = val ? [...workspaceWithKeywords.value] : []
+  syncCheckedState()
 }
 const handleCheckedWorkspaceChange = (value: CheckboxValueType[]) => {
-  const checkedCount = value.length
-  checkAll.value = checkedCount === workspaceWithKeywords.value.length
-  isIndeterminate.value = checkedCount > 0 && checkedCount < workspaceWithKeywords.value.length
-  const tableNameArr = workspaceWithKeywords.value.map((ele: any) => ele.name)
-  checkTableList.value = [
-    ...new Set([
-      ...checkTableList.value.filter((ele: any) => !tableNameArr.includes(ele.name)),
-      ...value,
-    ]),
-  ]
+  const rest = checkTableList.value.filter((ele: any) => !isVisibleUser(ele))
+  const picked = (value as any[]).filter(isVisibleUser)
+  checkTableList.value = [...rest, ...picked]
+  checkedWorkspace.value = [...picked]
+  syncCheckedState()
 }
 
 const USER_PAGE_SIZE = 500
