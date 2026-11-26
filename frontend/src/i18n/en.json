@@ -424,6 +424,16 @@
       "field_comment_label": "Field Comment"
     },
     "form": {
+      "kerberos_host": "Kerberos service hostname",
+      "kerberos_host_hint": "Optional; defaults to connection host",
+      "kerberos_auth": "Kerberos authentication",
+      "kerberos_principal": "Client principal",
+      "kerberos_service": "Service name",
+      "kerberos_required": "Enter the client principal",
+      "kerberos_selected": "Selected",
+      "kerberos_saved": "Credentials saved. Leave uploads empty to retain them. When changing connection settings, upload both files again.",
+      "kerberos_upload_hint": "Upload krb5.conf (up to 64 KB) and keytab (up to 256 KB). Tickets are obtained automatically for each connection.",
+      "kerberos_file_error": "Unable to read file or file exceeds size limit",
       "title": {
         "add": "Add Datasource",
         "edit": "Edit Datasource",

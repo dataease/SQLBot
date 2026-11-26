@@ -109,10 +109,11 @@ async def get_datasource(session: SessionDep, user: CurrentUser, trans: Trans, i
         editable_fields = {
             "host", "port", "username", "database", "dbSchema", "filename", "sheets",
             "mode", "timeout", "lowVersion", "ssl", "poolSize", "engine", "extraJdbc",
+            "kerberosMode", "kerberosPrincipal", "kerberosService", "kerberosHost",
         }
-        result["configuration"] = json.dumps({
-            field: configuration[field] for field in editable_fields if field in configuration
-        })
+        editable = {field: configuration[field] for field in editable_fields if field in configuration}
+        editable["kerberosConfigured"] = bool(configuration.get("kerberosConf") and configuration.get("kerberosKeytab"))
+        result["configuration"] = json.dumps(editable)
     return result
 
 

@@ -424,6 +424,16 @@
       "field_comment_label": "คำอธิบายฟิลด์"
     },
     "form": {
+      "kerberos_host": "ชื่อโฮสต์บริการ Kerberos",
+      "kerberos_host_hint": "ไม่บังคับ หากเว้นว่างจะใช้โฮสต์การเชื่อมต่อ",
+      "kerberos_auth": "การยืนยันตัวตน Kerberos",
+      "kerberos_principal": "principal ของไคลเอนต์",
+      "kerberos_service": "ชื่อบริการ",
+      "kerberos_required": "กรอก principal ของไคลเอนต์",
+      "kerberos_selected": "เลือกแล้ว",
+      "kerberos_saved": "บันทึกข้อมูลรับรองแล้ว เว้นไฟล์ว่างเพื่อเก็บค่าเดิม หากเปลี่ยนการเชื่อมต่อให้อัปโหลดทั้งสองไฟล์ใหม่",
+      "kerberos_upload_hint": "อัปโหลด krb5.conf (สูงสุด 64 KB) และ keytab (สูงสุด 256 KB) ระบบรับตั๋วใหม่ทุกครั้งที่เชื่อมต่อ",
+      "kerberos_file_error": "อ่านไฟล์ไม่ได้หรือไฟล์เกินขนาดที่กำหนด",
       "title": {
         "add": "เพิ่มแหล่งข้อมูล",
         "edit": "แก้ไขแหล่งข้อมูล",

@@ -124,6 +124,12 @@ class DatasourceConf(BaseModel):
     ssl: bool = False
     poolSize: int = 5
     engine: str = 'hive'
+    kerberosMode: bool = False
+    kerberosPrincipal: str = ''
+    kerberosService: str = ''
+    kerberosHost: str = ''
+    kerberosConf: str = ''
+    kerberosKeytab: str = ''
 
     def to_dict(self):
         return {
@@ -142,7 +148,13 @@ class DatasourceConf(BaseModel):
             "lowVersion": self.lowVersion,
             "ssl": self.ssl,
             "poolSize": self.poolSize,
-            "engine": self.engine
+            "engine": self.engine,
+            "kerberosMode": self.kerberosMode,
+            "kerberosPrincipal": self.kerberosPrincipal,
+            "kerberosService": self.kerberosService,
+            "kerberosHost": self.kerberosHost,
+            "kerberosConf": self.kerberosConf,
+            "kerberosKeytab": self.kerberosKeytab
         }
 
 

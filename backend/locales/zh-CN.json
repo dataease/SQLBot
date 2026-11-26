@@ -1,4 +1,5 @@
 {
+  "i18n_ds_kerberos_failed": "Kerberos 连接失败，请检查凭据、KDC 网络、DNS 和运行依赖。",
   "i18n_platform_token_cache_error": "平台认证暂时不可用，请重试或联系管理员。",
   "ws_model_settings": "工作空间模型设置",
   "system_model_workspace_impact": "模型变更影响",

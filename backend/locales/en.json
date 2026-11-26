@@ -1,4 +1,5 @@
 {
+  "i18n_ds_kerberos_failed": "Kerberos connection failed. Check credentials, KDC connectivity, DNS and runtime dependencies.",
   "i18n_platform_token_cache_error": "Platform authentication is temporarily unavailable. Please retry or contact the administrator.",
   "ws_model_settings": "Workspace model settings",
   "system_model_workspace_impact": "Model change impact",

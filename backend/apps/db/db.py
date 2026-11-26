@@ -108,6 +108,21 @@ def get_extra_config(conf: DatasourceConf):
     return config_dict
 
 
+def get_hs2_auth_config(ds_type: str, conf: DatasourceConf, extra_config: dict) -> dict:
+    """Resolve HS2 authentication without overriding explicit Kerberos settings."""
+    config = dict(extra_config)
+    auth = config.get('auth', '').upper()
+    if auth == 'KERBEROS':
+        config['auth'] = auth
+        config.setdefault('kerberos_service_name', 'impala' if ds_type == 'impala' else 'hive')
+        # Kerberos uses the worker's credential cache, never a database password.
+        config.pop('password', None)
+    elif conf.password:
+        config['password'] = conf.password
+        config['auth'] = auth or 'LDAP'
+    return config
+
+
 def get_origin_connect(type: str, conf: DatasourceConf):
     extra_config_dict = get_extra_config(conf)
     if equals_ignore_case(type, "sqlServer"):
@@ -266,6 +281,11 @@ def get_session(ds: CoreDatasource | AssistantOutDsSchema):
 
 def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: dict = {}, use_pool: bool = False):
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
+    if getattr(conf, 'kerberosMode', False):
+        if not equals_ignore_case(ds.type, 'hive', 'impala'):
+            raise ValueError('Kerberos requires HiveServer2')
+        from apps.db.kerberos_connection import KerberosConnection, KerberosPool
+        return KerberosPool(conf.model_dump()) if use_pool else KerberosConnection(conf.model_dump())
     extra_config_dict = get_extra_config(conf)
 
     pool_config = {
@@ -346,10 +366,8 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
                 options=f"-c statement_timeout={conf.timeout * 1000}",
                 **conn_conf
             )
-    elif equals_ignore_case(ds.type, 'hive'):
-        if conf.password:
-            conn_conf['password'] = conf.password
-            conn_conf['auth'] = 'LDAP'
+    elif equals_ignore_case(ds.type, 'hive', 'impala'):
+        conn_conf = get_hs2_auth_config(ds.type, conf, conn_conf)
 
         if not use_pool:
             conn = hive.connect(host=conf.host, port=conf.port, username=conf.username, database=conf.database,
@@ -368,6 +386,9 @@ def get_driver_connection(ds: CoreDatasource | AssistantOutDsSchema, db_config: 
 
 
 def get_driver_pool(ds: CoreDatasource | AssistantOutDsSchema, db_config: dict = {}):
+    conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
+    if getattr(conf, 'kerberosMode', False):
+        return get_driver_connection(ds, db_config, use_pool=True)
     pool = driver_pool_manager.get_pool(ds, db_config)
     return pool
 
@@ -391,6 +412,15 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
             return False
     else:
         conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration)))
+        if getattr(conf, 'kerberosMode', False):
+            try:
+                with get_driver_connection(ds) as connection, connection.cursor() as cursor:
+                    cursor.execute('select 1')
+                return True
+            except Exception:
+                if is_raise:
+                    raise HTTPException(status_code=500, detail=trans('i18n_ds_kerberos_failed')) from None
+                return False
         extra_config_dict = get_extra_config(conf)
         if equals_ignore_case(ds.type, 'dm'):
             with dmPython.connect(user=conf.username, password=conf.password, server=conf.host,
@@ -446,12 +476,12 @@ def check_connection(trans: Optional[Trans], ds: CoreDatasource | AssistantOutDs
                     if is_raise:
                         raise HTTPException(status_code=500, detail=trans('i18n_ds_invalid') + f': {e.args}')
                     return False
-        elif equals_ignore_case(ds.type, 'hive'):
-            if conf.password:
-                extra_config_dict['password'] = conf.password
-                extra_config_dict['auth'] = 'LDAP'
-            with hive.connect(host=conf.host, port=conf.port, username=conf.username, database=conf.database,
-                              **extra_config_dict) as conn, conn.cursor() as cursor:
+        elif equals_ignore_case(ds.type, 'hive', 'impala'):
+            extra_config_dict = get_hs2_auth_config(ds.type, conf, extra_config_dict)
+            connection = (get_driver_connection(ds) if getattr(conf, 'kerberosMode', False) else
+                          hive.connect(host=conf.host, port=conf.port, username=conf.username,
+                                       database=conf.database, **extra_config_dict))
+            with connection as conn, conn.cursor() as cursor:
                 try:
                     cursor.execute('select 1')
                     SQLBotLogUtil.info("success")
@@ -517,7 +547,7 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
                     cursor.execute(sql)
                     res = cursor.fetchall()
                     version = res[0][0]
-            elif equals_ignore_case(ds.type, 'redshift', 'es', 'hive'):
+            elif equals_ignore_case(ds.type, 'redshift', 'es', 'hive', 'impala'):
                 version = ''
     except Exception as e:
         print(e)
@@ -617,7 +647,7 @@ def get_tables(ds: CoreDatasource):
             res = get_es_index(conf)
             res_list = [TableSchema(*item) for item in res]
             return res_list
-        elif equals_ignore_case(ds.type, 'hive'):
+        elif equals_ignore_case(ds.type, 'hive', 'impala'):
             with get_driver_connection(ds) as conn, conn.cursor() as cursor:
                 cursor.execute(sql)
                 res = cursor.fetchall()
@@ -668,7 +698,7 @@ def get_fields(ds: CoreDatasource, table_name: str = None):
             res = get_es_fields(conf, table_name)
             res_list = [ColumnSchema(*item) for item in res]
             return res_list
-        elif equals_ignore_case(ds.type, 'hive'):
+        elif equals_ignore_case(ds.type, 'hive', 'impala'):
             with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
                 cursor.execute(sql)
                 res = cursor.fetchall()
@@ -1015,7 +1045,7 @@ def exec_sql(ds: CoreDatasource | AssistantOutDsSchema, sql: str, origin_column=
                         "sql": bytes.decode(base64.b64encode(bytes(sql, 'utf-8')))}
             except Exception as ex:
                 raise Exception(str(ex))
-        elif equals_ignore_case(ds.type, 'hive'):
+        elif equals_ignore_case(ds.type, 'hive', 'impala'):
             with get_driver_pool(ds).connection() as conn, conn.cursor() as cursor:
                 try:
                     # Hive uses backticks for identifiers; normalize quoted identifiers as a compatibility fallback.
@@ -1143,7 +1173,7 @@ def get_sqlglot_dialect(ds_type: str) -> str:
         return 'mysql'
     elif equals_ignore_case(ds_type, 'sqlServer'):
         return 'tsql'
-    elif equals_ignore_case(ds_type, 'hive'):
+    elif equals_ignore_case(ds_type, 'hive', 'impala'):
         return 'hive'
     return None
 
@@ -1171,6 +1201,7 @@ DS_SPECIFIC_DANGEROUS_FUNCTIONS = {
     'sqlserver': {'EXEC', 'xp_cmdshell', 'sp_executesql'},
     'oracle': {'UTL_FILE', 'DBMS_PIPE', 'DBMS_LOCK'},
     'hive': {'ADD FILE', 'ADD JAR'},
+    'impala': {'ADD FILE', 'ADD JAR'},
 }
 
 # 危险模式正则表达式（用于检查特殊语法）
