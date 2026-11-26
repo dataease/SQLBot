@@ -9,6 +9,9 @@ import legacy from '@vitejs/plugin-legacy'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  // Opt out with SQLBOT_LEGACY=false (npm run build:modern) to skip the
+  // duplicate Babel/legacy bundle, which dominates build time and memory.
+  const withLegacy = process.env.SQLBOT_LEGACY !== 'false'
   console.info(mode)
   console.info(env)
   return {
@@ -28,11 +31,15 @@ export default defineConfig(({ mode }) => {
         svgo: false,
         defaultImport: 'component', // or 'raw'
       }),
-      legacy({
-        targets: ['Chrome >= 81'],
-        polyfills: true,
-        modernPolyfills: true,
-      }),
+      ...(withLegacy
+        ? [
+            legacy({
+              targets: ['Chrome >= 81'],
+              polyfills: true,
+              modernPolyfills: true,
+            }),
+          ]
+        : []),
     ],
     resolve: {
       alias: {
