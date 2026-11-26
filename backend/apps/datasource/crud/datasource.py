@@ -66,19 +66,35 @@ def seal_browser_configuration(configuration: str, previous: str | None = None) 
     incoming = parse_configuration(decode_legacy_configuration(configuration))
     if previous:
         saved = parse_configuration(aes_decrypt(previous))
-        retained = {field: saved[field] for field in ("password", "extraJdbc")
+        secret_fields = ["password", "extraJdbc"]
+        if incoming.get("kerberosMode", saved.get("kerberosMode")):
+            secret_fields += ["kerberosConf", "kerberosKeytab"]
+        retained = {field: saved[field] for field in secret_fields
                     if field not in incoming and saved.get(field)}
         # Never send a stored secret to a destination selected by the request.
-        destination = ("host", "port", "username", "database", "dbSchema", "mode", "engine", "ssl", "extraJdbc")
+        destination = ("host", "port", "username", "database", "dbSchema", "mode", "engine", "ssl", "extraJdbc", "kerberosMode")
+        if saved.get("kerberosMode") or incoming.get("kerberosMode"):
+            destination += ("kerberosPrincipal", "kerberosService", "kerberosHost", "kerberosConf")
         defaults = DatasourceConf().model_dump()
         existing = {**defaults, **saved}
         candidate = {**existing, **incoming}
         if any(candidate[field] != existing[field] for field in destination):
+            if "kerberosKeytab" in retained and candidate.get("kerberosMode"):
+                raise DatasourceConfigurationError("Connection settings changed while retaining Kerberos credentials")
             # A changed destination must never receive credentials from the old one.
             incoming.setdefault("password", "")
             if "extraJdbc" in retained:
                 incoming["extraJdbc"] = ""
         incoming = {**saved, **incoming}
+    if incoming.get("kerberosMode"):
+        from apps.db.kerberos_connection import validate_credentials
+        try:
+            validate_credentials(incoming)
+        except ValueError:
+            raise DatasourceConfigurationError("Invalid Kerberos configuration") from None
+    elif "kerberosMode" in incoming:
+        incoming["kerberosConf"] = ""
+        incoming["kerberosKeytab"] = ""
     if "sheets" in incoming:
         validate_excel_sheet_names(incoming)
     return aes_encrypt(json.dumps(incoming)).decode("ascii")
@@ -416,7 +432,7 @@ def preview(session: SessionDep, current_user: CurrentUser, id: int, data: Table
     table = session.query(CoreTable).filter(CoreTable.id == data.table.id).first()
     conf = DatasourceConf(**json.loads(aes_decrypt(ds.configuration))) if ds.type != "excel" else get_engine_config()
     sql: str = ""
-    if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks" or ds.type == "hive":
+    if ds.type == "mysql" or ds.type == "doris" or ds.type == "starrocks" or ds.type == "hive" or ds.type == "impala":
         sql = f"""SELECT `{"`, `".join(fields)}` FROM `{table.table_name}` 
             {where} 
             LIMIT 100"""
@@ -535,7 +551,7 @@ def get_table_sample_data(ds: CoreDatasource, table_name: str, fields: list) -> 
         query = f"SELECT TOP 3 {','.join(field_names)} FROM {prefix}{table_name}{suffix}"
     elif equals_ignore_case(ds.type, "ck"):
         query = f"SELECT {','.join(field_names)} FROM {table_name} LIMIT 3"
-    elif equals_ignore_case(ds.type, "hive"):
+    elif equals_ignore_case(ds.type, "hive", "impala"):
         query = f"SELECT {','.join(field_names)} FROM {table_name} LIMIT 3"
     elif equals_ignore_case(ds.type, "oracle"):
         query = f"SELECT {','.join(field_names)} FROM \"{table_name}\" WHERE ROWNUM <= 3"
@@ -606,7 +622,7 @@ def get_table_schema(session: SessionDep, current_user: CurrentUser, ds: CoreDat
             continue
 
         schema_table = ''
-        no_schema_types = ["mysql", "es", "sqlite", "hive", "doris", "starrocks"]
+        no_schema_types = ["mysql", "es", "sqlite", "hive", "impala", "doris", "starrocks"]
         schema_table += f"# Table: {db_name}.{obj.table.table_name}" if ds.type not in no_schema_types and db_name else f"# Table: {obj.table.table_name}"
         table_comment = ''
         if obj.table.custom_comment:

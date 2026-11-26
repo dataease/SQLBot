@@ -424,6 +424,16 @@
       "field_comment_label": "字段注释"
     },
     "form": {
+      "kerberos_host": "Kerberos 服务主机名",
+      "kerberos_host_hint": "选填，留空时使用连接主机",
+      "kerberos_auth": "Kerberos 认证",
+      "kerberos_principal": "客户端 principal",
+      "kerberos_service": "服务名",
+      "kerberos_required": "请填写客户端 principal",
+      "kerberos_selected": "已选择",
+      "kerberos_saved": "凭据已保存。不上传时保留；更改连接目标或认证配置时，请重新上传两个文件。",
+      "kerberos_upload_hint": "请上传 krb5.conf（最多 64 KB）和 keytab（最多 256 KB），每次建立连接自动获取票据。",
+      "kerberos_file_error": "文件读取失败或超过大小限制",
       "title": {
         "add": "添加数据源",
         "edit": "编辑数据源",

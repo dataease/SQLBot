@@ -6,7 +6,7 @@ import icon_upload_outlined from '@/assets/svg/icon_upload_outlined.svg'
 import icon_searchOutline_outlined from '@/assets/svg/icon_search-outline_outlined.svg'
 import { encrypted } from './js/aes'
 import { ElMessage } from 'element-plus-secondary'
-import type { FormInstance, FormRules } from 'element-plus-secondary'
+import type { FormInstance, FormRules, UploadFile } from 'element-plus-secondary'
 import icon_form_outlined from '@/assets/svg/icon_form_outlined.svg'
 import FixedSizeList from 'element-plus-secondary/es/components/virtual-list/src/components/fixed-size-list.mjs'
 import { debounce } from 'lodash-es'
@@ -148,6 +148,13 @@ const form = ref<any>({
   ssl: false,
   poolSize: 5,
   engine: 'hive',
+  kerberosMode: false,
+  kerberosPrincipal: '',
+  kerberosService: '',
+  kerberosHost: '',
+  kerberosConf: '',
+  kerberosKeytab: '',
+  kerberosConfigured: false,
 })
 
 const close = () => {
@@ -203,6 +210,13 @@ const initForm = (item: any, editTable: boolean = false) => {
           ? configuration.poolSize
           : 5
       form.value.engine = configuration.engine ? configuration.engine : 'hive'
+      form.value.kerberosMode = configuration.kerberosMode ?? false
+      form.value.kerberosPrincipal = configuration.kerberosPrincipal ?? ''
+      form.value.kerberosService = configuration.kerberosService ?? ''
+      form.value.kerberosHost = configuration.kerberosHost ?? ''
+      form.value.kerberosConf = ''
+      form.value.kerberosKeytab = ''
+      form.value.kerberosConfigured = configuration.kerberosConfigured ?? false
     }
 
     savedConnection.value = connectionSnapshot()
@@ -279,6 +293,13 @@ const initForm = (item: any, editTable: boolean = false) => {
       ssl: false,
       poolSize: 5,
       engine: 'hive',
+      kerberosMode: false,
+      kerberosPrincipal: '',
+      kerberosService: '',
+      kerberosHost: '',
+      kerberosConf: '',
+      kerberosKeytab: '',
+      kerberosConfigured: false,
     }
   }
   dialogVisible.value = true
@@ -352,15 +373,39 @@ const save = async (formEl: FormInstance | undefined) => {
   })
 }
 
+const readKerberosFile = async (upload: UploadFile, field: 'kerberosConf' | 'kerberosKeytab') => {
+  const file = upload.raw
+  if (!file) return
+  try {
+    const limit = field === 'kerberosConf' ? 65536 : 262144
+    if (file.size > limit || file.size === 0) throw new Error('size')
+    if (field === 'kerberosConf') {
+      form.value[field] = await file.text()
+    } else {
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      let binary = ''
+      for (const byte of bytes) binary += String.fromCharCode(byte)
+      form.value[field] = btoa(binary)
+    }
+  } catch {
+    form.value[field] = ''
+    ElMessage.error(t('ds.form.kerberos_file_error'))
+  }
+}
+
 const buildConf = () => {
   form.value.configuration = encrypted(
     JSON.stringify({
       host: form.value.host,
       port: form.value.port,
       username: form.value.username,
-      password: form.value.id && !form.value.password ? undefined : form.value.password,
+      password: form.value.kerberosMode
+        ? ''
+        : form.value.id && !form.value.password
+          ? undefined
+          : form.value.password,
       database: form.value.database,
-      extraJdbc: form.value.extraJdbc,
+      extraJdbc: form.value.kerberosMode ? '' : form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
       filename: form.value.filename,
       sheets: form.value.sheets,
@@ -370,6 +415,14 @@ const buildConf = () => {
       ssl: form.value.ssl,
       poolSize: form.value.poolSize,
       engine: form.value.engine,
+      kerberosMode: ['hive', 'impala'].includes(form.value.type) && form.value.kerberosMode,
+      kerberosPrincipal: form.value.kerberosPrincipal,
+      kerberosHost: form.value.kerberosHost,
+      kerberosService:
+        form.value.kerberosService || (form.value.type === 'impala' ? 'impala' : 'hive'),
+      kerberosConf: form.value.id && !form.value.kerberosConf ? undefined : form.value.kerberosConf,
+      kerberosKeytab:
+        form.value.id && !form.value.kerberosKeytab ? undefined : form.value.kerberosKeytab,
     })
   )
   const obj = JSON.parse(JSON.stringify(form.value))
@@ -389,6 +442,13 @@ const buildConf = () => {
   delete obj.ssl
   delete obj.poolSize
   delete obj.engine
+  delete obj.kerberosMode
+  delete obj.kerberosPrincipal
+  delete obj.kerberosService
+  delete obj.kerberosHost
+  delete obj.kerberosConf
+  delete obj.kerberosKeytab
+  delete obj.kerberosConfigured
   return obj
 }
 
@@ -729,7 +789,72 @@ defineExpose({
               "
             />
           </el-form-item>
-          <el-form-item :label="t('ds.form.password')">
+          <el-form-item
+            v-if="['hive', 'impala'].includes(form.type)"
+            :label="t('ds.form.kerberos_auth')"
+          >
+            <el-switch v-model="form.kerberosMode" />
+          </el-form-item>
+          <template v-if="['hive', 'impala'].includes(form.type) && form.kerberosMode">
+            <el-form-item
+              :label="t('ds.form.kerberos_principal')"
+              prop="kerberosPrincipal"
+              :rules="[
+                { required: true, message: t('ds.form.kerberos_required'), trigger: 'blur' },
+              ]"
+            >
+              <el-input v-model="form.kerberosPrincipal" />
+            </el-form-item>
+            <el-form-item :label="t('ds.form.kerberos_service')">
+              <el-input
+                v-model="form.kerberosService"
+                :placeholder="form.type === 'impala' ? 'impala' : 'hive'"
+              />
+            </el-form-item>
+            <el-form-item :label="t('ds.form.kerberos_host')">
+              <el-input
+                v-model="form.kerberosHost"
+                :placeholder="t('ds.form.kerberos_host_hint')"
+              />
+            </el-form-item>
+            <el-form-item label="krb5.conf">
+              <el-upload
+                accept=".conf"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="(file: UploadFile) => readKerberosFile(file, 'kerberosConf')"
+              >
+                <el-button :icon="Plus">{{ t('user.upload_file') }}</el-button>
+              </el-upload>
+              <span v-if="form.kerberosConf">{{ t('ds.form.kerberos_selected') }}</span>
+            </el-form-item>
+            <el-form-item label="keytab">
+              <el-upload
+                accept=".keytab"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="(file: UploadFile) => readKerberosFile(file, 'kerberosKeytab')"
+              >
+                <el-button :icon="Plus">{{ t('user.upload_file') }}</el-button>
+              </el-upload>
+              <span v-if="form.kerberosKeytab">{{ t('ds.form.kerberos_selected') }}</span>
+            </el-form-item>
+            <el-alert
+              :closable="false"
+              type="info"
+              :title="
+                t(
+                  form.kerberosConfigured
+                    ? 'ds.form.kerberos_saved'
+                    : 'ds.form.kerberos_upload_hint'
+                )
+              "
+            />
+          </template>
+          <el-form-item
+            v-if="!(['hive', 'impala'].includes(form.type) && form.kerberosMode)"
+            :label="t('ds.form.password')"
+          >
             <el-input
               v-model="form.password"
               clearable

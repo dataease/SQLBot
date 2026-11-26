@@ -22,8 +22,8 @@ def _load_symbol(relative_path, name, namespace):
     return namespace[name]
 
 
-@pytest.fixture
-def get_hive_fields():
+@pytest.fixture(params=["hive", "impala"])
+def get_hive_fields(request):
     cursor = Mock()
     connection = SimpleNamespace(cursor=lambda: nullcontext(cursor))
     pool = SimpleNamespace(connection=lambda: nullcontext(connection))
@@ -47,7 +47,7 @@ def get_hive_fields():
 
     def discover(rows):
         cursor.fetchall.return_value = rows
-        fields = get_fields(SimpleNamespace(type="hive", configuration="{}"), "sample")
+        fields = get_fields(SimpleNamespace(type=request.param, configuration="{}"), "sample")
         return [(field.fieldName, field.fieldType, field.fieldComment) for field in fields]
 
     return discover

@@ -29,7 +29,7 @@ def get_version_sql(ds: CoreDatasource, conf: DatasourceConf):
         return """
                 SELECT * FROM v$version
                 """
-    elif equals_ignore_case(ds.type, "redshift", "sqlite", "hive"):
+    elif equals_ignore_case(ds.type, "redshift", "sqlite", "hive", "impala"):
         return ''
 
 
@@ -162,7 +162,7 @@ def get_table_sql(ds: CoreDatasource, conf: DatasourceConf, db_version: str = ''
               """, conf.dbSchema
     elif equals_ignore_case(ds.type, "es"):
         return "", None
-    elif equals_ignore_case(ds.type, "hive"):
+    elif equals_ignore_case(ds.type, "hive", "impala"):
         return """
                 SHOW TABLES
                 """, None
@@ -316,6 +316,6 @@ def get_field_sql(ds: CoreDatasource, conf: DatasourceConf, table_name: str = No
         return sql1 + sql2, conf.dbSchema, table_name
     elif equals_ignore_case(ds.type, "es"):
         return "", None, None
-    elif equals_ignore_case(ds.type, "hive"):
+    elif equals_ignore_case(ds.type, "hive", "impala"):
         sql1 = f"DESCRIBE {table_name}"
         return sql1, None, None

@@ -1,4 +1,5 @@
 {
+  "i18n_ds_kerberos_failed": "Kerberos 연결에 실패했습니다. 자격 증명, KDC 연결, DNS 및 런타임 종속성을 확인하세요.",
   "i18n_platform_token_cache_error": "플랫폼 인증을 일시적으로 사용할 수 없습니다. 다시 시도하거나 관리자에게 문의하세요.",
   "ws_model_settings": "워크스페이스 모델 설정",
   "system_model_workspace_impact": "모델 변경 영향",

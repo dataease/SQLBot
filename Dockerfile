@@ -11,6 +11,9 @@ COPY frontend/ ./
 RUN npm install && npm run build
 
 FROM ${SQLBOT_RUNTIME_IMAGE} AS runtime-base
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends krb5-user libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
 # Rebuild Dockerfile-base first, then point this build at the rebuilt image.
 RUN if ! node -e 'if (process.versions.node.split(".")[0] !== "22") process.exit(1)' \
         || [ -e /opt/dmdbms/bin/libssl.so ] \

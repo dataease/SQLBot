@@ -372,6 +372,85 @@ def test_datasource_http_postgres(pg, monkeypatch, caplog):
     assert saved not in caplog.text
 
 
+def test_kerberos_encrypted_retention_rotation_and_disable(key_file):
+    from apps.datasource.crud.datasource import seal_browser_configuration
+
+    config = {
+        "host": "hive.example.invalid", "port": 10000, "username": "sqlbot",
+        "database": "default", "password": "", "extraJdbc": "",
+        "kerberosMode": True, "kerberosPrincipal": "sqlbot@EXAMPLE.COM",
+        "kerberosService": "hive",
+        "kerberosConf": "[libdefaults]\ndefault_realm = EXAMPLE.COM\n",
+        "kerberosKeytab": base64.b64encode(b"\x05\x02synthetic-only").decode(),
+    }
+    stored = seal_browser_configuration(legacy(json.dumps(config)))
+    assert "synthetic-only" not in stored
+    assert aes_decrypt(stored) == json.dumps(config)
+    edited = {key: value for key, value in config.items()
+              if key not in {"kerberosConf", "kerberosKeytab"}}
+    retained = seal_browser_configuration(legacy(json.dumps(edited)), stored)
+    assert json.loads(aes_decrypt(retained)) == config
+    for change in ({"host": "other.example.invalid"},
+                   {"kerberosPrincipal": "other@EXAMPLE.COM"},
+                   {"kerberosService": "impala"},
+                   {"kerberosHost": "other.example.invalid"},
+                   {"kerberosConf": "[libdefaults]\ndefault_realm = OTHER.COM\n"}):
+        with pytest.raises(DatasourceConfigurationError):
+            seal_browser_configuration(legacy(json.dumps(edited | change)), stored)
+    rotated = config | {"kerberosKeytab": base64.b64encode(b"\x05\x02replacement").decode()}
+    assert json.loads(aes_decrypt(seal_browser_configuration(legacy(json.dumps(rotated)), stored))) == rotated
+    disabled = seal_browser_configuration(legacy(json.dumps(edited | {"kerberosMode": False})), stored)
+    assert json.loads(aes_decrypt(disabled))["kerberosKeytab"] == ""
+    assert json.loads(aes_decrypt(disabled))["kerberosConf"] == ""
+    with pytest.raises(DatasourceConfigurationError):
+        seal_browser_configuration(legacy(json.dumps(config | {"kerberosConf": "include /etc/passwd"})))
+
+
+def test_kerberos_details_redact_uploads_and_reject_other_workspace(key_file, monkeypatch):
+    import asyncio
+    import inspect
+    from types import SimpleNamespace
+
+    from fastapi import HTTPException
+
+    config = {
+        "kerberosMode": True, "kerberosPrincipal": "sqlbot@EXAMPLE.COM",
+        "kerberosService": "hive", "kerberosConf": "private-profile",
+        "kerberosKeytab": "private-keytab", "host": "hive.example.invalid",
+    }
+    record = CoreDatasource(id=123, oid=1, type="hive", configuration=aes_encrypt(json.dumps(config)).decode())
+    monkeypatch.setattr(datasource, "get_ds", lambda *_: record)
+    handler = inspect.unwrap(datasource.get_datasource)
+    details = asyncio.run(handler(None, SimpleNamespace(oid=1), lambda key: key, 123))
+    editable = json.loads(details["configuration"])
+    assert editable["kerberosConfigured"] is True
+    assert editable["kerberosPrincipal"] == config["kerberosPrincipal"]
+    assert "kerberosConf" not in editable
+    assert "kerberosKeytab" not in editable
+    assert "private-" not in json.dumps(details)
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(handler(None, SimpleNamespace(oid=2), lambda key: key, 123))
+    assert error.value.status_code == 404
+    request = CoreDatasource(id=123, type="hive", configuration=legacy(json.dumps(config)))
+    with pytest.raises(HTTPException) as error:
+        datasource._browser_configuration(None, SimpleNamespace(oid=2), lambda key: key, request)
+    assert error.value.status_code == 404
+
+
+def test_password_auth_edit_ignores_inactive_kerberos_defaults(key_file):
+    from apps.datasource.crud.datasource import seal_browser_configuration
+
+    original = {"host": "db.example.invalid", "port": 21050, "username": "test",
+                "password": "synthetic-password", "database": "test", "extraJdbc": ""}
+    stored = seal_browser_configuration(legacy(json.dumps(original)))
+    request = {key: value for key, value in original.items() if key != "password"}
+    request.update(kerberosMode=False, kerberosPrincipal="", kerberosService="impala", kerberosHost="")
+    result = seal_browser_configuration(legacy(json.dumps(request)), stored)
+    assert json.loads(aes_decrypt(result))["password"] == original["password"]
+    changed = seal_browser_configuration(legacy(json.dumps(request | {"host": "other.example.invalid"})), stored)
+    assert json.loads(aes_decrypt(changed))["password"] == ""
+
+
 @pytest.mark.parametrize("field,value", [("host", "other.invalid"), ("database", "other"), ("extraJdbc", "sslmode=require")])
 def test_changed_connection_does_not_reuse_password(key_file, field, value):
     from apps.datasource.crud.datasource import seal_browser_configuration

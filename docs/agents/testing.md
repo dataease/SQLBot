@@ -120,6 +120,10 @@ SQLBOT_PASSWORD_TEST_PG=1 uv run --no-sync pytest -q tests/test_local_password_h
 
 `backend/tests/test_datasource_configuration_crypto.py` 默认执行合成配置的离线加密回归。显式设置 `SQLBOT_DATASOURCE_TEST_DATABASE_URL` 后，在指定隔离 PostgreSQL 数据库内创建并清理随机 schema，执行配置迁移和真实 FastAPI 数据源路由测试。HTTP 测试注入合成身份，保留工作空间权限检查，隔离审计写入与 embedding 调度。预览使用真实连接，查询通过正常执行函数验证。
 
+## 数据源 Kerberos 离线回归
+
+在 backend 目录运行 `uv run --no-sync python -m pytest -q tests/test_kerberos_connection.py tests/test_hs2_auth.py tests/test_hive_fields.py tests/test_connection_pool_manager.py tests/test_datasource_configuration_crypto.py`。子进程测试使用合成 kinit 和 PyHive 驱动，不访问 KDC，覆盖并发身份隔离、超时/失败清理及恶意配置拒绝；配置加密测试覆盖凭据保留/替换/清除、编辑详情脱敏和跨工作空间拒绝。配置加密模块中的 PostgreSQL 集成测试仍需按前文显式提供隔离数据库，离线通过不代表真实 KDC/数据库或完整 UI 验收。
+
 ## 账号绑定回归
 
 绑定后端跨仓库回归位于 xpack 的 `tests/test_account_bindings.py`。在已按 xpack 联调步骤准备的隔离环境中，从主工程 `backend/` 执行（解释器必须确实导入待测的主工程和 xpack checkout）：

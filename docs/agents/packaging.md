@@ -84,3 +84,7 @@ node --check g2-ssr/charts/<changed-file.js>
 6. 构建在线 / 离线安装包。
 
 发布版本号、镜像 tag、离线包名、backend 包版本和 Git tag 必须由使用者明确确认。agent 不要自行发布、上传、打 tag 或推送。
+
+## Kerberos 运行依赖
+
+Hive/Impala 的应用内认证使用 Python kerberos（backend/pyproject.toml）和 kinit。应用 Dockerfile 在 runtime-base 安装 krb5-user、libgssapi-krb5-2；Python 扩展编译依赖现有构建基础镜像的 libkrb5-dev。无需挂载全局 keytab/票据缓存，上传文件由后端按连接临时解密使用。/opt/sqlbot 工作目录和现有数据、图表、日志挂载保持原布局。验证边界及客户端配置限制见 backend/README.md。

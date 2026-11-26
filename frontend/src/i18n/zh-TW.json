@@ -424,6 +424,16 @@
       "field_comment_label": "欄位註解"
     },
     "form": {
+      "kerberos_host": "Kerberos 服務主機名稱",
+      "kerberos_host_hint": "選填，留空時使用連線主機",
+      "kerberos_auth": "Kerberos 驗證",
+      "kerberos_principal": "用戶端 principal",
+      "kerberos_service": "服務名稱",
+      "kerberos_required": "請填寫用戶端 principal",
+      "kerberos_selected": "已選擇",
+      "kerberos_saved": "憑證已儲存。不上傳時保留；變更連線目標或驗證設定時，請重新上傳兩個檔案。",
+      "kerberos_upload_hint": "請上傳 krb5.conf（最多 64 KB）及 keytab（最多 256 KB），每次建立連線自動取得票證。",
+      "kerberos_file_error": "檔案讀取失敗或超過大小限制",
       "title": {
         "add": "新增資料來源",
         "edit": "編輯資料來源",

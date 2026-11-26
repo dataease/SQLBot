@@ -11,6 +11,7 @@ import es from '@/assets/datasource/icon_es.png'
 import kingbase from '@/assets/datasource/icon_kingbase.png'
 import starrocks from '@/assets/datasource/icon_starrocks.png'
 import hive_icon from '@/assets/datasource/icon_hive.png'
+import impala_icon from '@/assets/datasource/impala-ds.png'
 import { i18n } from '@/i18n'
 
 const t = i18n.global.t
@@ -28,6 +29,7 @@ export const dsType = [
   { label: 'Kingbase', value: 'kingbase' },
   { label: 'StarRocks', value: 'starrocks' },
   { label: 'Apache Hive', value: 'hive' },
+  { label: 'Apache Impala', value: 'impala' },
 ]
 
 export const dsTypeWithImg = [
@@ -44,6 +46,7 @@ export const dsTypeWithImg = [
   { name: 'Kingbase', type: 'kingbase', img: kingbase },
   { name: 'StarRocks', type: 'starrocks', img: starrocks },
   { name: 'Apache Hive', type: 'hive', img: hive_icon },
+  { name: 'Apache Impala', type: 'impala', img: impala_icon },
 ]
 
 export const haveSchema = ['sqlServer', 'pg', 'oracle', 'dm', 'redshift', 'kingbase']
