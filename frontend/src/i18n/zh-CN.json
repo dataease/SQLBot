@@ -429,7 +429,7 @@
       "authentication_method": "认证方式",
       "ldap_auth": "用户名密码(LDAP)",
       "kerberos_auth": "Kerberos 认证",
-      "kerberos_principal_hint": "请输入客户端 principal，例如 impala_user@EXAMPLE.COM",
+      "kerberos_principal_hint": "请输入客户端 principal",
       "kerberos_principal": "客户端 principal",
       "kerberos_service": "服务名",
       "kerberos_required": "请填写客户端 principal",

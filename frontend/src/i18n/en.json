@@ -429,7 +429,7 @@
       "authentication_method": "Authentication method",
       "ldap_auth": "Username and password (LDAP)",
       "kerberos_auth": "Kerberos authentication",
-      "kerberos_principal_hint": "Enter client principal, e.g. impala_user@EXAMPLE.COM",
+      "kerberos_principal_hint": "Enter client principal",
       "kerberos_principal": "Client principal",
       "kerberos_service": "Service name",
       "kerberos_required": "Enter the client principal",
