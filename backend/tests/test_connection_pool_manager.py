@@ -1,5 +1,6 @@
 """Regression tests for SQLAlchemy connection pool lifecycle management."""
 
+import hashlib
 import ast
 import os
 import threading
@@ -19,7 +20,7 @@ _SRC_PATH = os.path.join(
 )
 
 
-def _load_connection_pool_manager():
+def _load_connection_pool_manager(class_name="ConnectionPoolManager"):
     """Load only ConnectionPoolManager to avoid importing database drivers."""
     with open(_SRC_PATH, encoding="utf-8") as file:
         source = file.read()
@@ -28,7 +29,7 @@ def _load_connection_pool_manager():
     class_node = next(
         node
         for node in tree.body
-        if isinstance(node, ast.ClassDef) and node.name == "ConnectionPoolManager"
+        if isinstance(node, ast.ClassDef) and node.name == class_name
     )
 
     class CoreDatasource:
@@ -39,6 +40,9 @@ def _load_connection_pool_manager():
 
     namespace = {
         "threading": threading,
+        "hashlib": hashlib,
+        "aes_decrypt": lambda value: value,
+        "equals_ignore_case": lambda a, b: a.lower() == b.lower(),
         "OrderedDict": OrderedDict,
         "CoreDatasource": CoreDatasource,
         "AssistantOutDsSchema": AssistantOutDsSchema,
@@ -48,7 +52,7 @@ def _load_connection_pool_manager():
     module = ast.Module(body=[class_node], type_ignores=[])
     ast.fix_missing_locations(module)
     exec(compile(module, _SRC_PATH, "exec"), namespace)
-    return namespace["ConnectionPoolManager"], namespace
+    return namespace[class_name], namespace
 
 
 ConnectionPoolManager, _namespace = _load_connection_pool_manager()
@@ -70,7 +74,7 @@ def test_remove_pool_disposes_bound_engine():
     _namespace["get_engine"] = _engine_factory(created_engines)
     manager = ConnectionPoolManager()
 
-    manager.get_pool(SimpleNamespace(id="ds-1"))
+    manager.get_pool(SimpleNamespace(id="ds-1", type="pg", configuration="old"))
     manager.remove_pool("ds-1")
 
     created_engines[0].dispose.assert_called_once_with()
@@ -82,8 +86,8 @@ def test_lru_eviction_disposes_oldest_engine():
     _namespace["get_engine"] = _engine_factory(created_engines)
     manager = ConnectionPoolManager(max_pools=1)
 
-    manager.get_pool(SimpleNamespace(id="ds-1"))
-    manager.get_pool(SimpleNamespace(id="ds-2"))
+    manager.get_pool(SimpleNamespace(id="ds-1", type="pg", configuration="old"))
+    manager.get_pool(SimpleNamespace(id="ds-2", type="pg", configuration="old"))
 
     created_engines[0].dispose.assert_called_once_with()
     created_engines[1].dispose.assert_not_called()
@@ -94,10 +98,50 @@ def test_close_all_disposes_every_engine():
     _namespace["get_engine"] = _engine_factory(created_engines)
     manager = ConnectionPoolManager(max_pools=2)
 
-    manager.get_pool(SimpleNamespace(id="ds-1"))
-    manager.get_pool(SimpleNamespace(id="ds-2"))
+    manager.get_pool(SimpleNamespace(id="ds-1", type="pg", configuration="old"))
+    manager.get_pool(SimpleNamespace(id="ds-2", type="pg", configuration="old"))
     manager.close_all()
 
     for engine in created_engines:
         engine.dispose.assert_called_once_with()
     assert not manager._pools
+
+
+def test_configuration_change_replaces_pool_without_web_invalidation():
+    created_engines = []
+    _namespace["get_engine"] = _engine_factory(created_engines)
+    manager = ConnectionPoolManager()
+    ds = SimpleNamespace(id="ds-1", type="pg", configuration="old")
+    original = manager.get_pool(ds)
+    assert manager.get_pool(ds) is original
+    ds.configuration = "new"
+    replacement = manager.get_pool(ds)
+    assert replacement is not original
+    assert manager.get_pool(ds) is replacement
+    created_engines[0].dispose.assert_called_once_with()
+    assert len(created_engines) == 2
+
+
+def test_driver_configuration_change_and_cleanup():
+    manager_class, namespace = _load_connection_pool_manager("DriverConnectionPoolManager")
+    created = []
+
+    def create_pool(ds, config, use_pool=False):
+        assert use_pool
+        pool = Mock()
+        created.append(pool)
+        return pool
+
+    namespace["get_driver_connection"] = create_pool
+    manager = manager_class(max_pools=1)
+    ds = SimpleNamespace(id="ds-1", type="mysql", configuration="old")
+    original = manager.get_pool(ds, {})
+    assert manager.get_pool(ds, {}) is original
+    ds.configuration = "new"
+    replacement = manager.get_pool(ds, {})
+    original.close.assert_called_once_with()
+    assert replacement is not original
+    assert manager.get_pool(ds, {}) is replacement
+    manager.remove_pool(ds.id)
+    replacement.close.assert_called_once_with()
+    assert not manager._fingerprints

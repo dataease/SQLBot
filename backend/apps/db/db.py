@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import os
 import platform
@@ -1331,13 +1332,23 @@ class ConnectionPoolManager:
         """
         self.max_pools = max_pools
         self._pools = OrderedDict()  # datasource_id -> (sessionmaker, Engine)
+        self._fingerprints = {}
         self._lock = threading.Lock()  # 保证多线程安全
 
     def get_pool(self, ds: CoreDatasource | AssistantOutDsSchema, **db_config):
         """
         get connection pool（lazy load + LRU update）
         """
+        # Compare the persisted configuration on every process-local lookup.
+        # Store only a digest, never a second copy of connection credentials.
+        fingerprint = hashlib.sha256(repr((
+            ds.type, ds.configuration, db_config
+        )).encode()).digest()
         with self._lock:
+            if ds.id in self._pools and self._fingerprints.get(ds.id) != fingerprint:
+                stale = self._pools.pop(ds.id)
+                self._fingerprints.pop(ds.id, None)
+                stale[1].dispose()
             if ds.id:
                 # 1. 如果连接池已存在，将其移动到字典末尾（标记为最近使用）
                 if ds.id in self._pools:
@@ -1350,18 +1361,21 @@ class ConnectionPoolManager:
                 # 2. 如果连接池不存在，检查是否达到上限，若达到则淘汰最久未使用的（字典头部）
                 if len(self._pools) >= self.max_pools:
                     oldest_id, (_, oldest_engine) = self._pools.popitem(last=False)
+                    self._fingerprints.pop(oldest_id, None)
                     oldest_engine.dispose()  # 安全关闭被驱逐的连接池
                     print(f"[LRU] remove oldest: {oldest_id}")
 
             # 3. 创建新连接池并放入字典末尾
             engine = get_engine(ds, use_pool=True)
             new_pool = sessionmaker(bind=engine)
+            self._fingerprints[ds.id] = fingerprint
             self._pools[ds.id] = (new_pool, engine)
             print(f"[LRU] create: {ds.id}")
             return new_pool
 
     def remove_pool(self, datasource_id):
         with self._lock:
+            self._fingerprints.pop(datasource_id, None)
             if datasource_id in self._pools:
                 # 1. 从字典中移除并获取该连接池对象
                 _, engine = self._pools.pop(datasource_id)
@@ -1377,6 +1391,7 @@ class ConnectionPoolManager:
             for _, engine in self._pools.values():
                 engine.dispose()
             self._pools.clear()
+            self._fingerprints.clear()
 
 
 pool_manager = ConnectionPoolManager(max_pools=500)
@@ -1390,13 +1405,23 @@ class DriverConnectionPoolManager:
         """
         self.max_pools = max_pools
         self._pools = OrderedDict()  # 使用有序字典实现 LRU
+        self._fingerprints = {}
         self._lock = threading.Lock()  # 保证多线程安全
 
     def get_pool(self, ds: CoreDatasource | AssistantOutDsSchema, db_config):
         """
         get connection pool（lazy load + LRU update）
         """
+        # Compare the persisted configuration on every process-local lookup.
+        # Store only a digest, never a second copy of connection credentials.
+        fingerprint = hashlib.sha256(repr((
+            ds.type, ds.configuration, db_config
+        )).encode()).digest()
         with self._lock:
+            if ds.id in self._pools and self._fingerprints.get(ds.id) != fingerprint:
+                stale = self._pools.pop(ds.id)
+                self._fingerprints.pop(ds.id, None)
+                stale.close()
             if ds.id:
                 # 1. 如果连接池已存在，将其移动到字典末尾（标记为最近使用）
                 if ds.id in self._pools:
@@ -1409,17 +1434,20 @@ class DriverConnectionPoolManager:
                 # 2. 如果连接池不存在，检查是否达到上限，若达到则淘汰最久未使用的（字典头部）
                 if len(self._pools) >= self.max_pools:
                     oldest_id, oldest_pool = self._pools.popitem(last=False)
+                    self._fingerprints.pop(oldest_id, None)
                     oldest_pool.close()  # 安全关闭被驱逐的连接池
                     print(f"[LRU] remove oldest: {oldest_id}")
 
             # 3. 创建新连接池并放入字典末尾
             new_pool = get_driver_connection(ds, db_config, use_pool=True)
+            self._fingerprints[ds.id] = fingerprint
             self._pools[ds.id] = new_pool
             print(f"[LRU] create: {ds.id}")
             return new_pool
 
     def remove_pool(self, datasource_id):
         with self._lock:
+            self._fingerprints.pop(datasource_id, None)
             if datasource_id in self._pools:
                 # 1. 从字典中移除并获取该连接池对象
                 pool = self._pools.pop(datasource_id)
@@ -1435,6 +1463,7 @@ class DriverConnectionPoolManager:
             for pool in self._pools.values():
                 pool.close()
             self._pools.clear()
+            self._fingerprints.clear()
 
 
 driver_pool_manager = DriverConnectionPoolManager(max_pools=500)
