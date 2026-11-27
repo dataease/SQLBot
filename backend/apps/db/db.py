@@ -170,7 +170,10 @@ def parse_hive_table_rows(res, is_spark: bool):
             # Spark Thrift Server returns (database, tableName, isTemporary).
             if len(row) >= 2:
                 # Skip a possible in-band header row over the legacy Hive-JDBC path.
-                if row[1].lower() == 'tablename':
+                if (len(row) == 3
+                        and row[0].strip().lower() in ('database', 'namespace')
+                        and row[1].strip().lower() == 'tablename'
+                        and row[2].strip().lower() == 'istemporary'):
                     continue
                 name = row[1].strip()
             else:
@@ -210,7 +213,9 @@ def parse_hive_field_rows(res, is_spark: bool):
         type_str = (field_type or '').strip() if isinstance(field_type, str) else (str(field_type).strip() if field_type else '')
 
         # Legacy Hive-JDBC path may return the column header row as data.
-        if is_spark and stripped_name.lower() == 'col_name':
+        if (is_spark and stripped_name.lower() == 'col_name'
+                and type_str.lower() == 'data_type'
+                and str(field_comment or '').strip().lower() == 'comment'):
             continue
 
         # DESCRIBE includes section headings and repeats partition columns.
@@ -541,13 +546,13 @@ def get_version(ds: CoreDatasource | AssistantOutDsSchema):
                     cursor.execute(sql, timeout=10, **extra_config_dict)
                     res = cursor.fetchall()
                     version = res[0][0]
-            elif equals_ignore_case(ds.type, 'doris', 'starrocks'):
+            elif equals_ignore_case(ds.type, 'doris', 'starrocks', 'impala'):
                 t_conf = {'connect_timeout': 10, 'read_timeout': 10}
-                with get_driver_pool(ds, t_conf).connection() as conn, conn.cursor() as cursor:
+                with get_driver_pool(ds, {} if equals_ignore_case(ds.type, 'impala') else t_conf).connection() as conn, conn.cursor() as cursor:
                     cursor.execute(sql)
                     res = cursor.fetchall()
                     version = res[0][0]
-            elif equals_ignore_case(ds.type, 'redshift', 'es', 'hive', 'impala'):
+            elif equals_ignore_case(ds.type, 'redshift', 'es', 'hive'):
                 version = ''
     except Exception as e:
         print(e)

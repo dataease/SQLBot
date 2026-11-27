@@ -426,7 +426,10 @@
     "form": {
       "kerberos_host": "Kerberos 服務主機名稱",
       "kerberos_host_hint": "選填，留空時使用連線主機",
+      "authentication_method": "驗證方式",
+      "ldap_auth": "使用者名稱密碼(LDAP)",
       "kerberos_auth": "Kerberos 驗證",
+      "kerberos_principal_hint": "請輸入用戶端 principal，例如 impala_user@EXAMPLE.COM",
       "kerberos_principal": "用戶端 principal",
       "kerberos_service": "服務名稱",
       "kerberos_required": "請填寫用戶端 principal",

@@ -426,7 +426,10 @@
     "form": {
       "kerberos_host": "Kerberos 서비스 호스트 이름",
       "kerberos_host_hint": "선택 사항, 비워두면 연결 호스트 사용",
+      "authentication_method": "인증 방식",
+      "ldap_auth": "사용자 이름 및 비밀번호(LDAP)",
       "kerberos_auth": "Kerberos 인증",
+      "kerberos_principal_hint": "클라이언트 principal 입력, 예: impala_user@EXAMPLE.COM",
       "kerberos_principal": "클라이언트 principal",
       "kerberos_service": "서비스 이름",
       "kerberos_required": "클라이언트 principal을 입력하세요",

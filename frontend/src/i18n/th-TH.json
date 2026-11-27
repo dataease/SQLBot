@@ -426,7 +426,10 @@
     "form": {
       "kerberos_host": "ชื่อโฮสต์บริการ Kerberos",
       "kerberos_host_hint": "ไม่บังคับ หากเว้นว่างจะใช้โฮสต์การเชื่อมต่อ",
+      "authentication_method": "วิธีการยืนยันตัวตน",
+      "ldap_auth": "ชื่อผู้ใช้และรหัสผ่าน (LDAP)",
       "kerberos_auth": "การยืนยันตัวตน Kerberos",
+      "kerberos_principal_hint": "ระบุ principal ของไคลเอนต์ เช่น impala_user@EXAMPLE.COM",
       "kerberos_principal": "principal ของไคลเอนต์",
       "kerberos_service": "ชื่อบริการ",
       "kerberos_required": "กรอก principal ของไคลเอนต์",

@@ -140,6 +140,7 @@ def connect_hs2(hive, config):
 
 def _worker(pipe, config, directory):
     conn = cursor = None
+    connected = False
     # Include kinit in the worker's process group so cancellation cannot orphan it.
     if hasattr(os, "setsid"):
         os.setsid()
@@ -167,6 +168,7 @@ def _worker(pipe, config, directory):
 
         conn = connect_hs2(hive, config)
         cursor = conn.cursor()
+        connected = True
         pipe.send((True, None))
         while True:
             command, value = pipe.recv()
@@ -181,9 +183,25 @@ def _worker(pipe, config, directory):
                 raise ValueError("Unsupported operation")
     except (EOFError, BrokenPipeError):
         pass
-    except Exception:
+    except Exception as error:
+        message = _ERROR
+        if connected:
+            message = "SQL execution failed"
+            from pyhive.exc import Error as HiveError
+
+            if isinstance(error, HiveError):
+                detail = str(error)
+                for secret in (
+                    config.get("password"),
+                    config.get("kerberosKeytab"),
+                    config.get("kerberosConf"),
+                    directory,
+                ):
+                    if secret:
+                        detail = detail.replace(secret, "[redacted]")
+                message += ": " + detail[:4000]
         try:
-            pipe.send((False, _ERROR))
+            pipe.send((False, message))
         except (EOFError, BrokenPipeError):
             pass
     finally:
@@ -210,10 +228,11 @@ class KerberosConnection:
         self.description = None
         if not _LIMIT.acquire(timeout=self.timeout):
             raise RuntimeError(_ERROR)
-        self.directory = tempfile.TemporaryDirectory(prefix="sqlbot-kerberos-")
+        self.directory = None
         self.process = None
         self.pipe = None
         try:
+            self.directory = tempfile.TemporaryDirectory(prefix="sqlbot-kerberos-")
             context = multiprocessing.get_context("spawn")
             self.pipe, child = context.Pipe()
             self.process = context.Process(
@@ -237,7 +256,7 @@ class KerberosConnection:
             raise RuntimeError(_ERROR) from None
         if not ok:
             self.close()
-            raise RuntimeError(_ERROR)
+            raise RuntimeError(result)
         return result
 
     def cursor(self):
@@ -247,18 +266,25 @@ class KerberosConnection:
         if self.closed:
             return
         self.closed = True
-        if self.pipe is not None:
-            self.pipe.close()
-        if self.process is not None and self.process.pid is not None:
-            self.process.join(timeout=0.2)
-            if self.process.is_alive():
-                self._terminate_group(signal.SIGTERM)
-                self.process.join(timeout=2)
-            if self.process.is_alive():
-                self._terminate_group(signal.SIGKILL)
-                self.process.join()
-        self.directory.cleanup()
-        _LIMIT.release()
+        try:
+            try:
+                if self.pipe is not None:
+                    self.pipe.close()
+            finally:
+                if self.process is not None and self.process.pid is not None:
+                    self.process.join(timeout=0.2)
+                    if self.process.is_alive():
+                        self._terminate_group(signal.SIGTERM)
+                        self.process.join(timeout=2)
+                    if self.process.is_alive():
+                        self._terminate_group(signal.SIGKILL)
+                        self.process.join()
+        finally:
+            try:
+                if self.directory is not None:
+                    self.directory.cleanup()
+            finally:
+                _LIMIT.release()
 
     def _terminate_group(self, sig):
         if hasattr(os, "killpg"):

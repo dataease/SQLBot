@@ -205,7 +205,7 @@ def test_hs2_show_tables_single_column(get_hive_tables):
 
 def test_spark_show_tables_three_columns_with_header(get_hive_tables):
     rows = [
-        ("default", "tableName", "isTemporary"),  # header row returned as data
+        ("database", "tableName", "isTemporary"),  # header row returned as data
         ("default", "orders", "false"),
         ("default", "users", "false"),
         ("default", "orders", "false"),
@@ -227,3 +227,76 @@ def test_spark_show_tables_ignores_database_column_and_handles_temp_views(get_hi
         ("salesdb", "orders", "false"),
     ]
     assert get_hive_tables(rows, True) == [("orders", ""), ("temp_view", "")]
+
+
+def test_spark_real_table_named_tablename_is_preserved(get_hive_tables):
+    assert get_hive_tables([
+        ("namespace", "tableName", "isTemporary"),
+        ("default", "tablename", False),
+        ("default", "ordinary", False),
+    ], True) == [("tablename", ""), ("ordinary", "")]
+
+
+def test_spark_real_column_named_col_name_is_preserved(get_hive_spark_fields):
+    assert get_hive_spark_fields([
+        ("col_name", "data_type", "comment"),
+        ("col_name", "string", "custom column"),
+        ("id", "int", None),
+    ]) == [("col_name", "string", "custom column"), ("id", "int", None)]
+
+
+def test_spark_discovery_sync_preserves_saved_metadata(get_hive_tables):
+    from typing import List
+    from sqlalchemy import and_
+    from sqlmodel import Session, create_engine, select
+    from apps.datasource.models.datasource import CoreTable, CoreField, ColumnSchema
+
+    engine = create_engine("sqlite://")
+    CoreTable.__table__.create(engine)
+    CoreField.__table__.create(engine)
+    namespace = dict(
+        SessionDep=Session, CoreDatasource=SimpleNamespace, CoreTable=CoreTable,
+        CoreField=CoreField, ColumnSchema=ColumnSchema, List=List, select=select,
+        and_=and_, invalidate_metadata=lambda *a: None,
+        run_save_table_embeddings=lambda *a: None,
+        run_save_ds_embeddings=lambda *a: None,
+    )
+    parse_fields = _load_symbol("apps/db/db.py", "parse_hive_field_rows", namespace)
+    discovered_fields = [
+        ColumnSchema(n, t, c)
+        for n, t, c in parse_fields([
+            ("col_name", "data_type", "comment"),
+            ("col_name", "string", "source comment"),
+        ], True)
+    ]
+    namespace["getFieldsByDs"] = lambda *a: discovered_fields
+    namespace["get_tables_by_ds_id"] = lambda session, ds_id: session.exec(
+        select(CoreTable).where(CoreTable.ds_id == ds_id)
+    ).all()
+    sync_fields = _load_symbol("apps/datasource/crud/datasource.py", "sync_fields", namespace)
+    sync_table = _load_symbol("apps/datasource/crud/datasource.py", "sync_table", namespace)
+    with Session(engine) as session:
+        for table_id, name in [(11, "tablename"), (12, "ordinary")]:
+            session.add(CoreTable(id=table_id, ds_id=1, table_name=name,
+                                  table_comment="source", custom_comment="custom table"))
+            session.add(CoreField(id=table_id + 100, ds_id=1, table_id=table_id,
+                                  field_name="col_name", field_type="string",
+                                  field_comment="source", custom_comment="custom field"))
+        session.commit()
+        tables = [
+            CoreTable(table_name=name, table_comment=comment)
+            for name, comment in get_hive_tables([
+                ("database", "tableName", "isTemporary"),
+                ("default", "tablename", False), ("default", "ordinary", False),
+            ], True)
+        ]
+        sync_table(session, SimpleNamespace(id=1), tables)
+        ordinary = session.get(CoreTable, 12)
+        sync_fields(session, SimpleNamespace(id=1), ordinary, discovered_fields)
+        session.expire_all()
+        assert [(t.id, t.custom_comment) for t in session.exec(
+            select(CoreTable).order_by(CoreTable.id)
+        )] == [(11, "custom table"), (12, "custom table")]
+        assert [(f.id, f.custom_comment) for f in session.exec(
+            select(CoreField).order_by(CoreField.id)
+        )] == [(111, "custom field"), (112, "custom field")]

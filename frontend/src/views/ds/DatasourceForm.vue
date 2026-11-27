@@ -398,14 +398,16 @@ const buildConf = () => {
     JSON.stringify({
       host: form.value.host,
       port: form.value.port,
-      username: form.value.username,
-      password: form.value.kerberosMode
-        ? ''
-        : form.value.id && !form.value.password
-          ? undefined
-          : form.value.password,
+      username: form.value.type === 'impala' && form.value.kerberosMode ? '' : form.value.username,
+      password:
+        form.value.type === 'impala' && form.value.kerberosMode
+          ? ''
+          : form.value.id && !form.value.password
+            ? undefined
+            : form.value.password,
       database: form.value.database,
-      extraJdbc: form.value.kerberosMode ? '' : form.value.extraJdbc,
+      extraJdbc:
+        form.value.type === 'impala' && form.value.kerberosMode ? '' : form.value.extraJdbc,
       dbSchema: form.value.dbSchema,
       filename: form.value.filename,
       sheets: form.value.sheets,
@@ -415,7 +417,7 @@ const buildConf = () => {
       ssl: form.value.ssl,
       poolSize: form.value.poolSize,
       engine: form.value.engine,
-      kerberosMode: ['hive', 'impala'].includes(form.value.type) && form.value.kerberosMode,
+      kerberosMode: form.value.type === 'impala' && form.value.kerberosMode,
       kerberosPrincipal: form.value.kerberosPrincipal,
       kerberosHost: form.value.kerberosHost,
       kerberosService:
@@ -780,7 +782,16 @@ defineExpose({
               :placeholder="$t('datasource.please_enter') + $t('common.empty') + t('ds.form.port')"
             />
           </el-form-item>
-          <el-form-item :label="t('ds.form.username')">
+          <el-form-item v-if="form.type === 'impala'" :label="t('ds.form.authentication_method')">
+            <el-select v-model="form.kerberosMode" class="authentication-select">
+              <el-option :label="t('ds.form.ldap_auth')" :value="false" />
+              <el-option label="Kerberos" :value="true" />
+            </el-select>
+          </el-form-item>
+          <el-form-item
+            v-if="!(form.type === 'impala' && form.kerberosMode)"
+            :label="t('ds.form.username')"
+          >
             <el-input
               v-model="form.username"
               clearable
@@ -789,13 +800,7 @@ defineExpose({
               "
             />
           </el-form-item>
-          <el-form-item
-            v-if="['hive', 'impala'].includes(form.type)"
-            :label="t('ds.form.kerberos_auth')"
-          >
-            <el-switch v-model="form.kerberosMode" />
-          </el-form-item>
-          <template v-if="['hive', 'impala'].includes(form.type) && form.kerberosMode">
+          <template v-if="form.type === 'impala' && form.kerberosMode">
             <el-form-item
               :label="t('ds.form.kerberos_principal')"
               prop="kerberosPrincipal"
@@ -803,12 +808,9 @@ defineExpose({
                 { required: true, message: t('ds.form.kerberos_required'), trigger: 'blur' },
               ]"
             >
-              <el-input v-model="form.kerberosPrincipal" />
-            </el-form-item>
-            <el-form-item :label="t('ds.form.kerberos_service')">
               <el-input
-                v-model="form.kerberosService"
-                :placeholder="form.type === 'impala' ? 'impala' : 'hive'"
+                v-model="form.kerberosPrincipal"
+                :placeholder="t('ds.form.kerberos_principal_hint')"
               />
             </el-form-item>
             <el-form-item :label="t('ds.form.kerberos_host')">
@@ -826,7 +828,9 @@ defineExpose({
               >
                 <el-button :icon="Plus">{{ t('user.upload_file') }}</el-button>
               </el-upload>
-              <span v-if="form.kerberosConf">{{ t('ds.form.kerberos_selected') }}</span>
+              <span v-if="form.kerberosConf" class="kerberos-file-status">{{
+                t('ds.form.kerberos_selected')
+              }}</span>
             </el-form-item>
             <el-form-item label="keytab">
               <el-upload
@@ -837,9 +841,12 @@ defineExpose({
               >
                 <el-button :icon="Plus">{{ t('user.upload_file') }}</el-button>
               </el-upload>
-              <span v-if="form.kerberosKeytab">{{ t('ds.form.kerberos_selected') }}</span>
+              <span v-if="form.kerberosKeytab" class="kerberos-file-status">{{
+                t('ds.form.kerberos_selected')
+              }}</span>
             </el-form-item>
             <el-alert
+              class="kerberos-credentials-hint"
               :closable="false"
               type="info"
               :title="
@@ -852,7 +859,7 @@ defineExpose({
             />
           </template>
           <el-form-item
-            v-if="!(['hive', 'impala'].includes(form.type) && form.kerberosMode)"
+            v-if="!(form.type === 'impala' && form.kerberosMode)"
             :label="t('ds.form.password')"
           >
             <el-input
@@ -910,7 +917,10 @@ defineExpose({
           >
             <el-switch v-model="form.ssl" />
           </el-form-item>
-          <el-form-item v-if="form.type !== 'es'" :label="t('ds.form.extra_jdbc')">
+          <el-form-item
+            v-if="form.type !== 'es' && !(form.type === 'impala' && form.kerberosMode)"
+            :label="t('ds.form.extra_jdbc')"
+          >
             <el-input
               v-model="form.extraJdbc"
               clearable
@@ -953,7 +963,11 @@ defineExpose({
               controls-position="right"
             />
           </el-form-item>
-          <el-form-item v-if="form.type !== 'es'" :label="t('ds.form.pool_size')" prop="poolSize">
+          <el-form-item
+            v-if="form.type !== 'es' && !(form.type === 'impala' && form.kerberosMode)"
+            :label="t('ds.form.pool_size')"
+            prop="poolSize"
+          >
             <el-input-number
               v-model="form.poolSize"
               clearable
@@ -1226,5 +1240,20 @@ defineExpose({
       }
     }
   }
+}
+</style>
+
+<style scoped>
+.authentication-select {
+  width: 100%;
+}
+
+.kerberos-file-status {
+  margin-left: 12px;
+}
+
+.kerberos-credentials-hint {
+  margin-bottom: 20px;
+  padding: 12px 16px;
 }
 </style>
