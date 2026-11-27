@@ -132,3 +132,28 @@ def test_excel_import_keeps_literal_values_in_explicit_text_columns(tmp_path):
     assert frame["created"].isna().tolist() == [True, False, True, False]
     assert frame.loc[1, "created"] == pd.Timestamp("2026-11-16")
     assert frame["inferred"].isna().tolist() == [True, False, True, False]
+
+
+@pytest.mark.parametrize("extension", ["csv", "xlsx"])
+def test_preview_empty_cells_are_json_null(tmp_path, extension):
+    path = tmp_path / f"empty_cells.{extension}"
+    frame = pd.DataFrame({
+        "row": [1, 2, 3],
+        "price": [1.5, None, 0.0],
+        "label": [None, "present", "last"],
+        "empty": [None, None, None],
+    })
+    if extension == "csv":
+        frame.to_csv(path, index=False)
+    else:
+        frame.to_excel(path, index=False, engine="openpyxl")
+
+    [sheet] = parse_excel_preview(str(path))
+    result = json.loads(json.dumps(sheet, allow_nan=False))
+    assert result["rows"] == 3
+    assert result["fields"][1] == {"fieldName": "price", "fieldType": "float"}
+    assert result["data"] == [
+        {"row": 1, "price": 1.5, "label": None, "empty": None},
+        {"row": 2, "price": None, "label": "present", "empty": None},
+        {"row": 3, "price": 0.0, "label": "last", "empty": None},
+    ]

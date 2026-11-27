@@ -102,12 +102,16 @@ def read_import_dataframe(save_path: str, sheet_name: str, field_mapping: dict):
 def _preview_records(df: pd.DataFrame, max_rows: int) -> list[dict]:
     # JSON cannot represent infinities as numbers. Keep their sign visible in
     # the preview while continuing to represent empty cells as null.
-    return df.head(max_rows).replace({
-        pd.NA: None,
-        float('nan'): None,
-        float('inf'): 'Infinity',
-        float('-inf'): '-Infinity',
-    }).to_dict(orient='records')
+    records = df.head(max_rows).to_dict(orient='records')
+    for record in records:
+        for column, value in record.items():
+            if pd.isna(value):
+                record[column] = None
+            elif isinstance(value, float) and value == float('inf'):
+                record[column] = 'Infinity'
+            elif isinstance(value, float) and value == float('-inf'):
+                record[column] = '-Infinity'
+    return records
 
 
 def parse_excel_preview(save_path: str, max_rows: int = 10):
